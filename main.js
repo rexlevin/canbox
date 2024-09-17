@@ -33,8 +33,10 @@ const createWindow = () => {
     // Menu.setApplicationMenu(null);
 
     let config = {
-        minWidth: 820,
-        minHeight: 600,
+        minWidth: 700,
+        minHeight: 450,
+        width: 700,
+        height: 450,
         icon: path.join(__dirname, '/public/logo.png'),
         webPreferences: {
             sandbox: false,     // 没有这个配置，加载不到 preload.js
@@ -49,15 +51,14 @@ const createWindow = () => {
 
     win = new BrowserWindow(config);
 
-    // win.loadURL('file://' + __dirname + '/dist/index.html');
-    // win.loadURL('file://${__dirname}/dist/index.html');
-    win.loadURL(path.join('file://', __dirname, '/dist/index.html'));
+    // win.loadURL(path.join('file://', __dirname, '/dist/index.html'));
+    win.loadURL('http://localhost:5173/');
     
     // win.setMenu(Menu.buildFromTemplate(menuTemplate));
     win.setMenu(null);
 
     // 打开开发者窗口
-    // win.webContents.openDevTools();
+    win.webContents.openDevTools({mode: 'detach'});
 
     win.on('ready-to-show', () => {
         win.show();
