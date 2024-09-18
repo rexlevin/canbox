@@ -1,9 +1,9 @@
 const { app, BrowserWindow, Menu, Tray, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
-// const Store  = require('electron-store');
 const { sandboxed } = require('process');
 
-// Store.initRenderer();
+const Store  = require('electron-store');
+Store.initRenderer();
 
 // 清除启动时控制台的“Electron Security Warning (Insecure Content-Security-Policy)”报错信息
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'

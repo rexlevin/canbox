@@ -12,6 +12,7 @@
     },
     "dependencies": {
         "electron-store": "^8.2.0",
+        "element-plus": "^2.8.3",
         "vue": "^3.4.21"
     },
     "devDependencies": {

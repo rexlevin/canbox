@@ -1,37 +1,31 @@
 <template>
-    <div class="container">
-        <div class="content">
-            <aside>
-                <div class="tab-menu my-aside">
-                    <ul>
-                        <li>小程序商店</li>
-                        <li class="tab-menu-selected">我的小程序</li>
-                        <li>用户中心</li>
-                    </ul>
-                </div>
-            </aside>
-            <main>
-                <div class="pagination">
-                    <!-- 分页 -->
-                </div>
-                <div class="my_app_list">
-                    <button type="button" class="btn btn-sm btn-primary">launch app</button>
-                </div>
-                <div></div>
-            </main>
-        </div>
-        <footer>
-            <div class="bottom"></div>
-        </footer>
+    <div class="common-layout my_container">
+        <el-container class="my_container my_container">
+            <el-container>
+                <el-main class="my_main">
+                    <el-tabs tab-position="left">
+                        <el-tab-pane label="我的app">
+                            <el-button type="primary">launch app</el-button>
+                        </el-tab-pane>
+                        <el-tab-pane label="app商店">app商店</el-tab-pane>
+                        <el-tab-pane label="用户中心">用户中心</el-tab-pane>
+                    </el-tabs>
+                </el-main>
+            </el-container>
+            <el-footer class="bottom">footer</el-footer>
+        </el-container>
     </div>
 </template>
 
 <script setup>
-import 'simple-ui/src/ui.css';
-import 'simple-ui/src/ui';
+import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
+onBeforeMount(() => {
+    window.api.loadExtension('xxasdfasdfa');
+});
 </script>
 
 <style scoped>
-.my_aside{width: 120px;}
-.bottom {height: 40px;}
+.my_container{width: 100%; height: 100%;}
+.my_main{padding: 0;}
+.bottom {height: 40px; padding: 0;}
 </style>
