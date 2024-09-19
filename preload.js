@@ -11,13 +11,30 @@ window.addEventListener('DOMContentLoaded', () => {
     document.title = package.description + ' - v' + package.version;
 });
 
-let extensionsConfig;
+let extensionsConfigFile, extensionsConfig;
 const extensions = {
     test: () => {
         console.info('11111111111111');
     },
     loadExtConfig: () => {
-        console.info(extensionsConfig);
+        console.info(extensionsConfigFile);
+        fs.stat(extensionsConfigFile, (err, stats) => {
+            if(err) {
+                console.error(err);
+                return;
+            }
+            if(stats.isDirectory()) {
+                return;
+            }
+            fs.readFile(extensionsConfigFile, 'utf8', (err, data) => {
+                if(err) {
+                    console.error(err);
+                    return;
+                }
+                extensionsConfig = JSON.parse(data);
+                console.info(extensionsConfig['default']);
+            });
+        });
     }
 }
 
@@ -35,5 +52,5 @@ contextBridge.exposeInMainWorld(
 // })();
 
 ipcRenderer.on('userDataPath', (event, arg) => {
-    extensionsConfig = arg + '/Users/extensions.json';
+    extensionsConfigFile = arg + '/Users/extensions.json';
 });
