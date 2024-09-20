@@ -1,9 +1,10 @@
 const { app, BrowserWindow, Menu, Tray, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
+const fs = require("fs");
 const { sandboxed } = require('process');
 
-// const Store  = require('electron-store');
-// Store.initRenderer();
+const Store  = require('electron-store');
+Store.initRenderer();
 
 // 清除启动时控制台的“Electron Security Warning (Insecure Content-Security-Policy)”报错信息
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
@@ -20,7 +21,6 @@ app.whenReady().then(() => {
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     })
-    win.webContents.send('userDataPath', app.getPath('userData'));
 })
 
 app.on('window-all-closed', () => {
@@ -38,6 +38,7 @@ const createWindow = () => {
         minHeight: 450,
         width: 700,
         height: 450,
+        resizable: false,
         icon: path.join(__dirname, '/public/logo.png'),
         webPreferences: {
             sandbox: false,     // 没有这个配置，加载不到 preload.js
@@ -73,4 +74,4 @@ const createWindow = () => {
         // console.info('now will close app');
         // win.webContents.send('closeApp', isMax, mainPosition);
     });
-}   
+}

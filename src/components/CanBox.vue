@@ -5,7 +5,7 @@
                 <el-main class="my_main">
                     <el-tabs tab-position="left">
                         <el-tab-pane label="我的app">
-                            <el-button type="primary">launch app</el-button>
+                            <AppList :extensionList="extensionList"/>
                         </el-tab-pane>
                         <el-tab-pane label="app商店">app商店</el-tab-pane>
                         <el-tab-pane label="用户中心">用户中心</el-tab-pane>
@@ -18,9 +18,14 @@
 </template>
 
 <script setup>
+import AppList from './AppList.vue';
 import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
+
+const extensionList = ref(null);
+
 onBeforeMount(() => {
-    window.api.loadExtension('xxasdfasdfa');
+    extensionList.value = window.api.getExtensionList();
+    console.info(extensionList.value);
 });
 </script>
 
