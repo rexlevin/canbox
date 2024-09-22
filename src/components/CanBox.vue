@@ -9,6 +9,7 @@
                         </el-tab-pane>
                         <el-tab-pane label="app商店">app商店</el-tab-pane>
                         <el-tab-pane label="用户中心">用户中心</el-tab-pane>
+                        <el-tab-pane label="设置">设置</el-tab-pane>
                     </el-tabs>
                 </el-main>
             </el-container>

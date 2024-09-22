@@ -75,3 +75,30 @@ const createWindow = () => {
         // win.webContents.send('closeApp', isMax, mainPosition);
     });
 }
+
+// 设置一个map集合，用于存放所有打开的window
+const extMap = new Map();
+ipcMain.on('loadExt', (e, appItem) => {
+    console.info('loadExt===%o', appItem);
+    // shell.openPath(appItem.path);
+    appItem = JSON.parse(appItem);
+    if(extMap.has(appItem.id)) {
+        extMap.get(appItem.id).show();
+        console.info(appItem.id + ' ' + appItem.config.name + ' is already exists');
+        return;
+    }
+    const options = {
+        width: appItem.config.width,
+        height: appItem.config.height,
+        title: appItem.config.name,
+        icon: path.join(appItem.path, 'logo.png'),
+        webPreferences: {}
+    };
+    let extWin = new BrowserWindow(options);
+    extWin.loadFile(path.join(appItem.path, appItem.config.main));
+    extWin.setMenu(null);
+    extMap.set(appItem.id, extWin);
+    extWin.on('close', () => {
+        extMap.delete(appItem.id);
+    });
+});
