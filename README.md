@@ -1,7 +1,18 @@
-# Vue 3 + Vite
+# 插件开发
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## plugin
 
-## Recommended IDE Setup
+```json
+{
+    "name": "剪贴板",
+    "description": "一个好用的剪贴板",
+    "author": "dev001",
+    "homepage": "https://gitee.com/dev001/clipboard",
+    "main": "index.html",
+    "logo": "logo.png",
+    "version": "0.0.6",
+    "cmd": "clipboard"
+}
+```
 
-- [VS Code](https://code.visualstudio.com/) + [Vue - Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (previously Volar) and disable Vetur
+# API

@@ -39,12 +39,13 @@ const createWindow = () => {
         width: 700,
         height: 450,
         resizable: false,
-        icon: path.join(__dirname, '/public/logo.png'),
+        icon: path.join(__dirname, 'public/logo.png'),
         webPreferences: {
             sandbox: false,     // 没有这个配置，加载不到 preload.js
             preload: path.join(__dirname, '/preload.js'),
             // preload: 'http://localhost:13000',
-            spellcheck: false
+            spellcheck: false,
+            webSecurity: false
         },
         useContentSize: true,
         show: false,
@@ -58,6 +59,10 @@ const createWindow = () => {
     
     // win.setMenu(Menu.buildFromTemplate(menuTemplate));
     win.setMenu(null);
+
+    win.setAppDetails({
+        appId: 'canbox'
+    });
 
     // 打开开发者窗口
     win.webContents.openDevTools({mode: 'detach'});
@@ -97,8 +102,18 @@ ipcMain.on('loadExt', (e, appItem) => {
     let extWin = new BrowserWindow(options);
     extWin.loadFile(path.join(appItem.path, appItem.config.main));
     extWin.setMenu(null);
+    extWin.setAppDetails({
+        appId: appItem.id
+    });
     extMap.set(appItem.id, extWin);
     extWin.on('close', () => {
         extMap.delete(appItem.id);
     });
+});
+
+/**
+ * C:\Users\brood\AppData\Roaming\Microsoft\Windows\Start Menu\Programs
+ */
+ipcMain.on('', () => {
+    const appDataPath = path.join(app.getPath('appData'), '/Microsoft/Windows/Start Menu/Programs');
 });
