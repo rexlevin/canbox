@@ -12,7 +12,8 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 // 禁用当前应用程序的硬件加速
 app.disableHardwareAcceleration();
 
-const isDarwin = process.platform === 'darwin' ? true : false;
+// const isDarwin = process.platform === 'darwin' ? true : false;
+const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
 let win = null;
 
@@ -28,22 +29,19 @@ app.on('window-all-closed', () => {
 });
 
 console.info(__dirname);
+console.info(path.join(__dirname, './public/logo.png'));
 
 const createWindow = () => {
-    // Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
-    // Menu.setApplicationMenu(null);
-
-    let config = {
+    const config = {
         minWidth: 700,
         minHeight: 450,
         width: 700,
         height: 450,
         resizable: false,
-        icon: path.join(__dirname, 'public/logo.png'),
+        icon: path.join(__dirname, './public/logo.png'),
         webPreferences: {
             sandbox: false,     // 没有这个配置，加载不到 preload.js
-            preload: path.join(__dirname, '/preload.js'),
-            // preload: 'http://localhost:13000',
+            preload: path.join(__dirname, './preload.js'),
             spellcheck: false,
             webSecurity: false
         },
@@ -54,38 +52,36 @@ const createWindow = () => {
 
     win = new BrowserWindow(config);
 
-    // win.loadURL(path.join('file://', __dirname, '/dist/index.html'));
+    // win.loadURL(path.join('file://', __dirname, './dist/index.html'));
     win.loadURL('http://localhost:5173/');
     
     // win.setMenu(Menu.buildFromTemplate(menuTemplate));
     win.setMenu(null);
+    win.setIcon(path.join(__dirname, './public/logo.png'));
 
-    win.setAppDetails({
-        appId: 'canbox'
-    });
+    if(os === 'win') {
+        win.setAppDetails({
+            appId: 'canbox'
+        });
+    }
 
     // 打开开发者窗口
-    win.webContents.openDevTools({mode: 'detach'});
+    // win.webContents.openDevTools({mode: 'detach'});
 
     win.on('ready-to-show', () => {
         win.show();
     });
 
-    // 关闭主窗口事件，记录窗口大小和位置
+    // 关闭主窗口事件
     win.on('close', (e) => {
-        // e.preventDefault();     // 阻止默认事件
-        // let isMax = win.isMaximized()
-        //     , mainPosition = win.getContentBounds();
-        // console.info('now will close app');
-        // win.webContents.send('closeApp', isMax, mainPosition);
+        console.info('now will close app');
     });
 }
 
 // 设置一个map集合，用于存放所有打开的window
 const extMap = new Map();
 ipcMain.on('loadExt', (e, appItem) => {
-    console.info('loadExt===%o', appItem);
-    // shell.openPath(appItem.path);
+    // console.info('loadExt===%o', appItem);
     appItem = JSON.parse(appItem);
     if(extMap.has(appItem.id)) {
         extMap.get(appItem.id).show();
@@ -102,9 +98,11 @@ ipcMain.on('loadExt', (e, appItem) => {
     let extWin = new BrowserWindow(options);
     extWin.loadFile(path.join(appItem.path, appItem.config.main));
     extWin.setMenu(null);
-    extWin.setAppDetails({
-        appId: appItem.id
-    });
+    if(os === 'win') {
+        extWin.setAppDetails({
+            appId: appItem.id
+        });
+    }
     extMap.set(appItem.id, extWin);
     extWin.on('close', () => {
         extMap.delete(appItem.id);
