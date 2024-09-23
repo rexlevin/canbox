@@ -1,7 +1,6 @@
 const { app, BrowserWindow, Menu, Tray, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
-const fs = require("fs");
-const { sandboxed } = require('process');
+// const { sandboxed } = require('process');
 
 const Store  = require('electron-store');
 Store.initRenderer();
@@ -12,7 +11,6 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 // 禁用当前应用程序的硬件加速
 app.disableHardwareAcceleration();
 
-// const isDarwin = process.platform === 'darwin' ? true : false;
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
 let win = null;
@@ -29,7 +27,7 @@ app.on('window-all-closed', () => {
 });
 
 console.info(__dirname);
-console.info(path.join(__dirname, './public/logo.png'));
+console.info(path.join(__dirname, 'logo.png'));
 
 const createWindow = () => {
     const config = {
@@ -38,7 +36,7 @@ const createWindow = () => {
         width: 700,
         height: 450,
         resizable: false,
-        icon: path.join(__dirname, './public/logo.png'),
+        icon: path.join(__dirname, 'logo.png'),
         webPreferences: {
             sandbox: false,     // 没有这个配置，加载不到 preload.js
             preload: path.join(__dirname, './preload.js'),
@@ -57,7 +55,6 @@ const createWindow = () => {
     
     // win.setMenu(Menu.buildFromTemplate(menuTemplate));
     win.setMenu(null);
-    win.setIcon(path.join(__dirname, './public/logo.png'));
 
     if(os === 'win') {
         win.setAppDetails({
