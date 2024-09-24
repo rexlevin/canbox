@@ -8,7 +8,8 @@
                             <AppList :extensionList="extensionList"/>
                         </el-tab-pane>
                         <el-tab-pane label="app商店">app商店</el-tab-pane>
-                        <el-tab-pane label="用户中心">用户中心</el-tab-pane>
+                        <el-tab-pane label="用户中心"><UserCenter/></el-tab-pane>
+                        <el-tab-pane label="插件开发">插件开发</el-tab-pane>
                         <el-tab-pane label="设置">设置</el-tab-pane>
                     </el-tabs>
                 </el-main>
@@ -19,8 +20,9 @@
 </template>
 
 <script setup>
-import AppList from './AppList.vue';
 import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
+import AppList from './AppList.vue';
+import UserCenter from './UserCenter.vue'
 
 const extensionList = ref(null);
 
