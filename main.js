@@ -14,26 +14,51 @@ app.disableHardwareAcceleration();
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
 let win = null;
+// 设置一个map集合，用于存放所有打开的window
+let extMap = new Map();
 
 // 创建锁，保证只有一个实例在运行
 const getTheLock = app.requestSingleInstanceLock();
 if (!getTheLock) {
     app.quit()
 } else {
+
+    // console.info(process.argv);
+    // let extId = '';
+    // for(let arg of process.argv) {
+    //     if(arg.indexOf('id:') == -1) continue;
+    //     extId = arg.substring(arg.indexOf(':') + 1);
+    // }
+
     app.on('second-instance', (event, commandLine, workingDirectory) => {
-        if (win) {
-            if (win.isMinimized()) win.restore()
-            win.focus()
+        // console.info('commandLine===%o', commandLine);
+        // console.info('workingDirectory===%o', workingDirectory);
+        // console.info('extId====extId====%s', extId);
+        // 如果app已经启动，那么参数再次启动app或者extension的参数只能从commandLine里面获得
+        let extId = '';
+        for(let command of commandLine) {
+            if(command.indexOf('id:') == -1) continue;
+            extId = command.substring(command.indexOf(':') + 1);
+        }
+        if (win && '' === extId) {
+            if(win.isMinimized()) win.restore();
+            if(!win.isVisible()) win.show();
+            win.focus();
+        }
+        if(win && '' != extId) {
+            console.info('now loadExtDirect==%s', extId);
+            win.webContents.send('loadExtDirect', extId);
         }
     })
  
     app.whenReady().then(() => {
-        console.info(process.argv);
         createTray();
         createWindow();
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) createWindow();
-        })
+        });
+
+        // app第一次启动的时候，启动参数可以从process.argv里面获取到
         let extId = '';
         for(let arg of process.argv) {
             if(arg.indexOf('id:') == -1) continue;
@@ -56,9 +81,6 @@ if (!getTheLock) {
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });
-
-console.info(__dirname);
-console.info(path.join(__dirname, 'logo.png'));
 
 const createWindow = () => {
     const config = {
@@ -94,20 +116,29 @@ const createWindow = () => {
     }
 
     // 打开开发者窗口
-    win.webContents.openDevTools({mode: 'detach'});
+    // win.webContents.openDevTools({mode: 'detach'});
 
     win.on('ready-to-show', () => {
-        win.show(); // 注释掉这行，即启动最小化到tray
+        // win.show(); // 注释掉这行，即启动最小化到tray
     });
 
-    // 关闭主窗口事件
+    // 关闭主窗口事件，把extionsion的窗口都要关掉
     win.on('close', (e) => {
+        for(let key of extMap.keys()) {
+            extMap.get(key).close();
+        }
+        extMap.clear();
         console.info('now will close app');
     });
 }
 
 function createTray() {
-    let tray = new Tray(path.join(__dirname, './logo.png'));
+    let tray;
+    if('linux' === os) {
+        tray = new Tray(path.join(__dirname, './logo2.png'));
+    } else {
+        tray = new Tray(path.join(__dirname, './logo.png'));
+    }
     const menu = Menu.buildFromTemplate(trayMenuTemplate);
     tray.setContextMenu(menu);
 }
@@ -151,10 +182,8 @@ const trayMenuTemplate = [{
     }
 }];
 
-// 设置一个map集合，用于存放所有打开的window
-const extMap = new Map();
 ipcMain.on('loadExt', (e, appItem) => {
-    // console.info('loadExt===%o', appItem);
+    console.info('loadExt===%o', appItem);
     appItem = JSON.parse(appItem);
     if(extMap.has(appItem.id)) {
         extMap.get(appItem.id).show();
@@ -176,7 +205,7 @@ ipcMain.on('loadExt', (e, appItem) => {
             appId: appItem.id
         });
     }
-    extWin.webContents.openDevTools({mode: 'detach'});
+    // extWin.webContents.openDevTools({mode: 'detach'});
     extMap.set(appItem.id, extWin);
     extWin.on('close', () => {
         extMap.delete(appItem.id);

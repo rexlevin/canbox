@@ -8,7 +8,8 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
-        "start": "electron . --no-sandbox id:4fc5b570e0d0aecb11c1d5d3aa8e6ecd"
+        "start": "electron . --no-sandbox",
+        "startExt": "electron . --no-sandbox id:4fc5b570e0d0aecb11c1d5d3aa8e6ecd"
     },
     "dependencies": {
         "electron-store": "^8.2.0",
