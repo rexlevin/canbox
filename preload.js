@@ -49,7 +49,7 @@ function getExtList() {
         // C:\Users\brood\AppData\Roaming\canbox\Users\default\93f62daede2f64f962bec7fec070fb41\plugin.json
         const ext = {
             'id': id,
-            'config': currentStore.store,
+            'plugin': currentStore.store,
             'path': currentStore.path.substring(0, currentStore.path.lastIndexOf('plugin.json'))
         };
         extList.push(ext);

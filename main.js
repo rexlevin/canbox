@@ -116,10 +116,10 @@ const createWindow = () => {
     }
 
     // 打开开发者窗口
-    // win.webContents.openDevTools({mode: 'detach'});
+    win.webContents.openDevTools({mode: 'detach'});
 
     win.on('ready-to-show', () => {
-        // win.show(); // 注释掉这行，即启动最小化到tray
+        win.show(); // 注释掉这行，即启动最小化到tray
     });
 
     // 关闭主窗口事件，把extionsion的窗口都要关掉
@@ -187,18 +187,42 @@ ipcMain.on('loadExt', (e, appItem) => {
     appItem = JSON.parse(appItem);
     if(extMap.has(appItem.id)) {
         extMap.get(appItem.id).show();
-        console.info(appItem.id + ' ' + appItem.config.name + ' is already exists');
+        console.info(appItem.id + ' ' + appItem.plugin.name + ' is already exists');
         return;
     }
+    console.info('aaa=====%s', appItem.plugin.window);
+    const window = {
+        minWidth: 0,
+        minHeight: 0,
+        width: 800,
+        height: 600,
+        resizable: true
+    };
+    if(undefined === appItem.plugin.window) {
+        appItem.plugin.window = window;
+    } else {
+        appItem.plugin.window = Object.assign(window, appItem.plugin.window);
+    }
+    let opt = Object.assign({
+        width: 0,
+        height: 0
+    }, {
+        height: 220,
+        resizable: false
+    });
+    console.info('opt===%o', opt);
     const options = {
-        width: appItem.config.width,
-        height: appItem.config.height,
-        title: appItem.config.name,
+        minWidth: appItem.plugin.window.minWidth,
+        minHeight: appItem.plugin.window.minHeight,
+        width: appItem.plugin.window.width,
+        height: appItem.plugin.window.height,
+        resizable: appItem.plugin.window.resizable,
+        title: appItem.plugin.name,
         icon: path.join(appItem.path, 'logo.png'),
         webPreferences: {}
     };
     let extWin = new BrowserWindow(options);
-    extWin.loadFile(path.join(appItem.path, appItem.config.main));
+    extWin.loadFile(path.join(appItem.path, appItem.plugin.main));
     extWin.setMenu(null);
     if(os === 'win') {
         extWin.setAppDetails({
@@ -221,9 +245,9 @@ ipcMain.on('loadExt', (e, appItem) => {
 ipcMain.on('generateStartupShortcut', (e, appItemList) => {
     let appDataPath;
     if('win' === os) {
-        appDataPath = path.join(app.getPath('appData'), '/Microsoft/Windows/Start Menu/Programs');
+        generateShortcutWindows(appItemList);
     } else if('linux' === os) {
-        appDataPath = path.join(app.getPath('home'), '/.local/share/applications');
+        generateShortcutLinux(appItemList);
     } else {
         console.info('嘤嘤嘤~我不认识你~');
         return;
@@ -231,4 +255,9 @@ ipcMain.on('generateStartupShortcut', (e, appItemList) => {
 });
 
 function generateShortcutWindows(appItemList) {
+    const appDataPath = path.join(app.getPath('appData'), '/Microsoft/Windows/Start Menu/Programs');
+}
+
+function generateShortcutLinux(appItemList) {
+    const appDataPath = path.join(app.getPath('home'), '/.local/share/applications');
 }

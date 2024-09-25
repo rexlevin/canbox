@@ -2,11 +2,11 @@
     <div class="flex flex-wrap" style="margin: 5px 7px 0 0; padding: 0;">
         <div class="card">
             <div class="img-block">
-               <img style="width: 58px; height: 58px; cursor: pointer;" @click="loadExt()" :src="'file://' + appItem.path + appItem.config.logo" alt="" />
+               <img style="width: 58px; height: 58px; cursor: pointer;" @click="loadExt()" :src="'file://' + appItem.path + appItem.plugin.logo" alt="" />
             </div>
             <div class="info-block vertical-block">
-                <div style="height: 30px; line-height: 30px; cursor: pointer;" @click="loadExt()">{{ appItem.config.name }}</div>
-                <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.config.description }}</div>
+                <div style="height: 30px; line-height: 30px; cursor: pointer;" @click="loadExt()">{{ appItem.plugin.name }}</div>
+                <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.plugin.description }}</div>
             </div>
         </div>
     </div>

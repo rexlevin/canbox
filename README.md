@@ -11,8 +11,16 @@
     "main": "index.html",
     "logo": "logo.png",
     "version": "0.0.6",
+    "window": {
+        "minWidth": 800,
+        "minHeight": 400,
+        "width": 900,
+        "height": 500,
+        "resizable": false
+    },
     "cmd": "clipboard"
 }
+
 ```
 
 # API
