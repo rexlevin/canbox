@@ -29,7 +29,7 @@ const extensionList = ref(null);
 
 onBeforeMount(() => {
     extensionList.value = window.api.getExtensionList();
-    console.info(extensionList.value);
+    // console.info(extensionList.value);
 });
 </script>
 

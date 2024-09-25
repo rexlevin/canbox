@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer, shell } = require('electron');
 const Store  = require('electron-store');
-// const fs = require("fs");
+const path = require('path')
+const fs = require("fs");
 const package = require('./package.json');
 
 const extensionsConfig = new Store({
@@ -38,22 +39,21 @@ contextBridge.exposeInMainWorld(
 
 function getExtList() {
     // console.log("extension===%o", extensionsConfig.get('default'));
-    let extIdList = extensionsConfig.get('default'), extList = [];
-    for(let id of extIdList) {
-        // extensions[id] = require(`./extensions/${id}/main`);
-        const currentStore = new Store({
-            cwd: 'Users/default/' + id,
-            name: 'plugin'
-        });
-        // console.info(currentStore.path);
-        // C:\Users\brood\AppData\Roaming\canbox\Users\default\93f62daede2f64f962bec7fec070fb41\plugin.json
+    let extInfoList = extensionsConfig.get('default'), extList = [];
+    for(let extInfo of extInfoList) {
+        // console.info('===%s', extensionsConfig.path);
+        // /home/lizl6/.config/canbox/Users/extensions.json
+        // C:\Users\brood\AppData\Roaming\canbox\Users\extensions.json
+        let defaultPath = extensionsConfig.path.substring(0, extensionsConfig.path.lastIndexOf('extensions.json'));
+        const plugin = JSON.parse(fs.readFileSync(path.join(defaultPath, 'default', extInfo.id + '.asar/plugin.json'), 'utf8'));
+        // const plugin = JSON.parse(fs.readFileSync(defaultPath + 'default/' + extInfo.id + '.asar/plugin.json'));
         const ext = {
-            'id': id,
-            'plugin': currentStore.store,
-            'path': currentStore.path.substring(0, currentStore.path.lastIndexOf('plugin.json'))
+            'id': extInfo.id,
+            'plugin': plugin,
+            'path': path.join(defaultPath, 'default', extInfo.id + '.asar')
         };
         extList.push(ext);
     }
-    // console.info('returnList=====%o', returnList);
+    // console.info('returnList=====%o', extList);
     return extList;
 }

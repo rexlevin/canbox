@@ -175,7 +175,6 @@ ipcMain.on('loadExt', (e, appItem) => {
         console.info(appItem.id + ' ' + appItem.plugin.name + ' is already exists');
         return;
     }
-    console.info('aaa=====%s', appItem.plugin.window);
     const window = {
         minWidth: 0,
         minHeight: 0,
