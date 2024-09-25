@@ -22,14 +22,6 @@ const getTheLock = app.requestSingleInstanceLock();
 if (!getTheLock) {
     app.quit()
 } else {
-
-    // console.info(process.argv);
-    // let extId = '';
-    // for(let arg of process.argv) {
-    //     if(arg.indexOf('id:') == -1) continue;
-    //     extId = arg.substring(arg.indexOf(':') + 1);
-    // }
-
     app.on('second-instance', (event, commandLine, workingDirectory) => {
         // console.info('commandLine===%o', commandLine);
         // console.info('workingDirectory===%o', workingDirectory);
@@ -46,7 +38,7 @@ if (!getTheLock) {
             win.focus();
         }
         if(win && '' != extId) {
-            console.info('now loadExtDirect==%s', extId);
+            // console.info('now loadExtDirect==%s', extId);
             win.webContents.send('loadExtDirect', extId);
         }
     })
@@ -70,13 +62,6 @@ if (!getTheLock) {
         }
     })
 }
-// app.whenReady().then(() => {
-//     console.info(process.argv);
-//     createWindow();
-//     app.on('activate', () => {
-//         if (BrowserWindow.getAllWindows().length === 0) createWindow();
-//     })
-// })
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
@@ -203,14 +188,6 @@ ipcMain.on('loadExt', (e, appItem) => {
     } else {
         appItem.plugin.window = Object.assign(window, appItem.plugin.window);
     }
-    let opt = Object.assign({
-        width: 0,
-        height: 0
-    }, {
-        height: 220,
-        resizable: false
-    });
-    console.info('opt===%o', opt);
     const options = {
         minWidth: appItem.plugin.window.minWidth,
         minHeight: appItem.plugin.window.minHeight,
