@@ -29,15 +29,14 @@ import { UploadFilled } from '@element-plus/icons-vue';
 const uploadFiles = ref([]);
 
 function loadPluginFile(file) {
-    // Your code to load the plugin file goes here
-    // This function should handle the file upload, parse the JSON, and update the plugin state
     console.info('Loading plugin file==%o', file);
+    // console.log(document.getElementsByClassName("el-upload__input")[0].value); 
     // 这里开始读取上传的file
-    // 假设我们用FileReader来读取JSON
     const reader = new FileReader();
     reader.onload = (event) => {
+        console.info(event);
         const jsonData = JSON.parse(event.target.result);
-        // jsonData 包含了 plugin 描述信息
+        // jsonData 包含了 plugin 信息
         console.info('Parsed plugin file==%o', jsonData);
     };
     reader.readAsText(file.raw);
