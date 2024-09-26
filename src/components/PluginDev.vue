@@ -8,6 +8,7 @@
                     drag
                     :auto-upload="false"
                     :on-change="loadPluginFile"
+                    :file-list="uploadFiles"
                     >
                 <el-icon class="el-icon--upload"><upload-filled /></el-icon>
                 <div class="el-upload__text">
@@ -22,11 +23,23 @@
 </template>
 
 <script setup>
-import { UploadFilled } from '@element-plus/icons-vue'
+import { ref } from 'vue';
+import { UploadFilled } from '@element-plus/icons-vue';
 
-function loadPluginFile() {
+const uploadFiles = ref([]);
+
+function loadPluginFile(file) {
     // Your code to load the plugin file goes here
     // This function should handle the file upload, parse the JSON, and update the plugin state
-    console.info("Loading plugin file");
+    console.info('Loading plugin file==%o', file);
+    // 这里开始读取上传的file
+    // 假设我们用FileReader来读取JSON
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const jsonData = JSON.parse(event.target.result);
+        // jsonData 包含了 plugin 描述信息
+        console.info('Parsed plugin file==%o', jsonData);
+    };
+    reader.readAsText(file.raw);
 }
 </script>
