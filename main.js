@@ -15,7 +15,7 @@ const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' 
 
 let win = null;
 // 设置一个map集合，用于存放所有打开的window
-let extMap = new Map();
+let appMap = new Map();
 
 // 创建锁，保证只有一个实例在运行
 const getTheLock = app.requestSingleInstanceLock();
@@ -27,19 +27,19 @@ if (!getTheLock) {
         // console.info('workingDirectory===%o', workingDirectory);
         // console.info('extId====extId====%s', extId);
         // 如果app已经启动，那么参数再次启动app或者extension的参数只能从commandLine里面获得
-        let extId = '';
+        let appId = '';
         for(let command of commandLine) {
             if(command.indexOf('id:') == -1) continue;
-            extId = command.substring(command.indexOf(':') + 1);
+            appId = command.substring(command.indexOf(':') + 1);
         }
-        if (win && '' === extId) {
+        if (win && '' === appId) {
             if(win.isMinimized()) win.restore();
             if(!win.isVisible()) win.show();
             win.focus();
         }
-        if(win && '' != extId) {
+        if(win && '' != appId) {
             // console.info('now loadExtDirect==%s', extId);
-            win.webContents.send('loadExtDirect', extId);
+            win.webContents.send('loadAppDirect', appId);
         }
     })
  
@@ -109,10 +109,10 @@ const createWindow = () => {
 
     // 关闭主窗口事件，把extionsion的窗口都要关掉
     win.on('close', (e) => {
-        for(let key of extMap.keys()) {
-            extMap.get(key).close();
+        for(let key of appMap.keys()) {
+            appMap.get(key).close();
         }
-        extMap.clear();
+        appMap.clear();
         console.info('now will close app');
     });
 }
@@ -167,11 +167,11 @@ const trayMenuTemplate = [{
     }
 }];
 
-ipcMain.on('loadExt', (e, appItem) => {
+ipcMain.on('loadApp', (e, appItem) => {
     console.info('loadExt===%o', appItem);
     appItem = JSON.parse(appItem);
-    if(extMap.has(appItem.id)) {
-        extMap.get(appItem.id).show();
+    if(appMap.has(appItem.id)) {
+        appMap.get(appItem.id).show();
         console.info(appItem.id + ' ' + appItem.plugin.name + ' is already exists');
         return;
     }
@@ -197,18 +197,18 @@ ipcMain.on('loadExt', (e, appItem) => {
         icon: path.join(appItem.path, 'logo.png'),
         webPreferences: {}
     };
-    let extWin = new BrowserWindow(options);
-    extWin.loadFile(path.join(appItem.path, appItem.plugin.main));
-    extWin.setMenu(null);
+    let appWin = new BrowserWindow(options);
+    appWin.loadFile(path.join(appItem.path, appItem.plugin.main));
+    appWin.setMenu(null);
     if(os === 'win') {
-        extWin.setAppDetails({
+        appWin.setAppDetails({
             appId: appItem.id
         });
     }
     // extWin.webContents.openDevTools({mode: 'detach'});
-    extMap.set(appItem.id, extWin);
-    extWin.on('close', () => {
-        extMap.delete(appItem.id);
+    appMap.set(appItem.id, appWin);
+    appWin.on('close', () => {
+        appMap.delete(appItem.id);
     });
 });
 

@@ -5,7 +5,7 @@
                 <el-main class="my_main">
                     <el-tabs tab-position="left">
                         <el-tab-pane label="我的app">
-                            <AppList :extensionList="extensionList"/>
+                            <AppList :appList="appList"/>
                         </el-tab-pane>
                         <el-tab-pane label="app商店">app商店</el-tab-pane>
                         <el-tab-pane label="用户中心"><UserCenter/></el-tab-pane>
@@ -25,11 +25,11 @@ import AppList from './AppList.vue';
 import UserCenter from './UserCenter.vue'
 import AppDev from './AppDev.vue';
 
-const extensionList = ref(null);
+const appList = ref(null);
 
 onBeforeMount(() => {
-    extensionList.value = window.api.getExtensionList();
-    // console.info(extensionList.value);
+    appList.value = window.api.appList();
+    // console.info(appList.value);
 });
 </script>
 

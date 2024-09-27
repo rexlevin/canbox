@@ -4,19 +4,19 @@ const path = require('path')
 const fs = require("fs");
 const package = require('./package.json');
 
-const extensionsConfig = new Store({
+const appsConfig = new Store({
     cwd: 'Users',
-    name: 'extensions'
+    name: 'apps'
 });
 
 window.addEventListener('DOMContentLoaded', () => {
     document.title = package.description + ' - v' + package.version;
 });
 
-ipcRenderer.on('loadExtDirect', (e, extId) => {
-    console.info('loadExtDirect: %s',extId);
-    for(let appItem of getExtList()) {
-        if(appItem.id === extId) {
+ipcRenderer.on('loadAppDirect', (e, appId) => {
+    console.info('loadAppDirect: %s',appId);
+    for(let appItem of getAppList()) {
+        if(appItem.id === appId) {
             ipcRenderer.send('loadExt', JSON.stringify(appItem));
         }
     }
@@ -26,31 +26,31 @@ contextBridge.exposeInMainWorld(
     "api", {
         generateShortcut: () => {
             // console.info(getExtList());
-            ipcRenderer.send('generateStartupShortcut', JSON.stringify(getExtList()));
+            ipcRenderer.send('generateStartupShortcut', JSON.stringify(getAppList()));
         },
-        getExtensionList: () => {
-            return getExtList();
+        appList: () => {
+            return getAppList();
         },
-        loadExt: (appItem) => {
-            ipcRenderer.send('loadExt', appItem);
+        loadApp: (appItem) => {
+            ipcRenderer.send('loadApp', appItem);
         }
     }
 );
 
-function getExtList() {
+function getAppList() {
     // console.log("extension===%o", extensionsConfig.get('default'));
-    let extInfoList = extensionsConfig.get('default'), extList = [];
-    for(let extInfo of extInfoList) {
-        // console.info('===%s', extensionsConfig.path);
-        // /home/lizl6/.config/canbox/Users/extensions.json
-        // C:\Users\brood\AppData\Roaming\canbox\Users\extensions.json
-        let defaultPath = extensionsConfig.path.substring(0, extensionsConfig.path.lastIndexOf('extensions.json'));
-        const plugin = JSON.parse(fs.readFileSync(path.join(defaultPath, 'default', extInfo.id + '.asar/plugin.json'), 'utf8'));
+    let appInfoList = appsConfig.get('default'), extList = [];
+    for(let appInfo of appInfoList) {
+        // console.info('===%s', appConfig.path);
+        // /home/lizl6/.config/canbox/Users/apps.json
+        // C:\Users\brood\AppData\Roaming\canbox\Users\apps.json
+        let defaultPath = appsConfig.path.substring(0, appsConfig.path.lastIndexOf('apps.json'));
+        const plugin = JSON.parse(fs.readFileSync(path.join(defaultPath, 'default', appInfo.id + '.asar/plugin.json'), 'utf8'));
         // const plugin = JSON.parse(fs.readFileSync(defaultPath + 'default/' + extInfo.id + '.asar/plugin.json'));
         const ext = {
-            'id': extInfo.id,
+            'id': appInfo.id,
             'plugin': plugin,
-            'path': path.join(defaultPath, 'default', extInfo.id + '.asar')
+            'path': path.join(defaultPath, 'default', appInfo.id + '.asar')
         };
         extList.push(ext);
     }
