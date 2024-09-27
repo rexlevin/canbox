@@ -1,6 +1,6 @@
 # 插件开发
 
-## plugin
+## app.json
 
 ```json
 {

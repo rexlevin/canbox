@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, Tray, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
+// const fs = require("fs");
 // const { sandboxed } = require('process');
 
 const Store  = require('electron-store');
@@ -25,8 +26,7 @@ if (!getTheLock) {
     app.on('second-instance', (event, commandLine, workingDirectory) => {
         // console.info('commandLine===%o', commandLine);
         // console.info('workingDirectory===%o', workingDirectory);
-        // console.info('extId====extId====%s', extId);
-        // 如果app已经启动，那么参数再次启动app或者extension的参数只能从commandLine里面获得
+        // 如果app已经启动，那么参数再次启动app或者 app 的参数只能从commandLine里面获得
         let appId = '';
         for(let command of commandLine) {
             if(command.indexOf('id:') == -1) continue;
@@ -38,7 +38,7 @@ if (!getTheLock) {
             win.focus();
         }
         if(win && '' != appId) {
-            // console.info('now loadExtDirect==%s', extId);
+            // console.info('now loadAppDirect==%s', appId);
             win.webContents.send('loadAppDirect', appId);
         }
     })
@@ -51,14 +51,14 @@ if (!getTheLock) {
         });
 
         // app第一次启动的时候，启动参数可以从process.argv里面获取到
-        let extId = '';
+        let appId = '';
         for(let arg of process.argv) {
             if(arg.indexOf('id:') == -1) continue;
-            extId = arg.substring(arg.indexOf(':') + 1);
+            appId = arg.substring(arg.indexOf(':') + 1);
         }
-        console.info(extId);
-        if('' != extId) {
-            win.webContents.send('loadExtDirect', extId);
+        console.info(appId);
+        if('' != appId) {
+            win.webContents.send('loadAppDirect', appId);
         }
     })
 }
@@ -107,7 +107,7 @@ const createWindow = () => {
         win.show(); // 注释掉这行，即启动最小化到tray
     });
 
-    // 关闭主窗口事件，把extionsion的窗口都要关掉
+    // 关闭主窗口事件，需要把所有 app 的窗口都要关掉
     win.on('close', (e) => {
         for(let key of appMap.keys()) {
             appMap.get(key).close();
@@ -168,7 +168,7 @@ const trayMenuTemplate = [{
 }];
 
 ipcMain.on('loadApp', (e, appItem) => {
-    console.info('loadExt===%o', appItem);
+    console.info('loadApp===%o', appItem);
     appItem = JSON.parse(appItem);
     if(appMap.has(appItem.id)) {
         appMap.get(appItem.id).show();
@@ -205,7 +205,7 @@ ipcMain.on('loadApp', (e, appItem) => {
             appId: appItem.id
         });
     }
-    // extWin.webContents.openDevTools({mode: 'detach'});
+    // appWin.webContents.openDevTools({mode: 'detach'});
     appMap.set(appItem.id, appWin);
     appWin.on('close', () => {
         appMap.delete(appItem.id);
@@ -213,7 +213,7 @@ ipcMain.on('loadApp', (e, appItem) => {
 });
 
 /**
- * 给各个extension生成启动快捷方式，并放到启动目录
+ * 给各个 app 生成启动快捷方式，并放到启动目录
  * 
  * windows启动目录：C:\Users\brood\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\
  * linux启动目录：~/.local/share/applications/
@@ -229,11 +229,25 @@ ipcMain.on('generateStartupShortcut', (e, appItemList) => {
         return;
     }
 });
-
 function generateShortcutWindows(appItemList) {
     const appDataPath = path.join(app.getPath('appData'), '/Microsoft/Windows/Start Menu/Programs');
 }
-
 function generateShortcutLinux(appItemList) {
     const appDataPath = path.join(app.getPath('home'), '/.local/share/applications');
 }
+
+ipcMain.on('openAppJson', (e, options) => {
+    dialog.showOpenDialog(options).then(result => {
+        // result: { canceled: false, filePaths: [ 'C:\\Users\\brood\\depot\\cargo\\can-demo\\app.json' ] }
+        // console.info(3, 'You selected:', result.filePaths[0]);
+        if (result.canceled) {
+            win.webContents.send('openAppJson-reply', '');
+            return;
+        }
+        return win.webContents.send('openAppJson-reply', result.filePaths[0]);
+        // let appJson = fs.readFileSync(result['filePaths'][0], 'utf-8');
+        // appJson = JSON.parse(appJson);
+        // console.info(2, appJson);
+        // e.sender.send('openAppJsonResult', appJson);
+    });
+});
