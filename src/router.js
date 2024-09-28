@@ -4,7 +4,7 @@ const router = createRouter({
     routes: [
         {
             path: '/',
-            component: () => import('./components/CanBox.vue')
+            component: () => import('@/components/CanBox.vue')
         }
     ],
     history: createWebHashHistory()

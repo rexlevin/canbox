@@ -13,7 +13,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 
-import AppItem from './AppItem.vue';
+import AppItem from '@/components/AppItem.vue';
 
 const props = defineProps({
     appList: {

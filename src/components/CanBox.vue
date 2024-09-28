@@ -21,15 +21,16 @@
 
 <script setup>
 import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
-import AppList from './AppList.vue';
-import UserCenter from './UserCenter.vue'
-import AppDev from './AppDev.vue';
+import AppList from '@/components/AppList.vue';
+import UserCenter from '@/components/UserCenter.vue'
+import AppDev from '@/components/AppDev.vue';
 
 const appList = ref(null);
+const appDevList = ref(null);
 
 onBeforeMount(() => {
     appList.value = window.api.appList();
-    // console.info(appList.value);
+    appDevList.value = window.api.appDevList();
 });
 </script>
 

@@ -168,11 +168,11 @@ const trayMenuTemplate = [{
 }];
 
 ipcMain.on('loadApp', (e, appItem) => {
-    console.info('loadApp===%o', appItem);
+    // console.info('loadApp===%o', appItem);
     appItem = JSON.parse(appItem);
     if(appMap.has(appItem.id)) {
         appMap.get(appItem.id).show();
-        console.info(appItem.id + ' ' + appItem.plugin.name + ' is already exists');
+        console.info(appItem.id + ' ' + appItem.appJson.name + ' is already exists');
         return;
     }
     const window = {
@@ -182,23 +182,23 @@ ipcMain.on('loadApp', (e, appItem) => {
         height: 600,
         resizable: true
     };
-    if(undefined === appItem.plugin.window) {
-        appItem.plugin.window = window;
+    if(undefined === appItem.appJson.window) {
+        appItem.appJson.window = window;
     } else {
-        appItem.plugin.window = Object.assign(window, appItem.plugin.window);
+        appItem.appJson.window = Object.assign(window, appItem.appJson.window);
     }
     const options = {
-        minWidth: appItem.plugin.window.minWidth,
-        minHeight: appItem.plugin.window.minHeight,
-        width: appItem.plugin.window.width,
-        height: appItem.plugin.window.height,
-        resizable: appItem.plugin.window.resizable,
-        title: appItem.plugin.name,
+        minWidth: appItem.appJson.window.minWidth,
+        minHeight: appItem.appJson.window.minHeight,
+        width: appItem.appJson.window.width,
+        height: appItem.appJson.window.height,
+        resizable: appItem.appJson.window.resizable,
+        title: appItem.appJson.name,
         icon: path.join(appItem.path, 'logo.png'),
         webPreferences: {}
     };
     let appWin = new BrowserWindow(options);
-    appWin.loadFile(path.join(appItem.path, appItem.plugin.main));
+    appWin.loadFile(path.join(appItem.path, appItem.appJson.main));
     appWin.setMenu(null);
     if(os === 'win') {
         appWin.setAppDetails({
@@ -236,6 +236,9 @@ function generateShortcutLinux(appItemList) {
     const appDataPath = path.join(app.getPath('home'), '/.local/share/applications');
 }
 
+/**
+ * 打开文件选择窗口，读取文件本地path
+ */
 ipcMain.on('openAppJson', (e, options) => {
     dialog.showOpenDialog(options).then(result => {
         // result: { canceled: false, filePaths: [ 'C:\\Users\\brood\\depot\\cargo\\can-demo\\app.json' ] }
@@ -245,9 +248,5 @@ ipcMain.on('openAppJson', (e, options) => {
             return;
         }
         return win.webContents.send('openAppJson-reply', result.filePaths[0]);
-        // let appJson = fs.readFileSync(result['filePaths'][0], 'utf-8');
-        // appJson = JSON.parse(appJson);
-        // console.info(2, appJson);
-        // e.sender.send('openAppJsonResult', appJson);
     });
 });
