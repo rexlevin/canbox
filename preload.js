@@ -28,10 +28,6 @@ ipcRenderer.on('loadAppDirect', (e, appId) => {
     }
 });
 
-// ipcRenderer.on('openAppJson-reply', (e, filePath) => {
-//     console.info('openAppJson-reply: %s', filePath);
-// });
-
 contextBridge.exposeInMainWorld(
     "api", {
         generateShortcut: () => {
@@ -46,6 +42,9 @@ contextBridge.exposeInMainWorld(
         },
         loadApp: (appItem) => {
             ipcRenderer.send('loadApp', appItem);
+        },
+        loadAppDev: (appDevItem) => {
+            ipcRenderer.send('loadApp', appDevItem);
         },
         openAppJson: (fn) => {
             // console.info(uuid.v1());
@@ -67,7 +66,7 @@ contextBridge.exposeInMainWorld(
                 // e.sender.send('openAppJsonResult', appJson);
                 const appDevConfig = {
                     id: uuid.v4().replace(/-/g, ''),
-                    path: filePath.substring(0, filePath.lastIndexOf('/')),
+                    path: filePath.substring(0, filePath.lastIndexOf('app.json')),
                     name: appJson.name
                 };
                 let appDevConfigArr = undefined == appsDevConfig.get('default')
@@ -81,13 +80,16 @@ contextBridge.exposeInMainWorld(
 );
 
 function getAppList() {
-    // console.log("extension===%o", extensionsConfig.get('default'));
+    // console.log('appsConfig===%o', appsConfig.get('default'));
+    // console.info(2, appsConfig.get('default'));
+    if(undefined === appsConfig.get('default')) {
+        return [];
+    }
     let appInfoList = appsConfig.get('default'), appList = [];
     for(let appInfo of appInfoList) {
-        // console.info('===%s', appConfig.path);
         // /home/lizl6/.config/canbox/Users/apps.json
         // C:\Users\brood\AppData\Roaming\canbox\Users\apps.json
-        let defaultPath = appsConfig.path.substring(0, appsConfig.path.lastIndexOf('/'));
+        let defaultPath = appsConfig.path.substring(0, appsConfig.path.lastIndexOf('apps.json'));
         const appJson = JSON.parse(fs.readFileSync(path.join(defaultPath, 'default', appInfo.id + '.asar/app.json'), 'utf8'));
         // const appJson = JSON.parse(fs.readFileSync(defaultPath + 'default/' + extInfo.id + '.asar/spp.json'));
         const app = {
@@ -102,6 +104,11 @@ function getAppList() {
 }
 
 function getAppDevList() {
+    // console.info(1,appsDevConfig);
+    // console.info('getAppDevList===', appsDevConfig.get('default'));
+    if(undefined === appsDevConfig.get('default')) {
+        return [];
+    }
     let appDevInfoList = appsDevConfig.get('default')
         , appDevList = [];
     for(let appDevInfo of appDevInfoList) {
