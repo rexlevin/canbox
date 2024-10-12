@@ -37,47 +37,68 @@ contextBridge.exposeInMainWorld(
         appList: () => {
             return getAppList();
         },
-        appDevList: () => {
-            return getAppDevList();
-        },
         loadApp: (appItem) => {
             ipcRenderer.send('loadApp', appItem);
         },
-        loadAppDev: (appDevItem) => {
-            ipcRenderer.send('loadApp', appDevItem);
-        },
-        openAppJson: (fn) => {
-            // console.info(uuid.v1());
-            const options = {
-                title: '选择你的 app.json 文件',
-                filters: [
-                    { name: 'app.json', extensions: ['json'] }
-                ],
-                properties: ['openFile']
-            };
-            ipcRenderer.send('openAppJson', options);
-            ipcRenderer.on('openAppJson-reply', (e, filePath) => {
-                console.info('openAppJson-reply: %s', filePath);
-                if('' == filePath) return;
-                // 这里开始读取filePaht的文件内容
-                let appJson = fs.readFileSync(filePath, 'utf-8');
-                appJson = JSON.parse(appJson);
-                console.info(2, appJson);
-                // e.sender.send('openAppJsonResult', appJson);
-                const appDevConfig = {
-                    id: uuid.v4().replace(/-/g, ''),
-                    path: filePath.substring(0, filePath.lastIndexOf('app.json')),
-                    name: appJson.name
+        appDev: {
+            load: (appDevItem) => {
+                ipcRenderer.send('loadApp', appDevItem);
+            },
+            all: () => {
+                return getAppDevList();
+            },
+            add: (fn) => {
+                // console.info(uuid.v1());
+                const options = {
+                    title: '选择你的 app.json 文件',
+                    filters: [
+                        { name: 'app.json', extensions: ['json'] }
+                    ],
+                    properties: ['openFile']
                 };
-                let appDevConfigArr = undefined == appsDevConfig.get('default')
-                    ? [] : appsDevConfig.get('default');
-                appDevConfigArr.unshift(appDevConfig);
-                appsDevConfig.set('default', appDevConfigArr);
-                fn(appDevConfig);
-            });
+                ipcRenderer.send('openAppJson', options);
+                ipcRenderer.on('openAppJson-reply', (e, filePath) => {
+                    console.info('openAppJson-reply: %s', filePath);
+                    if('' == filePath) return;
+                    // 这里开始读取filePaht的文件内容
+                    let appJson = fs.readFileSync(filePath, 'utf-8');
+                    appJson = JSON.parse(appJson);
+                    console.info(2, appJson);
+                    // e.sender.send('openAppJsonResult', appJson);
+                    const appDevConfig = {
+                        id: uuid.v4().replace(/-/g, ''),
+                        path: filePath.substring(0, filePath.lastIndexOf('app.json')),
+                        name: appJson.name
+                    };
+                    let appDevConfigArr = undefined == appsDevConfig.get('default')
+                        ? [] : appsDevConfig.get('default');
+                    appDevConfigArr.unshift(appDevConfig);
+                    appsDevConfig.set('default', appDevConfigArr);
+                    fn(getAppDevList());
+                });
+            },
+            remove: (id, fn) => {
+                console.info('id======', id);
+                removeAppDevById(id);
+                fn({'code': '0000'});
+            }
         }
     }
 );
+
+function removeAppDevById(id) {
+    if(undefined === appsDevConfig.get('default')) {
+        return;
+    }
+    let appDevInfoList = appsDevConfig.get('default');
+    for(let appDevInfo of appDevInfoList) {
+        console.info('appDevInfo', appDevInfo);
+        if(id != appDevInfo.id) continue;
+        appDevInfoList.splice(appDevInfoList.indexOf(appDevInfo), 1);
+        appsDevConfig.set('default', appDevInfoList);
+    }
+    console.info('%s===remove is success', id);
+}
 
 function getAppList() {
     // console.log('appsConfig===%o', appsConfig.get('default'));

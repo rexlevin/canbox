@@ -5,7 +5,7 @@
                 <el-main class="my_main">
                     <el-tabs tab-position="left">
                         <el-tab-pane label="我的app">
-                            <AppList :appList="appList"/>
+                            <AppList/>
                         </el-tab-pane>
                         <el-tab-pane label="app商店">app商店</el-tab-pane>
                         <el-tab-pane label="用户中心"><UserCenter/></el-tab-pane>
@@ -20,18 +20,9 @@
 </template>
 
 <script setup>
-import { onBeforeMount, onMounted, onUnmounted, ref } from 'vue';
 import AppList from '@/components/AppList.vue';
 import UserCenter from '@/components/UserCenter.vue'
 import AppDev from '@/components/AppDev.vue';
-
-const appList = ref(null);
-const appDevList = ref(null);
-
-onBeforeMount(() => {
-    appList.value = window.api.appList();
-    appDevList.value = window.api.appDevList();
-});
 </script>
 
 <style scoped>

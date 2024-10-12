@@ -167,6 +167,9 @@ const trayMenuTemplate = [{
     }
 }];
 
+/**
+ * 启动app
+ */
 ipcMain.on('loadApp', (e, appItem) => {
     // console.info('loadApp===%o', appItem);
     appItem = JSON.parse(appItem);
@@ -198,14 +201,16 @@ ipcMain.on('loadApp', (e, appItem) => {
         webPreferences: {}
     };
     let appWin = new BrowserWindow(options);
-    appWin.loadFile(path.join(appItem.path, appItem.appJson.main));
+    appWin.loadURL(appItem.appJson.main);
     appWin.setMenu(null);
     if(os === 'win') {
         appWin.setAppDetails({
             appId: appItem.id
         });
     }
-    // appWin.webContents.openDevTools({mode: 'detach'});
+    if(undefined != appItem.appJson.window['devTools']) {
+        appWin.webContents.openDevTools({mode: appItem.appJson.window['devTools']});
+    }
     appMap.set(appItem.id, appWin);
     appWin.on('close', () => {
         appMap.delete(appItem.id);
@@ -219,7 +224,6 @@ ipcMain.on('loadApp', (e, appItem) => {
  * linux启动目录：~/.local/share/applications/
  */
 ipcMain.on('generateStartupShortcut', (e, appItemList) => {
-    let appDataPath;
     if('win' === os) {
         generateShortcutWindows(appItemList);
     } else if('linux' === os) {

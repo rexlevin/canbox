@@ -18,9 +18,32 @@
         "height": 500,
         "resizable": false
     },
-    "cmd": "clipboard"
+    "categories": ["development", "utility"],
+    "tags": ["json", "jsonformatter"]
 }
 
 ```
+
+### categories
+
+app分类，最多只取前两个
+
+| key         | 说明          |
+| ----------- | ------------- |
+| education   | 教育app       |
+| office      | 办公          |
+| audio       | 音频app       |
+| video       | 视频app       |
+| game        | 游戏app       |
+| utility     | 工具          |
+| development | 开发者工具app |
+| graphics    | 图形应用app   |
+| network     | 网络应用程序  |
+
+## tags
+
+非必填
+
+app标签，用于app商城内搜索使用
 
 # API
