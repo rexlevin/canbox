@@ -16,13 +16,26 @@
         "minHeight": 400,
         "width": 900,
         "height": 500,
-        "resizable": false
+        "resizable": false,
+        "preload": "preload.js",
+        "devTools": "detach"
     },
+    "platform": ["win32", "darwin", "linux"]
     "categories": ["development", "utility"],
     "tags": ["json", "jsonformatter"]
 }
 
 ```
+
+### platform
+
+win32, darwin, linux
+
+插件应用支持的平台，此为 `可选项`，默认为全平台支持
+
+### devTools
+
+left, right, bottom, undocked, detach
 
 ### categories
 

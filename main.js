@@ -1,7 +1,9 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, dialog, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 // const fs = require("fs");
 // const { sandboxed } = require('process');
+
+const tray = require('./modules/main/tray');
 
 const Store  = require('electron-store');
 Store.initRenderer();
@@ -44,7 +46,7 @@ if (!getTheLock) {
     })
  
     app.whenReady().then(() => {
-        createTray();
+        tray.createTray();
         createWindow();
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -117,56 +119,6 @@ const createWindow = () => {
     });
 }
 
-function createTray() {
-    let tray;
-    if('linux' === os) {
-        tray = new Tray(path.join(__dirname, './logo2.png'));
-    } else {
-        tray = new Tray(path.join(__dirname, './logo.png'));
-    }
-    const menu = Menu.buildFromTemplate(trayMenuTemplate);
-    tray.setContextMenu(menu);
-}
-const trayMenuTemplate = [{
-    label: '显示窗口',
-    type: 'normal',
-    click: function() {
-        win.show();
-    }
-}, {
-    label: 'About',
-    type: 'normal',
-    click: function() {
-        dialog.showMessageBox({
-            type: 'info',
-            title: '关于',
-            message: package.name + ':' + package.version + '\n' + package.description + '\nnode:' + process.versions['node'] + '\nchrome:' + process.versions['chrome'] + '\nelectron:' + process.versions['electron']
-        });
-    }
-}, {
-    label: 'Project Repository',
-    type: 'normal',
-    click: function() {
-        let exec = require('child_process').exec
-            , locale = app.getLocale()
-            , url = ''
-        // 使用ip的话要么自己维护一个ip库放在外部（太大，没必要放项目里），要么使用第三方，都需要进行网络交互
-        // 所以这里使用一个最粗略的方式“语言环境”来判断是否是中国大陆
-        if(locale.indexOf('zh-CN') == -1) {
-            url = 'https://github.com/rexlevin/coderbox'
-        } else {
-            url = 'https://gitee.com/rexlevin/coderbox'
-        }
-        exec('open ' + url)
-    }
-}, {
-    label: 'Quit',
-    type: 'normal',
-    click: function() {
-        app.quit();
-    }
-}];
-
 /**
  * 启动app
  */
@@ -198,10 +150,21 @@ ipcMain.on('loadApp', (e, appItem) => {
         resizable: appItem.appJson.window.resizable,
         title: appItem.appJson.name,
         icon: path.join(appItem.path, 'logo.png'),
-        webPreferences: {}
+        webPreferences: {
+            sandbox: false,     // 没有这个配置，加载不到 preload.js
+            spellcheck: false,
+            webSecurity: false
+        }
     };
+    if(undefined != appItem.appJson.window.preload) {
+        options.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.preload);
+    }
     let appWin = new BrowserWindow(options);
-    appWin.loadURL(appItem.appJson.main);
+    if(appItem.appJson.main.indexOf('http') != -1) {
+        appWin.loadURL(appItem.appJson.main);
+    } else {
+        appWin.loadFile(path.join(appItem.path, appItem.appJson.main));
+    }
     appWin.setMenu(null);
     if(os === 'win') {
         appWin.setAppDetails({
