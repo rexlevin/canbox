@@ -124,6 +124,44 @@ function getAppList() {
     return appList;
 }
 
+/**
+ * 获取当前开发中的app列表
+ * @returns 
+{
+    "false": [
+        {
+            "id": "98e2dea8620745a0a49ea0dd205609da",
+            "name": "test"
+        }
+    ],
+    "correct": [
+        {
+            "id": "691e211238c141dcb6c00de4c0416349",
+            "path": "C:\\Users\\brood\\depot\\cargo\\can-demo\\",
+            "name": "demo",
+            "appJson": {
+                "name": "demo",
+                "description": "这是一个插件demo",
+                "author": "dev001",
+                "homepage": "https://gitee.com/dev001/clipboard",
+                "main": "index.html",
+                "logo": "logo.png",
+                "version": "0.0.6",
+                "window": {
+                    "minWidth": 600,
+                    "minHeight": 400,
+                    "width": 700,
+                    "height": 500,
+                    "resizable": false
+                },
+                "platform": [ "win32", "darwin", "linux" ],
+                "categories": [ "utility" ],
+                "tags": [ "demo" ]
+            }
+        }
+    ]
+}
+ */
 function getAppDevList() {
     // console.info(1,appsDevConfig);
     // console.info('getAppDevList===', appsDevConfig.get('default'));
@@ -133,9 +171,14 @@ function getAppDevList() {
     let appDevInfoList = appsDevConfig.get('default')
         , appDevList = [];
     for(let appDevInfo of appDevInfoList) {
-        const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
-        appDevInfo.appJson = appJson;
-        appDevList.push(appDevInfo);
+        try {
+            const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
+            appDevInfo.appJson = appJson;
+            appDevList.push(appDevInfo);
+        } catch(e) {
+            console.error('parse app.json error:', e);
+            continue;
+        }
     }
     console.info('appDevList=====%o', appDevList);
     return appDevList;
