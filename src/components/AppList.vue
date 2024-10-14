@@ -13,6 +13,8 @@ import AppItem from '@/components/AppItem.vue';
 let appList = ref({});
 
 onMounted(() => {
-    appList.value = window.api.appList();
+    window.api.app.all(result => {
+        appList.value = result;
+    });
 });
 </script>

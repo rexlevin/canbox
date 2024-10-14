@@ -5,8 +5,17 @@
         </el-col>
     </el-row>
     <el-row v-for="(item, index) in appDevList">
-        <el-col :span="24"><AppDevItem :appDevItem="item" @reloadAppDev="reload"/></el-col>
+        <el-col :span="24"><AppDevItem :appDevItem="item" @reloadAppDev="load"/></el-col>
     </el-row>
+
+    <el-dialog v-model="centerDialogVisible" title="Warning" width="300" center>
+        <span style="white-space:pre-line">{{ warningContent }}</span>
+        <template #footer>
+        <div class="dialog-footer">
+            <el-button type="primary" @click="centerDialogVisible = false"> 确&nbsp;&nbsp;&nbsp;&nbsp;定 </el-button>
+        </div>
+        </template>
+    </el-dialog>
 </template>
 
 <script setup>
@@ -14,6 +23,8 @@ import { onMounted, ref } from 'vue';
 import AppDevItem from '@/components/AppDevItem.vue';
 
 let appDevList = ref({});
+const centerDialogVisible = ref(false);
+const warningContent = ref('');
 
 function addAppDev() {
     window.api.appDev.add((result) => {
@@ -22,12 +33,19 @@ function addAppDev() {
     });
 }
 
-function reload() {
-    appDevList.value = window.api.appDev.all();
+function load() {
+    // appDevList.value = null;
+    window.api.appDev.all((result) => {
+        // console.info('result: ', result);
+        appDevList.value = result.correct;
+        if(result.wrong.length > 0) {
+            warningContent.value = `以下 app.json 存在问题，已经移除： \n ${result.wrong.map(item => item.name).join('\n')}`;
+            centerDialogVisible.value = true;
+        }
+    });
 }
 
 onMounted(() => {
-    appDevList.value = window.api.appDev.all();
-    console.info(1, 'appDevInfo: ', appDevList.value);
+    load();
 });
 </script>

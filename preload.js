@@ -34,18 +34,20 @@ contextBridge.exposeInMainWorld(
             // console.info(getExtList());
             ipcRenderer.send('generateStartupShortcut', JSON.stringify(getAppList()));
         },
-        appList: () => {
-            return getAppList();
-        },
-        loadApp: (appItem) => {
-            ipcRenderer.send('loadApp', appItem);
+        app: {
+            all: (fn) => {
+                fn(getAppList());
+            },
+            load: (appDevItem) => {
+                ipcRenderer.send('loadApp', appDevItem);
+            }
         },
         appDev: {
             load: (appDevItem) => {
                 ipcRenderer.send('loadApp', appDevItem);
             },
-            all: () => {
-                return getAppDevList();
+            all: (fn) => {
+                fn(getAppDevList());
             },
             add: (fn) => {
                 // console.info(uuid.v1());
@@ -128,9 +130,10 @@ function getAppList() {
  * 获取当前开发中的app列表
  * @returns 
 {
-    "false": [
+    "wrong": [
         {
             "id": "98e2dea8620745a0a49ea0dd205609da",
+            "path": "/depot/cargo/demo-app/",
             "name": "test"
         }
     ],
@@ -169,17 +172,71 @@ function getAppDevList() {
         return [];
     }
     let appDevInfoList = appsDevConfig.get('default')
-        , appDevList = [];
+        , appDevList = []
+        , appDevFalseList = []
+        , tmpItem = {};
     for(let appDevInfo of appDevInfoList) {
+        console.info('appDevInfo', appDevInfo);
         try {
             const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
-            appDevInfo.appJson = appJson;
-            appDevList.push(appDevInfo);
+            tmpItem = objClone(appDevInfo);
+            tmpItem.appJson = appJson;
+            appDevList.push(tmpItem);
         } catch(e) {
-            console.error('parse app.json error:', e);
-            continue;
+            // console.error('parse app.json error:', e);
+            appDevFalseList.push(appDevInfo);
         }
     }
+    if(appDevFalseList.length > 0) {
+        for(let falseItem of appDevFalseList) {
+            console.info(falseItem);
+            appDevInfoList = appDevInfoList.filter(item => item.id !== falseItem.id);
+        }
+        appsDevConfig.set('default', appDevInfoList);
+    }
+    console.info('appDevInfoList===', appDevInfoList);
     console.info('appDevList=====%o', appDevList);
-    return appDevList;
+    return {"correct": appDevList, "wrong": appDevFalseList};
+}
+
+function objClone(obj) {
+    let copy
+
+    // 处理3种基础类型，和null、undefined
+    if (obj === null || typeof obj !== 'object') return obj
+
+    // 处理日期
+    if (obj instanceof Date) {
+        copy = new Date()
+        copy.setTime(obj.getTime())
+        return copy
+    }
+
+    // 处理数组
+    if (Array instanceof Array) {
+        copy = []
+        for (var i = 0, len = obj.length; i < len; i++) {
+            copy[i] = objClone(obj[i])
+        }
+        return copy
+    }
+
+    // 处理函数
+    if (obj instanceof Function) {
+        copy = function () {
+            return obj.apply(this, arguemnts)
+        }
+        return copy
+    }
+
+    // 处理对象
+    if (obj instanceof Object) {
+        copy = {}
+        for (var attr in obj) {
+            if (obj.hasOwnProperty(attr)) copy[attr] = objClone(obj[attr])
+        }
+        return copy
+    }
+
+    throw new Error("Unable to copy obj as type isn't suported" + obj.constructor.name)
 }

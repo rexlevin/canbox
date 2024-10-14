@@ -8,6 +8,7 @@
                 <div class="app-name" @click="loadApp()">{{ appItem.appJson.name }}</div>
                 <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.appJson.description }}</div>
             </div>
+            <div class="operate-block"></div>
         </div>
     </div>
 </template>
@@ -29,7 +30,7 @@ onMounted(() => {
 
 function loadApp() {
     // console.log('AppItem mounted:', props.appItem);
-    window.api.loadApp(JSON.stringify(props.appItem));
+    window.api.app.load(JSON.stringify(props.appItem));
 }
 </script>
 
