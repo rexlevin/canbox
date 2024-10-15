@@ -176,7 +176,7 @@ function getAppDevList() {
         , appDevFalseList = []
         , tmpItem = {};
     for(let appDevInfo of appDevInfoList) {
-        console.info('appDevInfo', appDevInfo);
+        // console.info('appDevInfo', appDevInfo);
         try {
             const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
             tmpItem = objClone(appDevInfo);
@@ -194,8 +194,8 @@ function getAppDevList() {
         }
         appsDevConfig.set('default', appDevInfoList);
     }
-    console.info('appDevInfoList===', appDevInfoList);
-    console.info('appDevList=====%o', appDevList);
+    // console.info('appDevInfoList===', appDevInfoList);
+    // console.info('appDevList=====%o', appDevList);
     return {"correct": appDevList, "wrong": appDevFalseList};
 }
 
