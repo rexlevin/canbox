@@ -1,9 +1,7 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
+const { app, BrowserWindow, Menu, Tray, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 // const fs = require("fs");
 // const { sandboxed } = require('process');
-
-const tray = require('./modules/main/tray');
 
 const Store  = require('electron-store');
 Store.initRenderer();
@@ -46,7 +44,7 @@ if (!getTheLock) {
     })
  
     app.whenReady().then(() => {
-        tray.createTray();
+        createTray();
         createWindow();
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -111,11 +109,13 @@ const createWindow = () => {
 
     // 关闭主窗口事件，需要把所有 app 的窗口都要关掉
     win.on('close', (e) => {
-        for(let key of appMap.keys()) {
-            appMap.get(key).close();
-        }
-        appMap.clear();
-        console.info('now will close app');
+        win.hide();
+        e.preventDefault();
+        // for(let key of appMap.keys()) {
+        //     appMap.get(key).close();
+        // }
+        // appMap.clear();
+        // console.info('now will close app');
     });
 }
 
@@ -217,3 +217,60 @@ ipcMain.on('openAppJson', (e, options) => {
         return win.webContents.send('openAppJson-reply', result.filePaths[0]);
     });
 });
+
+function createTray() {
+    // console.info(1, __dirname);
+    let tray;
+    if('linux' === os) {
+        tray = new Tray(path.join(__dirname, './logo2.png'));
+    } else {
+        tray = new Tray(path.join(__dirname, './logo.png'));
+    }
+    const menu = Menu.buildFromTemplate(trayMenuTemplate);
+    tray.setContextMenu(menu);
+}
+const trayMenuTemplate = [{
+    label: '显示窗口',
+    type: 'normal',
+    click: function() {
+        win.show();
+    }
+}, {
+    label: 'Toogle Development Tools',
+    type: 'normal',
+    click: function() {
+        win.webContents.openDevTools({mode: 'detach'});
+    }
+}, {
+    label: 'About',
+    type: 'normal',
+    click: function() {
+        dialog.showMessageBox({
+            type: 'info',
+            title: '关于',
+            message: package.name + ':' + package.version + '\n' + package.description + '\nnode:' + process.versions['node'] + '\nchrome:' + process.versions['chrome'] + '\nelectron:' + process.versions['electron']
+        });
+    }
+}, {
+    label: 'Project Repository',
+    type: 'normal',
+    click: function() {
+        let exec = require('child_process').exec
+            , locale = app.getLocale()
+            , url = ''
+        // 使用ip的话要么自己维护一个ip库放在外部（太大，没必要放项目里），要么使用第三方，都需要进行网络交互
+        // 所以这里使用一个最粗略的方式“语言环境”来判断是否是中国大陆
+        if(locale.indexOf('zh-CN') == -1) {
+            url = 'https://github.com/rexlevin/coderbox'
+        } else {
+            url = 'https://gitee.com/rexlevin/coderbox'
+        }
+        exec('open ' + url)
+    }
+}, {
+    label: 'Quit',
+    type: 'normal',
+    click: function() {
+        app.quit();
+    }
+}]
