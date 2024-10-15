@@ -2,23 +2,32 @@
     <div class="flex flex-wrap" style="margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);">
         <div class="card">
             <div class="img-block">
-               <img style="width: 58px; height: 58px; cursor: pointer;" @click="load()" :src="'file://' + appDevItem.path + '/' + appDevItem.appJson.logo" alt="" />
+                <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appDevItem.path + '/' + appDevItem.appJson.logo" alt="" />
             </div>
             <div class="info-block vertical-block">
-                <div class="app-name" @click="load()">{{ appDevItem.appJson.name }}</div>
+                <div class="app-name" @click="drawerInfo = true">{{ appDevItem.appJson.name }}</div>
                 <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appDevItem.appJson.description }}</div>
             </div>
             <div class="operate-block">
+                <span class="operate-icon-span" @click="load()" title="运行这个开发中的app">
+                    <el-icon :size="35" color="#228b22"><VideoPlay /></el-icon>
+                </span>
                 <span class="operate-icon-span" @click="remove(appDevItem.id)" title="删除这个开发中的app">
-                    <el-icon :size="25" color="#ab4e52" class="operate-icon"><Delete /></el-icon>
+                    <el-icon :size="35" color="#ab4e52"><Delete /></el-icon>
                 </span>
             </div>
         </div>
     </div>
+
+    <el-drawer v-model="drawerInfo" :with-header="false" :size="600">
+        <div style="text-align: left;" v-html="appDevInfoContent"></div>
+    </el-drawer>
 </template>
 
 <script setup>
+import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus';
+import { marked } from 'marked'
 
 const props = defineProps({
     appDevItem: {
@@ -29,6 +38,8 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['reloadAppDev']);
+const drawerInfo = ref(false);
+const appDevInfoContent = ref(null);
 
 function load() {
     window.api.appDev.load(JSON.stringify(props.appDevItem));
@@ -48,6 +59,16 @@ function remove(id) {
         emit('reloadAppDev');
     });
 }
+onMounted(() => {
+    window.api.appDev.info(JSON.stringify(props.appDevItem), result => {
+        // console.info('appDev info result=', result);
+        if(result.code!== '0000') {
+            appDevInfoContent.value = result.data;//'Cannot laod infomation of this app';
+            return;
+        }
+        appDevInfoContent.value = marked.parse(result.data);
+    });
+});
 </script>
 
 <style scoped>
@@ -65,7 +86,7 @@ function remove(id) {
     align-items: center;
     justify-content: right;
 }
-.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px;}
+.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 20px;}
 .operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
 .operate-icon-span:active {background-color: hsl(0, 0%, 70%); }
 </style>

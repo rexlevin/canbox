@@ -43,6 +43,23 @@ contextBridge.exposeInMainWorld(
             }
         },
         appDev: {
+            info: (appDevItemJsonStr, fn) => {
+                const appDevItem = JSON.parse(appDevItemJsonStr);
+                console.info(appDevItem.id, 'load info: ', appDevItem.path);
+                fs.readFile(path.join(appDevItem.path, 'README.md'), 'utf8', (err, content) => {
+                    if(err) {
+                        if(err.code === 'ENOENT') {
+                            console.error('file note found: ', err.path);
+                        } else {
+                            console.error('read file error: ', err.path);
+                        }
+                        fn({'code': '9101', 'data': 'There is no introduction information of this app'});
+                        return;
+                    }
+                    console.info(content)
+                    fn({'code': '0000', 'data': content});
+                });
+            },
             load: (appDevItem) => {
                 ipcRenderer.send('loadApp', appDevItem);
             },

@@ -29,7 +29,7 @@ const warningContent = ref('');
 function addAppDev() {
     window.api.appDev.add((result) => {
         console.info(1, 'result: ', result);
-        appDevList.value = result;
+        appDevList.value = result.corrent;
     });
 }
 

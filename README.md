@@ -53,10 +53,14 @@ app分类，最多只取前两个
 | graphics    | 图形应用app   |
 | network     | 网络应用程序  |
 
-## tags
+### tags
 
 非必填
 
 app标签，用于app商城内搜索使用
+
+# README.md
+
+和 app.json 同级的 README.md 文件将会被解析为 app 信息在 canbox 展示
 
 # API
