@@ -1,7 +1,9 @@
-const { app, BrowserWindow, Menu, Tray, ipcMain, dialog, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog } = require('electron')
 const path = require('path')
 // const fs = require("fs");
 // const { sandboxed } = require('process');
+
+const tray = require('./modules/main/tray');
 
 const Store  = require('electron-store');
 Store.initRenderer();
@@ -14,7 +16,9 @@ app.disableHardwareAcceleration();
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
+// canbox 主窗口对象
 let win = null;
+
 // 设置一个map集合，用于存放所有打开的window
 let appMap = new Map();
 
@@ -44,8 +48,10 @@ if (!getTheLock) {
     })
  
     app.whenReady().then(() => {
-        createTray();
+        // 创建窗口
         createWindow();
+        // 创建托盘
+        tray.createTray(win);
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) createWindow();
         });
@@ -110,6 +116,7 @@ const createWindow = () => {
     // 关闭主窗口事件，需要把所有 app 的窗口都要关掉
     win.on('close', (e) => {
         win.hide();
+        win.setSkipTaskbar(true);
         e.preventDefault();
         // for(let key of appMap.keys()) {
         //     appMap.get(key).close();
@@ -174,6 +181,7 @@ ipcMain.on('loadApp', (e, appItem) => {
     if(undefined != appItem.appJson.window['devTools']) {
         appWin.webContents.openDevTools({mode: appItem.appJson.window['devTools']});
     }
+    console.info('appWin==', appWin);
     appMap.set(appItem.id, appWin);
     appWin.on('close', () => {
         appMap.delete(appItem.id);
@@ -205,6 +213,7 @@ function generateShortcutLinux(appItemList) {
 
 /**
  * 打开文件选择窗口，读取文件本地path
+ * dialog只能在主进程调用，所以使用ipc模块在main.js中打开dialog
  */
 ipcMain.on('openAppJson', (e, options) => {
     dialog.showOpenDialog(options).then(result => {
@@ -217,60 +226,3 @@ ipcMain.on('openAppJson', (e, options) => {
         return win.webContents.send('openAppJson-reply', result.filePaths[0]);
     });
 });
-
-function createTray() {
-    // console.info(1, __dirname);
-    let tray;
-    if('linux' === os) {
-        tray = new Tray(path.join(__dirname, './logo2.png'));
-    } else {
-        tray = new Tray(path.join(__dirname, './logo.png'));
-    }
-    const menu = Menu.buildFromTemplate(trayMenuTemplate);
-    tray.setContextMenu(menu);
-}
-const trayMenuTemplate = [{
-    label: '显示窗口',
-    type: 'normal',
-    click: function() {
-        win.show();
-    }
-}, {
-    label: 'Toogle Development Tools',
-    type: 'normal',
-    click: function() {
-        win.webContents.openDevTools({mode: 'detach'});
-    }
-}, {
-    label: 'About',
-    type: 'normal',
-    click: function() {
-        dialog.showMessageBox({
-            type: 'info',
-            title: '关于',
-            message: package.name + ':' + package.version + '\n' + package.description + '\nnode:' + process.versions['node'] + '\nchrome:' + process.versions['chrome'] + '\nelectron:' + process.versions['electron']
-        });
-    }
-}, {
-    label: 'Project Repository',
-    type: 'normal',
-    click: function() {
-        let exec = require('child_process').exec
-            , locale = app.getLocale()
-            , url = ''
-        // 使用ip的话要么自己维护一个ip库放在外部（太大，没必要放项目里），要么使用第三方，都需要进行网络交互
-        // 所以这里使用一个最粗略的方式“语言环境”来判断是否是中国大陆
-        if(locale.indexOf('zh-CN') == -1) {
-            url = 'https://github.com/rexlevin/coderbox'
-        } else {
-            url = 'https://gitee.com/rexlevin/coderbox'
-        }
-        exec('open ' + url)
-    }
-}, {
-    label: 'Quit',
-    type: 'normal',
-    click: function() {
-        app.quit();
-    }
-}]

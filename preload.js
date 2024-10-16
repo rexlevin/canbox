@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, shell, dialog } = require('electron');
+const { contextBridge, ipcRenderer, shell } = require('electron');
 const Store  = require('electron-store');
 const path = require('path')
 const fs = require("fs");
