@@ -6,15 +6,19 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onBeforeMount, onMounted, ref } from 'vue';
 
 import AppItem from '@/components/AppItem.vue';
 
 let appList = ref({});
-
-onMounted(() => {
+onBeforeMount(() => {
     window.api.app.all(result => {
         appList.value = result;
     });
+});
+onMounted(() => {
+    // window.api.app.all(result => {
+    //     appList.value = result;
+    // });
 });
 </script>

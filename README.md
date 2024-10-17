@@ -63,4 +63,6 @@ app标签，用于app商城内搜索使用
 
 和 app.json 同级的 README.md 文件将会被解析为 app 信息在 canbox 展示
 
+**图片地址使用网络url才能正确展示**
+
 # API

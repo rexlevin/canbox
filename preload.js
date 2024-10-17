@@ -34,7 +34,28 @@ contextBridge.exposeInMainWorld(
             // console.info(getExtList());
             ipcRenderer.send('generateStartupShortcut', JSON.stringify(getAppList()));
         },
+        openUrl: (url) => {
+            console.info('url====', url);
+            ipcRenderer.send('open-url', url);
+        },
         app: {
+            info: (appItemJsonStr, fn) => {
+                const appItem = JSON.parse(appItemJsonStr);
+                // console.info('appItem==', appItem);
+                fs.readFile(path.join(appItem.path, 'README.md'), 'utf8', (err, content) => {
+                    if(err) {
+                        if(err.code === 'ENOENT') {
+                            console.error('file note found: ', err.path);
+                        } else {
+                            console.error('read file error: ', err.path);
+                        }
+                        fn({'code': '9101', 'data': 'There is no introduction information of this app'});
+                        return;
+                    }
+                    // console.info(content)
+                    fn({'code': '0000', 'data': content});
+                });
+            },
             all: (fn) => {
                 fn(getAppList());
             },
@@ -45,7 +66,7 @@ contextBridge.exposeInMainWorld(
         appDev: {
             info: (appDevItemJsonStr, fn) => {
                 const appDevItem = JSON.parse(appDevItemJsonStr);
-                console.info(appDevItem.id, 'load info: ', appDevItem.path);
+                // console.info('appDevItem==', appDevItem);
                 fs.readFile(path.join(appDevItem.path, 'README.md'), 'utf8', (err, content) => {
                     if(err) {
                         if(err.code === 'ENOENT') {
@@ -56,7 +77,7 @@ contextBridge.exposeInMainWorld(
                         fn({'code': '9101', 'data': 'There is no introduction information of this app'});
                         return;
                     }
-                    console.info(content)
+                    // console.info(content)
                     fn({'code': '0000', 'data': content});
                 });
             },

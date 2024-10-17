@@ -1,20 +1,47 @@
 <template>
     <div class="flex flex-wrap" style="margin: 5px 7px 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);">
-        <div class="card">
-            <div class="img-block">
-               <img style="width: 58px; height: 58px; cursor: pointer;" @click="loadApp()" :src="'file://' + appItem.path + '/' + appItem.appJson.logo" alt="" />
+        <el-card body-style="margin: 0; padding: 0;">
+            <div style="width: 100%; height: 60px; display: flex;">
+                <div class="img-block">
+                   <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.path + '/' + appItem.appJson.logo" alt="" />
+                </div>
+                <div class="info-block vertical-block">
+                    <div class="app-name" @click="drawerInfo = true">{{ appItem.appJson.name }}</div>
+                    <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.appJson.description }}</div>
+                </div>
             </div>
-            <div class="info-block vertical-block">
-                <div class="app-name" @click="loadApp()">{{ appItem.appJson.name }}</div>
-                <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.appJson.description }}</div>
+            <div class="operate-block">
+                <div>
+                    <span>v{{ appItem.appJson.version }}</span>
+                </div>
+                <div>
+                    <span class="operate-icon-span" @click="loadApp()" title="运行这个app">
+                        <el-icon :size="18" color="#228b22"><VideoPlay /></el-icon>
+                    </span>
+                    <span class="operate-icon-span" @click="clearData()" title="清除用户数据">
+                        <el-icon :size="18" color=""><Remove /></el-icon>
+                    </span>
+                    <span class="operate-icon-span" @click="delete(appItem.id)" title="删除这个app">
+                        <el-icon :size="18" color="#ab4e52"><Delete /></el-icon>
+                    </span>
+                </div>
             </div>
-            <div class="operate-block"></div>
-        </div>
+        </el-card>
     </div>
+
+    <el-drawer v-model="drawerInfo" :with-header="false" :size="600">
+        <el-tabs>
+            <el-tab-pane label="app介绍">
+                <div style="text-align: left;" v-html="appInfoContent" id="divAppInfo"></div>
+            </el-tab-pane>
+            <el-tab-pane label="版本记录"></el-tab-pane>
+        </el-tabs>
+    </el-drawer>
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onBeforeMount, onMounted, onUpdated, ref } from 'vue';
+import { marked } from 'marked'
 
 const props = defineProps({
     appItem: {
@@ -24,8 +51,31 @@ const props = defineProps({
     }
 });
 
-onMounted(() => {
+const drawerInfo = ref(false);
+const appInfoContent = ref(null);
+
+onBeforeMount(() => {
     // console.log('AppItem mounted:', props.appItem);
+    window.api.app.info(JSON.stringify(props.appItem), result => {
+        // console.info('appDev info result=', result);
+        if(result.code!== '0000') {
+            appInfoContent.value = result.data;//'Cannot laod infomation of this app';
+            return;
+        }
+        // console.info(marked.parse(result.data));
+        appInfoContent.value = marked.parse(result.data);
+    });
+});
+onUpdated(() => {
+    // 拦截app介绍中的a标签链接跳转，使其使用外部浏览器打开
+    const links = document.querySelectorAll('#divAppInfo a[href]');
+    links.forEach(link => {
+        link.addEventListener('click', e => {
+            const url = link.getAttribute('href');
+            e.preventDefault();
+            window.api.openUrl(url);
+        });
+    });
 });
 
 function loadApp() {
@@ -35,11 +85,20 @@ function loadApp() {
 </script>
 
 <style scoped>
-/* .card {width: 100%; height: 60px; border: 1px solid #626262; box-sizing: border-box; display: flex;} */
-.card {width: 100%; height: 60px; display: flex;}
 .img-block {width: 60px; height: 100%; margin: 0; padding: 0;}
 .info-block {line-height: 60px; text-align: left; margin-left: 10px; flex: 1;}
 .info-block .app-name {height: 30px; line-height: 30px; cursor: pointer;}
 .info-block .app-name:hover{color: #409eff; font-weight: bold;}
 .vertical-block {display: table;}
+
+.operate-block {width: 100%; height: 20px; text-align: right; display: table;}
+.operate-block div {display: table-cell;}
+.operate-block div:first-child {text-align: left; padding-left: 10px; color: #090;}
+.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 10px;}
+.operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
+.operate-icon-span:active {background-color: hsl(0, 0%, 70%); }
+
+.drawer-body{padding:0;}
+.el-tabs--card { height: calc(100vh - 110px); }
+.el-tab-pane { height: calc(100vh - 110px); overflow-y: auto; }
 </style>

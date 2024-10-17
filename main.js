@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 // const fs = require("fs");
 // const { sandboxed } = require('process');
@@ -225,4 +225,11 @@ ipcMain.on('openAppJson', (e, options) => {
         }
         return win.webContents.send('openAppJson-reply', result.filePaths[0]);
     });
+});
+
+/**
+ * 使用外部浏览器打开url
+ */
+ipcMain.on('open-url', (event, url) => {
+    shell.openExternal(url);
 });
