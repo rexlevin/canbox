@@ -89,7 +89,7 @@ const createWindow = () => {
         },
         useContentSize: true,
         show: false,
-        autoHideMenuBar: true,
+        autoHideMenuBar: true
     };
 
     win = new BrowserWindow(config);
@@ -107,7 +107,7 @@ const createWindow = () => {
     }
 
     // 打开开发者窗口
-    win.webContents.openDevTools({mode: 'detach'});
+    // win.webContents.openDevTools({mode: 'detach'});
 
     win.on('ready-to-show', () => {
         win.show(); // 注释掉这行，即启动最小化到tray

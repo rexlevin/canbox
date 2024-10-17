@@ -6,7 +6,9 @@
                    <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.path + '/' + appItem.appJson.logo" alt="" />
                 </div>
                 <div class="info-block vertical-block">
-                    <div class="app-name" @click="drawerInfo = true">{{ appItem.appJson.name }}</div>
+                    <div class="app-name" @click="drawerInfo = true">
+                        <span style="font-weight: bold; font-size: 16px;">{{ appItem.appJson.name }}</span>
+                    </div>
                     <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.appJson.description }}</div>
                 </div>
             </div>
@@ -93,7 +95,8 @@ function loadApp() {
 
 .operate-block {width: 100%; height: 20px; text-align: right; display: table;}
 .operate-block div {display: table-cell;}
-.operate-block div:first-child {text-align: left; padding-left: 10px; color: #090;}
+.operate-block div:first-child {text-align: left; padding-left: 10px;}
+.operate-block div:first-child span {color: gray;}
 .operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 10px;}
 .operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
 .operate-icon-span:active {background-color: hsl(0, 0%, 70%); }

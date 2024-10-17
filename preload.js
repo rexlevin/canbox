@@ -98,12 +98,10 @@ contextBridge.exposeInMainWorld(
                 };
                 ipcRenderer.send('openAppJson', options);
                 ipcRenderer.on('openAppJson-reply', (e, filePath) => {
-                    console.info('openAppJson-reply: %s', filePath);
                     if('' == filePath) return;
                     // 这里开始读取filePaht的文件内容
                     let appJson = fs.readFileSync(filePath, 'utf-8');
                     appJson = JSON.parse(appJson);
-                    console.info(2, appJson);
                     // e.sender.send('openAppJsonResult', appJson);
                     const appDevConfig = {
                         id: uuid.v4().replace(/-/g, ''),

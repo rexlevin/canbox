@@ -5,12 +5,18 @@
                 <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appDevItem.path + '/' + appDevItem.appJson.logo" alt="" />
             </div>
             <div class="info-block vertical-block">
-                <div class="app-name" @click="drawerInfo = true">{{ appDevItem.appJson.name }}</div>
+                <div class="app-name" @click="drawerInfo = true">
+                    <span style="font-weight: bold; font-size: 20px;">{{ appDevItem.appJson.name }}</span>
+                    <span style="padding-left: 20px; color: gray;">v{{ appDevItem.appJson.version }}</span>
+                </div>
                 <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appDevItem.appJson.description }}</div>
             </div>
             <div class="operate-block">
                 <span class="operate-icon-span" @click="load()" title="运行这个开发中的app">
                     <el-icon :size="35" color="#228b22"><VideoPlay /></el-icon>
+                </span>
+                <span class="operate-icon-span" @click="clearData()" title="清除用户数据">
+                    <el-icon :size="35" color=""><Remove /></el-icon>
                 </span>
                 <span class="operate-icon-span" @click="remove(appDevItem.id)" title="删除这个开发中的app">
                     <el-icon :size="35" color="#ab4e52"><Delete /></el-icon>
@@ -20,12 +26,18 @@
     </div>
 
     <el-drawer v-model="drawerInfo" :with-header="false" :size="600">
-        <div style="text-align: left;" v-html="appDevInfoContent"></div>
+        <!-- <div style="text-align: left;" v-html="appDevInfoContent"></div> -->
+        <el-tabs>
+            <el-tab-pane label="app介绍">
+                <div style="text-align: left;" v-html="appDevInfoContent" id="divAppInfo"></div>
+            </el-tab-pane>
+            <el-tab-pane label="版本记录"></el-tab-pane>
+        </el-tabs>
     </el-drawer>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onBeforeMount, onUpdated, ref } from 'vue'
 import { ElMessage } from 'element-plus';
 import { marked } from 'marked'
 
@@ -45,7 +57,6 @@ function load() {
     window.api.appDev.load(JSON.stringify(props.appDevItem));
 }
 function remove(id) {
-    console.info('id=', id);
     window.api.appDev.remove(id, (result)=>{
         console.info('remove result=', result);
         if(result.code !== '0000') {
@@ -59,7 +70,8 @@ function remove(id) {
         emit('reloadAppDev');
     });
 }
-onMounted(() => {
+
+onBeforeMount(() => {
     window.api.appDev.info(JSON.stringify(props.appDevItem), result => {
         // console.info('appDev info result=', result);
         if(result.code!== '0000') {
@@ -67,6 +79,18 @@ onMounted(() => {
             return;
         }
         appDevInfoContent.value = marked.parse(result.data);
+    });
+});
+
+onUpdated(() => {
+    // 拦截app介绍中的a标签链接跳转，使其使用外部浏览器打开
+    const links = document.querySelectorAll('#divAppInfo a[href]');
+    links.forEach(link => {
+        link.addEventListener('click', e => {
+            const url = link.getAttribute('href');
+            e.preventDefault();
+            window.api.openUrl(url);
+        });
     });
 });
 </script>

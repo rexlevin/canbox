@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onBeforeMount, ref } from 'vue';
 import AppDevItem from '@/components/AppDevItem.vue';
 
 let appDevList = ref({});
@@ -28,15 +28,13 @@ const warningContent = ref('');
 
 function addAppDev() {
     window.api.appDev.add((result) => {
-        console.info(1, 'result: ', result);
-        appDevList.value = result.corrent;
+        appDevList.value = result.correct;
     });
 }
 
 function load() {
     // appDevList.value = null;
     window.api.appDev.all((result) => {
-        // console.info('result: ', result);
         appDevList.value = result.correct;
         if(result.wrong.length > 0) {
             warningContent.value = `以下 app.json 存在问题，已经移除： \n ${result.wrong.map(item => item.name).join('\n')}`;
@@ -45,7 +43,7 @@ function load() {
     });
 }
 
-onMounted(() => {
+onBeforeMount(() => {
     load();
 });
 </script>

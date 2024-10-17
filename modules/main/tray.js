@@ -13,6 +13,12 @@ module.exports = {
                 win.show();
             }
         }, {
+            label: 'Toggle DevTools',
+            type: 'normal',
+            click: function() {
+                win.webContents.openDevTools({mode: 'detach'});
+            }
+        }, {
             label: 'About',
             type: 'normal',
             click: function() {
