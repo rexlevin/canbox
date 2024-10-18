@@ -16,26 +16,32 @@
         "minHeight": 400,
         "width": 900,
         "height": 500,
+        "icon": "logo.png",
         "resizable": false,
-        "preload": "preload.js",
-        "devTools": "detach"
+        "webPreferences": {
+            "preload": "preload.js"
+        }
     },
     "platform": ["win32", "darwin", "linux"]
     "categories": ["development", "utility"],
-    "tags": ["json", "jsonformatter"]
+    "tags": ["json", "jsonformatter"],
+    "development": {
+        "main": "index.html",
+        "devTools": "detach"
+    }
 }
 
 ```
+
+### window
+
+同 Electron 中 BrowserWindow 参数
 
 ### platform
 
 win32, darwin, linux
 
 插件应用支持的平台，此为 `可选项`，默认为全平台支持
-
-### devTools
-
-left, right, bottom, undocked, detach
 
 ### categories
 
@@ -58,6 +64,14 @@ app分类，最多只取前两个
 非必填
 
 app标签，用于app商城内搜索使用
+
+### development
+
+开发环境配置
+
+main：开发环境下 `development.main` 配置会覆盖 `main`
+
+devTools：打开开发者工具，left, right, bottom, undocked, detach
 
 # README.md
 

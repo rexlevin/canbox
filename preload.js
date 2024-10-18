@@ -82,7 +82,7 @@ contextBridge.exposeInMainWorld(
                 });
             },
             load: (appDevItem) => {
-                ipcRenderer.send('loadApp', appDevItem);
+                ipcRenderer.send('loadApp', appDevItem, '1');
             },
             all: (fn) => {
                 fn(getAppDevList());
@@ -96,24 +96,25 @@ contextBridge.exposeInMainWorld(
                     ],
                     properties: ['openFile']
                 };
-                ipcRenderer.send('openAppJson', options);
-                ipcRenderer.on('openAppJson-reply', (e, filePath) => {
-                    if('' == filePath) return;
-                    // 这里开始读取filePaht的文件内容
-                    let appJson = fs.readFileSync(filePath, 'utf-8');
-                    appJson = JSON.parse(appJson);
-                    // e.sender.send('openAppJsonResult', appJson);
-                    const appDevConfig = {
-                        id: uuid.v4().replace(/-/g, ''),
-                        path: filePath.substring(0, filePath.lastIndexOf('app.json')),
-                        name: appJson.name
-                    };
-                    let appDevConfigArr = undefined == appsDevConfig.get('default')
-                        ? [] : appsDevConfig.get('default');
-                    appDevConfigArr.unshift(appDevConfig);
-                    appsDevConfig.set('default', appDevConfigArr);
-                    fn(getAppDevList());
-                });
+                // 向 main 发送同步消息
+                const filePath = ipcRenderer.sendSync('openAppJson', options);
+                console.info('filePath: ', filePath);
+                if('' == filePath) return;
+                // 这里开始读取filePaht的文件内容
+                let appJson = fs.readFileSync(filePath, 'utf-8');
+                appJson = JSON.parse(appJson);
+                // e.sender.send('openAppJsonResult', appJson);
+                const appDevConfig = {
+                    id: uuid.v4().replace(/-/g, ''),
+                    path: filePath.substring(0, filePath.lastIndexOf('app.json')),
+                    name: appJson.name
+                };
+                let appDevConfigArr = undefined == appsDevConfig.get('default')
+                    ? [] : appsDevConfig.get('default');
+                console.info('appDevConfigArr', appDevConfigArr);
+                appDevConfigArr.unshift(appDevConfig);
+                appsDevConfig.set('default', appDevConfigArr);
+                fn(getAppDevList());
             },
             remove: (id, fn) => {
                 console.info('id======', id);

@@ -51,7 +51,7 @@ if (!getTheLock) {
         // 创建窗口
         createWindow();
         // 创建托盘
-        tray.createTray(win);
+        tray.createTray(win, appMap);
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) createWindow();
         });
@@ -129,7 +129,7 @@ const createWindow = () => {
 /**
  * 启动app
  */
-ipcMain.on('loadApp', (e, appItem) => {
+ipcMain.on('loadApp', (e, appItem, devTag) => {
     // console.info('loadApp===%o', appItem);
     appItem = JSON.parse(appItem);
     if(appMap.has(appItem.id)) {
@@ -137,36 +137,37 @@ ipcMain.on('loadApp', (e, appItem) => {
         console.info(appItem.id + ' ' + appItem.appJson.name + ' is already exists');
         return;
     }
-    const window = {
+    let options = {
         minWidth: 0,
         minHeight: 0,
         width: 800,
         height: 600,
-        resizable: true
-    };
-    if(undefined === appItem.appJson.window) {
-        appItem.appJson.window = window;
-    } else {
-        appItem.appJson.window = Object.assign(window, appItem.appJson.window);
-    }
-    const options = {
-        minWidth: appItem.appJson.window.minWidth,
-        minHeight: appItem.appJson.window.minHeight,
-        width: appItem.appJson.window.width,
-        height: appItem.appJson.window.height,
-        resizable: appItem.appJson.window.resizable,
-        title: appItem.appJson.name,
-        icon: path.join(appItem.path, 'logo.png'),
+        resizable: true,
         webPreferences: {
             sandbox: false,     // 没有这个配置，加载不到 preload.js
             spellcheck: false,
             webSecurity: false
         }
     };
-    if(undefined != appItem.appJson.window.preload) {
-        options.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.preload);
+    if(undefined !== appItem.appJson.window) {
+        options = cloneObj(appItem.appJson.window);
+        options.webPreferences.sandbox = false;
+        options.webPreferences.spellcheck = false;
+        options.webPreferences.webSecurity = false;
+    }
+    if(undefined != options.icon) {
+        options.icon = path.join(appItem.path, options.icon);
+    } else {
+        options.icon = path.join(appItem.path, appItem.appJson.logo);
+    }
+    if(undefined != options.webPreferences.preload) {
+        options.webPreferences.preload = path.join(appItem.path, options.webPreferences.preload);
     }
     let appWin = new BrowserWindow(options);
+
+    if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.main) {
+        appItem.appJson.main = appItem.appJson.development.main;
+    }
     if(appItem.appJson.main.indexOf('http') != -1) {
         appWin.loadURL(appItem.appJson.main);
     } else {
@@ -178,10 +179,9 @@ ipcMain.on('loadApp', (e, appItem) => {
             appId: appItem.id
         });
     }
-    if(undefined != appItem.appJson.window['devTools']) {
-        appWin.webContents.openDevTools({mode: appItem.appJson.window['devTools']});
+    if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.devTools) {
+        appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
     }
-    console.info('appWin==', appWin);
     appMap.set(appItem.id, appWin);
     appWin.on('close', () => {
         appMap.delete(appItem.id);
@@ -214,16 +214,17 @@ function generateShortcutLinux(appItemList) {
 /**
  * 打开文件选择窗口，读取文件本地path
  * dialog只能在主进程调用，所以使用ipc模块在main.js中打开dialog
+ * 该消息是个同步消息，所以使用 event.returnValue 进行应答
  */
-ipcMain.on('openAppJson', (e, options) => {
+ipcMain.on('openAppJson', (event, options) => {
     dialog.showOpenDialog(options).then(result => {
         // result: { canceled: false, filePaths: [ 'C:\\Users\\brood\\depot\\cargo\\can-demo\\app.json' ] }
         // console.info(3, 'You selected:', result.filePaths[0]);
         if (result.canceled) {
-            win.webContents.send('openAppJson-reply', '');
+            event.returnValue = '';
             return;
         }
-        return win.webContents.send('openAppJson-reply', result.filePaths[0]);
+        event.returnValue = result.filePaths[0];
     });
 });
 
@@ -233,3 +234,17 @@ ipcMain.on('openAppJson', (e, options) => {
 ipcMain.on('open-url', (event, url) => {
     shell.openExternal(url);
 });
+
+
+function cloneObj(obj) {
+    if(obj == null) return null;
+    if (typeof obj !== 'object') {
+        return obj;
+    } else {
+        var newobj = obj.constructor === Array ? [] : {};
+        for (var i in obj) {
+            newobj[i] = typeof obj[i] === 'object' ? cloneObj(obj[i]) : obj[i]; 
+        }
+        return newobj;
+    }
+}

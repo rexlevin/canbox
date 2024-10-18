@@ -1,10 +1,11 @@
-const { app, Menu, Tray } = require('electron');
+const { app, dialog, Menu, Tray } = require('electron');
 const path = require('path')
+const package = require('../../package.json');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
 module.exports = {
-    createTray: (win) => {
+    createTray: (win, appMap) => {
         // console.info(1, __dirname);
         let trayMenuTemplate = [{
             label: '显示窗口',
@@ -48,7 +49,11 @@ module.exports = {
             label: 'Quit',
             type: 'normal',
             click: function() {
-                // app.quit();
+                // 先销毁所有app，forEach的参数是(value, key)，而不是(key, value)
+                appMap.forEach((appWin, id) => {
+                    appWin.destroy();
+                });
+                // 退出canbox
                 win.destroy();
             }
         }]
