@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer, shell } = require('electron');
+const { BrowserWindow } = require('@electron/remote');
 const Store  = require('electron-store');
 const path = require('path')
 const fs = require("fs");
@@ -14,6 +15,8 @@ const appsDevConfig = new Store({
     cwd: 'Users',
     name: 'appsDev'
 });
+
+const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
 window.addEventListener('DOMContentLoaded', () => {
     document.title = package.description + ' - v' + package.version;
@@ -82,7 +85,8 @@ contextBridge.exposeInMainWorld(
                 });
             },
             load: (appDevItem) => {
-                ipcRenderer.send('loadApp', appDevItem, '1');
+                // ipcRenderer.send('loadApp', appDevItem, '1');
+                loadApp(appDevItem, '1')
             },
             all: (fn) => {
                 fn(getAppDevList());
@@ -216,7 +220,7 @@ function getAppDevList() {
         // console.info('appDevInfo', appDevInfo);
         try {
             const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
-            tmpItem = objClone(appDevInfo);
+            tmpItem = cloneObj(appDevInfo);
             tmpItem.appJson = appJson;
             appDevList.push(tmpItem);
         } catch(e) {
@@ -236,44 +240,132 @@ function getAppDevList() {
     return {"correct": appDevList, "wrong": appDevFalseList};
 }
 
-function objClone(obj) {
-    let copy
+// function objClone(obj) {
+//     let copy
 
-    // 处理3种基础类型，和null、undefined
-    if (obj === null || typeof obj !== 'object') return obj
+//     // 处理3种基础类型，和null、undefined
+//     if (obj === null || typeof obj !== 'object') return obj
 
-    // 处理日期
-    if (obj instanceof Date) {
-        copy = new Date()
-        copy.setTime(obj.getTime())
-        return copy
-    }
+//     // 处理日期
+//     if (obj instanceof Date) {
+//         copy = new Date()
+//         copy.setTime(obj.getTime())
+//         return copy
+//     }
 
-    // 处理数组
-    if (Array instanceof Array) {
-        copy = []
-        for (var i = 0, len = obj.length; i < len; i++) {
-            copy[i] = objClone(obj[i])
+//     // 处理数组
+//     if (Array instanceof Array) {
+//         copy = []
+//         for (var i = 0, len = obj.length; i < len; i++) {
+//             copy[i] = objClone(obj[i])
+//         }
+//         return copy
+//     }
+
+//     // 处理函数
+//     if (obj instanceof Function) {
+//         copy = function () {
+//             return obj.apply(this, arguemnts)
+//         }
+//         return copy
+//     }
+
+//     // 处理对象
+//     if (obj instanceof Object) {
+//         copy = {}
+//         for (var attr in obj) {
+//             if (obj.hasOwnProperty(attr)) copy[attr] = objClone(obj[attr])
+//         }
+//         return copy
+//     }
+
+//     throw new Error("Unable to copy obj as type isn't suported" + obj.constructor.name)
+// }
+
+function cloneObj(obj) {
+    if(obj == null) return null;
+    if (typeof obj !== 'object') {
+        return obj;
+    } else {
+        var newobj = obj.constructor === Array ? [] : {};
+        for (var i in obj) {
+            newobj[i] = typeof obj[i] === 'object' ? cloneObj(obj[i]) : obj[i]; 
         }
-        return copy
+        return newobj;
     }
+}
 
-    // 处理函数
-    if (obj instanceof Function) {
-        copy = function () {
-            return obj.apply(this, arguemnts)
+// 设置一个map集合，用于存放所有打开的window
+let appMap = new Map();
+window.canbox = {
+    hooks: {},
+    __event__: {},
+    hello: () => {
+        console.info('hello world');
+    },
+    storage: {
+        set: (k, v) => {
+            console.info(k, v);
         }
-        return copy
-    }
+    },
+    createBrowserWindow: () => {}
+};
 
-    // 处理对象
-    if (obj instanceof Object) {
-        copy = {}
-        for (var attr in obj) {
-            if (obj.hasOwnProperty(attr)) copy[attr] = objClone(obj[attr])
+function loadApp(appItem, devTag) {
+    console.info('loadApp===%o', appItem);
+    appItem = JSON.parse(appItem);
+    if(appMap.has(appItem.id)) {
+        appMap.get(appItem.id).show();
+        console.info(appItem.id + ' ' + appItem.appJson.name + ' is already exists');
+        return;
+    }
+    let options = {
+        minWidth: 0,
+        minHeight: 0,
+        width: 800,
+        height: 600,
+        resizable: true,
+        webPreferences: {
+            sandbox: false,     // 没有这个配置，加载不到 preload.js
+            spellcheck: false,
+            webSecurity: false
         }
-        return copy
+    };
+    if(undefined !== appItem.appJson.window) {
+        options = cloneObj(appItem.appJson.window);
+        options.webPreferences.sandbox = false;
+        options.webPreferences.spellcheck = false;
+        options.webPreferences.webSecurity = false;
     }
+    if(undefined != options.icon) {
+        options.icon = path.join(appItem.path, options.icon);
+    } else {
+        options.icon = path.join(appItem.path, appItem.appJson.logo);
+    }
+    if(undefined != options.webPreferences.preload) {
+        options.webPreferences.preload = path.join(appItem.path, options.webPreferences.preload);
+    }
+    let appWin = new BrowserWindow(options);
 
-    throw new Error("Unable to copy obj as type isn't suported" + obj.constructor.name)
+    if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.main) {
+        appItem.appJson.main = appItem.appJson.development.main;
+    }
+    if(appItem.appJson.main.indexOf('http') != -1) {
+        appWin.loadURL(appItem.appJson.main);
+    } else {
+        appWin.loadFile(path.join(appItem.path, appItem.appJson.main));
+    }
+    appWin.setMenu(null);
+    if(os === 'win') {
+        appWin.setAppDetails({
+            appId: appItem.id
+        });
+    }
+    if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.devTools) {
+        appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
+    }
+    appMap.set(appItem.id, appWin);
+    appWin.on('close', () => {
+        appMap.delete(appItem.id);
+    });
 }
