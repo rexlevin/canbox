@@ -151,6 +151,9 @@ ipcMain.on('loadApp', (e, appItem, devTag) => {
     };
     if(undefined !== appItem.appJson.window) {
         options = cloneObj(appItem.appJson.window);
+        if(undefined == options.webPreferences) {
+            options.webPreferences = {};
+        }
         options.webPreferences.sandbox = false;
         options.webPreferences.spellcheck = false;
         options.webPreferences.webSecurity = false;
