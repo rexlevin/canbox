@@ -50,6 +50,8 @@ if (!getTheLock) {
     app.whenReady().then(() => {
         // 创建窗口
         createWindow();
+        require('@electron/remote/main').initialize();
+        require('@electron/remote/main').enable(win.webContents);
         // 创建托盘
         tray.createTray(win, appMap);
         app.on('activate', () => {

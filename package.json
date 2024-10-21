@@ -12,6 +12,7 @@
         "startExt": "electron . --no-sandbox id:4fc5b570e0d0aecb11c1d5d3aa8e6ecd"
     },
     "dependencies": {
+        "@electron/remote": "^2.1.2",
         "electron-store": "^8.2.0",
         "element-plus": "^2.8.3",
         "marked": "^14.1.3",
