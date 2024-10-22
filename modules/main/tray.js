@@ -52,6 +52,7 @@ module.exports = {
                 // 先销毁所有app，forEach的参数是(value, key)，而不是(key, value)
                 appMap.forEach((appWin, id) => {
                     appWin.destroy();
+                    // appWin = undefined;
                 });
                 // 退出canbox
                 win.destroy();

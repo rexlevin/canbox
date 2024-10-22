@@ -50,6 +50,7 @@ if (!getTheLock) {
     app.whenReady().then(() => {
         // 创建窗口
         createWindow();
+        // 让rederrer能使用@electron/remote
         require('@electron/remote/main').initialize();
         require('@electron/remote/main').enable(win.webContents);
         // 创建托盘
@@ -146,9 +147,10 @@ ipcMain.on('loadApp', (e, appItem, devTag) => {
         height: 600,
         resizable: true,
         webPreferences: {
-            sandbox: false,     // 没有这个配置，加载不到 preload.js
+            // sandbox: false,     // 没有这个配置，加载不到 preload.js
             spellcheck: false,
-            webSecurity: false
+            webSecurity: false,
+            nodeIntegration: true
         }
     };
     if(undefined !== appItem.appJson.window) {
