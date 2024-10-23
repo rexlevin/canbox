@@ -2,8 +2,6 @@ const { app, dialog, Menu, Tray } = require('electron');
 const path = require('path')
 const package = require('../../package.json');
 
-// const AppWindow = require('./appWindow');
-
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
 module.exports = {
@@ -51,7 +49,6 @@ module.exports = {
             label: 'Quit',
             type: 'normal',
             click: function() {
-                // AppWindow.destroyAll();
                 // 退出canbox
                 win.destroy(); // 强制关闭窗口，会触发win的closed事件，不会触发close事件
             }

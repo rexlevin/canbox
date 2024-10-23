@@ -134,7 +134,8 @@ const createWindow = () => {
     });
 
     win.on('closed', () => {
-        console.info('now win closed');
+        console.info('now win closed, and app will quit');
+        app.quit();
     });
 }
 
