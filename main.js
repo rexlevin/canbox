@@ -73,7 +73,12 @@ if (!getTheLock) {
 }
 
 app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') app.quit();
+    // if (process.platform !== 'darwin') app.quit();
+    if (process.platform !== 'darwin') {
+        console.info('now will quit app');
+        app.quit();
+        console.info('now after quit app');
+    }
 });
 
 const createWindow = () => {
@@ -126,6 +131,10 @@ const createWindow = () => {
         // }
         // appMap.clear();
         // console.info('now will close app');
+    });
+
+    win.on('closed', () => {
+        console.info('now win closed');
     });
 }
 

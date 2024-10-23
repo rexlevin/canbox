@@ -3,12 +3,10 @@ const path = require('path');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
-// 设置一个map集合，用于存放所有打开的window
+// 设置一个 map 集合，用于存放所有打开的 app window
 let appMap = new Map();
 
 module.exports = {
-    // 设置一个map集合，用于存放所有打开的window
-    // appMap: new Map(),
     loadApp: (appItem, devTag) => {
         // console.info('loadApp===%o', appItem);
         appItem = JSON.parse(appItem);
@@ -69,6 +67,13 @@ module.exports = {
         appWin.on('close', () => {
             // appWin = undefined;
             appMap.delete(appItem.id);
+        });
+    },
+    destroyAll: () => {
+        // 先销毁所有app，forEach的参数是(value, key)，而不是(key, value)
+        appMap.forEach((appWin, id) => {
+            appWin.destroy();
+            // appWin = undefined;
         });
     }
 }

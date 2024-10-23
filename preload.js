@@ -107,7 +107,7 @@ contextBridge.exposeInMainWorld(
                 const filePath = ipcRenderer.sendSync('openAppJson', options);
                 console.info('filePath: ', filePath);
                 if('' == filePath) return;
-                // 这里开始读取filePaht的文件内容
+                // 这里开始读取filePath的文件内容
                 let appJson = fs.readFileSync(filePath, 'utf-8');
                 appJson = JSON.parse(appJson);
                 // e.sender.send('openAppJsonResult', appJson);
