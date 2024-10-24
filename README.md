@@ -5,6 +5,7 @@
 ```json
 {
     "name": "剪贴板",
+    "id": "com.gitee.dev001.clipboard",
     "description": "一个好用的剪贴板",
     "author": "dev001",
     "homepage": "https://gitee.com/dev001/clipboard",
@@ -32,6 +33,14 @@
 }
 
 ```
+
+### id
+
+app 应用标识
+
+1. 使用多段标识，如： `com.gitee.dev001.clipboard`
+2. 数字与字母构成，字母全小写
+3. 仅最后一段可以使用 `-` 符号
 
 ### window
 

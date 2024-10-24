@@ -6,7 +6,7 @@ const fs = require("fs");
 const uuid = require('uuid');
 const package = require('./package.json');
 
-const AppWindow = require('./modules/main/appWindow');
+const AppWindow = require('./modules/main/app.window');
 
 const appsConfig = new Store({
     cwd: 'Users',
@@ -17,8 +17,6 @@ const appsDevConfig = new Store({
     cwd: 'Users',
     name: 'appsDev'
 });
-
-const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
 window.addEventListener('DOMContentLoaded', () => {
     document.title = package.description + ' - v' + package.version;
@@ -243,48 +241,6 @@ function getAppDevList() {
     return {"correct": appDevList, "wrong": appDevFalseList};
 }
 
-// function objClone(obj) {
-//     let copy
-
-//     // 处理3种基础类型，和null、undefined
-//     if (obj === null || typeof obj !== 'object') return obj
-
-//     // 处理日期
-//     if (obj instanceof Date) {
-//         copy = new Date()
-//         copy.setTime(obj.getTime())
-//         return copy
-//     }
-
-//     // 处理数组
-//     if (Array instanceof Array) {
-//         copy = []
-//         for (var i = 0, len = obj.length; i < len; i++) {
-//             copy[i] = objClone(obj[i])
-//         }
-//         return copy
-//     }
-
-//     // 处理函数
-//     if (obj instanceof Function) {
-//         copy = function () {
-//             return obj.apply(this, arguemnts)
-//         }
-//         return copy
-//     }
-
-//     // 处理对象
-//     if (obj instanceof Object) {
-//         copy = {}
-//         for (var attr in obj) {
-//             if (obj.hasOwnProperty(attr)) copy[attr] = objClone(obj[attr])
-//         }
-//         return copy
-//     }
-
-//     throw new Error("Unable to copy obj as type isn't suported" + obj.constructor.name)
-// }
-
 function cloneObj(obj) {
     if(obj == null) return null;
     if (typeof obj !== 'object') {
@@ -297,17 +253,3 @@ function cloneObj(obj) {
         return newobj;
     }
 }
-
-window.canbox = {
-    hooks: {},
-    __event__: {},
-    hello: () => {
-        console.info('hello world');
-    },
-    storage: {
-        set: (k, v) => {
-            console.info(k, v);
-        }
-    },
-    createBrowserWindow: () => {}
-};

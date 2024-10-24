@@ -1,4 +1,4 @@
-const { BrowserWindow } = require('@electron/remote');
+const { BrowserWindow, session } = require('@electron/remote');
 const path = require('path');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
@@ -15,6 +15,8 @@ module.exports = {
             console.info(appItem.id + ' ' + appItem.appJson.name + ' is already exists');
             return;
         }
+        const sess = session.fromPartition(appItem.id);
+        sess.setPreloads([path.join(__dirname, 'api.sdk.js')]);
         let options = {
             minWidth: 0,
             minHeight: 0,
@@ -24,10 +26,7 @@ module.exports = {
             webPreferences: {
                 sandbox: false,     // 没有这个配置，加载不到 preload.js
                 spellcheck: false,
-                webSecurity: false,
-                contextIsolation: false,
-                nodeIntegration: true,
-                nodeIntegrationInSubFrames: true
+                webSecurity: false
             }
         };
         if(undefined !== appItem.appJson.window) {
@@ -36,6 +35,8 @@ module.exports = {
             options.webPreferences.spellcheck = false;
             options.webPreferences.webSecurity = false;
         }
+        // 挂载 api 给 app
+        options.webPreferences.session = sess;
         if(undefined != options.icon) {
             options.icon = path.join(appItem.path, options.icon);
         } else {
@@ -65,15 +66,8 @@ module.exports = {
         }
         appMap.set(appItem.id, appWin);
         appWin.on('close', () => {
-            // appWin = undefined;
+            appWin = undefined;
             appMap.delete(appItem.id);
-        });
-    },
-    destroyAll: () => {
-        // 先销毁所有app，forEach的参数是(value, key)，而不是(key, value)
-        appMap.forEach((appWin, id) => {
-            appWin.destroy();
-            // appWin = undefined;
         });
     }
 }

@@ -121,18 +121,14 @@ const createWindow = () => {
         win.show(); // 注释掉这行，即启动最小化到tray
     });
 
-    // 关闭主窗口事件，需要把所有 app 的窗口都要关掉
+    // 关闭主窗口事件，最小化到托盘
     win.on('close', (e) => {
         win.hide();
         win.setSkipTaskbar(true);
         e.preventDefault();
-        // for(let key of appMap.keys()) {
-        //     appMap.get(key).close();
-        // }
-        // appMap.clear();
-        // console.info('now will close app');
     });
 
+    // 在 win 的closed事件里退出整个app
     win.on('closed', () => {
         console.info('now win closed, and app will quit');
         app.quit();
