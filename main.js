@@ -4,6 +4,7 @@ const path = require('path')
 // const { sandboxed } = require('process');
 
 const tray = require('./modules/main/tray');
+const api = require('./modules/main/api');
 
 const Store  = require('electron-store');
 Store.initRenderer();
@@ -138,68 +139,68 @@ const createWindow = () => {
 /**
  * 启动app
  */
-ipcMain.on('loadApp', (e, appItem, devTag) => {
-    // console.info('loadApp===%o', appItem);
-    appItem = JSON.parse(appItem);
-    if(appMap.has(appItem.id)) {
-        appMap.get(appItem.id).show();
-        console.info(appItem.id + ' ' + appItem.appJson.name + ' is already exists');
-        return;
-    }
-    let options = {
-        minWidth: 0,
-        minHeight: 0,
-        width: 800,
-        height: 600,
-        resizable: true,
-        webPreferences: {
-            // sandbox: false,     // 没有这个配置，加载不到 preload.js
-            spellcheck: false,
-            webSecurity: false,
-            nodeIntegration: true
-        }
-    };
-    if(undefined !== appItem.appJson.window) {
-        options = cloneObj(appItem.appJson.window);
-        if(undefined == options.webPreferences) {
-            options.webPreferences = {};
-        }
-        options.webPreferences.sandbox = false;
-        options.webPreferences.spellcheck = false;
-        options.webPreferences.webSecurity = false;
-    }
-    if(undefined != options.icon) {
-        options.icon = path.join(appItem.path, options.icon);
-    } else {
-        options.icon = path.join(appItem.path, appItem.appJson.logo);
-    }
-    if(undefined != options.webPreferences.preload) {
-        options.webPreferences.preload = path.join(appItem.path, options.webPreferences.preload);
-    }
-    let appWin = new BrowserWindow(options);
+// ipcMain.on('loadApp', (e, appItem, devTag) => {
+//     // console.info('loadApp===%o', appItem);
+//     appItem = JSON.parse(appItem);
+//     if(appMap.has(appItem.id)) {
+//         appMap.get(appItem.id).show();
+//         console.info(appItem.id + ' ' + appItem.appJson.name + ' is already exists');
+//         return;
+//     }
+//     let options = {
+//         minWidth: 0,
+//         minHeight: 0,
+//         width: 800,
+//         height: 600,
+//         resizable: true,
+//         webPreferences: {
+//             // sandbox: false,     // 没有这个配置，加载不到 preload.js
+//             spellcheck: false,
+//             webSecurity: false,
+//             nodeIntegration: true
+//         }
+//     };
+//     if(undefined !== appItem.appJson.window) {
+//         options = cloneObj(appItem.appJson.window);
+//         if(undefined == options.webPreferences) {
+//             options.webPreferences = {};
+//         }
+//         options.webPreferences.sandbox = false;
+//         options.webPreferences.spellcheck = false;
+//         options.webPreferences.webSecurity = false;
+//     }
+//     if(undefined != options.icon) {
+//         options.icon = path.join(appItem.path, options.icon);
+//     } else {
+//         options.icon = path.join(appItem.path, appItem.appJson.logo);
+//     }
+//     if(undefined != options.webPreferences.preload) {
+//         options.webPreferences.preload = path.join(appItem.path, options.webPreferences.preload);
+//     }
+//     let appWin = new BrowserWindow(options);
 
-    if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.main) {
-        appItem.appJson.main = appItem.appJson.development.main;
-    }
-    if(appItem.appJson.main.indexOf('http') != -1) {
-        appWin.loadURL(appItem.appJson.main);
-    } else {
-        appWin.loadFile(path.join(appItem.path, appItem.appJson.main));
-    }
-    appWin.setMenu(null);
-    if(os === 'win') {
-        appWin.setAppDetails({
-            appId: appItem.id
-        });
-    }
-    if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.devTools) {
-        appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
-    }
-    appMap.set(appItem.id, appWin);
-    appWin.on('close', () => {
-        appMap.delete(appItem.id);
-    });
-});
+//     if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.main) {
+//         appItem.appJson.main = appItem.appJson.development.main;
+//     }
+//     if(appItem.appJson.main.indexOf('http') != -1) {
+//         appWin.loadURL(appItem.appJson.main);
+//     } else {
+//         appWin.loadFile(path.join(appItem.path, appItem.appJson.main));
+//     }
+//     appWin.setMenu(null);
+//     if(os === 'win') {
+//         appWin.setAppDetails({
+//             appId: appItem.id
+//         });
+//     }
+//     if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.devTools) {
+//         appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
+//     }
+//     appMap.set(appItem.id, appWin);
+//     appWin.on('close', () => {
+//         appMap.delete(appItem.id);
+//     });
+// });
 
 /**
  * 给各个 app 生成启动快捷方式，并放到启动目录

@@ -1,4 +1,4 @@
-const { BrowserWindow, session } = require('@electron/remote');
+const { BrowserWindow, session } = require('@electron/remote'); // 使用 @electron/remote 是renderer 中能使用 main 进程中的对象，减少ipc
 const path = require('path');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
@@ -16,7 +16,7 @@ module.exports = {
             return;
         }
         const sess = session.fromPartition(appItem.id);
-        sess.setPreloads([path.join(__dirname, 'api.sdk.js')]);
+        sess.setPreloads([path.join(__dirname, 'app.api.js')]);
         let options = {
             minWidth: 0,
             minHeight: 0,

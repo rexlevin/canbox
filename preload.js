@@ -63,7 +63,8 @@ contextBridge.exposeInMainWorld(
                 fn(getAppList());
             },
             load: (appDevItem) => {
-                ipcRenderer.send('loadApp', appDevItem);
+                // ipcRenderer.send('loadApp', appDevItem);
+                AppWindow.loadApp(appDevItem, '1');
             }
         },
         appDev: {
