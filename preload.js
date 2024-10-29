@@ -155,7 +155,7 @@ function getAppList() {
     for(let appInfo of appInfoList) {
         // /home/lizl6/.config/canbox/Users/apps.json
         // C:\Users\brood\AppData\Roaming\canbox\Users\apps.json
-        let defaultPath = appsConfig.path.substring(0, appsConfig.path.lastIndexOf('apps.json'));
+    let defaultPath = appsConfig.path.substring(0, appsConfig.path.lastIndexOf('apps.json'));
         const appJson = JSON.parse(fs.readFileSync(path.join(defaultPath, 'default', appInfo.id + '.asar/app.json'), 'utf8'));
         // const appJson = JSON.parse(fs.readFileSync(defaultPath + 'default/' + extInfo.id + '.asar/spp.json'));
         const app = {

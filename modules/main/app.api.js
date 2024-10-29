@@ -1,15 +1,17 @@
 const { ipcRenderer } = require("electron");
 
+let appId = null;
+
 /**
- * 通过 ipc 请求主线程中的 api，ipc 消息名为：msg-trigger
+ * 通过 ipc 请求主线程中的 db-api，ipc 消息名为：msg-db
  * 
- * @param {String} method api操作方法
+ * @param {String} type api操作方法
  * @param {JSON} data api操作请求数据，要求json格式
  * @returns api操作应答内容
  */
-const ipcSendSync = (method, data) => {
-    const returnValue = ipcRenderer.sendSync('msg-trigger', {
-        method,
+const ipcSendSyncDB = (type, data) => {
+    const returnValue = ipcRenderer.sendSync('msg-db', {
+        type,
         data,
     });
     if (returnValue instanceof Error) throw returnValue;
@@ -18,7 +20,7 @@ const ipcSendSync = (method, data) => {
 
 const db = {
     init: (name) => {
-        ipcSendSync('init', {});
+        ipcSendSyncDB('init', {});
     }
 }
 
@@ -30,6 +32,7 @@ window.canbox = {
     __event__: {},
     hello: () => {
         console.info('hello world');
+        console.info('appId: ' + appId);
     },
     db
 };
