@@ -1,6 +1,6 @@
 const { ipcRenderer } = require("electron");
 
-let appId = null;
+// let appId = null;
 
 /**
  * 通过 ipc 请求主线程中的 db-api，ipc 消息名为：msg-db
@@ -30,7 +30,11 @@ const db = {
 window.canbox = {
     hooks: {},
     __event__: {},
+    // onAppLoad: (args) => {
+    //     console.info('args:', args);
+    // },
     hello: () => {
+        console.info('appId: ', appId);
         console.info('hello world');
         console.info('appId: ' + appId);
     },

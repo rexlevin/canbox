@@ -71,6 +71,12 @@ module.exports = {
         // `;
         // appWin.webContents.executeJavaScript(js);
 
+        // canbox.onAppLoad(${appItem.id});
+        const js = `
+            const appId = ${appItem.id};
+        `;
+        appWin.webContents.executeJavaScript(js);
+
         appMap.set(appItem.id, appWin);
         // appWin.on('ready-to-show', () => {
         //     console.info(`app is ready to show: ${appItem.id}`);
