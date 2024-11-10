@@ -24,19 +24,28 @@ const db = {
     }
 }
 
+const _event = {
+    on: (event, cb) => {
+        canbox.on[event] = cb;
+    }
+};
+
 /**
  * 对 app 暴露的 api
  */
 window.canbox = {
     hooks: {},
-    __event__: {},
-    // onAppLoad: (args) => {
-    //     console.info('args:', args);
-    // },
+    _event,
+    onAppLoad: (args) => {
+        console.info('args:', args);
+    },
     hello: () => {
-        console.info('appId: ', appId);
         console.info('hello world');
-        console.info('appId: ' + appId);
+        // console.info('appId: ' + appId);
     },
     db
 };
+
+function init(id) {
+    console.info("id: " + id);
+}

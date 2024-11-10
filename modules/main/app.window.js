@@ -64,26 +64,21 @@ module.exports = {
         if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.devTools) {
             appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
         }
+        
+        const executeHook = (appId) => {
+            console.info('====', appId);
+            const js = `
+                window.canbox.on('AppLoad', 'asdfasdfasdfasdfasdf');
+            `;
+            appWin.webContents.executeJavaScript(js);
+        };
 
-        // appWin.webContents.executeJavaScript(`appId=${appItem.id}`);
-        // const js = `
-        //     window.canbox.hooks.on${hook}(${data ? JSON.stringify(data) : ''});
-        // `;
-        // appWin.webContents.executeJavaScript(js);
-
-        // canbox.onAppLoad(${appItem.id});
-        const js = `
-            const appId = ${appItem.id};
-        `;
-        appWin.webContents.executeJavaScript(js);
+        appWin.webContents.on('did-finish-load', () => {
+            executeHook(appItem.id);
+        });
 
         appMap.set(appItem.id, appWin);
-        // appWin.on('ready-to-show', () => {
-        //     console.info(`app is ready to show: ${appItem.id}`);
-        //     const js = `
-        //         window.canbox.hooks.on${hook}(${data ? JSON.stringify(data) : ''});
-        //     `;
-        // });
+
         appWin.on('close', () => {
             console.info(`now will close app: ${appItem.id}`);
             appWin = undefined;
