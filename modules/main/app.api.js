@@ -39,8 +39,9 @@ window.canbox = {
     onAppLoad: (args) => {
         console.info('args:', args);
     },
-    hello: () => {
-        console.info('hello world');
+    hello: (param) => {
+        param = param || 'world'
+        console.info(`hello ${param}`);
         // console.info('appId: ' + appId);
     },
     db

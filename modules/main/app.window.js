@@ -1,4 +1,4 @@
-const { BrowserWindow, session } = require('@electron/remote'); // 使用 @electron/remote 是renderer 中能使用 main 进程中的对象，减少ipc
+const { BrowserWindow, WebContentsView, session } = require('@electron/remote'); // 使用 @electron/remote 是renderer 中能使用 main 进程中的对象，减少ipc
 const path = require('path');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
@@ -46,6 +46,8 @@ module.exports = {
             options.webPreferences.preload = path.join(appItem.path, options.webPreferences.preload);
         }
         let appWin = new BrowserWindow(options);
+        let appView = new WebContentsView(options);
+        appWin.contentView.addChildView(appView);
 
         if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.main) {
             appItem.appJson.main = appItem.appJson.development.main;
@@ -68,22 +70,29 @@ module.exports = {
         const executeHook = (appId) => {
             console.info('====', appId);
             const js = `
-                window.canbox.on('AppLoad', 'asdfasdfasdfasdfasdf');
+                try {
+                    window.canbox.onAppLoad('${appId}');
+                } catch(e) {
+                    console.error('error', e);
+                }
             `;
             appWin.webContents.executeJavaScript(js);
         };
 
-        appWin.webContents.on('did-finish-load', () => {
+        appWin.webContents.once('dom-ready', ()=>{
             executeHook(appItem.id);
         });
-
-        appMap.set(appItem.id, appWin);
+        // appWin.on('ready-to-show', () => {
+        //     executeHook(appItem.id);
+        // });
 
         appWin.on('close', () => {
             console.info(`now will close app: ${appItem.id}`);
             appWin = undefined;
             appMap.delete(appItem.id);
         });
+
+        appMap.set(appItem.id, appWin);
     }
 }
 
