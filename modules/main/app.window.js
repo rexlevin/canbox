@@ -31,55 +31,75 @@ module.exports = {
         };
         if(undefined !== appItem.appJson.window) {
             options = cloneObj(appItem.appJson.window);
-            options.webPreferences.sandbox = false;
-            options.webPreferences.spellcheck = false;
-            options.webPreferences.webSecurity = false;
+            delete options.webPreferences;
+            // options.webPreferences.sandbox = false;
+            // options.webPreferences.spellcheck = false;
+            // options.webPreferences.webSecurity = false;
+        }
+        let wp = {
+            webPreferences: {
+                sandbox: false,     // 没有这个配置，加载不到 preload.js
+                spellcheck: false,
+                webSecurity: false,
+                nodeIntegration: true,
+                contextIsolation: false
+            }
         }
         // 挂载 api 给 app
-        options.webPreferences.session = sess;
+        // options.webPreferences.session = sess;
+        wp.webPreferences.session = sess;
         if(undefined != options.icon) {
             options.icon = path.join(appItem.path, options.icon);
         } else {
             options.icon = path.join(appItem.path, appItem.appJson.logo);
         }
-        if(undefined != options.webPreferences.preload) {
-            options.webPreferences.preload = path.join(appItem.path, options.webPreferences.preload);
+        if(undefined != appItem.appJson.window.webPreferences.preload) {
+            // options.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
+            wp.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
         }
         let appWin = new BrowserWindow(options);
-        let appView = new WebContentsView(options);
+        let appView = new WebContentsView(wp);
         appWin.contentView.addChildView(appView);
 
         if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.main) {
             appItem.appJson.main = appItem.appJson.development.main;
         }
         if(appItem.appJson.main.indexOf('http') != -1) {
-            appWin.loadURL(appItem.appJson.main);
+            // appWin.loadURL(appItem.appJson.main);
+            appView.webContents.loadURL(appItem.appJson.main);
         } else {
-            appWin.loadFile(path.join(appItem.path, appItem.appJson.main));
+            // appWin.loadFile(path.join(appItem.path, appItem.appJson.main));
+            appView.webContents.loadURL(path.join(appItem.path, appItem.appJson.main));
         }
+        appView.setBounds({
+            x: 0, y: 0,
+            width: options.width,
+            height: options.height
+        });
         appWin.setMenu(null);
         if(os === 'win') {
             appWin.setAppDetails({
                 appId: appItem.id
             });
         }
-        if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.devTools) {
-            appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
+        if('1' === devTag && appItem.appJson.development && appItem.appJson.development.devTools) {
+            appView.webContents.openDevTools({mode: appItem.appJson.development.devTools});
         }
         
         const executeHook = (appId) => {
             console.info('====', appId);
             const js = `
+                console.info(window);
                 try {
                     window.canbox.onAppLoad('${appId}');
                 } catch(e) {
                     console.error('error', e);
                 }
             `;
-            appWin.webContents.executeJavaScript(js);
+            appView.webContents.executeJavaScript(js);
         };
 
-        appWin.webContents.once('dom-ready', ()=>{
+        appView.webContents.once('did-finish-load', ()=>{
             executeHook(appItem.id);
         });
         // appWin.on('ready-to-show', () => {
@@ -88,6 +108,8 @@ module.exports = {
 
         appWin.on('close', () => {
             console.info(`now will close app: ${appItem.id}`);
+            appView.webContents.closeDevTools();
+            appView = undefined;
             appWin = undefined;
             appMap.delete(appItem.id);
         });
