@@ -89,3 +89,7 @@ devTools：打开开发者工具，left, right, bottom, undocked, detach
 **图片地址使用网络url才能正确展示**
 
 # API
+
+## DB
+
+canbox 使用 pouchdb 作为本地存储库

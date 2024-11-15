@@ -1,6 +1,6 @@
 const { ipcRenderer } = require("electron");
 
-let appId = null;
+// var appId = null;
 
 /**
  * 通过 ipc 请求主线程中的 db-api，ipc 消息名为：msg-db
@@ -10,41 +10,34 @@ let appId = null;
  * @returns api操作应答内容
  */
 const ipcSendSyncDB = (type, data) => {
-    const returnValue = ipcRenderer.sendSync('msg-db', {
+    let returnValue = ipcRenderer.sendSync('msg-db', {
         type,
         data,
-        appId: appId
+        appId: window.appId
     });
     if (returnValue instanceof Error) throw returnValue;
     return returnValue;
 };
 
 const db = {
-    init: (name) => {
-        ipcSendSyncDB('init', {});
+    init: (data) => {
+        // console.info('window = ', window);
+        // console.info('window.appId = ', window.appId);
+        // setTimeout("console.info('window.appId = ', window.appId)", 100);
+        ipcSendSyncDB('init', data);
     }
 }
-
-const _event = {
-    on: (event, cb) => {
-        canbox.on[event] = cb;
-    }
-};
 
 /**
  * 对 app 暴露的 api
  */
 window.canbox = {
     hooks: {},
-    _event,
     onAppLoad: (id) => {
         console.info('id:', id);
-        appId = id;
     },
     hello: (param) => {
         param = param || 'world'
-        console.info(`hello ${param}`);
-        // console.info('appId: ' + appId);
     },
     db
 };

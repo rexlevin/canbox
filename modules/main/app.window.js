@@ -55,7 +55,7 @@ module.exports = {
         }
         if(undefined != appItem.appJson.window.webPreferences.preload) {
             // options.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
-            wp.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
+            wp.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
         }
         let appWin = new BrowserWindow(options);
         let appView = new WebContentsView(wp);
@@ -89,8 +89,8 @@ module.exports = {
         const executeHook = (appId) => {
             console.info('====', appId);
             const js = `
-                console.info(window);
                 try {
+                    window.appId = '${appId}';
                     window.canbox.onAppLoad('${appId}');
                 } catch(e) {
                     console.error('error', e);

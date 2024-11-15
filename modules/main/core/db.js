@@ -1,6 +1,11 @@
 const { app } = require('electron');
 const PouchDB = require('pouchdb');
 
+/*
+ * userData目录：
+ * windows：~\AppData\Roaming\canbox\
+ * linux: ~/config/canbox/
+ */
 const userDataPath = app.getPath('userData');
 
 module.exports = {

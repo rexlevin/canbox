@@ -20,6 +20,12 @@ module.exports = {
                 win.webContents.openDevTools({mode: 'detach'});
             }
         }, {
+            label: 'Reload Canbox',
+            type: 'normal',
+            click: function() {
+                win.webContents.reload();
+            }
+        }, {
             label: 'About',
             type: 'normal',
             click: function() {
