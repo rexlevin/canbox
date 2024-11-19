@@ -10,21 +10,21 @@ const { ipcRenderer } = require("electron");
  * @returns api操作应答内容
  */
 const ipcSendSyncDB = (type, data) => {
+    data.appId = window.appId;
     let returnValue = ipcRenderer.sendSync('msg-db', {
         type,
-        data,
-        appId: window.appId
+        data
     });
     if (returnValue instanceof Error) throw returnValue;
     return returnValue;
 };
 
 const db = {
-    init: (data) => {
+    init: () => {
         // console.info('window = ', window);
         // console.info('window.appId = ', window.appId);
         // setTimeout("console.info('window.appId = ', window.appId)", 100);
-        ipcSendSyncDB('init', data);
+        ipcSendSyncDB('init', {});
     }
 }
 
