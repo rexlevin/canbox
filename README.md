@@ -92,4 +92,16 @@ devTools：打开开发者工具，left, right, bottom, undocked, detach
 
 ## DB
 
-canbox 使用 pouchdb 作为本地存储库
+canbox 使用 [pouchdb](https://pouchdb.com/) 作为本地存储库
+
+pouchdb中文教程：[PouchDB 教程](https://www.w3ccoo.com/pouchdb/)
+
+### canbox.db.put(data)
+
+- 参数
+  1. `data`
+- 应答 object
+
+```javascript
+canbox.db.put().then().cacht()
+```

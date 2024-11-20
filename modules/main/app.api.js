@@ -25,6 +25,9 @@ const db = {
         // console.info('window.appId = ', window.appId);
         // setTimeout("console.info('window.appId = ', window.appId)", 100);
         ipcSendSyncDB('init', {});
+    },
+    put: () => {
+        ipcSendSyncDB('init', {});
     }
 }
 
