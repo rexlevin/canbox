@@ -4,6 +4,6 @@ const DB = require('./core/db');
 ipcMain.on('msg-db', (event, args) => {
     // console.info('event', event);
     console.info('args: ', args);
-    DB[args.type](args.data);
+    DB[args.type](args.appId, args.data);
     event.returnValue = 'ok';
 });

@@ -10,24 +10,27 @@ const { ipcRenderer } = require("electron");
  * @returns api操作应答内容
  */
 const ipcSendSyncDB = (type, data) => {
-    data.appId = window.appId;
+    if(!window.appId) {
+        throw new Error('appId is not set');
+    }
     let returnValue = ipcRenderer.sendSync('msg-db', {
         type,
-        data
+        data,
+        appId: window.appId
     });
     if (returnValue instanceof Error) throw returnValue;
     return returnValue;
 };
 
 const db = {
-    init: () => {
-        // console.info('window = ', window);
-        // console.info('window.appId = ', window.appId);
-        // setTimeout("console.info('window.appId = ', window.appId)", 100);
-        ipcSendSyncDB('init', {});
+    // init: () => {
+    //     ipcSendSyncDB('init', {});
+    // },
+    put: (data) => {
+        return ipcSendSyncDB('put', data);
     },
-    put: () => {
-        ipcSendSyncDB('init', {});
+    get: (data) => {
+        return ipcSendSyncDB('get', data);
     }
 }
 
