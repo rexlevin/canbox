@@ -105,3 +105,9 @@ pouchdb中文教程：[PouchDB 教程](https://www.w3ccoo.com/pouchdb/)
 ```javascript
 canbox.db.put().then().cacht()
 ```
+
+## 应答编码
+
+| code | 释义                 |
+| ---- | -------------------- |
+| 9100 | 数据操作异常、不成功 |
