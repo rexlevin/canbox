@@ -103,11 +103,43 @@ pouchdb中文教程：[PouchDB 教程](https://www.w3ccoo.com/pouchdb/)
 - 应答 object
 
 ```javascript
-canbox.db.put().then().cacht()
+const result = canbox.db.put({
+    _id: '0001',
+    boxes: '[{title:"json01",content:"hello lizl6"},{title:"json02",content:"hello world"}]'
+});
+console.info(result);
+/*
+ * 数据入库成功
+{
+    "code": "0000",
+    "_id": "0001",
+    "_rev": "1-ba9a81377a1991e5a693659ec7e238c2"
+}
+ *
+ * 数据入库失败
+{
+    "code": "9100",
+    "message": "Database operate, put error, Document update conflict"
+}
+*/
 ```
 
-## 应答编码
+### canbox.db.get(query)
 
-| code | 释义                 |
-| ---- | -------------------- |
-| 9100 | 数据操作异常、不成功 |
+## 应答
+
+```json
+{
+    code: '',
+    message: '',
+    data: object/array/string/int/boolean
+}
+```
+
+| code | 释义                                                 |
+| ---- | ---------------------------------------------------- |
+| 0000 | 成功                                                 |
+| 9100 | 数据操作异常、不成功                                 |
+| 9200 | 文件/文件夹操作异常、不成功                          |
+| 9201 | 文件夹删除失败                                       |
+| 9202 | 文件读取失败，可能是因为文件不存在，具体查看 message |

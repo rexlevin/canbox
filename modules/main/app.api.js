@@ -6,16 +6,16 @@ const { ipcRenderer } = require("electron");
  * 通过 ipc 请求主线程中的 db-api，ipc 消息名为：msg-db
  * 
  * @param {String} type api操作方法
- * @param {JSON} data api操作请求数据，要求json格式
+ * @param {JSON} param api操作请求数据，要求json格式
  * @returns api操作应答内容
  */
-const ipcSendSyncDB = (type, data) => {
+const ipcSendSyncDB = (type, param) => {
     if(!window.appId) {
         throw new Error('appId is not set');
     }
     let returnValue = ipcRenderer.sendSync('msg-db', {
         type,
-        data,
+        param,
         appId: window.appId
     });
     if (returnValue instanceof Error) throw returnValue;
@@ -26,11 +26,11 @@ const db = {
     // init: () => {
     //     ipcSendSyncDB('init', {});
     // },
-    put: (data) => {
-        return ipcSendSyncDB('put', data);
+    put: (param) => {
+        return ipcSendSyncDB('put', param);
     },
-    get: (data) => {
-        return ipcSendSyncDB('get', data);
+    get: (param) => {
+        return ipcSendSyncDB('get', param);
     }
 }
 
@@ -39,11 +39,12 @@ const db = {
  */
 window.canbox = {
     hooks: {},
-    onAppLoad: (id) => {
-        console.info('id:', id);
-    },
-    hello: (param) => {
-        param = param || 'world'
+    // onAppLoad: (id) => {
+    //     console.info('id:', id);
+    // },
+    hello: (name) => {
+        name = name || 'world'
+        console.info(`hello, ${name}`);
     },
     db
 };

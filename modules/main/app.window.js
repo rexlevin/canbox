@@ -7,6 +7,12 @@ const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' 
 let appMap = new Map();
 
 module.exports = {
+    /**
+     * 
+     * @param {JSON} appItem app应用信息
+     * @param {string} devTag app开发tag，dev：当前是开发app
+     * @returns void
+     */
     loadApp: (appItem, devTag) => {
         // console.info('loadApp===%o', appItem);
         appItem = JSON.parse(appItem);
@@ -61,7 +67,7 @@ module.exports = {
         let appView = new WebContentsView(wp);
         appWin.contentView.addChildView(appView);
 
-        if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.main) {
+        if('dev' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.main) {
             appItem.appJson.main = appItem.appJson.development.main;
         }
         if(appItem.appJson.main.indexOf('http') != -1) {
@@ -82,7 +88,7 @@ module.exports = {
                 appId: appItem.id
             });
         }
-        if('1' === devTag && appItem.appJson.development && appItem.appJson.development.devTools) {
+        if('dev' === devTag && appItem.appJson.development && appItem.appJson.development.devTools) {
             appView.webContents.openDevTools({mode: appItem.appJson.development.devTools});
         }
         
@@ -109,8 +115,11 @@ module.exports = {
         appWin.on('close', () => {
             console.info(`now will close app: ${appItem.id}`);
             appView.webContents.closeDevTools();
-            appView = undefined;
-            appWin = undefined;
+            // appView = undefined;
+            // appWin = undefined;
+            if(appWin.isDestroyed()) {
+                console.info('appWin is destroyed');
+            }
             appMap.delete(appItem.id);
         });
 

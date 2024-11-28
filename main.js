@@ -249,6 +249,14 @@ ipcMain.on('open-url', (event, url) => {
     shell.openExternal(url);
 });
 
+/**
+ * 根据 name 获取路径
+ * 参见：https://www.electronjs.org/zh/docs/latest/api/app#appgetpathname
+ */
+ipcMain.on('getPath', (event, name) => {
+    event.returnValue = app.getPath(name);
+});
+
 
 function cloneObj(obj) {
     if(obj == null) return null;

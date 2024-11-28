@@ -15,7 +15,7 @@
                 <span class="operate-icon-span" @click="load()" title="运行这个开发中的app">
                     <el-icon :size="35" color="#228b22"><VideoPlay /></el-icon>
                 </span>
-                <span class="operate-icon-span" @click="clearData()" title="清除用户数据">
+                <span class="operate-icon-span" @click="clearData(appDevItem.id)" title="清除用户数据">
                     <el-icon :size="35" color=""><Remove /></el-icon>
                 </span>
                 <span class="operate-icon-span" @click="remove(appDevItem.id)" title="删除这个开发中的app">
@@ -54,7 +54,20 @@ const drawerInfo = ref(false);
 const appDevInfoContent = ref(null);
 
 function load() {
-    window.api.appDev.load(JSON.stringify(props.appDevItem));
+    window.api.app.load(JSON.stringify(props.appDevItem), 'dev');
+}
+function clearData(id) {
+    window.api.app.clearData(id, (result)=>{
+        console.info('clearData result=', result);
+        if(result.code !== '0000') {
+            ElMessage.error(result.message);
+            return;
+        }
+        ElMessage({
+            message: '清除数据成功',
+            type:'success'
+        });
+    });
 }
 function remove(id) {
     window.api.appDev.remove(id, (result)=>{
@@ -64,7 +77,7 @@ function remove(id) {
             return;
         }
         ElMessage({
-            message: '删除成功',
+            message: 'APP 删除成功',
             type:'success'
         });
         emit('reloadAppDev');
@@ -72,7 +85,7 @@ function remove(id) {
 }
 
 onBeforeMount(() => {
-    window.api.appDev.info(JSON.stringify(props.appDevItem), result => {
+    window.api.app.info(JSON.stringify(props.appDevItem), result => {
         // console.info('appDev info result=', result);
         if(result.code!== '0000') {
             appDevInfoContent.value = result.data;//'Cannot laod infomation of this app';

@@ -8,6 +8,13 @@ const package = require('./package.json');
 
 const AppWindow = require('./modules/main/app.window');
 
+/*
+ * userData目录：
+ * windows：~\AppData\Roaming\canbox\
+ * linux: ~/config/canbox/
+ */
+const userDataPath = ipcRenderer.sendSync('getPath', 'userData');
+
 const appsConfig = new Store({
     cwd: 'Users',
     name: 'apps'
@@ -47,52 +54,80 @@ contextBridge.exposeInMainWorld(
                 // console.info('appItem==', appItem);
                 fs.readFile(path.join(appItem.path, 'README.md'), 'utf8', (err, content) => {
                     if(err) {
+                        let msg = '';
                         if(err.code === 'ENOENT') {
                             console.error('file note found: ', err.path);
+                            msg = '文件不存在';
                         } else {
                             console.error('read file error: ', err.path);
+                            msg = '文件读取失败';
                         }
-                        fn({'code': '9101', 'data': 'There is no introduction information of this app'});
+                        fn({code: '9101', message: msg, data: 'There is no introduction information of this app'});
                         return;
                     }
                     // console.info(content)
-                    fn({'code': '0000', 'data': content});
+                    fn({code: '0000', data: content});
                 });
             },
             all: (fn) => {
                 fn(getAppList());
             },
-            load: (appDevItem) => {
+            load: (appItem, devTag) => {
                 // ipcRenderer.send('loadApp', appDevItem);
-                AppWindow.loadApp(appDevItem, '1');
+                AppWindow.loadApp(appItem, devTag);
+            },
+            clearData: (id, fn) => {
+                console.info('clearData');
+
+                const appData = path.join( userDataPath, 'Users', 'data', id );
+                fs.rmdir(appData, { recursive: true }, (error) => {
+                    if (error) {
+                        console.error(`Failed to remove directory: ${error}`);
+                        fn({code: '9201', message: error.message, 'data': 'Failed to remove app data'});
+                        return;
+                    }
+                    fn({code: '0000'});
+                });
+            },
+            remove: (id, fn) => {
+                console.info('id======', id);
+                removeAppDevById(id);
+                fn({code: '0000'});
             }
         },
         appDev: {
-            info: (appDevItemJsonStr, fn) => {
-                const appDevItem = JSON.parse(appDevItemJsonStr);
-                // console.info('appDevItem==', appDevItem);
-                fs.readFile(path.join(appDevItem.path, 'README.md'), 'utf8', (err, content) => {
-                    if(err) {
-                        if(err.code === 'ENOENT') {
-                            console.error('file note found: ', err.path);
-                        } else {
-                            console.error('read file error: ', err.path);
-                        }
-                        fn({'code': '9101', 'data': 'There is no introduction information of this app'});
-                        return;
-                    }
-                    // console.info(content)
-                    fn({'code': '0000', 'data': content});
-                });
-            },
-            load: (appDevItem) => {
-                // ipcRenderer.send('loadApp', appDevItem, '1');
-                // loadApp(appDevItem, '1')
-                AppWindow.loadApp(appDevItem, '1');
-            },
+            // info: (appDevItemJsonStr, fn) => {
+            //     const appDevItem = JSON.parse(appDevItemJsonStr);
+            //     // console.info('appDevItem==', appDevItem);
+            //     fs.readFile(path.join(appDevItem.path, 'README.md'), 'utf8', (err, content) => {
+            //         if(err) {
+            //             let msg = '';
+            //             if(err.code === 'ENOENT') {
+            //                 console.error('file note found: ', err.path);
+            //                 msg = '文件不存在';
+            //             } else {
+            //                 console.error('read file error: ', err.path);
+            //                 msg = '文件读取失败';
+            //             }
+            //             fn({
+            //                 code: '9202',
+            //                 message: msg,
+            //                 data: 'There is no introduction information of this app'
+            //             });
+            //             return;
+            //         }
+            //         // console.info(content)
+            //         fn({code: '0000', data: content});
+            //     });
+            // },
             all: (fn) => {
                 fn(getAppDevList());
             },
+            // load: (appDevItem) => {
+            //     // ipcRenderer.send('loadApp', appDevItem, '1');
+            //     // loadApp(appDevItem, '1')
+            //     AppWindow.loadApp(appDevItem, '1');
+            // },
             add: (fn) => {
                 // console.info(uuid.v1());
                 const options = {
