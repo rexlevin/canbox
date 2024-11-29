@@ -26,8 +26,13 @@ const db = {
     // init: () => {
     //     ipcSendSyncDB('init', {});
     // },
-    put: (param) => {
+    putSync: (param) => {
         return ipcSendSyncDB('put', param);
+    },
+    put: (param) => {
+        return new Promise((resolve, reject) => {
+            //
+        });
     },
     get: (param) => {
         return ipcSendSyncDB('get', param);
