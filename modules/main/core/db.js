@@ -70,12 +70,10 @@ class DB {
     put(param, callback) {
         this.db.put(param).then(result => {
             console.info('res: ', result);
-            // return {code: '0000', _id: result.id, _rev: result.rev};
             callback({code: '0000', _id: result.id, _rev: result.rev});
         }).catch(error => {
             console.error('err: ', error);
-            // return {code: '9100', message: 'Database operate, put error, ' + error.message};
-            callback({code: '9100', message: 'Database operate, put error, ' + error.message});
+            callback({code: '9100', msg: 'Database operate, put error, ' + error.message});
         });
     }
     bulkDocs() {}

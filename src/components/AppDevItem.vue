@@ -60,7 +60,7 @@ function clearData(id) {
     window.api.app.clearData(id, (result)=>{
         console.info('clearData result=', result);
         if(result.code !== '0000') {
-            ElMessage.error(result.message);
+            ElMessage.error(result.msg);
             return;
         }
         ElMessage({
@@ -73,7 +73,7 @@ function remove(id) {
     window.api.appDev.remove(id, (result)=>{
         console.info('remove result=', result);
         if(result.code !== '0000') {
-            ElMessage.error(result.message);
+            ElMessage.error(result.msg);
             return;
         }
         ElMessage({

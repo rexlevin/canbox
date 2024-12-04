@@ -62,7 +62,7 @@ contextBridge.exposeInMainWorld(
                             console.error('read file error: ', err.path);
                             msg = '文件读取失败';
                         }
-                        fn({code: '9101', message: msg, data: 'There is no introduction information of this app'});
+                        fn({code: '9101', msg: msg, data: 'There is no introduction information of this app'});
                         return;
                     }
                     // console.info(content)
@@ -83,7 +83,7 @@ contextBridge.exposeInMainWorld(
                 fs.rmdir(appData, { recursive: true }, (error) => {
                     if (error) {
                         console.error(`Failed to remove directory: ${error}`);
-                        fn({code: '9201', message: error.message, 'data': 'Failed to remove app data'});
+                        fn({code: '9201', msg: error.message, 'data': 'Failed to remove app data'});
                         return;
                     }
                     fn({code: '0000'});
@@ -111,7 +111,7 @@ contextBridge.exposeInMainWorld(
             //             }
             //             fn({
             //                 code: '9202',
-            //                 message: msg,
+            //                 msg: msg,
             //                 data: 'There is no introduction information of this app'
             //             });
             //             return;
