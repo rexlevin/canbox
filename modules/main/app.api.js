@@ -31,7 +31,8 @@ const db = {
     },
     put: (param) => {
         return new Promise((resolve, reject) => {
-            //
+            const returnValue = ipcSendSyncDB('put', param);
+            "0000" == ret.code ? resolve({_id: ret._id, _rev: ret._rev}) : reject(ret.msg);
         });
     },
     get: (param) => {
