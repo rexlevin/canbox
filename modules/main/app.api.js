@@ -19,7 +19,7 @@ const ipcSendSyncDB = (type, param) => {
         appId: window.appId
     });
     if (returnValue instanceof Error) throw returnValue;
-    return returnValue;
+    return JSON.parse(returnValue);
 };
 
 const db = {
@@ -31,7 +31,8 @@ const db = {
     },
     put: (param) => {
         return new Promise((resolve, reject) => {
-            const returnValue = ipcSendSyncDB('put', param);
+            const ret = ipcSendSyncDB('put', param);
+            console.info('ret in app.api==', ret);
             "0000" == ret.code ? resolve({_id: ret._id, _rev: ret._rev}) : reject(ret.msg);
         });
     },
@@ -45,9 +46,6 @@ const db = {
  */
 window.canbox = {
     hooks: {},
-    // onAppLoad: (id) => {
-    //     console.info('id:', id);
-    // },
     hello: (name) => {
         name = name || 'world'
         console.info(`hello, ${name}`);

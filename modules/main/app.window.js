@@ -97,7 +97,6 @@ module.exports = {
             const js = `
                 try {
                     window.appId = '${appId}';
-                    window.canbox.onAppLoad('${appId}');
                 } catch(e) {
                     console.error('error', e);
                 }

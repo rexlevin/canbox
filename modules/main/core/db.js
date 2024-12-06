@@ -34,7 +34,6 @@ module.exports = {
         const db = new DB({name: appId});
         db.put(param, (res) => {
             db.close(); // 关闭数据库连接
-            console.info('res==', res);
             callback(res);
         });
         // const ret = db.put(data);
