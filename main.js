@@ -4,6 +4,7 @@ const path = require('path')
 // const { sandboxed } = require('process');
 
 const tray = require('./modules/main/tray');
+
 const api = require('./modules/main/api');
 
 const Store  = require('electron-store');
@@ -34,7 +35,7 @@ if (!getTheLock) {
         // 如果app已经启动，那么参数再次启动app或者 app 的参数只能从commandLine里面获得
         let appId = '';
         for(let command of commandLine) {
-            if(command.indexOf('id:') == -1) continue;
+            if(command.indexOf('id:') === -1) continue;
             appId = command.substring(command.indexOf(':') + 1);
         }
         if (win && '' === appId) {
@@ -42,7 +43,7 @@ if (!getTheLock) {
             if(!win.isVisible()) win.show();
             win.focus();
         }
-        if(win && '' != appId) {
+        if(win && '' !== appId) {
             // console.info('now loadAppDirect==%s', appId);
             win.webContents.send('loadAppDirect', appId);
         }
@@ -63,11 +64,11 @@ if (!getTheLock) {
         // app第一次启动的时候，启动参数可以从process.argv里面获取到
         let appId = '';
         for(let arg of process.argv) {
-            if(arg.indexOf('id:') == -1) continue;
+            if(arg.indexOf('id:') === -1) continue;
             appId = arg.substring(arg.indexOf(':') + 1);
         }
         console.info(appId);
-        if('' != appId) {
+        if('' !== appId) {
             win.webContents.send('loadAppDirect', appId);
         }
     })
@@ -137,76 +138,10 @@ const createWindow = () => {
 }
 
 /**
- * 启动app
- */
-// ipcMain.on('loadApp', (e, appItem, devTag) => {
-//     // console.info('loadApp===%o', appItem);
-//     appItem = JSON.parse(appItem);
-//     if(appMap.has(appItem.id)) {
-//         appMap.get(appItem.id).show();
-//         console.info(appItem.id + ' ' + appItem.appJson.name + ' is already exists');
-//         return;
-//     }
-//     let options = {
-//         minWidth: 0,
-//         minHeight: 0,
-//         width: 800,
-//         height: 600,
-//         resizable: true,
-//         webPreferences: {
-//             // sandbox: false,     // 没有这个配置，加载不到 preload.js
-//             spellcheck: false,
-//             webSecurity: false,
-//             nodeIntegration: true
-//         }
-//     };
-//     if(undefined !== appItem.appJson.window) {
-//         options = cloneObj(appItem.appJson.window);
-//         if(undefined == options.webPreferences) {
-//             options.webPreferences = {};
-//         }
-//         options.webPreferences.sandbox = false;
-//         options.webPreferences.spellcheck = false;
-//         options.webPreferences.webSecurity = false;
-//     }
-//     if(undefined != options.icon) {
-//         options.icon = path.join(appItem.path, options.icon);
-//     } else {
-//         options.icon = path.join(appItem.path, appItem.appJson.logo);
-//     }
-//     if(undefined != options.webPreferences.preload) {
-//         options.webPreferences.preload = path.join(appItem.path, options.webPreferences.preload);
-//     }
-//     let appWin = new BrowserWindow(options);
-
-//     if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.main) {
-//         appItem.appJson.main = appItem.appJson.development.main;
-//     }
-//     if(appItem.appJson.main.indexOf('http') != -1) {
-//         appWin.loadURL(appItem.appJson.main);
-//     } else {
-//         appWin.loadFile(path.join(appItem.path, appItem.appJson.main));
-//     }
-//     appWin.setMenu(null);
-//     if(os === 'win') {
-//         appWin.setAppDetails({
-//             appId: appItem.id
-//         });
-//     }
-//     if('1' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.devTools) {
-//         appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
-//     }
-//     appMap.set(appItem.id, appWin);
-//     appWin.on('close', () => {
-//         appMap.delete(appItem.id);
-//     });
-// });
-
-/**
- * 给各个 app 生成启动快捷方式，并放到启动目录
+ * 给各个 app 生成启动快捷方式，并放到应用程序启动文件所在目录
  * 
- * windows启动目录：C:\Users\brood\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\
- * linux启动目录：~/.local/share/applications/
+ * windows：C:\Users\brood\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\
+ * linux：~/.local/share/applications/
  */
 ipcMain.on('generateStartupShortcut', (e, appItemList) => {
     if('win' === os) {
@@ -214,8 +149,7 @@ ipcMain.on('generateStartupShortcut', (e, appItemList) => {
     } else if('linux' === os) {
         generateShortcutLinux(appItemList);
     } else {
-        console.info('嘤嘤嘤~我不认识你~');
-        return;
+        console.info('嘤嘤嘤~我没有mac，我不知道怎么搞~');
     }
 });
 function generateShortcutWindows(appItemList) {
@@ -246,7 +180,11 @@ ipcMain.on('openAppJson', (event, options) => {
  * 使用外部浏览器打开url
  */
 ipcMain.on('open-url', (event, url) => {
-    shell.openExternal(url);
+    shell.openExternal(url).then(res => {
+        console.info('open external link:', res);
+    }).catch(error => {
+        console.error('Error opening external link:', error);
+    });
 });
 
 /**
@@ -256,17 +194,3 @@ ipcMain.on('open-url', (event, url) => {
 ipcMain.on('getPath', (event, name) => {
     event.returnValue = app.getPath(name);
 });
-
-
-function cloneObj(obj) {
-    if(obj == null) return null;
-    if (typeof obj !== 'object') {
-        return obj;
-    } else {
-        var newobj = obj.constructor === Array ? [] : {};
-        for (var i in obj) {
-            newobj[i] = typeof obj[i] === 'object' ? cloneObj(obj[i]) : obj[i]; 
-        }
-        return newobj;
-    }
-}

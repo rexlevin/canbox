@@ -1,5 +1,6 @@
 const { BrowserWindow, WebContentsView, session } = require('@electron/remote'); // 使用 @electron/remote 是renderer 中能使用 main 进程中的对象，减少ipc
 const path = require('path');
+const ObjectUtils = require('../utils/ObjectUtils');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
@@ -8,8 +9,8 @@ let appMap = new Map();
 
 module.exports = {
     /**
-     * 
-     * @param {JSON} appItem app应用信息
+     *
+     * @param {string} appItem app应用信息
      * @param {string} devTag app开发tag，dev：当前是开发app
      * @returns void
      */
@@ -36,7 +37,7 @@ module.exports = {
             }
         };
         if(undefined !== appItem.appJson.window) {
-            options = cloneObj(appItem.appJson.window);
+            options = ObjectUtils.clone(appItem.appJson.window);
             delete options.webPreferences;
             // options.webPreferences.sandbox = false;
             // options.webPreferences.spellcheck = false;
@@ -54,12 +55,12 @@ module.exports = {
         // 挂载 api 给 app
         // options.webPreferences.session = sess;
         wp.webPreferences.session = sess;
-        if(undefined != options.icon) {
+        if(undefined !== options.icon) {
             options.icon = path.join(appItem.path, options.icon);
         } else {
             options.icon = path.join(appItem.path, appItem.appJson.logo);
         }
-        if(undefined != appItem.appJson.window.webPreferences.preload) {
+        if(undefined !== appItem.appJson.window.webPreferences.preload) {
             // options.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
             wp.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
         }
@@ -67,10 +68,10 @@ module.exports = {
         let appView = new WebContentsView(wp);
         appWin.contentView.addChildView(appView);
 
-        if('dev' === devTag && undefined != appItem.appJson.development && appItem.appJson.development.main) {
+        if('dev' === devTag && undefined !== appItem.appJson.development && appItem.appJson.development.main) {
             appItem.appJson.main = appItem.appJson.development.main;
         }
-        if(appItem.appJson.main.indexOf('http') != -1) {
+        if(appItem.appJson.main.indexOf('http') !== -1) {
             // appWin.loadURL(appItem.appJson.main);
             appView.webContents.loadURL(appItem.appJson.main);
         } else {
@@ -123,18 +124,5 @@ module.exports = {
         });
 
         appMap.set(appItem.id, appWin);
-    }
-}
-
-function cloneObj(obj) {
-    if(obj == null) return null;
-    if (typeof obj !== 'object') {
-        return obj;
-    } else {
-        var newobj = obj.constructor === Array ? [] : {};
-        for (var i in obj) {
-            newobj[i] = typeof obj[i] === 'object' ? cloneObj(obj[i]) : obj[i]; 
-        }
-        return newobj;
     }
 }

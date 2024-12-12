@@ -4,7 +4,7 @@ const { ipcRenderer } = require("electron");
 
 /**
  * 通过 ipc 请求主线程中的 db-api，ipc 消息名为：msg-db
- * 
+ *
  * @param {String} type api操作方法
  * @param {JSON} param api操作请求数据，要求json格式
  * @returns api操作应答内容
@@ -18,6 +18,7 @@ const ipcSendSyncDB = (type, param) => {
         param,
         appId: window.appId
     });
+    console.info('returnValue in app.api==', returnValue);
     if (returnValue instanceof Error) throw returnValue;
     return JSON.parse(returnValue);
 };
@@ -32,12 +33,14 @@ const db = {
     put: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('put', param);
-            console.info('ret in app.api==', ret);
-            "0000" == ret.code ? resolve({_id: ret._id, _rev: ret._rev}) : reject(ret.msg);
+            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
         });
     },
     get: (param) => {
-        return ipcSendSyncDB('get', param);
+        return new Promise((resolve, reject) => {
+            const ret = ipcSendSyncDB('get', param);
+            "0000" === ret.code? resolve(ret.data) : reject(ret.msg);
+        })
     }
 }
 

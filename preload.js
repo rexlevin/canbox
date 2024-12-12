@@ -4,7 +4,8 @@ const Store  = require('electron-store');
 const path = require('path')
 const fs = require("fs");
 const uuid = require('uuid');
-const package = require('./package.json');
+const PackageJson = require('./package.json');
+const ObjectUtils = require('./modules/utils/ObjectUtils')
 
 const AppWindow = require('./modules/main/app.window');
 
@@ -26,7 +27,7 @@ const appsDevConfig = new Store({
 });
 
 window.addEventListener('DOMContentLoaded', () => {
-    document.title = package.description + ' - v' + package.version;
+    document.title = PackageJson.description + ' - v' + PackageJson.version;
 });
 
 ipcRenderer.on('loadAppDirect', (e, appId) => {
@@ -54,7 +55,7 @@ contextBridge.exposeInMainWorld(
                 // console.info('appItem==', appItem);
                 fs.readFile(path.join(appItem.path, 'README.md'), 'utf8', (err, content) => {
                     if(err) {
-                        let msg = '';
+                        let msg;
                         if(err.code === 'ENOENT') {
                             console.error('file note found: ', err.path);
                             msg = '文件不存在';
@@ -140,7 +141,7 @@ contextBridge.exposeInMainWorld(
                 // 向 main 发送同步消息
                 const filePath = ipcRenderer.sendSync('openAppJson', options);
                 console.info('filePath: ', filePath);
-                if('' == filePath) return;
+                if('' === filePath) return;
                 // 这里开始读取filePath的文件内容
                 let appJson = fs.readFileSync(filePath, 'utf-8');
                 appJson = JSON.parse(appJson);
@@ -150,7 +151,7 @@ contextBridge.exposeInMainWorld(
                     path: filePath.substring(0, filePath.lastIndexOf('app.json')),
                     name: appJson.name
                 };
-                let appDevConfigArr = undefined == appsDevConfig.get('default')
+                let appDevConfigArr = undefined === appsDevConfig.get('default')
                     ? [] : appsDevConfig.get('default');
                 console.info('appDevConfigArr', appDevConfigArr);
                 appDevConfigArr.unshift(appDevConfig);
@@ -173,7 +174,7 @@ function removeAppDevById(id) {
     let appDevInfoList = appsDevConfig.get('default');
     for(let appDevInfo of appDevInfoList) {
         console.info('appDevInfo', appDevInfo);
-        if(id != appDevInfo.id) continue;
+        if(id !== appDevInfo.id) continue;
         appDevInfoList.splice(appDevInfoList.indexOf(appDevInfo), 1);
         appsDevConfig.set('default', appDevInfoList);
     }
@@ -206,7 +207,7 @@ function getAppList() {
 
 /**
  * 获取当前开发中的app列表
- * @returns 
+ * @returns 获取一个json格式得app信息列表， 内容示例如下：
 {
     "wrong": [
         {
@@ -257,7 +258,7 @@ function getAppDevList() {
         // console.info('appDevInfo', appDevInfo);
         try {
             const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
-            tmpItem = cloneObj(appDevInfo);
+            tmpItem = ObjectUtils.clone(appDevInfo);
             tmpItem.appJson = appJson;
             appDevList.push(tmpItem);
         } catch(e) {
@@ -275,17 +276,4 @@ function getAppDevList() {
     // console.info('appDevInfoList===', appDevInfoList);
     // console.info('appDevList=====%o', appDevList);
     return {"correct": appDevList, "wrong": appDevFalseList};
-}
-
-function cloneObj(obj) {
-    if(obj == null) return null;
-    if (typeof obj !== 'object') {
-        return obj;
-    } else {
-        var newobj = obj.constructor === Array ? [] : {};
-        for (var i in obj) {
-            newobj[i] = typeof obj[i] === 'object' ? cloneObj(obj[i]) : obj[i]; 
-        }
-        return newobj;
-    }
 }

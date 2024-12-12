@@ -23,7 +23,7 @@
             "preload": "preload.js"
         }
     },
-    "platform": ["win32", "darwin", "linux"]
+    "platform": ["win32", "darwin", "linux"],
     "categories": ["development", "utility"],
     "tags": ["json", "jsonformatter"],
     "development": {
@@ -130,9 +130,9 @@ console.info(result);
 
 ```json
 {
-    code: '',
-    message: '',
-    data: object/array/string/int/boolean
+    "code": "",
+    "msg": "",
+    "data": "{object/array/string/int/boolean}"
 }
 ```
 
