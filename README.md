@@ -96,45 +96,114 @@ canbox 使用 [pouchdb](https://pouchdb.com/) 作为本地存储库
 
 pouchdb中文教程：[PouchDB 教程](https://www.w3ccoo.com/pouchdb/)
 
-### canbox.db.put(data)
+### canbox.db.put(doc)
+
+新增/修改数据文档
+
+想要修改文档，参数 `_rev` 使必须的
 
 - 参数
-  1. `data`
+  1. object
 - 应答 object
 
 ```javascript
-const result = canbox.db.put({
+canbox.db.put({
     _id: '0001',
     boxes: '[{title:"json01",content:"hello lizl6"},{title:"json02",content:"hello world"}]'
+}).then(result => {
+    console.info('result=', result);
+}).catch(error => {
+    console.error('error=', error);
 });
-console.info(result);
 /*
  * 数据入库成功
 {
-    "code": "0000",
-    "_id": "0001",
-    "_rev": "1-ba9a81377a1991e5a693659ec7e238c2"
+    id: "0001",
+    ok: true,
+    rev: "1-1e4db196bda552aeaf4c719d4f5f8e9e"
 }
  *
- * 数据入库失败
-{
-    "code": "9100",
-    "message": "Database operate, put error, Document update conflict"
-}
+ * 数据入库失败时，catch中的error信息：
+"Document update conflict"
 */
+```
+
+修改文档：
+
+```javascript
+canbox.db.put({
+    _id: '0001',
+    boxes: '[{title:"json01",content:"hello lizl6"},{title:"json02",content:"hello world"}]',
+    rev: "1-1e4db196bda552aeaf4c719d4f5f8e9e"
+}).then(result => {
+    console.info('result=', result);
+}).catch(error => {
+    console.error('error=', error);
+});
+/*
+ * 修改成功：
+{ ok: true, id: '0001', rev: '2-d43f99e5e956bc1da667a5208320b43b' }
+ */
 ```
 
 ### canbox.db.get(query)
 
-## 应答
+- 参数
+  1. `object`
+- 应答 object
 
-```json
+```javascript
+canbox.db.get({
+    _id: '0001'
+}).then(result => {
+    console.info('result:', result);
+}).catch(error => {
+    console.error('error=', error);
+});
+/*
+ * 成功获取数据，返回数据信息示例如下：
 {
-    "code": "",
-    "msg": "",
-    "data": "{object/array/string/int/boolean}"
+    "boxes": "[{title:\"json01\",content:\"hello lizl6\"},{title:\"json02\",content:\"hello world\"}]",
+    "createTime": "20241212173838",
+    "_id": "0001",
+    "_rev": "1-1e4db196bda552aeaf4c719d4f5f8e9e"
 }
+ *
+ * 没有获取到数据，catch中的error信息：
+"missing"
+*/
 ```
+
+### canbox.db.remove(doc)
+
+- 参数
+  1. object 需要包含 `_id` 和 `_rev`
+- 应答 object
+
+```javascript
+canbox.db.remove({
+    _id: '0001',
+    _rev: '1-1e4db196bda552aeaf4c719d4f5f8e9e'
+}).then(result => {
+    console.info('result:', result);
+}).catch(error => {
+    console.error('error=', error);
+});
+
+/**
+ * 删除成功，返回result如下：
+{
+    "ok": true,
+    "id": "0001",
+    "rev": "2-7c2e19010a1048fd631bcc1ced9bf07d"
+}
+ *
+ * 没有匹配到可删除的数据，catch中error信息：
+"missing"
+*/
+```
+
+# 应答码
 
 | code | 释义                                                 |
 | ---- | ---------------------------------------------------- |

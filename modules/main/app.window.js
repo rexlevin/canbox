@@ -48,7 +48,7 @@ module.exports = {
                 sandbox: false,     // 没有这个配置，加载不到 preload.js
                 spellcheck: false,
                 webSecurity: false,
-                nodeIntegration: true,
+                nodeIntegration: true,  // 使app的渲染进程能调用到preload中的自定义window属性
                 contextIsolation: false
             }
         }
@@ -60,7 +60,7 @@ module.exports = {
         } else {
             options.icon = path.join(appItem.path, appItem.appJson.logo);
         }
-        if(undefined !== appItem.appJson.window.webPreferences.preload) {
+        if(appItem.appJson.window.webPreferences.preload) {
             // options.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
             wp.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
         }

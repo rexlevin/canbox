@@ -31,13 +31,19 @@ module.exports = {
     bulkDocs: () => {},
     get: (appId, param, callback) => {
         const db = new DB({name: appId});
-        db.get(param._id, res => {
+        db.get(param, res => {
             db.close();
             callback(res);
         })
     },
     getAll: () => {},
-    remove: (id) => {},
+    remove: (appId, param, callback) => {
+        const db = new DB({name: appId});
+        db.remove(param, result => {
+            db.close(); // 关闭数据库连接
+            callback(result);
+        });
+    },
     destroy: (param) => {
         const db = new DB({name: param.appId});
         db.destroy();
@@ -61,16 +67,26 @@ class DB {
             callback({code: '0000', data: result});
         }).catch(error => {
             console.error('err: ', error);
-            callback({code: '9100', msg: 'Database operate, put error, ' + error.message});
+            callback({code: '9100', msg: error.message});
         });
     }
     bulkDocs() {}
-    get(id, callback) {
-        this.db.get(id).then(result => {
+    get(param, callback) {
+        this.db.get(param._id).then(result => {
             console.info('res: ', result);
             callback({code: '0000', data: result});
         }).catch(error => {
-            callback({code: '9100', msg: 'Database operate, put error, ' + error.message});});
+            console.error('error: ', error);
+            callback({code: '9100', msg: error.message});});
+    }
+    remove(param, callback) {
+        this.db.remove(param._id, param._rev).then(result => {
+            console.info('res: ', result);
+            callback({code: '0000', data: result});
+        }).catch(error => {
+            console.error('remove err: ', error);
+            callback({code: '9100', msg: error.message});
+        });
     }
     close() {
         this.db.close();

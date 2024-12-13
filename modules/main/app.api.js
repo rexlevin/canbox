@@ -18,7 +18,7 @@ const ipcSendSyncDB = (type, param) => {
         param,
         appId: window.appId
     });
-    console.info('returnValue in app.api==', returnValue);
+    // console.info('returnValue in app.api==', returnValue);
     if (returnValue instanceof Error) throw returnValue;
     return JSON.parse(returnValue);
 };
@@ -39,6 +39,12 @@ const db = {
     get: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('get', param);
+            "0000" === ret.code? resolve(ret.data) : reject(ret.msg);
+        })
+    },
+    remove: (param) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcSendSyncDB('remove', param);
             "0000" === ret.code? resolve(ret.data) : reject(ret.msg);
         })
     }
