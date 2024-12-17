@@ -6,8 +6,8 @@ const { ipcRenderer } = require("electron");
  * 通过 ipc 请求主线程中的 db-api，ipc 消息名为：msg-db
  *
  * @param {String} type api操作方法
- * @param {JSON} param api操作请求数据，要求json格式
- * @returns api操作应答内容
+ * @param {Object} param api操作请求数据，要求json格式
+ * @returns {Object} api操作应答内容
  */
 const ipcSendSyncDB = (type, param) => {
     if(!window.appId) {
@@ -24,15 +24,15 @@ const ipcSendSyncDB = (type, param) => {
 };
 
 const db = {
-    // init: () => {
-    //     ipcSendSyncDB('init', {});
-    // },
-    putSync: (param) => {
-        return ipcSendSyncDB('put', param);
-    },
     put: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('put', param);
+            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+        });
+    },
+    bulkDocs: (docs) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcSendSyncDB('bulkDocs', docs);
             "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
         });
     },
@@ -55,9 +55,5 @@ const db = {
  */
 window.canbox = {
     hooks: {},
-    hello: (name) => {
-        name = name || 'world'
-        console.info(`hello, ${name}`);
-    },
     db
 };

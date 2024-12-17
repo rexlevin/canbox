@@ -18,9 +18,10 @@ const nanoid = customAlphabet('1234567890abcdef', 10)
 module.exports = {
     put: (appId, param, callback) => {
         param._id = param._id || nanoid();
-        param.createTime = param.createTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
         if (param._rev) {
             param.updateTime = param.updateTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
+        } else {
+            param.createTime = param.createTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
         }
         const db = new DB({name: appId});
         db.put(param, (res) => {
@@ -28,7 +29,21 @@ module.exports = {
             callback(res);
         });
     },
-    bulkDocs: () => {},
+    bulkDocs: (appId, docs, callback) => {
+        for(let doc of docs) {
+            doc._id = doc._id || nanoid();
+            if (doc._rev) {
+                doc.updateTime = doc.updateTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
+            } else {
+                doc.createTime = doc.createTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
+            }
+        }
+        const db = new DB({name: appId});
+        db.bulkDocs(docs, res => {
+            db.close();
+            callback(res);
+        });
+    },
     get: (appId, param, callback) => {
         const db = new DB({name: appId});
         db.get(param, res => {
@@ -36,7 +51,6 @@ module.exports = {
             callback(res);
         })
     },
-    getAll: () => {},
     remove: (appId, param, callback) => {
         const db = new DB({name: appId});
         db.remove(param, result => {
@@ -70,7 +84,15 @@ class DB {
             callback({code: '9100', msg: error.message});
         });
     }
-    bulkDocs() {}
+    bulkDocs(docs, callback) {
+        this.db.bulkDocs(docs).then(result => {
+            console.info('bulkDocs res: ', result);
+            callback({code: '0000', msg: result});
+        }).catch(error => {
+            console.error('bulkDocs err: ', error);
+            callback({code: '9100', msg: error.message});
+        });
+    }
     get(param, callback) {
         this.db.get(param._id).then(result => {
             console.info('res: ', result);

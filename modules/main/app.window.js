@@ -10,8 +10,10 @@ let appMap = new Map();
 module.exports = {
     /**
      *
-     * @param {string} appItem app应用信息
-     * @param {string} devTag app开发tag，dev：当前是开发app
+     * @typedef {Object} appItem
+     *
+     * @param {String} appItem app应用信息
+     * @param {String} devTag app开发tag，dev：当前是开发app
      * @returns void
      */
     loadApp: (appItem, devTag) => {

@@ -100,6 +100,8 @@ pouchdb中文教程：[PouchDB 教程](https://www.w3ccoo.com/pouchdb/)
 
 新增/修改数据文档
 
+**创建文档时，如果没有\_id，canbox会生成一个\_id最后在应答内容中返回给app**
+
 想要修改文档，参数 `_rev` 使必须的
 
 - 参数
@@ -145,6 +147,47 @@ canbox.db.put({
 { ok: true, id: '0001', rev: '2-d43f99e5e956bc1da667a5208320b43b' }
  */
 ```
+
+### canbox.db.bulkDocs(docs)
+
+- 参数
+  1. `array` docs
+- 应答 `array`
+
+```javascript
+canbox.db.bulkDocs([{
+    _id: '001',
+    data: '这里是第一个节点的数据',
+},{
+    _id: '002',
+    data: '这里是第二个节点的数据',
+    _rev: '1-7b80fc50b6af7a905f368670429a757e'
+}]).then(result => {
+    console.info('result=', result);
+}).catch(error => {
+    console.error('error=', error);
+});
+/*
+ * 成功：
+[
+    {
+        "ok": true,
+        "id": "0001",
+        "rev": "1-84abc2a942007bee7cf55007cba56198"
+    },
+    {
+        "ok": true,
+        "id": "0002",
+        "rev": "2-7b80fc50b6af7a905f368670429a757e"
+    }
+]
+ *
+ * 失败的话：
+"Document update conflict"
+ */
+```
+
+
 
 ### canbox.db.get(query)
 

@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
-// const fs = require("fs");
+const fs = require("fs");
 // const { sandboxed } = require('process');
 
 const tray = require('./modules/main/tray');
@@ -152,8 +152,28 @@ ipcMain.on('generateStartupShortcut', (e, appItemList) => {
         console.info('嘤嘤嘤~我没有mac，我不知道怎么搞~');
     }
 });
+
+/**
+ * windows系统：生成app的快捷方式
+ * @param {Array<Object>} appItemList
+ */
 function generateShortcutWindows(appItemList) {
-    const appDataPath = path.join(app.getPath('appData'), '/Microsoft/Windows/Start Menu/Programs');
+    const appDataPath = path.join(app.getPath('appData'), '/Microsoft/Windows/Start Menu/Programs', 'canbox');
+    for(let appItem of appItemList) {
+        const exePath = path.join(appItem.path, appItem.exe);
+        const shortcutPath = path.join(appDataPath, `${appItem.name}.lnk`);
+        const shortcut = {
+            Target: exePath,
+            WorkingDirectory: appItem.path,
+            IconLocation: exePath,
+            Arguments: '',
+            Description: appItem.description,
+            Name: appItem.name,
+            Hotkey: ''
+        };
+        // 写入快捷方式
+        fs.writeFileSync(shortcutPath, JSON.stringify(shortcut));
+    }
 }
 function generateShortcutLinux(appItemList) {
     const appDataPath = path.join(app.getPath('home'), '/.local/share/applications');
