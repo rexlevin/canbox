@@ -10,7 +10,7 @@
                         <el-tab-pane label="app商店">app商店</el-tab-pane>
                         <el-tab-pane label="用户中心"><UserCenter/></el-tab-pane>
                         <el-tab-pane label="app开发"><AppDev/></el-tab-pane>
-                        <el-tab-pane label="设置">设置</el-tab-pane>
+                        <el-tab-pane label="设置"><Settings/></el-tab-pane>
                     </el-tabs>
                 </el-main>
             </el-container>
@@ -23,6 +23,7 @@
 import AppList from '@/components/AppList.vue';
 import UserCenter from '@/components/UserCenter.vue'
 import AppDev from '@/components/AppDev.vue';
+import Settings from '@/components/Settings.vue';
 </script>
 
 <style scoped>

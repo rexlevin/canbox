@@ -2,14 +2,47 @@
     "name": "canbox",
     "private": true,
     "version": "0.0.1",
-    "description": "Canbox - 您的百宝箱",
+    "description": "Canbox - Some Useful Apps",
     "main": "main.js",
     "scripts": {
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
         "start": "electron . --no-sandbox",
-        "startExt": "electron . --no-sandbox id:4fc5b570e0d0aecb11c1d5d3aa8e6ecd"
+        "startExt": "electron . --no-sandbox id:4fc5b570e0d0aecb11c1d5d3aa8e6ecd",
+        "build:win": "electron-builder -w",
+        "build:linux": "electron-builder -l"
+    },
+    "build": {
+        "appId": "com.github.lizl6.canbox",
+        "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+        "asar": true,
+        "files": [
+            "dist/**/*",
+            "modules/**/*",
+            "public/**/*"
+        ],
+        "directories": {
+            "output": "./build"
+        },
+        "linux": {
+            "target": [
+                "appimage"
+            ],
+            "icon": "./public/logo.png"
+        },
+        "win": {
+            "icon": "./public/logo.png",
+            "target": [
+                "nsis"
+            ]
+        },
+        "nsis": {
+            "oneClick": false,
+            "perMachine": false,
+            "allowElevation": true,
+            "shortcutName": "canbox"
+        }
     },
     "dependencies": {
         "@electron/remote": "^2.1.2",

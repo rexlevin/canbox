@@ -8,6 +8,7 @@ const PackageJson = require('./package.json');
 const ObjectUtils = require('./modules/utils/ObjectUtils')
 
 const AppWindow = require('./modules/main/app.window');
+const AppShortcut = require('./modules/main/app.shortcut')
 
 /*
  * userData目录：
@@ -42,8 +43,12 @@ ipcRenderer.on('loadAppDirect', (e, appId) => {
 contextBridge.exposeInMainWorld(
     "api", {
         generateShortcut: () => {
-            // console.info(getExtList());
-            ipcRenderer.send('generateStartupShortcut', JSON.stringify(getAppList()));
+            // console.info('222222222222222process.execPath==', process.execPath);
+            // ipcRenderer.send('generateStartupShortcut', JSON.stringify(getAppList()));
+            AppShortcut.generateStartupShortcut(JSON.stringify(getAppList()));
+        },
+        deleteShortcut: () => {
+            AppShortcut.deleteStartupShortcut();
         },
         openUrl: (url) => {
             console.info('url====', url);
@@ -73,9 +78,8 @@ contextBridge.exposeInMainWorld(
             all: (fn) => {
                 fn(getAppList());
             },
-            load: (appItem, devTag) => {
-                // ipcRenderer.send('loadApp', appDevItem);
-                AppWindow.loadApp(appItem, devTag);
+            load: (appItemStr, devTag) => {
+                AppWindow.loadApp(appItemStr, devTag);
             },
             clearData: (id, fn) => {
                 console.info('clearData');
@@ -181,6 +185,10 @@ function removeAppDevById(id) {
     console.info('%s===remove is success', id);
 }
 
+/**
+ * @property {Object} appInfo
+ * @returns {*[Object]} app信息集合
+ */
 function getAppList() {
     // console.log('appsConfig===%o', appsConfig.get('default'));
     // console.info(2, appsConfig.get('default'));
@@ -191,13 +199,14 @@ function getAppList() {
     for(let appInfo of appInfoList) {
         // /home/lizl6/.config/canbox/Users/apps.json
         // C:\Users\brood\AppData\Roaming\canbox\Users\apps.json
-    let defaultPath = appsConfig.path.substring(0, appsConfig.path.lastIndexOf('apps.json'));
+        let defaultPath = appsConfig.path.substring(0, appsConfig.path.lastIndexOf('apps.json'));
         const appJson = JSON.parse(fs.readFileSync(path.join(defaultPath, 'default', appInfo.id + '.asar/app.json'), 'utf8'));
         // const appJson = JSON.parse(fs.readFileSync(defaultPath + 'default/' + extInfo.id + '.asar/spp.json'));
         const app = {
-            'id': appInfo.id,
-            'appJson': appJson,
-            'path': path.join(defaultPath, 'default', appInfo.id + '.asar')
+            id: appInfo.id,
+            appJson: appJson,
+            logo: appInfo.logo,
+            path: path.join(defaultPath, 'default', appInfo.id + '.asar')
         };
         appList.push(app);
     }

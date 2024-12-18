@@ -138,48 +138,6 @@ const createWindow = () => {
 }
 
 /**
- * 给各个 app 生成启动快捷方式，并放到应用程序启动文件所在目录
- * 
- * windows：C:\Users\brood\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\
- * linux：~/.local/share/applications/
- */
-ipcMain.on('generateStartupShortcut', (e, appItemList) => {
-    if('win' === os) {
-        generateShortcutWindows(appItemList);
-    } else if('linux' === os) {
-        generateShortcutLinux(appItemList);
-    } else {
-        console.info('嘤嘤嘤~我没有mac，我不知道怎么搞~');
-    }
-});
-
-/**
- * windows系统：生成app的快捷方式
- * @param {Array<Object>} appItemList
- */
-function generateShortcutWindows(appItemList) {
-    const appDataPath = path.join(app.getPath('appData'), '/Microsoft/Windows/Start Menu/Programs', 'canbox');
-    for(let appItem of appItemList) {
-        const exePath = path.join(appItem.path, appItem.exe);
-        const shortcutPath = path.join(appDataPath, `${appItem.name}.lnk`);
-        const shortcut = {
-            Target: exePath,
-            WorkingDirectory: appItem.path,
-            IconLocation: exePath,
-            Arguments: '',
-            Description: appItem.description,
-            Name: appItem.name,
-            Hotkey: ''
-        };
-        // 写入快捷方式
-        fs.writeFileSync(shortcutPath, JSON.stringify(shortcut));
-    }
-}
-function generateShortcutLinux(appItemList) {
-    const appDataPath = path.join(app.getPath('home'), '/.local/share/applications');
-}
-
-/**
  * 打开文件选择窗口，读取文件本地path
  * dialog只能在主进程调用，所以使用ipc模块在main.js中打开dialog
  * 该消息是个同步消息，所以使用 event.returnValue 进行应答
@@ -210,6 +168,9 @@ ipcMain.on('open-url', (event, url) => {
 /**
  * 根据 name 获取路径
  * 参见：https://www.electronjs.org/zh/docs/latest/api/app#appgetpathname
+ *
+ * userData: C:\Users\brood\AppData\Roaming\canbox
+ * appData: C:\Users\brood\AppData\Roaming
  */
 ipcMain.on('getPath', (event, name) => {
     event.returnValue = app.getPath(name);

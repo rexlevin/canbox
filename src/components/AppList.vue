@@ -1,7 +1,7 @@
 <template>
     <el-row v-for="(item, index) in appList">
-        <el-col :span="12" v-if="index % 2 == 0"><AppItem :appItem="appList[index]"/></el-col>
-        <el-col :span="12" v-if="index % 2 == 0"><AppItem :appItem="appList[index + 1]"/></el-col>
+        <el-col :span="12" v-if="index % 2 === 0"><AppItem :appItem="appList[index]"/></el-col>
+        <el-col :span="12" v-if="index % 2 === 0"><AppItem :appItem="appList[index + 1]"/></el-col>
     </el-row>
 </template>
 

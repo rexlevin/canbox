@@ -1,3 +1,20 @@
+# 打包
+
+安装全局包 electron-builder
+
+```bash
+npm i -g electron-builder
+```
+
+打包：
+
+```bash
+cd canbox
+npm run build:win
+```
+
+
+
 # 插件开发
 
 ## app.json

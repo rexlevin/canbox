@@ -10,15 +10,13 @@ let appMap = new Map();
 module.exports = {
     /**
      *
-     * @typedef {Object} appItem
-     *
-     * @param {String} appItem app应用信息
+     * @param {String} appItemStr app应用信息
      * @param {String} devTag app开发tag，dev：当前是开发app
      * @returns void
      */
-    loadApp: (appItem, devTag) => {
-        // console.info('loadApp===%o', appItem);
-        appItem = JSON.parse(appItem);
+    loadApp: (appItemStr, devTag) => {
+        // console.info('loadApp===%o', appItemJsonStr);
+        let appItem = JSON.parse(appItemStr);
         if(appMap.has(appItem.id)) {
             appMap.get(appItem.id).show();
             console.info(appItem.id + ' ' + appItem.appJson.name + ' is already exists');
