@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, shell } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 // const { BrowserWindow } = require('@electron/remote');
 const Store  = require('electron-store');
 const path = require('path')
@@ -15,7 +15,7 @@ const AppShortcut = require('./modules/main/app.shortcut')
  * windows：~\AppData\Roaming\canbox\
  * linux: ~/config/canbox/
  */
-const userDataPath = ipcRenderer.sendSync('getPath', 'userData');
+const USER_DATA_PATH = ipcRenderer.sendSync('getPath', 'userData');
 
 const appsConfig = new Store({
     cwd: 'Users',
@@ -84,7 +84,7 @@ contextBridge.exposeInMainWorld(
             clearData: (id, fn) => {
                 console.info('clearData');
 
-                const appData = path.join( userDataPath, 'Users', 'data', id );
+                const appData = path.join( USER_DATA_PATH, 'Users', 'data', id );
                 fs.rmdir(appData, { recursive: true }, (error) => {
                     if (error) {
                         console.error(`Failed to remove directory: ${error}`);
@@ -175,7 +175,7 @@ function removeAppDevById(id) {
     if(undefined === appsDevConfig.get('default')) {
         return;
     }
-    let appDevInfoList = appsDevConfig.get('default');
+    const /*Array<Object>*/ appDevInfoList = appsDevConfig.get('default');
     for(let appDevInfo of appDevInfoList) {
         console.info('appDevInfo', appDevInfo);
         if(id !== appDevInfo.id) continue;
@@ -186,31 +186,29 @@ function removeAppDevById(id) {
 }
 
 /**
- * @property {Object} appInfo
  * @returns {*[Object]} app信息集合
  */
 function getAppList() {
-    // console.log('appsConfig===%o', appsConfig.get('default'));
-    // console.info(2, appsConfig.get('default'));
+    // console.log('appsConfig.get('default'):', appsConfig.get('default'));
     if(undefined === appsConfig.get('default')) {
         return [];
     }
-    let appInfoList = appsConfig.get('default'), appList = [];
-    for(let appInfo of appInfoList) {
+    const /*Array<Types.AppItemType>*/ appInfoList = appsConfig.get('default');
+    let appList = [];
+    for(const appInfo of appInfoList) {
         // /home/lizl6/.config/canbox/Users/apps.json
         // C:\Users\brood\AppData\Roaming\canbox\Users\apps.json
-        let defaultPath = appsConfig.path.substring(0, appsConfig.path.lastIndexOf('apps.json'));
-        const appJson = JSON.parse(fs.readFileSync(path.join(defaultPath, 'default', appInfo.id + '.asar/app.json'), 'utf8'));
-        // const appJson = JSON.parse(fs.readFileSync(defaultPath + 'default/' + extInfo.id + '.asar/spp.json'));
+        // 读取app.json文件内容
+        const appJson = JSON.parse(fs.readFileSync(path.join(USER_DATA_PATH, 'Users', 'default', appInfo.id + '.asar/app.json'), 'utf8'));
         const app = {
             id: appInfo.id,
             appJson: appJson,
             logo: appInfo.logo,
-            path: path.join(defaultPath, 'default', appInfo.id + '.asar')
+            path: path.join(USER_DATA_PATH, 'Users', 'default', appInfo.id + '.asar')
         };
         appList.push(app);
     }
-    // console.info('appList=====%o', appList);
+    console.info('appList=====%o', appList);
     return appList;
 }
 
@@ -259,7 +257,7 @@ function getAppDevList() {
     if(undefined === appsDevConfig.get('default')) {
         return [];
     }
-    let appDevInfoList = appsDevConfig.get('default')
+    let /*Array<Types.AppItemType>*/ appDevInfoList = appsDevConfig.get('default')
         , appDevList = []
         , appDevFalseList = []
         , tmpItem = {};
@@ -285,4 +283,36 @@ function getAppDevList() {
     // console.info('appDevInfoList===', appDevInfoList);
     // console.info('appDevList=====%o', appDevList);
     return {"correct": appDevList, "wrong": appDevFalseList};
+}
+
+Types = function() {}
+Types.AppItemType = function () {
+    return {
+        "name": "剪贴板",
+        "id": "com.gitee.dev001.clipboard",
+        "description": "一个好用的剪贴板",
+        "author": "dev001",
+        "homepage": "https://gitee.com/dev001/clipboard",
+        "main": "index.html",
+        "logo": "logo.png",
+        "version": "0.0.6",
+        "window": {
+            "minWidth": 800,
+            "minHeight": 400,
+            "width": 900,
+            "height": 500,
+            "icon": "logo.png",
+            "resizable": false,
+            "webPreferences": {
+                "preload": "preload.js"
+            }
+        },
+        "platform": ["win32", "darwin", "linux"],
+        "categories": ["development", "utility"],
+        "tags": ["json", "jsonformatter"],
+        "development": {
+            "main": "index.html",
+            "devTools": "detach"
+        }
+    };
 }
