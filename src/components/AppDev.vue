@@ -36,7 +36,7 @@ function load() {
     // appDevList.value = null;
     window.api.appDev.all((result) => {
         appDevList.value = result.correct;
-        if(result.wrong.length > 0) {
+        if(result.wrong && result.wrong.length > 0) {
             warningContent.value = `以下 app.json 存在问题，已经移除： \n ${result.wrong.map(item => item.name).join('\n')}`;
             centerDialogVisible.value = true;
         }
