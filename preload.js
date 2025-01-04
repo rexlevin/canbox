@@ -8,7 +8,8 @@ const PackageJson = require('./package.json');
 const ObjectUtils = require('./modules/utils/ObjectUtils')
 
 const AppWindow = require('./modules/main/app.window');
-const AppShortcut = require('./modules/main/app.shortcut')
+const AppShortcut = require('./modules/main/app.shortcut');
+const UserInfo = require('./modules/main/app.user');
 
 /*
  * userData目录：
@@ -17,12 +18,12 @@ const AppShortcut = require('./modules/main/app.shortcut')
  */
 const USER_DATA_PATH = ipcRenderer.sendSync('getPath', 'userData');
 
-const appsConfig = new Store({
+const AppsConfig = new Store({
     cwd: 'Users',
     name: 'apps'
 });
 
-const appsDevConfig = new Store({
+const AppsDevConfig = new Store({
     cwd: 'Users',
     name: 'appsDev'
 });
@@ -42,6 +43,10 @@ ipcRenderer.on('loadAppDirect', (e, appId) => {
 
 contextBridge.exposeInMainWorld(
     "api", {
+        getUserInfo: () => {
+            console.info('UserInfo.getUserInfo==', UserInfo.info());
+            return UserInfo.info();
+        },
         generateShortcut: () => {
             // console.info('222222222222222process.execPath==', process.execPath);
             // ipcRenderer.send('generateStartupShortcut', JSON.stringify(getAppList()));
@@ -155,11 +160,11 @@ contextBridge.exposeInMainWorld(
                     path: filePath.substring(0, filePath.lastIndexOf('app.json')),
                     name: appJson.name
                 };
-                let appDevConfigArr = undefined === appsDevConfig.get('default')
-                    ? [] : appsDevConfig.get('default');
+                let appDevConfigArr = undefined === AppsDevConfig.get('default')
+                    ? [] : AppsDevConfig.get('default');
                 console.info('appDevConfigArr', appDevConfigArr);
                 appDevConfigArr.unshift(appDevConfig);
-                appsDevConfig.set('default', appDevConfigArr);
+                AppsDevConfig.set('default', appDevConfigArr);
                 fn(getAppDevList());
             },
             remove: (id, fn) => {
@@ -172,15 +177,15 @@ contextBridge.exposeInMainWorld(
 );
 
 function removeAppDevById(id) {
-    if(undefined === appsDevConfig.get('default')) {
+    if(undefined === AppsDevConfig.get('default')) {
         return;
     }
-    const /*Array<Object>*/ appDevInfoList = appsDevConfig.get('default');
+    const /*Array<Object>*/ appDevInfoList = AppsDevConfig.get('default');
     for(let appDevInfo of appDevInfoList) {
         console.info('appDevInfo', appDevInfo);
         if(id !== appDevInfo.id) continue;
         appDevInfoList.splice(appDevInfoList.indexOf(appDevInfo), 1);
-        appsDevConfig.set('default', appDevInfoList);
+        AppsDevConfig.set('default', appDevInfoList);
     }
     console.info('%s===remove is success', id);
 }
@@ -190,10 +195,10 @@ function removeAppDevById(id) {
  */
 function getAppList() {
     // console.log('appsConfig.get('default'):', appsConfig.get('default'));
-    if(undefined === appsConfig.get('default')) {
+    if(undefined === AppsConfig.get('default')) {
         return [];
     }
-    const /*Array<Types.AppItemType>*/ appInfoList = appsConfig.get('default');
+    const /*Array<Types.AppItemType>*/ appInfoList = AppsConfig.get('default');
     let appList = [];
     for(const appInfo of appInfoList) {
         // /home/lizl6/.config/canbox/Users/apps.json
@@ -254,10 +259,10 @@ function getAppList() {
 function getAppDevList() {
     // console.info(1,appsDevConfig);
     // console.info('getAppDevList===', appsDevConfig.get('default'));
-    if(undefined === appsDevConfig.get('default')) {
+    if(undefined === AppsDevConfig.get('default')) {
         return [];
     }
-    let /*Array<Types.AppItemType>*/ appDevInfoList = appsDevConfig.get('default')
+    let /*Array<Types.AppItemType>*/ appDevInfoList = AppsDevConfig.get('default')
         , appDevList = []
         , appDevFalseList = []
         , tmpItem = {};
@@ -278,7 +283,7 @@ function getAppDevList() {
             console.info(falseItem);
             appDevInfoList = appDevInfoList.filter(item => item.id !== falseItem.id);
         }
-        appsDevConfig.set('default', appDevInfoList);
+        AppsDevConfig.set('default', appDevInfoList);
     }
     // console.info('appDevInfoList===', appDevInfoList);
     // console.info('appDevList=====%o', appDevList);
