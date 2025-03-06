@@ -1,19 +1,13 @@
 # 打包
 
-安装全局包 electron-builder
-
 ```bash
+# 安装 electron-builder
 npm i -g electron-builder
-```
 
-打包：
-
-```bash
+# 打包：
 cd canbox
 npm run build:win
 ```
-
-
 
 # 插件开发
 
@@ -203,8 +197,6 @@ canbox.db.bulkDocs([{
 "Document update conflict"
  */
 ```
-
-
 
 ### canbox.db.get(query)
 

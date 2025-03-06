@@ -9,7 +9,7 @@ const ObjectUtils = require('./modules/utils/ObjectUtils')
 
 const AppWindow = require('./modules/main/app.window');
 const AppShortcut = require('./modules/main/app.shortcut');
-const UserInfo = require('./modules/main/app.user');
+const AppRepo = require('./modules/main/app.repo');
 
 /*
  * userData目录：
@@ -43,8 +43,8 @@ ipcRenderer.on('loadAppDirect', (e, appId) => {
 
 contextBridge.exposeInMainWorld(
     "api", {
-        getUserInfo: () => {
-            console.info('UserInfo.getUserInfo==', UserInfo.info());
+        getRepoInfo: () => {
+            console.info('AppRepo.info==', AppRepo.info());
             return UserInfo.info();
         },
         generateShortcut: () => {

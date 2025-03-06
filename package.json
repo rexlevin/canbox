@@ -4,6 +4,9 @@
     "version": "0.0.1",
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
+    "engines": {
+        "node": ">=22.0.0"
+    },
     "scripts": {
         "dev": "vite",
         "build": "vite build",

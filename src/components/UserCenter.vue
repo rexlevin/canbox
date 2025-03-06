@@ -6,9 +6,9 @@
 import { onBeforeMount } from 'vue';
 
 onBeforeMount(() => {
-    // Check if the user is authenticated
-    const user = window.api.getUserInfo();
-    if (!user) {
+    const repoInfo = window.api.getRepoInfo();
+    console.info(repoInfo);
+    if (!repoInfo) {
         // Redirect to the login page if not authenticated
         // this.$router.push('/login');
     }
