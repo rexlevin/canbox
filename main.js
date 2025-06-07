@@ -105,7 +105,7 @@ const createWindow = () => {
     win = new BrowserWindow(config);
 
     // win.loadURL(path.join('file://', __dirname, './dist/index.html'));
-    win.loadURL('http://localhost:5173/');
+    win.loadURL('http://localhost:12333/');
     
     // win.setMenu(Menu.buildFromTemplate(menuTemplate));
     win.setMenu(null);
@@ -117,7 +117,7 @@ const createWindow = () => {
     }
 
     // 打开开发者窗口
-    // win.webContents.openDevTools({mode: 'detach'});
+    win.webContents.openDevTools({mode: 'detach'});
 
     win.on('ready-to-show', () => {
         win.show(); // 注释掉这行，即启动最小化到tray
@@ -174,4 +174,12 @@ ipcMain.on('open-url', (event, url) => {
  */
 ipcMain.on('getPath', (event, name) => {
     event.returnValue = app.getPath(name);
+});
+
+ipcMain.on('reload', () => {
+    win.reload();
+});
+ipcMain.on('openDevTools', () => {
+    if(win.webContents.isDevToolsOpened()) win.webContents.closeDevTools();
+    else win.webContents.openDevTools({mode: 'detach'});
 });

@@ -43,9 +43,15 @@ ipcRenderer.on('loadAppDirect', (e, appId) => {
 
 contextBridge.exposeInMainWorld(
     "api", {
+        reload: () => {
+            ipcRenderer.send('reload');
+        },
+        openDevTools: () => {
+            ipcRenderer.send('openDevTools');
+        },
         getRepoInfo: () => {
             console.info('AppRepo.info==', AppRepo.info());
-            return UserInfo.info();
+            return AppRepo.info();
         },
         generateShortcut: () => {
             // console.info('222222222222222process.execPath==', process.execPath);
