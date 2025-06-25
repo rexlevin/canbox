@@ -85,10 +85,10 @@ app.on('window-all-closed', () => {
 
 const createWindow = () => {
     const config = {
-        minWidth: 700,
-        minHeight: 450,
-        width: 700,
-        height: 450,
+        minWidth: 800,
+        minHeight: 550,
+        width: 800,
+        height: 550,
         resizable: false,
         icon: path.join(__dirname, 'logo.png'),
         webPreferences: {
