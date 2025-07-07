@@ -7,7 +7,7 @@
                         <el-tab-pane label="我的app" name="myApps">
                             <AppList @switchTab="changeActiveTab"/>
                         </el-tab-pane>
-                        <el-tab-pane label="app商店" name="appStore">app商店</el-tab-pane>
+                        <el-tab-pane label="app仓库" name="appRepos"><AppRepos /></el-tab-pane>
                         <el-tab-pane label="用户中心"><UserCenter/></el-tab-pane>
                         <el-tab-pane label="app开发" name="devApp"><AppDev/></el-tab-pane>
                         <el-tab-pane label="设置"><Settings/></el-tab-pane>
@@ -22,6 +22,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue';
 import AppList from '@/components/AppList.vue';
+import AppRepos from '@/components/AppRepos.vue';
 import UserCenter from '@/components/UserCenter.vue'
 import AppDev from '@/components/AppDev.vue';
 import Settings from '@/components/Settings.vue';
