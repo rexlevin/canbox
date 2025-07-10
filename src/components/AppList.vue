@@ -7,7 +7,7 @@
     </div>
     <div v-show="appList.length == 0">
         here is nothing<br />
-        click <a href="javascript:void(0);" @click="toAnotherTab('appStore')">here</a> to get apps<br />
+        click <a href="javascript:void(0);" @click="toAnotherTab('appRepos')">here</a> to get apps<br />
         or to <a href="javascript:void(0);" @click.prevent="toAnotherTab('devApp')">develop a app</a>
     </div>
 </template>

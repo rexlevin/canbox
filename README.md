@@ -34,7 +34,7 @@ npm run build:win
             "preload": "preload.js"
         }
     },
-    "platform": ["win32", "darwin", "linux"],
+    "platform": ["windows", "darwin", "linux"],
     "categories": ["development", "utility"],
     "tags": ["json", "jsonformatter"],
     "development": {
@@ -42,30 +42,22 @@ npm run build:win
         "devTools": "detach"
     }
 }
-
 ```
 
-### id
+### 字段说明
 
-app 应用标识
+| 字段        | 父节点      |  类型  | 约束 | 说明                                                                                                                                                    |
+| ----------- | ----------- | :----: | :--: | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id          |             | string |  1  | app应用标识<br />1. 多段组成，如：`com.gitee.dev001.clipboard` <br />2. 每段都由小写字母和数字组成，且小写字母开头<br />3. 仅最后一段可以使用 - 符号 |
+| window      |             | object |  1  | 同 Electron 中 BrowserWindow 参数                                                                                                                       |
+| platform    |             | array |  *  | windows, darwin, linux<br />插件应用支持的平台，此为 `可选项`，默认为全平台支持                                                                       |
+| categories  |             | array |  *  | app分类，最多只取前两个                                                                                                                                 |
+| tags        |             | array |  *  | app标签，用于app商城内搜索使用                                                                                                                          |
+| development |             | object |  ?  | 开发环境配置                                                                                                                                            |
+| main        | development | string |  ?  | 开发环境下 `development.main` 配置会覆盖 `main`                                                                                                     |
+| devTools    | development | string |  ?  | 打开开发者工具，left, right, bottom, undocked, detach                                                                                                   |
 
-1. 使用多段标识，如： `com.gitee.dev001.clipboard`
-2. 数字与字母构成，字母全小写
-3. 仅最后一段可以使用 `-` 符号
-
-### window
-
-同 Electron 中 BrowserWindow 参数
-
-### platform
-
-win32, darwin, linux
-
-插件应用支持的平台，此为 `可选项`，默认为全平台支持
-
-### categories
-
-app分类，最多只取前两个
+#### categories
 
 | key         | 说明          |
 | ----------- | ------------- |
@@ -78,20 +70,6 @@ app分类，最多只取前两个
 | development | 开发者工具app |
 | graphics    | 图形应用app   |
 | network     | 网络应用程序  |
-
-### tags
-
-非必填
-
-app标签，用于app商城内搜索使用
-
-### development
-
-开发环境配置
-
-main：开发环境下 `development.main` 配置会覆盖 `main`
-
-devTools：打开开发者工具，left, right, bottom, undocked, detach
 
 # README.md
 
@@ -260,8 +238,8 @@ canbox.db.remove({
 | code | 释义                                                 |
 | ---- | ---------------------------------------------------- |
 | 0000 | 成功                                                 |
-| 9100 | 数据操作异常、不成功                                 |
-| 9200 | 文件/文件夹操作异常、不成功                          |
+| 9100 | 数据操作异常、失败                                   |
+| 9200 | 文件/文件夹操作异常、失败                            |
 | 9201 | 文件夹删除失败                                       |
 | 9202 | 文件读取失败，可能是因为文件不存在，具体查看 message |
 
