@@ -15,7 +15,7 @@ module.exports = {
      * @returns void
      */
     loadApp: (appItemStr, devTag) => {
-        // console.info('loadApp===%o', appItemJsonStr);
+        // console.info('loadApp===%o', appItemStr);
         let appItem = JSON.parse(appItemStr);
         if(appMap.has(appItem.id)) {
             appMap.get(appItem.id).show();
