@@ -15,15 +15,27 @@ module.exports = {
      * @returns void
      */
     loadApp: (appItemStr, devTag) => {
-        // console.info('loadApp===%o', appItemStr);
-        let appItem = JSON.parse(appItemStr);
+        console.info('loadApp===%o', appItemStr);
+        let appItem;
+        try {
+            appItem = JSON.parse(appItemStr);
+        } catch(e) {
+            console.error('Failed to parse app item:', e);
+            return;
+        }
+
         if(appMap.has(appItem.id)) {
-            appMap.get(appItem.id).show();
+            const win = appMap.get(appItem.id);
+            if (!win.isDestroyed()) {
+                win.show();
+            }
             console.info(appItem.id + ' ' + appItem.appJson.name + ' is already exists');
             return;
         }
+
         const sess = session.fromPartition(appItem.id);
         sess.setPreloads([path.join(__dirname, 'app.api.js')]);
+
         let options = {
             minWidth: 0,
             minHeight: 0,
@@ -33,66 +45,63 @@ module.exports = {
             webPreferences: {
                 sandbox: false,     // 没有这个配置，加载不到 preload.js
                 spellcheck: false,
-                webSecurity: false
+                webSecurity: false,
+                nodeIntegration: true,  // 使app的渲染进程能调用到preload中的自定义window属性
+                contextIsolation: false,
+                session: sess
             }
         };
-        if(undefined !== appItem.appJson.window) {
-            options = ObjectUtils.clone(appItem.appJson.window);
-            delete options.webPreferences;
-            // options.webPreferences.sandbox = false;
-            // options.webPreferences.spellcheck = false;
-            // options.webPreferences.webSecurity = false;
-        }
-        let wp = {
-            webPreferences: {
+
+        if(appItem.appJson.window) {
+            Object.assign(options, ObjectUtils.clone(appItem.appJson.window));
+            // options = ObjectUtils.clone(appItem.appJson.window);
+            
+            if(options.icon) {
+                options.icon = path.resolve(appItem.path, options.icon);
+            } else {
+                options.icon = path.resolve(appItem.path, appItem.appJson.logo);
+            }
+
+            options.webPreferences = {
                 sandbox: false,     // 没有这个配置，加载不到 preload.js
                 spellcheck: false,
                 webSecurity: false,
                 nodeIntegration: true,  // 使app的渲染进程能调用到preload中的自定义window属性
-                contextIsolation: false
-            }
+                contextIsolation: false,
+                session: sess
+            };
         }
-        // 挂载 api 给 app
-        // options.webPreferences.session = sess;
-        wp.webPreferences.session = sess;
-        if(undefined !== options.icon) {
-            options.icon = path.join(appItem.path, options.icon);
-        } else {
-            options.icon = path.join(appItem.path, appItem.appJson.logo);
+        if(appItem.appJson.window?.webPreferences?.preload) {
+            options.webPreferences.preload = path.resolve(appItem.path, appItem.appJson.window.webPreferences.preload);
         }
-        if(appItem.appJson.window.webPreferences.preload) {
-            // options.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
-            wp.webPreferences.preload = path.join(appItem.path, appItem.appJson.window.webPreferences.preload);
-        }
-        let appWin = new BrowserWindow(options);
-        let appView = new WebContentsView(wp);
-        appWin.contentView.addChildView(appView);
+        console.info('options:', options);
+        console.info('options:', JSON.stringify(options));
 
-        if('dev' === devTag && undefined !== appItem.appJson.development && appItem.appJson.development.main) {
+        let appWin = new BrowserWindow(options);
+        // appWin.webContents.session = sess;
+
+        if('dev' === devTag && appItem.appJson.development?.main) {
             appItem.appJson.main = appItem.appJson.development.main;
         }
-        if(appItem.appJson.main.indexOf('http') !== -1) {
-            // appWin.loadURL(appItem.appJson.main);
-            appView.webContents.loadURL(appItem.appJson.main);
-        } else {
-            // appWin.loadFile(path.join(appItem.path, appItem.appJson.main));
-            appView.webContents.loadURL(path.join(appItem.path, appItem.appJson.main));
-        }
-        appView.setBounds({
-            x: 0, y: 0,
-            width: options.width,
-            height: options.height
+
+        const loadUrl = appItem.appJson.main.indexOf('http') !== -1 
+                ? appItem.appJson.main 
+                : `file://${path.resolve(appItem.path, appItem.appJson.main)}`;
+        appWin.loadURL(loadUrl).catch(err => {
+            console.error('Failed to load URL:', err);
         });
+
         appWin.setMenu(null);
         if(os === 'win') {
             appWin.setAppDetails({
                 appId: appItem.id
             });
         }
-        if('dev' === devTag && appItem.appJson.development && appItem.appJson.development.devTools) {
-            appView.webContents.openDevTools({mode: appItem.appJson.development.devTools});
+
+        if('dev' === devTag && appItem.appJson.development?.devTools) {
+            appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
         }
-        
+
         const executeHook = (appId) => {
             console.info('====', appId);
             const js = `
@@ -102,24 +111,23 @@ module.exports = {
                     console.error('error', e);
                 }
             `;
-            appView.webContents.executeJavaScript(js);
+            appWin.webContents.executeJavaScript(js);
         };
 
-        appView.webContents.once('did-finish-load', ()=>{
+        appWin.webContents.once('did-finish-load', ()=>{
             executeHook(appItem.id);
         });
-        // appWin.on('ready-to-show', () => {
-        //     executeHook(appItem.id);
-        // });
 
         appWin.on('close', () => {
             console.info(`now will close app: ${appItem.id}`);
-            appView.webContents.closeDevTools();
-            // appView = undefined;
-            // appWin = undefined;
-            if(appWin.isDestroyed()) {
-                console.info('appWin is destroyed');
+            if(!appWin.isDestroyed()) {
+                try {
+                    appWin.webContents.closeDevTools();
+                } catch(e) {
+                    // console.error('Failed to close devtools:', e);
+                }
             }
+            console.info('appWin is destroyed');
             appMap.delete(appItem.id);
         });
 
