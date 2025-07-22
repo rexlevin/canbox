@@ -4,7 +4,10 @@ const ObjectUtils = require('../utils/ObjectUtils');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
-// 设置一个 map 集合，用于存放所有打开的 app window
+/**
+ * 设置一个 map 集合，用于存放所有打开的 app window
+ * 键是应用id，值是窗口对象
+ */
 let appMap = new Map();
 
 module.exports = {
@@ -24,6 +27,7 @@ module.exports = {
             return;
         }
 
+        // 如果app已存在并且未被销毁，则显示app窗口
         if(appMap.has(appItem.id)) {
             const win = appMap.get(appItem.id);
             if (!win.isDestroyed()) {
@@ -33,9 +37,11 @@ module.exports = {
             return;
         }
 
+        // 设置会话和预加载脚本
         const sess = session.fromPartition(appItem.id);
         sess.setPreloads([path.join(__dirname, 'app.api.js')]);
 
+        // app窗口选项
         let options = {
             minWidth: 0,
             minHeight: 0,
@@ -52,6 +58,7 @@ module.exports = {
             }
         };
 
+        // 合并自定义窗口选项：如果app.json中配置了窗口选项，则合并到options中
         if(appItem.appJson.window) {
             Object.assign(options, ObjectUtils.clone(appItem.appJson.window));
             // options = ObjectUtils.clone(appItem.appJson.window);
@@ -77,13 +84,14 @@ module.exports = {
         console.info('options:', options);
         console.info('options:', JSON.stringify(options));
 
-        let appWin = new BrowserWindow(options);
-        // appWin.webContents.session = sess;
-
+        // 合并开发选项：如果当前是开发app，则合并开发选项
         if('dev' === devTag && appItem.appJson.development?.main) {
             appItem.appJson.main = appItem.appJson.development.main;
         }
 
+        // 创建窗口
+        let appWin = new BrowserWindow(options);
+        // appWin.webContents.session = sess;
         const loadUrl = appItem.appJson.main.indexOf('http') !== -1 
                 ? appItem.appJson.main 
                 : `file://${path.resolve(appItem.path, appItem.appJson.main)}`;
@@ -98,10 +106,12 @@ module.exports = {
             });
         }
 
+        // 如果是开发模式且配置了开发者工具，则打开开发者工具
         if('dev' === devTag && appItem.appJson.development?.devTools) {
             appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
         }
 
+        // 执行狗子函数，将app id注入到渲染进程中
         const executeHook = (appId) => {
             console.info('====', appId);
             const js = `
@@ -113,11 +123,11 @@ module.exports = {
             `;
             appWin.webContents.executeJavaScript(js);
         };
-
         appWin.webContents.once('did-finish-load', ()=>{
             executeHook(appItem.id);
         });
 
+        // 监听窗口关闭事件：销毁窗口，并从appMap中删除
         appWin.on('close', () => {
             console.info(`now will close app: ${appItem.id}`);
             if(!appWin.isDestroyed()) {
@@ -131,6 +141,7 @@ module.exports = {
             appMap.delete(appItem.id);
         });
 
+        // 将app窗口添加到appMap中
         appMap.set(appItem.id, appWin);
     }
 }
