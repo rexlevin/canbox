@@ -111,7 +111,7 @@ module.exports = {
             appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
         }
 
-        // 执行狗子函数，将app id注入到渲染进程中
+        // 执行钩子函数，将appId注入到渲染进程中
         const executeHook = (appId) => {
             console.info('====', appId);
             const js = `
