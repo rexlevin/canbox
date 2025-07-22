@@ -4,7 +4,7 @@ const PouchDB = require('pouchdb');
 const { customAlphabet } = require('nanoid-cjs');
 const DateFormat = require('../../utils/DateFormat');
 
-/*
+/**
  * userData目录：
  * windows：~\AppData\Roaming\canbox\
  * linux: ~/config/canbox/
