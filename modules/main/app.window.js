@@ -32,9 +32,9 @@ module.exports = {
             const win = appMap.get(appItem.id);
             if (!win.isDestroyed()) {
                 win.show();
+                console.info('%s ( %s ) is already exists', appItem.id, appItem.appJson.name);
+                return;
             }
-            console.info(appItem.id + ' ' + appItem.appJson.name + ' is already exists');
-            return;
         }
 
         // 设置会话和预加载脚本
@@ -70,11 +70,11 @@ module.exports = {
             }
 
             options.webPreferences = {
-                sandbox: false,     // 没有这个配置，加载不到 preload.js
+                // sandbox: false,     // 没有这个配置，加载不到 preload.js
                 spellcheck: false,
                 webSecurity: false,
-                nodeIntegration: true,  // 使app的渲染进程能调用到preload中的自定义window属性
-                contextIsolation: false,
+                nodeIntegration: false,  // 使app的渲染进程能调用到preload中的自定义window属性
+                contextIsolation: true,
                 session: sess
             };
         }
