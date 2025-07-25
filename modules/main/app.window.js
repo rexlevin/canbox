@@ -57,14 +57,7 @@ module.exports = {
             width: 800,
             height: 600,
             resizable: true,
-            webPreferences: {
-                sandbox: false,     // 没有这个配置，加载不到 preload.js
-                spellcheck: false,
-                webSecurity: false,
-                nodeIntegration: true,  // 启用nodejs集成
-                contextIsolation: false,    // 上下文隔离：使app的渲染进程能调用到preload中的自定义window属性
-                session: sess
-            }
+            webPreferences: {}
         };
 
         // 合并自定义窗口选项：如果app.json中配置了窗口选项，则合并到options中
@@ -79,11 +72,11 @@ module.exports = {
             }
 
             options.webPreferences = {
-                // sandbox: false,     // 没有这个配置，加载不到 preload.js
+                sandbox: true,
                 spellcheck: false,
                 webSecurity: false,
-                nodeIntegration: false,  // 使app的渲染进程能调用到preload中的自定义window属性
-                contextIsolation: true,
+                nodeIntegration: false,  // 使app的渲染进程能不能使用nodejs集成
+                contextIsolation: true, // 开启上下文隔离：使app的渲染进程能不能调用到preload中的自定义window方法或属性，只能通过contextBridge暴露api
                 session: sess
             };
         }

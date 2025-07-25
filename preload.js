@@ -94,16 +94,24 @@ contextBridge.exposeInMainWorld(
             },
             clearData: (id, fn) => {
                 console.info('clearData');
-
                 const appData = path.join( USER_DATA_PATH, 'Users', 'data', id );
-                fs.rmdir(appData, { recursive: true }, (error) => {
-                    if (error) {
-                        console.error(`Failed to remove directory: ${error}`);
-                        fn({code: '9201', msg: error.message, 'data': 'Failed to remove app data'});
+
+                // 判断有没有appData这个目录，有的话才进行删除操作
+                fs.access(appData, fs.constants.F_OK, (err) => {
+                    if (err) {
+                        console.error(`Directory does not exist: ${err}`);
+                        fn({code: '0000', msg: 'no data to remove'});
                         return;
                     }
-                    fn({code: '0000'});
-                });
+                    fs.rmdir(appData, { recursive: true }, (error) => {
+                        if (error) {
+                            console.error(`Failed to remove directory: ${error}`);
+                            fn({code: '9201', msg: error.message, 'data': 'Failed to remove app data'});
+                            return;
+                        }
+                        fn({code: '0000'});
+                    })
+                })
             },
             remove: (id, fn) => {
                 console.info('id======', id);
