@@ -50,10 +50,22 @@ const db = {
     }
 }
 
+// 从cookie中提取 appId
+const getAppId = () => {
+    const cookie = document.cookie;
+    const appId = cookie.match(/appId=([^;]+)/);
+    return appId ? appId[1] : null;
+}
+
 /**
  * 对 app 暴露的 api
  */
+window.appId = getAppId();
 window.canbox = {
     hooks: {},
+    hello: () => {
+        console.info('hello, hope you have a nice day');
+        // console.info('hello, appId: ', appId);
+    },
     db
 };

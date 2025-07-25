@@ -71,7 +71,28 @@ npm run build:win
 | graphics    | 图形应用app   |
 | network     | 网络应用程序  |
 
-# README.md
+## preload.js
+
+canbox开启了上下文隔离，想要使用canbox提供的api，需要在 app.json 中配置预加载脚本：
+
+```json
+"window": {
+    "webPreferences": {
+        "preload": "preload.js"
+    }
+}
+```
+
+在预加载脚本中使用canbox的api：
+
+```javascript
+# preload.js
+canbox.hello();  # hello, hope you have a nice day
+```
+
+preload遵循 `CommonJS` 规范，可以使用 `require` 来引入 nodejs 模块：
+
+## README.md
 
 和 app.json 同级的 README.md 文件将会被解析为 app 信息在 canbox 展示
 

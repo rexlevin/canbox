@@ -1,5 +1,6 @@
-const { BrowserWindow, WebContentsView, session } = require('@electron/remote'); // 使用 @electron/remote 是renderer 中能使用 main 进程中的对象，减少ipc
+const { BrowserWindow, session } = require('@electron/remote'); // 使用 @electron/remote 是renderer 中能使用 main 进程中的对象，减少ipc
 const path = require('path');
+const fs = require('fs');
 const ObjectUtils = require('../utils/ObjectUtils');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
@@ -37,9 +38,17 @@ module.exports = {
             }
         }
 
-        // 设置会话和预加载脚本
+        // 使用id来创建唯一的session实例
         const sess = session.fromPartition(appItem.id);
+        // 设置预加载脚本：设置preload文件，使app的渲染进程能调用到preload中的自定义window属性
         sess.setPreloads([path.join(__dirname, 'app.api.js')]);
+        // 将appId存储到cookie
+        const cookie = {name: 'appId', value: appItem.id, url: 'http://localhost:8080'};
+        sess.cookies.set(cookie, err => {
+            if(err) {
+                console.error('Failed to set cookie:', err);
+            }
+        });
 
         // app窗口选项
         let options = {
@@ -52,8 +61,8 @@ module.exports = {
                 sandbox: false,     // 没有这个配置，加载不到 preload.js
                 spellcheck: false,
                 webSecurity: false,
-                nodeIntegration: true,  // 使app的渲染进程能调用到preload中的自定义window属性
-                contextIsolation: false,
+                nodeIntegration: true,  // 启用nodejs集成
+                contextIsolation: false,    // 上下文隔离：使app的渲染进程能调用到preload中的自定义window属性
                 session: sess
             }
         };
@@ -111,21 +120,21 @@ module.exports = {
             appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
         }
 
-        // 执行钩子函数，将appId注入到渲染进程中
-        const executeHook = (appId) => {
-            console.info('====', appId);
-            const js = `
-                try {
-                    window.appId = '${appId}';
-                } catch(e) {
-                    console.error('error', e);
-                }
-            `;
-            appWin.webContents.executeJavaScript(js);
-        };
-        appWin.webContents.once('did-finish-load', ()=>{
-            executeHook(appItem.id);
-        });
+        // // 执行钩子函数，将appId注入到渲染进程中
+        // const executeHook = (appId) => {
+        //     console.info('====', appId);
+        //     const js = `
+        //         try {
+        //             window.appId = '${appId}';
+        //         } catch(e) {
+        //             console.error('error', e);
+        //         }
+        //     `;
+        //     appWin.webContents.executeJavaScript(js);
+        // };
+        // appWin.webContents.once('did-finish-load', ()=>{
+        //     executeHook(appItem.id);
+        // });
 
         // 监听窗口关闭事件：销毁窗口，并从appMap中删除
         appWin.on('close', () => {
