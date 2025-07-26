@@ -93,7 +93,6 @@ module.exports = {
 
         // 创建窗口
         let appWin = new BrowserWindow(options);
-        // appWin.webContents.session = sess;
         const loadUrl = appItem.appJson.main.indexOf('http') !== -1 
                 ? appItem.appJson.main 
                 : `file://${path.resolve(appItem.path, appItem.appJson.main)}`;

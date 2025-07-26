@@ -2,12 +2,13 @@ const { app } = require('electron');
 const path = require('path')
 const PouchDB = require('pouchdb');
 const { customAlphabet } = require('nanoid-cjs');
+const fs = require("fs");
 const DateFormat = require('../../utils/DateFormat');
 
 /**
  * userData目录：
  * windows：~\AppData\Roaming\canbox\
- * linux: ~/config/canbox/
+ * linux: ~/.config/canbox/
  */
 const userDataPath = app.getPath('userData');
 // const canboxDB = new PouchDB(path.join(userDataPath, 'Users', 'data', 'default'), {auto_compaction: true});
@@ -67,6 +68,14 @@ module.exports = {
 class DB {
     db;
     constructor(option) {
+        const dbPath = path.join( userDataPath, 'Users', 'data', option.name, 'default' );
+        console.info('dbPath: ', dbPath);
+
+        // 根据dbPath怕判断路径是否存在，不存在则创建
+        if (!fs.existsSync(dbPath)) {
+            fs.mkdirSync(dbPath, { recursive: true });
+        }
+
         this.db = new PouchDB(
             path.join( userDataPath, 'Users', 'data', option.name, 'default' ),
             {auto_compaction: true}
@@ -99,7 +108,8 @@ class DB {
             callback({code: '0000', data: result});
         }).catch(error => {
             console.error('error: ', error);
-            callback({code: '9100', msg: error.message});});
+            callback({code: '9100', msg: error.message});
+        });
     }
     remove(param, callback) {
         this.db.remove(param._id, param._rev).then(result => {
