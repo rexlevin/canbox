@@ -7,7 +7,6 @@ const uuid = require('uuid');
 const PackageJson = require('./package.json');
 const ObjectUtils = require('./modules/utils/ObjectUtils')
 
-const AppWindow = require('./modules/main/app.window');
 const AppShortcut = require('./modules/main/app.shortcut');
 const AppRepo = require('./modules/main/app.repo');
 
@@ -90,7 +89,7 @@ contextBridge.exposeInMainWorld(
                 fn(getAppList());
             },
             load: (appItemStr, devTag) => {
-                AppWindow.loadApp(appItemStr, devTag);
+                ipcRenderer.send('loadApp', appItemStr, devTag);
             },
             clearData: (id, fn) => {
                 console.info('clearData');

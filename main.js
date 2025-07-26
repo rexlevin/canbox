@@ -1,11 +1,10 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 const fs = require("fs");
-// const { sandboxed } = require('process');
 
 const tray = require('./modules/main/tray');
-
 const api = require('./modules/main/api');
+const appWindow = require('./modules/main/app.window');
 
 const Store  = require('electron-store');
 Store.initRenderer();
@@ -92,10 +91,14 @@ const createWindow = () => {
         resizable: false,
         icon: path.join(__dirname, 'logo.png'),
         webPreferences: {
-            sandbox: false,     // 没有这个配置，加载不到 preload.js
+            sandbox: false, // 因为我想在preload中使用nodejs模块，所以这里设置为false，并且在启动参数中使用 --no-sandbox
             preload: path.join(__dirname, './preload.js'),
             spellcheck: false,
-            webSecurity: false
+            webSecurity: false,
+            nodeIntegration: true,
+            contextIsolation: true,
+            allowRunningInsecureContent: false,
+            allowEval: false
         },
         useContentSize: true,
         show: false,
@@ -182,4 +185,7 @@ ipcMain.on('reload', () => {
 ipcMain.on('openDevTools', () => {
     if(win.webContents.isDevToolsOpened()) win.webContents.closeDevTools();
     else win.webContents.openDevTools({mode: 'detach'});
+});
+ipcMain.on('loadApp', (event, appItemStr, devTag) => {
+    appWindow.loadApp(appItemStr, devTag);
 });

@@ -1,6 +1,5 @@
-const { BrowserWindow, session } = require('@electron/remote'); // 使用 @electron/remote 是renderer 中能使用 main 进程中的对象，减少ipc
+const { BrowserWindow, session } = require('electron'); // 使用 @electron/remote 是renderer 中能使用 main 进程中的对象，减少ipc
 const path = require('path');
-const fs = require('fs');
 const ObjectUtils = require('../utils/ObjectUtils');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
@@ -72,19 +71,22 @@ module.exports = {
             }
 
             options.webPreferences = {
-                sandbox: true,
+                sandbox: false,
+                additionalArguments: [' --no-sandbox'],
                 spellcheck: false,
                 webSecurity: false,
-                nodeIntegration: false,  // 使app的渲染进程能不能使用nodejs集成
+                nodeIntegration: true,  // 使app的渲染进程能使用nodejs集成
+                nodeIntegrationInSubFrames: true,
                 contextIsolation: true, // 开启上下文隔离：使app的渲染进程能不能调用到preload中的自定义window方法或属性，只能通过contextBridge暴露api
+                // allowRunningInsecureContent: false,
+                // allowEval: false,
                 session: sess
             };
         }
         if(appItem.appJson.window?.webPreferences?.preload) {
             options.webPreferences.preload = path.resolve(appItem.path, appItem.appJson.window.webPreferences.preload);
         }
-        console.info('options:', options);
-        console.info('options:', JSON.stringify(options));
+        // console.info('options:', options);
 
         // 合并开发选项：如果当前是开发app，则合并开发选项
         if('dev' === devTag && appItem.appJson.development?.main) {
