@@ -11,7 +11,7 @@ const DateFormat = require('../../utils/DateFormat');
  * linux: ~/.config/canbox/
  */
 const userDataPath = app.getPath('userData');
-// const canboxDB = new PouchDB(path.join(userDataPath, 'Users', 'data', 'default'), {auto_compaction: true});
+// const canboxDB = new PouchDB(path.join(userDataPath, 'Users', 'data', 'db'), {auto_compaction: true});
 
 // nanoid
 const nanoid = customAlphabet('1234567890abcdef', 10)
@@ -68,7 +68,7 @@ module.exports = {
 class DB {
     db;
     constructor(option) {
-        const dbPath = path.join( userDataPath, 'Users', 'data', option.name, 'default' );
+        const dbPath = path.join( userDataPath, 'Users', 'data', option.name, 'db' );
         console.info('dbPath: ', dbPath);
 
         // 根据dbPath怕判断路径是否存在，不存在则创建
@@ -77,7 +77,7 @@ class DB {
         }
 
         this.db = new PouchDB(
-            path.join( userDataPath, 'Users', 'data', option.name, 'default' ),
+            path.join( userDataPath, 'Users', 'data', option.name, 'db' ),
             {auto_compaction: true}
         );
     }
