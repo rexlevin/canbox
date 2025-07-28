@@ -72,10 +72,10 @@ module.exports = {
 
             options.webPreferences = {
                 sandbox: false,
-                additionalArguments: [' --no-sandbox'],
+                noSandbox: true,    // 启用 --no-sandbox
                 spellcheck: false,
                 webSecurity: false,
-                nodeIntegration: true,  // 使app的渲染进程能使用nodejs集成
+                nodeIntegration: false,  // 使app的渲染进程能使用nodejs集成
                 nodeIntegrationInSubFrames: true,
                 contextIsolation: true, // 开启上下文隔离：使app的渲染进程能不能调用到preload中的自定义window方法或属性，只能通过contextBridge暴露api
                 // allowRunningInsecureContent: false,
