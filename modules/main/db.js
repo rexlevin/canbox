@@ -24,6 +24,7 @@ module.exports = {
         } else {
             param.createTime = param.createTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
         }
+        console.info('param in put: ', param);
         const db = new DB({name: appId});
         db.put(param, (res) => {
             db.close(); // 关闭数据库连接
