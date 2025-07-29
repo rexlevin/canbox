@@ -93,13 +93,68 @@ module.exports = {
             appItem.appJson.main = appItem.appJson.development.main;
         }
 
-        // 创建窗口
-        let appWin = new BrowserWindow(options);
-        const loadUrl = appItem.appJson.main.indexOf('http') !== -1 
-                ? appItem.appJson.main 
-                : `file://${path.resolve(appItem.path, appItem.appJson.main)}`;
-        appWin.loadURL(loadUrl).catch(err => {
-            console.error('Failed to load URL:', err);
+        // 加载窗口状态
+        const winState = require('./winState');
+        let appWin; // 提升到外层作用域
+        winState.load(appItem.id, (res) => {
+            const state = res.data;
+            // 默认恢复窗口状态（restore 为 1）
+            if (!state || state.restore !== 0) {
+                if (state?.position) {
+                    options.x = state.position.x;
+                    options.y = state.position.y;
+                    options.width = state.position.width;
+                    options.height = state.position.height;
+                }
+            }
+
+            // 创建窗口
+            appWin = new BrowserWindow(options);
+            if (state?.isMax) {
+                appWin.maximize();
+            }
+            const loadUrl = appItem.appJson.main.indexOf('http') !== -1 
+                    ? appItem.appJson.main 
+                    : `file://${path.resolve(appItem.path, appItem.appJson.main)}`;
+            appWin.loadURL(loadUrl).catch(err => {
+                console.error('Failed to load URL:', err);
+            });
+
+            // 保存窗口状态
+            appWin.on('close', () => {
+                const bounds = appWin.getContentBounds();
+                const isMax = appWin.isMaximized();
+                winState.save(appItem.id, {
+                    restore: 1,
+                    isMax,
+                    position: isMax ? null : bounds
+                }, () => {});
+                console.info(`now will close app: ${appItem.id}`);
+                if(!appWin.isDestroyed()) {
+                    try {
+                        appWin.webContents.closeDevTools();
+                    } catch(e) {
+                        // console.error('Failed to close devtools:', e);
+                    }
+                }
+                console.info('appWin is destroyed');
+                appMap.delete(appItem.id);
+            });
+
+            appWin.setMenu(null);
+            if(os === 'win') {
+                appWin.setAppDetails({
+                    appId: appItem.id
+                });
+            }
+
+            // 如果是开发模式且配置了开发者工具，则打开开发者工具
+            if('dev' === devTag && appItem.appJson.development?.devTools) {
+                appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
+            }
+
+            // 将app窗口添加到appMap中
+            appMap.set(appItem.id, appWin);
         });
 
         appWin.setMenu(null);

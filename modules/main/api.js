@@ -1,5 +1,5 @@
 const { ipcMain } = require('electron');
-const DB = require('./core/db');
+const DB = require('./db');
 
 ipcMain.on('msg-db', (event, args) => {
     // console.info('event', event);

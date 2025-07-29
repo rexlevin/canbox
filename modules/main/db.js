@@ -3,7 +3,7 @@ const path = require('path')
 const PouchDB = require('pouchdb');
 const { customAlphabet } = require('nanoid-cjs');
 const fs = require("fs");
-const DateFormat = require('../../utils/DateFormat');
+const DateFormat = require('../utils/DateFormat');
 
 /**
  * userData目录：
