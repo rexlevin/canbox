@@ -11,6 +11,7 @@ export default defineConfig({
     },
     plugins: [vue()],
     build: {
+        outDir: 'build',
         chunkSizeWarningLimit: 1500
     },
 })
