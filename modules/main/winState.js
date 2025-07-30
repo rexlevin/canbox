@@ -5,18 +5,18 @@ class WinState {
     constructor() {
         this.store = new Store({
             name: 'winState',
-            cwd: path.join(require('electron').app.getPath('userData'), 'Users', 'data', 'winState')
+            cwd: path.join(require('electron').app.getPath('userData'), 'Users', 'data')
         });
     }
 
     save(appId, state, callback) {
-        const key = `${appId}/winState`;
+        const key = `${appId}`;
         this.store.set(key, state);
         callback({ code: '0000', data: null, msg: '保存成功' });
     }
 
     load(appId, callback) {
-        const key = `${appId}/winState`;
+        const key = `${appId}`;
         const state = this.store.get(key);
         callback({ code: '0000', data: state || null, msg: '加载成功' });
     }
