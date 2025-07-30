@@ -60,11 +60,7 @@ module.exports = {
             }
         }]
         let tray;
-        if('linux' === os) {
-            tray = new Tray(path.join(__dirname, '../../logo2.png'));
-        } else {
-            tray = new Tray(path.join(__dirname, '../../logo.png'));
-        }
+        tray = new Tray(path.join(__dirname, '../../logo.png'));
         const menu = Menu.buildFromTemplate(trayMenuTemplate);
         tray.setContextMenu(menu);
         tray.on('click', () => {

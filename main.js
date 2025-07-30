@@ -83,7 +83,7 @@ app.on('window-all-closed', () => {
 });
 
 const createWindow = () => {
-    const config = {
+    let config = {
         minWidth: 800,
         minHeight: 550,
         width: 800,
