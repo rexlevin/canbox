@@ -189,3 +189,18 @@ ipcMain.on('openDevTools', () => {
 ipcMain.on('loadApp', (event, appItemStr, devTag) => {
     appWindow.loadApp(appItemStr, devTag);
 });
+
+// 添加 IPC 处理逻辑
+ipcMain.handle('show-dialog', async (event, options) => {
+    return dialog.showMessageBox(options);
+});
+
+ipcMain.handle('select-directory', async (event, options) => {
+    return dialog.showOpenDialog(options);
+});
+
+ipcMain.handle('pack-asar', async (event, { sourceDir, outputPath }) => {
+    const asar = require('asar');
+    await asar.createPackage(sourceDir, outputPath);
+    return { success: true, outputPath };
+});

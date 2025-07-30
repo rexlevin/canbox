@@ -12,6 +12,9 @@
                 <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appDevItem.appJson.description }}</div>
             </div>
             <div class="operate-block">
+                <span class="operate-icon-span" @click="pack()" title="打包app">
+                    <el-icon :size="35" color="#6a8759"><FolderAdd /></el-icon>
+                </span>
                 <span class="operate-icon-span" @click="load()" title="运行这个开发中的app">
                     <el-icon :size="35" color="#228b22"><VideoPlay /></el-icon>
                 </span>
@@ -37,7 +40,7 @@
 </template>
 
 <script setup>
-import { onBeforeMount, onUpdated, ref } from 'vue'
+import { onBeforeMount, onMounted, onUpdated, ref } from 'vue'
 import { ElMessage } from 'element-plus';
 import { marked } from 'marked'
 
@@ -53,6 +56,35 @@ const emit = defineEmits(['reloadAppDev']);
 const drawerInfo = ref(false);
 const appDevInfoContent = ref(null);
 
+async function pack() {
+    const { response } = await window.api.showDialog({
+        type: 'info',
+        title: `打包${props.appDevItem.appJson.name}`,
+        message: `版本号: ${props.appDevItem.appJson.version}`,
+        buttons: ['取消', '确定'],
+        defaultId: 1,
+        cancelId: 0,
+    });
+
+    if (response === 1) {
+        const { filePaths } = await window.api.selectDirectory({
+            title: '选择打包目录',
+            properties: ['openDirectory'],
+            defaultPath: '../../',
+        });
+
+        if (filePaths && filePaths.length > 0) {
+            const outputPath = `${props.appDevItem.appJson.name}.asar`;
+            await window.api.packToAsar(filePaths[0], outputPath);
+
+            await window.api.showDialog({
+                type: 'info',
+                message: '打包完成',
+                detail: `文件已保存到: ${outputPath}`,
+            });
+        }
+    }
+}
 function load() {
     window.api.app.load(JSON.stringify(props.appDevItem), 'dev');
 }
@@ -123,7 +155,7 @@ onUpdated(() => {
     align-items: center;
     justify-content: right;
 }
-.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 20px;}
+.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 10px;}
 .operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
 .operate-icon-span:active {background-color: hsl(0, 0%, 70%); }
 </style>

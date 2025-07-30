@@ -64,6 +64,15 @@ contextBridge.exposeInMainWorld(
             console.info('url====', url);
             ipcRenderer.send('open-url', url);
         },
+        showDialog: (options) => {
+            return ipcRenderer.invoke('show-dialog', options);
+        },
+        selectDirectory: (options) => {
+            return ipcRenderer.invoke('select-directory', options);
+        },
+        packToAsar: (sourceDir, outputPath) => {
+            return ipcRenderer.invoke('pack-asar', { sourceDir, outputPath });
+        },
         app: {
             info: (appItemJsonStr, fn) => {
                 const appItem = JSON.parse(appItemJsonStr);
