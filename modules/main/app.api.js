@@ -44,8 +44,7 @@ const db = {
     },
     getSync: (param) => {
         const ret = ipcSendSyncDB('get', param);
-        if ("0000" !== ret.code) throw new Error(ret.msg);
-        return ret.data;
+        return "0000" === ret.code ? ret.data : null;
     },
     remove: (param) => {
         return new Promise((resolve, reject) => {
