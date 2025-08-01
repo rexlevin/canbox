@@ -2,6 +2,8 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 const fs = require("fs");
 
+const { v4: uuidv4 } = require('uuid');
+
 const tray = require('./modules/main/tray');
 const api = require('./modules/main/api');
 const appWindow = require('./modules/main/app.window');
@@ -23,6 +25,11 @@ const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' 
  * linux: ~/.config/canbox/
  */
 const userDataPath = app.getPath('userData');
+
+const AppsConfig = new Store({
+    cwd: 'Users',
+    name: 'apps'
+});
 
 // canbox 主窗口对象
 let win = null;
@@ -216,8 +223,6 @@ ipcMain.handle('pack-asar', async (event, { sourceDir, outputPath }) => {
     return { success: true, outputPath };
 });
 
-const { v4: uuidv4 } = require('uuid');
-
 ipcMain.handle('select-file', async (event, options) => {
     return dialog.showOpenDialog({
         ...options,
@@ -226,42 +231,48 @@ ipcMain.handle('select-file', async (event, options) => {
     });
 });
 
-// ipcMain.handle('copy-file', async (event, source) => {
-//     const uuid = uuidv4();
-//     const targetDir = path.join(userDataPath, 'Users', 'apps');
-//     const targetPath = path.join(targetDir, `${uuid}.asar`);
-//     return fs.promises.copyFile(source, targetPath);
-// });
-
-// ipcMain.handle('read-app-json', async (event, asarPath) => {
-//     const asar = require('asar');
-//     const appJsonPath = path.join(asarPath, 'app.json');
-//     const appJson = await asar.extractFile(asarPath, 'app.json');
-//     return JSON.parse(appJson);
-// });
-
 ipcMain.handle('import-app', async (event, asarPath) => {
     try {
         // 1. 生成 UUID 和目标路径
-        const uuid = uuidv4();
-        const targetDir = path.join(userDataPath, 'Users', 'apps');
-        const targetPath = path.join(targetDir, `${uuid}.asar`);
+        const uuid = uuidv4().replace(/-/g, '');
+        const targetPath = path.join(userDataPath, 'Users', 'apps', `${uuid}.asar`);
+        // const targetPath = path.join(targetDir, `${uuid}.asar`);
+
+        console.info('asarPath=', asarPath);
+        console.info('targetPath=', targetPath);
 
         // 2. 复制文件并重命名
-        await fs.promises.copyFile(asarPath, targetPath);
+        if (!fs.existsSync(asarPath)) {
+            throw new Error(`源文件不存在: ${asarPath}`);
+        }
+        const absoluteAsarPath = path.resolve(asarPath);
+        if (!fs.existsSync(absoluteAsarPath)) {
+            throw new Error(`解析后的路径无效: ${absoluteAsarPath}`);
+        }
+        const targetDir = path.dirname(targetPath);
+        if (!fs.existsSync(targetDir)) {
+            fs.mkdirSync(targetDir, { recursive: true });
+        }
+        try {
+            fs.copyFileSync(absoluteAsarPath, targetPath);
+            console.log(`文件复制成功: ${absoluteAsarPath} -> ${targetPath}`);
+        } catch (error) {
+            console.error('复制文件失败:', {
+                sourcePath: absoluteAsarPath,
+                targetPath,
+                error: error.message
+            });
+            throw error;
+        }
 
         // 3. 读取 app.json
-        const asar = require('asar');
-        const appJson = await asar.extractFile(asarPath, 'app.json');
+        const appJson = JSON.parse(fs.readFileSync(path.join(targetPath, 'app.json'), 'utf8'));
         const parsedAppJson = JSON.parse(appJson);
 
+        
         // 4. 写入 apps.json
-        const appsJsonPath = path.join(userDataPath, 'Users', 'apps.json');
-        let appsJson = { default: [] };
-        if (fs.existsSync(appsJsonPath)) {
-            appsJson = JSON.parse(fs.readFileSync(appsJsonPath, 'utf-8'));
-        }
-        appsJson.default.push({
+        let appConfigArr = AppsConfig.get('default') ? AppsConfig.get('default') : [];
+        appConfigArr.push({
             sid: uuid,
             id: parsedAppJson.id || '',
             name: parsedAppJson.name || '',
@@ -270,7 +281,8 @@ ipcMain.handle('import-app', async (event, asarPath) => {
             author: parsedAppJson.author || '',
             logo: parsedAppJson.logo || '',
         });
-        fs.writeFileSync(appsJsonPath, JSON.stringify(appsJson, null, 2));
+        AppsConfig.set('default', appConfigArr);
+        // fs.writeFileSync(appsJsonPath, JSON.stringify(appsJson, null, 2));
 
         return { success: true, uuid };
     } catch (error) {
@@ -278,14 +290,3 @@ ipcMain.handle('import-app', async (event, asarPath) => {
         return { success: false, error: error.message };
     }
 });
-
-// ipcMain.handle('write-apps-json', async (event, data) => {
-//     const appsJsonPath = path.join(userDataPath, 'Users', 'apps.json');
-//     let appsJson = { default: [] };
-//     if (fs.existsSync(appsJsonPath)) {
-//         appsJson = JSON.parse(fs.readFileSync(appsJsonPath, 'utf-8'));
-//     }
-//     appsJson.default.push(data);
-//     fs.writeFileSync(appsJsonPath, JSON.stringify(appsJson, null, 2));
-//     return true;
-// });

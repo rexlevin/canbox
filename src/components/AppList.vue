@@ -15,7 +15,7 @@
 
 <script setup>
 import { onBeforeMount, onMounted, ref } from 'vue';
-
+import { ElMessage } from 'element-plus'
 import AppItem from '@/components/AppItem.vue';
 
 // 定义触发的自定义事件
@@ -43,10 +43,7 @@ async function importApp() {
 
         const asarPath = filePaths[0];
 
-        // 2. 复制文件并重命名
-        // await window.api.copyFile(asarPath);
-
-        // 3. 调用合并后的操作
+        // 2. 导入文件：复制文件并重命名
         const { success, error } = await window.api.importApp(asarPath);
         if (!success) {
             throw new Error(error);
@@ -56,18 +53,13 @@ async function importApp() {
             appList.value = result;
         });
 
-        window.api.showMessageBox({
-            title: '导入成功',
+        ElMessage({
             message: '应用导入成功！',
-            buttons: ['确定'],
+            type: 'success',
         });
     } catch (error) {
         console.error('导入应用失败:', error);
-        window.api.showMessageBox({
-            title: '导入失败',
-            message: '导入应用失败！',
-            buttons: ['确定'],
-        });
+        ElMessage.error('导入应用失败：' + error.message)
     }
 }
 </script>

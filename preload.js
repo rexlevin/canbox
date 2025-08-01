@@ -73,15 +73,6 @@ contextBridge.exposeInMainWorld(
         selectFile: (options) => {
             return ipcRenderer.invoke('select-file', options);
         },
-        // copyFile: (source) => {
-        //     return ipcRenderer.invoke('copy-file', source);
-        // },
-        // readAppJson: (asarPath) => {
-        //     return ipcRenderer.invoke('read-app-json', asarPath);
-        // },
-        // writeAppsJson: (data) => {
-        //     return ipcRenderer.invoke('write-apps-json', data);
-        // },
         importApp: (asarPath) => {
             return ipcRenderer.invoke('import-app', asarPath);
         },
