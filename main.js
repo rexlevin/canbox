@@ -199,6 +199,10 @@ ipcMain.handle('select-directory', async (event, options) => {
     return dialog.showOpenDialog(options);
 });
 
+ipcMain.handle('show-save-dialog', async (event, options) => {
+    return dialog.showSaveDialog(options);
+});
+
 ipcMain.handle('pack-asar', async (event, { sourceDir, outputPath }) => {
     const asar = require('asar');
     await asar.createPackage(sourceDir, outputPath);

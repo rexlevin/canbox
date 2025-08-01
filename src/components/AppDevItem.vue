@@ -57,34 +57,46 @@ const drawerInfo = ref(false);
 const appDevInfoContent = ref(null);
 
 async function pack() {
+    const { filePaths } = await window.api.selectDirectory({
+        title: '选择打包目录',
+        properties: ['openDirectory'],
+        defaultPath: '../../',
+    });
+
+    if (!filePaths || filePaths.length === 0) return;
+
     const { response } = await window.api.showDialog({
         type: 'info',
         title: `打包${props.appDevItem.appJson.name}`,
-        message: `版本号: ${props.appDevItem.appJson.version}`,
+        message: `版本号: ${props.appDevItem.appJson.version}\n\n打包目录: ${filePaths[0]}`,
         buttons: ['取消', '确定'],
         defaultId: 1,
         cancelId: 0,
     });
 
-    if (response === 1) {
-        const { filePaths } = await window.api.selectDirectory({
-            title: '选择打包目录',
-            properties: ['openDirectory'],
-            defaultPath: '../../',
-        });
+    if (response !== 1) return;
 
-        if (filePaths && filePaths.length > 0) {
-            const outputPath = `${props.appDevItem.appJson.name}.asar`;
-            await window.api.packToAsar(filePaths[0], outputPath);
+    const { canceled, filePaths: selectedFilePaths } = await window.api.selectDirectory({
+        title: '选择打包文件保存目录',
+        properties: ['openDirectory'],
+        defaultPath: '../../',
+    });
 
-            await window.api.showDialog({
-                type: 'info',
-                message: '打包完成',
-                detail: `文件已保存到: ${outputPath}`,
-            });
-        }
-    }
+    const savePath = selectedFilePaths?.[0];
+    console.info('savePath: ', savePath);
+    if (canceled || !savePath) return;
+
+    const outputPath = savePath + '/' + `${props.appDevItem.appJson.name}.asar`;
+
+    await window.api.packToAsar(filePaths[0], outputPath);
+
+    await window.api.showDialog({
+        type: 'info',
+        message: '打包完成',
+        detail: `文件已保存到: ${outputPath}`,
+    });
 }
+
 function load() {
     window.api.app.load(JSON.stringify(props.appDevItem), 'dev');
 }

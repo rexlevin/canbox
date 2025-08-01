@@ -70,7 +70,13 @@ contextBridge.exposeInMainWorld(
         selectDirectory: (options) => {
             return ipcRenderer.invoke('select-directory', options);
         },
-        packToAsar: (sourceDir, outputPath) => {
+        packToAsar: async (sourceDir, outputPath) => {
+            if (!sourceDir || !outputPath) {
+                console.error('Invalid arguments: sourceDir and outputPath are required');
+                return;
+            }
+
+            // 执行打包
             return ipcRenderer.invoke('pack-asar', { sourceDir, outputPath });
         },
         app: {
