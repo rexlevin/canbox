@@ -70,6 +70,21 @@ contextBridge.exposeInMainWorld(
         selectDirectory: (options) => {
             return ipcRenderer.invoke('select-directory', options);
         },
+        selectFile: (options) => {
+            return ipcRenderer.invoke('select-file', options);
+        },
+        // copyFile: (source) => {
+        //     return ipcRenderer.invoke('copy-file', source);
+        // },
+        // readAppJson: (asarPath) => {
+        //     return ipcRenderer.invoke('read-app-json', asarPath);
+        // },
+        // writeAppsJson: (data) => {
+        //     return ipcRenderer.invoke('write-apps-json', data);
+        // },
+        importApp: (asarPath) => {
+            return ipcRenderer.invoke('import-app', asarPath);
+        },
         packToAsar: async (sourceDir, outputPath) => {
             if (!sourceDir || !outputPath) {
                 console.error('Invalid arguments: sourceDir and outputPath are required');

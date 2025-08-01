@@ -31,6 +31,43 @@ onBeforeMount(() => {
     });
 });
 
-function importApp() {
+async function importApp() {
+    try {
+        // 1. 选择 .asar 文件
+        const { canceled, filePaths } = await window.api.selectFile({
+            title: '选择应用文件',
+            properties: ['openFile'],
+            filters: [{ name: 'App Files', extensions: ['asar'] }],
+        });
+        if (canceled || !filePaths?.[0]) return;
+
+        const asarPath = filePaths[0];
+
+        // 2. 复制文件并重命名
+        // await window.api.copyFile(asarPath);
+
+        // 3. 调用合并后的操作
+        const { success, error } = await window.api.importApp(asarPath);
+        if (!success) {
+            throw new Error(error);
+        }
+
+        window.api.app.all(result => {
+            appList.value = result;
+        });
+
+        window.api.showMessageBox({
+            title: '导入成功',
+            message: '应用导入成功！',
+            buttons: ['确定'],
+        });
+    } catch (error) {
+        console.error('导入应用失败:', error);
+        window.api.showMessageBox({
+            title: '导入失败',
+            message: '导入应用失败！',
+            buttons: ['确定'],
+        });
+    }
 }
 </script>

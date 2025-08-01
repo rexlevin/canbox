@@ -17,6 +17,13 @@ app.disableHardwareAcceleration();
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
+/**
+ * userData目录：
+ * windows：~\AppData\Roaming\canbox\
+ * linux: ~/.config/canbox/
+ */
+const userDataPath = app.getPath('userData');
+
 // canbox 主窗口对象
 let win = null;
 
@@ -208,3 +215,77 @@ ipcMain.handle('pack-asar', async (event, { sourceDir, outputPath }) => {
     await asar.createPackage(sourceDir, outputPath);
     return { success: true, outputPath };
 });
+
+const { v4: uuidv4 } = require('uuid');
+
+ipcMain.handle('select-file', async (event, options) => {
+    return dialog.showOpenDialog({
+        ...options,
+        properties: ['openFile'],
+        filters: [{ name: 'App Files', extensions: ['asar'] }],
+    });
+});
+
+// ipcMain.handle('copy-file', async (event, source) => {
+//     const uuid = uuidv4();
+//     const targetDir = path.join(userDataPath, 'Users', 'apps');
+//     const targetPath = path.join(targetDir, `${uuid}.asar`);
+//     return fs.promises.copyFile(source, targetPath);
+// });
+
+// ipcMain.handle('read-app-json', async (event, asarPath) => {
+//     const asar = require('asar');
+//     const appJsonPath = path.join(asarPath, 'app.json');
+//     const appJson = await asar.extractFile(asarPath, 'app.json');
+//     return JSON.parse(appJson);
+// });
+
+ipcMain.handle('import-app', async (event, asarPath) => {
+    try {
+        // 1. 生成 UUID 和目标路径
+        const uuid = uuidv4();
+        const targetDir = path.join(userDataPath, 'Users', 'apps');
+        const targetPath = path.join(targetDir, `${uuid}.asar`);
+
+        // 2. 复制文件并重命名
+        await fs.promises.copyFile(asarPath, targetPath);
+
+        // 3. 读取 app.json
+        const asar = require('asar');
+        const appJson = await asar.extractFile(asarPath, 'app.json');
+        const parsedAppJson = JSON.parse(appJson);
+
+        // 4. 写入 apps.json
+        const appsJsonPath = path.join(userDataPath, 'Users', 'apps.json');
+        let appsJson = { default: [] };
+        if (fs.existsSync(appsJsonPath)) {
+            appsJson = JSON.parse(fs.readFileSync(appsJsonPath, 'utf-8'));
+        }
+        appsJson.default.push({
+            sid: uuid,
+            id: parsedAppJson.id || '',
+            name: parsedAppJson.name || '',
+            version: parsedAppJson.version || '',
+            description: parsedAppJson.description || '',
+            author: parsedAppJson.author || '',
+            logo: parsedAppJson.logo || '',
+        });
+        fs.writeFileSync(appsJsonPath, JSON.stringify(appsJson, null, 2));
+
+        return { success: true, uuid };
+    } catch (error) {
+        console.error('导入应用失败:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// ipcMain.handle('write-apps-json', async (event, data) => {
+//     const appsJsonPath = path.join(userDataPath, 'Users', 'apps.json');
+//     let appsJson = { default: [] };
+//     if (fs.existsSync(appsJsonPath)) {
+//         appsJson = JSON.parse(fs.readFileSync(appsJsonPath, 'utf-8'));
+//     }
+//     appsJson.default.push(data);
+//     fs.writeFileSync(appsJsonPath, JSON.stringify(appsJson, null, 2));
+//     return true;
+// });
