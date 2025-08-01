@@ -1,5 +1,3 @@
 <template>
-    <div>
-        <el-collapse></el-collapse>
-    </div>
+    <h1>建设中...</h1>
 </template>

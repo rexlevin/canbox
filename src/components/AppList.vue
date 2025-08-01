@@ -7,6 +7,7 @@
     </div>
     <div v-show="appList.length == 0">
         here is nothing<br />
+        click <a href="javascript:void(0);" @click="importApp">here</a> to import a app<br />
         click <a href="javascript:void(0);" @click="toAnotherTab('appRepos')">here</a> to get apps<br />
         or to <a href="javascript:void(0);" @click.prevent="toAnotherTab('devApp')">develop a app</a>
     </div>
@@ -29,9 +30,7 @@ onBeforeMount(() => {
         appList.value = result;
     });
 });
-onMounted(() => {
-    // window.api.app.all(result => {
-    //     appList.value = result;
-    // });
-});
+
+function importApp() {
+}
 </script>

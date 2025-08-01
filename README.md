@@ -266,15 +266,17 @@ canbox.db.remove({
 
 # repos
 
-repos文件是一个json格式的app集合描述文件：
+canbox没有中心服务器，所有能使用的app都靠交流传播:laughing:
 
-```mermaid
+repos文件就是app信息的集合，这是一个json格式的描述文件：
+
+```json
 {
     "title": "",
     "version": "",
     "repos": [
         {
-            "repo": "",
+            "app": "",
             "description": "",
             "history": "",
             "release": ""
