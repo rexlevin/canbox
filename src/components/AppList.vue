@@ -1,16 +1,23 @@
 <template>
-    <div v-show="appList.length > 0">
-        <el-row v-for="(item, index) in appList">
-            <el-col :span="24"><AppItem :appItem="appList[index]" @remove-app="handleRemoveApp"/></el-col>
-            <!-- <el-col :span="12" v-if="index % 2 === 0"><AppItem :appItem="appList[index]"/></el-col>
-            <el-col :span="12" v-if="index % 2 === 0"><AppItem :appItem="appList[index + 1]"/></el-col> -->
-        </el-row>
-    </div>
-    <div v-show="appList.length == 0">
-        here is nothing<br />
-        click <a href="javascript:void(0);" @click="importApp">here</a> to import a app<br />
-        click <a href="javascript:void(0);" @click="toAnotherTab('appRepos')">here</a> to get apps<br />
-        or to <a href="javascript:void(0);" @click.prevent="toAnotherTab('devApp')">develop a app</a>
+    <div class="app-list-container">
+        <!-- 第一部分：按钮区域 -->
+        <div class="button-section">
+            <el-button type="primary" @click="importApp">导入已有app</el-button>
+            <el-button type="primary" @click="toAnotherTab('appRepos')">去仓库下载</el-button>
+            <el-button type="primary" @click.prevent="toAnotherTab('devApp')">去开发自己的app</el-button>
+        </div>
+
+        <!-- 第二部分：应用列表区域 -->
+        <div class="app-list-section" v-show="appList.length > 0">
+            <el-row v-for="(item, index) in appList">
+                <el-col :span="24"><AppItem :appItem="appList[index]" @remove-app="handleRemoveApp"/></el-col>
+            </el-row>
+        </div>
+
+        <!-- 空状态提示 -->
+        <div class="empty-section" v-show="appList.length == 0">
+            <p>暂无应用</p>
+        </div>
     </div>
 </template>
 
@@ -68,3 +75,26 @@ async function importApp() {
     }
 }
 </script>
+
+<style scoped>
+.app-list-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.button-section {
+    margin-top: 20px;
+    margin-bottom: 16px;
+}
+
+.app-list-section {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.empty-section {
+    text-align: center;
+    padding: 20px;
+}
+</style>
