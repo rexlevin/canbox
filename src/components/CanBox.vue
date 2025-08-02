@@ -1,6 +1,6 @@
 <template>
     <div class="common-layout my_container">
-        <el-container class="my_container my_container">
+        <el-container>
             <el-container>
                 <el-main class="my_main">
                     <el-tabs tab-position="left" v-model="activeName">
@@ -55,7 +55,24 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.my_container{width: 100%; height: 100%;}
-.my_main{padding: 0;}
-.bottom {height: 40px; padding: 0;}
+.my_container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.my_container .el-container {
+    flex: 1;
+    overflow: hidden;
+}
+
+.my_main {
+    padding: 0;
+    height: 100%;
+}
+
+.bottom {
+    height: 40px;
+    padding: 0;
+}
 </style>
