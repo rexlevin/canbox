@@ -21,6 +21,32 @@
     </div>
 </template>
 
+<style scoped>
+.app-list-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.button-section {
+    height: 60px;
+    padding: 10px 0;
+    line-height: 60px;
+}
+
+.app-list-section {
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+}
+
+.empty-section {
+    height: calc(100vh - 60px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+</style>
+
 <script setup>
 import { onBeforeMount, onMounted, ref } from 'vue';
 import { ElMessage } from 'element-plus'
@@ -75,26 +101,3 @@ async function importApp() {
     }
 }
 </script>
-
-<style scoped>
-.app-list-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.button-section {
-    margin-top: 20px;
-    margin-bottom: 16px;
-}
-
-.app-list-section {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.empty-section {
-    text-align: center;
-    padding: 20px;
-}
-</style>

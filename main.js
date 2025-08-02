@@ -135,7 +135,7 @@ const createWindow = () => {
 
     // 打开开发者窗口
     win.on('ready-to-show', () => {
-        win.webContents.openDevTools();
+        win.webContents.openDevTools({mode: 'detach'});
     });
 
     win.on('ready-to-show', () => {

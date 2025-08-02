@@ -1,23 +1,55 @@
 <template>
-    <div class="common-layout my_container">
-        <el-container>
-            <el-container>
-                <el-main class="my_main">
-                    <el-tabs tab-position="left" v-model="activeName">
-                        <el-tab-pane label="我的app" name="myApps">
-                            <AppList @switchTab="changeActiveTab"/>
-                        </el-tab-pane>
-                        <el-tab-pane label="app仓库" name="appRepos"><AppRepos /></el-tab-pane>
-                        <el-tab-pane label="用户中心"><UserCenter/></el-tab-pane>
-                        <el-tab-pane label="app开发" name="devApp"><AppDev/></el-tab-pane>
-                        <el-tab-pane label="设置"><Settings/></el-tab-pane>
-                    </el-tabs>
-                </el-main>
-            </el-container>
-            <el-footer class="bottom">footer</el-footer>
+    <div class="page-container">
+        <el-container class="main-container">
+            <el-main class="main-content">
+                <el-tabs tab-position="left" v-model="activeName" class="full-height-tabs">
+                    <el-tab-pane label="我的app" name="myApps" class="full-height-pane">
+                        <AppList @switchTab="changeActiveTab"/>
+                    </el-tab-pane>
+                    <el-tab-pane label="app仓库" name="appRepos" class="full-height-pane"><AppRepos /></el-tab-pane>
+                    <el-tab-pane label="用户中心" class="full-height-pane"><UserCenter/></el-tab-pane>
+                    <el-tab-pane label="app开发" name="devApp" class="full-height-pane"><AppDev/></el-tab-pane>
+                    <el-tab-pane label="设置" class="full-height-pane"><Settings/></el-tab-pane>
+                </el-tabs>
+            </el-main>
+            <el-footer class="footer">footer</el-footer>
         </el-container>
     </div>
 </template>
+
+<style scoped>
+.page-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    height: calc(100vh - 40px);
+    padding: 0;
+}
+
+.full-height-tabs {
+    height: 100%;
+}
+
+.full-height-pane {
+    height: 100%;
+    overflow: hidden;
+}
+
+.footer {
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+}
+</style>
 
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue';
@@ -53,26 +85,3 @@ onUnmounted(() => {
     window.removeEventListener('keydown', handleKeydown);
 });
 </script>
-
-<style scoped>
-.my_container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-}
-
-.my_container .el-container {
-    flex: 1;
-    overflow: hidden;
-}
-
-.my_main {
-    padding: 0;
-    height: 100%;
-}
-
-.bottom {
-    height: 40px;
-    padding: 0;
-}
-</style>
