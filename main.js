@@ -98,9 +98,9 @@ app.on('window-all-closed', () => {
 
 const createWindow = () => {
     let config = {
-        minWidth: 800,
+        minWidth: 700,
         minHeight: 550,
-        width: 800,
+        width: 700,
         height: 550,
         resizable: false,
         icon: path.join(__dirname, 'logo.png'),
@@ -134,7 +134,9 @@ const createWindow = () => {
     }
 
     // 打开开发者窗口
-    win.webContents.openDevTools({mode: 'detach'});
+    win.on('ready-to-show', () => {
+        win.webContents.openDevTools();
+    });
 
     win.on('ready-to-show', () => {
         win.show(); // 注释掉这行，即启动最小化到tray

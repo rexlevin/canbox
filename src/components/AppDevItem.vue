@@ -12,16 +12,16 @@
                 <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appDevItem.appJson.description }}</div>
             </div>
             <div class="operate-block">
-                <span class="operate-icon-span" @click="pack()" title="打包app">
+                <span class="operate-icon-span" @click="packApp" title="打包app">
                     <el-icon :size="35" color="#6a8759"><FolderAdd /></el-icon>
                 </span>
-                <span class="operate-icon-span" @click="load()" title="运行这个开发中的app">
+                <span class="operate-icon-span" @click="loadApp" title="运行这个开发中的app">
                     <el-icon :size="35" color="#228b22"><VideoPlay /></el-icon>
                 </span>
-                <span class="operate-icon-span" @click="clearData(appDevItem.id)" title="清除用户数据">
+                <span class="operate-icon-span" @click="clearData" title="清除用户数据">
                     <el-icon :size="35" color=""><Remove /></el-icon>
                 </span>
-                <span class="operate-icon-span" @click="remove(appDevItem.id)" title="删除这个开发中的app">
+                <span class="operate-icon-span" @click="removeApp" title="删除这个开发中的app">
                     <el-icon :size="35" color="#ab4e52"><Delete /></el-icon>
                 </span>
             </div>
@@ -56,7 +56,7 @@ const emit = defineEmits(['reloadAppDev']);
 const drawerInfo = ref(false);
 const appDevInfoContent = ref(null);
 
-async function pack() {
+async function packApp() {
     const { filePaths } = await window.api.selectDirectory({
         title: '选择打包目录',
         properties: ['openDirectory'],
@@ -97,11 +97,11 @@ async function pack() {
     });
 }
 
-function load() {
+function loadApp() {
     window.api.app.load(JSON.stringify(props.appDevItem), 'dev');
 }
-function clearData(id) {
-    window.api.app.clearData(id, (result)=>{
+function clearData(i) {
+    window.api.app.clearData(props.appDevItem.id, (result)=>{
         console.info('clearData result=', result);
         if(result.code !== '0000') {
             ElMessage.error(result.msg);
@@ -113,8 +113,11 @@ function clearData(id) {
         });
     });
 }
-function remove(id) {
-    window.api.appDev.remove(id, (result)=>{
+function removeApp() {
+    window.api.appDev.remove({
+            id: props.appDevItem.id,
+            tag: 'dev'
+        }, (result) => {
         console.info('remove result=', result);
         if(result.code !== '0000') {
             ElMessage.error(result.msg);

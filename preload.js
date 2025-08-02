@@ -17,6 +17,9 @@ const AppRepo = require('./modules/main/app.repo');
  */
 const USER_DATA_PATH = ipcRenderer.sendSync('getPath', 'userData');
 
+const DATA_PATH = path.join(USER_DATA_PATH, 'Users', 'data');
+const APP_PATH = path.join(USER_DATA_PATH, 'Users', 'apps');
+
 const AppsConfig = new Store({
     cwd: 'Users',
     name: 'apps'
@@ -133,9 +136,13 @@ contextBridge.exposeInMainWorld(
                     })
                 })
             },
-            remove: (id, fn) => {
-                console.info('id======', id);
-                removeAppDevById(id);
+            remove: (param, fn) => {
+                console.info('remove app param======', param);
+                if ('dev' === param.tag) {
+                    removeAppDevById(param.id);
+                } else {
+                    removeAppById(param.id);
+                }
                 fn({code: '0000'});
             }
         },
@@ -200,16 +207,25 @@ contextBridge.exposeInMainWorld(
                 appDevConfigArr.unshift(appDevConfig);
                 AppsDevConfig.set('default', appDevConfigArr);
                 fn(getAppDevList());
-            },
-            remove: (id, fn) => {
-                console.info('id======', id);
-                removeAppDevById(id);
-                fn({'code': '0000'});
             }
         }
     }
 );
 
+function removeAppById(id) {
+    if(undefined === AppsConfig.get('default')) {
+        return;
+    }
+    const /*Array<Object>*/ appConfigList = AppsConfig.get('default');
+    for(let appConfig of appConfigList) {
+        console.info('appConfig==', appConfig);
+        if(id !== appConfig.id) continue;
+        appConfigList.splice(appConfigList.indexOf(appConfig), 1);
+        AppsConfig.set('default', appConfigList);
+    }
+    fs.unlinkSync(path.join(APP_PATH, id + '.asar'));
+    console.info('%s===remove is success', id);
+}
 function removeAppDevById(id) {
     if(undefined === AppsDevConfig.get('default')) {
         return;
@@ -238,12 +254,12 @@ function getAppList() {
         // /home/lizl6/.config/canbox/Users/apps.json
         // C:\Users\brood\AppData\Roaming\canbox\Users\apps.json
         // 读取app.json文件内容
-        const appJson = JSON.parse(fs.readFileSync(path.join(USER_DATA_PATH, 'Users', 'default', appInfo.id + '.asar/app.json'), 'utf8'));
+        const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, appInfo.id + '.asar/app.json'), 'utf8'));
         const app = {
             id: appInfo.id,
             appJson: appJson,
             logo: appInfo.logo,
-            path: path.join(USER_DATA_PATH, 'Users', 'default', appInfo.id + '.asar')
+            path: path.join(APP_PATH, appInfo.id + '.asar')
         };
         appList.push(app);
     }

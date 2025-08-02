@@ -10,17 +10,17 @@
                         <span style="font-weight: bold; font-size: 20px;">{{ appItem.appJson.name }}</span>
                         <span style="padding-left: 20px; color: gray;">v{{ appItem.appJson.version }}</span>
                     </div>
-                    <div style="height: 30px; line-height: 13px; font-size: 16px;">{{ appItem.appJson.description }}</div>
+                    <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.appJson.description }}</div>
                 </div>
                 <div class="operate-block">
                     <div>
-                        <span class="operate-icon-span" @click="loadApp()" title="运行这个app">
+                        <span class="operate-icon-span" @click="loadApp" title="运行这个app">
                             <el-icon :size="33" color="#228b22"><VideoPlay /></el-icon>
                         </span>
-                        <span class="operate-icon-span" @click="clearData()" title="清除用户数据">
+                        <span class="operate-icon-span" @click="clearData" title="清除用户数据">
                             <el-icon :size="33" color=""><Remove /></el-icon>
                         </span>
-                        <span class="operate-icon-span" @click="delete(appItem.id)" title="删除这个app">
+                        <span class="operate-icon-span" @click="removeApp" title="删除这个app">
                             <el-icon :size="33" color="#ab4e52"><Delete /></el-icon>
                         </span>
                     </div>
@@ -41,7 +41,10 @@
 
 <script setup>
 import { onBeforeMount, onMounted, onUpdated, ref } from 'vue';
+import { ElMessage } from 'element-plus';
 import { marked } from 'marked'
+
+const emit = defineEmits(['remove-app']);
 
 const props = defineProps({
     appItem: {
@@ -82,12 +85,45 @@ function loadApp() {
     // console.log('AppItem mounted:', props.appItem);
     window.api.app.load(JSON.stringify(props.appItem));
 }
+function clearData() {
+    window.api.app.clearData(props.appItem.id, (result)=>{
+        console.info('clearData result=', result);
+        if(result.code !== '0000') {
+            ElMessage.error(result.msg);
+            return;
+        }
+        ElMessage({
+            message: '清除数据成功',
+            type:'success'
+        });
+    });
+}
+function removeApp() {
+    // 这里增加一个确认弹框
+    window.api.app.remove({
+        id: props.appItem.id,
+        tag: ''
+    }, (result) => {
+        console.info('remove result=', result);
+        if(result.code !== '0000') {
+            ElMessage.error(result.msg);
+            return;
+        }
+        // 触发删除当前应用的事件
+        emit('remove-app', props.appItem.id);
+        ElMessage({
+            message: 'APP 删除成功',
+            type:'success'
+        }); 
+    });
+}
 </script>
 
 <style scoped>
 .card {width: 100%; height: 60px; display: flex; justify-content: flex-start;}
 .img-block {width: 60px; height: 100%; margin: 0; padding: 0;}
-.info-block {line-height: 60px; text-align: left; margin-left: 10px; flex: 1;}
+.info-block {line-height: 60px; text-align: left; margin-left: 10px;}
+.info-block div{width: 300px;}
 .info-block .app-name {height: 30px; line-height: 30px; cursor: pointer;}
 .info-block .app-name:hover{color: #409eff; font-weight: bold;}
 .vertical-block {display: table;}

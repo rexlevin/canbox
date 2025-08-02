@@ -1,7 +1,7 @@
 <template>
     <div v-show="appList.length > 0">
         <el-row v-for="(item, index) in appList">
-            <el-col :span="24"><AppItem :appItem="appList[index]"/></el-col>
+            <el-col :span="24"><AppItem :appItem="appList[index]" @remove-app="handleRemoveApp"/></el-col>
             <!-- <el-col :span="12" v-if="index % 2 === 0"><AppItem :appItem="appList[index]"/></el-col>
             <el-col :span="12" v-if="index % 2 === 0"><AppItem :appItem="appList[index + 1]"/></el-col> -->
         </el-row>
@@ -31,6 +31,10 @@ onBeforeMount(() => {
         appList.value = result;
     });
 });
+
+function handleRemoveApp(appId) {
+    appList.value = appList.value.filter(app => app.id !== appId);
+}
 
 async function importApp() {
     try {
