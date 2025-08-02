@@ -1,32 +1,30 @@
 <template>
     <div class="flex flex-wrap" style="margin: 5px 7px 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);">
-        <el-card body-style="margin: 0; padding: 0;">
-            <div class="card">
-                <div class="img-block">
-                   <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.path + '/' + appItem.appJson.logo" alt="" />
+        <div class="card">
+            <div class="img-block">
+                <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.path + '/' + appItem.appJson.logo" alt="" />
+            </div>
+            <div class="info-block vertical-block">
+                <div class="app-name" @click="drawerInfo = true">
+                    <span style="font-weight: bold; font-size: 20px;">{{ appItem.appJson.name }}</span>
+                    <span style="padding-left: 20px; color: gray;">v{{ appItem.appJson.version }}</span>
                 </div>
-                <div class="info-block vertical-block">
-                    <div class="app-name" @click="drawerInfo = true">
-                        <span style="font-weight: bold; font-size: 20px;">{{ appItem.appJson.name }}</span>
-                        <span style="padding-left: 20px; color: gray;">v{{ appItem.appJson.version }}</span>
-                    </div>
-                    <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.appJson.description }}</div>
-                </div>
-                <div class="operate-block">
-                    <div>
-                        <span class="operate-icon-span" @click="loadApp" title="运行这个app">
-                            <el-icon :size="33" color="#228b22"><VideoPlay /></el-icon>
-                        </span>
-                        <span class="operate-icon-span" @click="clearData" title="清除用户数据">
-                            <el-icon :size="33" color=""><Remove /></el-icon>
-                        </span>
-                        <span class="operate-icon-span" @click="removeApp" title="删除这个app">
-                            <el-icon :size="33" color="#ab4e52"><Delete /></el-icon>
-                        </span>
-                    </div>
+                <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.appJson.description }}</div>
+            </div>
+            <div class="operate-block">
+                <div>
+                    <span class="operate-icon-span" @click="loadApp" title="运行这个app">
+                        <el-icon :size="33" color="#228b22"><VideoPlay /></el-icon>
+                    </span>
+                    <span class="operate-icon-span" @click="clearData" title="清除用户数据">
+                        <el-icon :size="33" color=""><Remove /></el-icon>
+                    </span>
+                    <span class="operate-icon-span" @click="removeApp" title="删除这个app">
+                        <el-icon :size="33" color="#ab4e52"><Delete /></el-icon>
+                    </span>
                 </div>
             </div>
-        </el-card>
+        </div>
     </div>
 
     <el-drawer v-model="drawerInfo" :with-header="false" :size="600">

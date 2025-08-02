@@ -12,7 +12,7 @@
                     <el-tab-pane label="设置" class="full-height-pane"><Settings/></el-tab-pane>
                 </el-tabs>
             </el-main>
-            <el-footer class="footer">footer</el-footer>
+            <!-- <el-footer class="footer">footer</el-footer> -->
         </el-container>
     </div>
 </template>
