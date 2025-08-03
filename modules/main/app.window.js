@@ -1,5 +1,6 @@
 const { BrowserWindow, session } = require('electron'); // 使用 @electron/remote 是renderer 中能使用 main 进程中的对象，减少ipc
 const path = require('path');
+const fs = require('fs');
 const ObjectUtils = require('../utils/ObjectUtils');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
@@ -88,9 +89,16 @@ module.exports = {
         }
         // console.info('options:', options);
 
+        // 开发选线 uat.dev.json
+        // console.info('uat.dev.json is exists: ', fs.existsSync(path.resolve(appItem.path, 'uat.dev.json')));
+        const uatDevJson = fs.existsSync(path.resolve(appItem.path, 'uat.dev.json'))
+            ? JSON.parse(fs.readFileSync(path.resolve(appItem.path, 'uat.dev.json'), 'utf-8'))
+            : null;
+        console.info('uatDevJson: ', uatDevJson);
+
         // 合并开发选项：如果当前是开发app，则合并开发选项
-        if('dev' === devTag && appItem.appJson.development?.main) {
-            appItem.appJson.main = appItem.appJson.development.main;
+        if('dev' === devTag && uatDevJson?.main) {
+            appItem.appJson.main = uatDevJson.main;
         }
 
         // 加载窗口状态
@@ -107,6 +115,7 @@ module.exports = {
                     options.height = state.position.height;
                 }
             }
+            // console.info('load app window options===%o', options);
 
             // 创建窗口
             appWin = new BrowserWindow(options);
@@ -116,6 +125,7 @@ module.exports = {
             const loadUrl = appItem.appJson.main.indexOf('http') !== -1 
                     ? appItem.appJson.main 
                     : `file://${path.resolve(appItem.path, appItem.appJson.main)}`;
+            console.info(`load app window url===%o`, loadUrl);
             appWin.loadURL(loadUrl).catch(err => {
                 console.error('Failed to load URL:', err);
             });
@@ -148,58 +158,36 @@ module.exports = {
                 });
             }
 
+            appWin.on('ready-to-show', () => {
+                appWin.webContents.openDevTools({mode: 'detach'});
+            });
             // 如果是开发模式且配置了开发者工具，则打开开发者工具
-            if('dev' === devTag && appItem.appJson.development?.devTools) {
-                appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
-            }
+            // if('dev' === devTag && uatDevJson?.devTools) {
+            //     appWin.on('ready-to-show', () => {
+            //         appWin.webContents.openDevTools({mode: uatDevJson?.devTools});
+            //     });
+            // }
+
+            // // 执行钩子函数，将appId注入到渲染进程中
+            // const executeHook = (appId) => {
+            //     console.info('====', appId);
+            //     const js = `
+            //         try {
+            //             window.appId = '${appId}';
+            //         } catch(e) {
+            //             console.error('error', e);
+            //         }
+            //     `;
+            //     appWin.webContents.executeJavaScript(js);
+            // };
+            // appWin.webContents.once('did-finish-load', ()=>{
+            //     executeHook(appItem.id);
+            // });
 
             // 将app窗口添加到appMap中
             appMap.set(appItem.id, appWin);
+            console.info('appMap length: %o', appMap.size);
         });
-
-        appWin.setMenu(null);
-        if(os === 'win') {
-            appWin.setAppDetails({
-                appId: appItem.id
-            });
-        }
-
-        // 如果是开发模式且配置了开发者工具，则打开开发者工具
-        if('dev' === devTag && appItem.appJson.development?.devTools) {
-            appWin.webContents.openDevTools({mode: appItem.appJson.development.devTools});
-        }
-
-        // // 执行钩子函数，将appId注入到渲染进程中
-        // const executeHook = (appId) => {
-        //     console.info('====', appId);
-        //     const js = `
-        //         try {
-        //             window.appId = '${appId}';
-        //         } catch(e) {
-        //             console.error('error', e);
-        //         }
-        //     `;
-        //     appWin.webContents.executeJavaScript(js);
-        // };
-        // appWin.webContents.once('did-finish-load', ()=>{
-        //     executeHook(appItem.id);
-        // });
-
-        // 监听窗口关闭事件：销毁窗口，并从appMap中删除
-        appWin.on('close', () => {
-            console.info(`now will close app: ${appItem.id}`);
-            if(!appWin.isDestroyed()) {
-                try {
-                    appWin.webContents.closeDevTools();
-                } catch(e) {
-                    // console.error('Failed to close devtools:', e);
-                }
-            }
-            console.info('appWin is destroyed');
-            appMap.delete(appItem.id);
-        });
-
-        // 将app窗口添加到appMap中
-        appMap.set(appItem.id, appWin);
     }
+
 }

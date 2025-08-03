@@ -115,7 +115,7 @@ function clearData(i) {
     });
 }
 function removeApp() {
-    window.api.appDev.remove({
+    window.api.app.remove({
             id: props.appDevItem.id,
             tag: 'dev'
         }, (result) => {
