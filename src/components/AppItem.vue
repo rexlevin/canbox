@@ -2,7 +2,7 @@
     <div class="flex flex-wrap" style="margin: 5px 7px 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);">
         <div class="card">
             <div class="img-block">
-                <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.path + '/' + appItem.appJson.logo" alt="" />
+                <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.logo" alt="" />
             </div>
             <div class="info-block vertical-block">
                 <div class="app-name" @click="drawerInfo = true">

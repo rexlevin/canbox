@@ -233,6 +233,8 @@ ipcMain.handle('select-file', async (event, options) => {
     });
 });
 
+const { execSync } = require('child_process');
+
 ipcMain.handle('import-app', async (event, asarPath) => {
     try {
         // 1. 生成 UUID 和目标路径
@@ -256,35 +258,30 @@ ipcMain.handle('import-app', async (event, asarPath) => {
             fs.mkdirSync(targetDir, { recursive: true });
         }
         try {
-            fs.copyFileSync(absoluteAsarPath, targetPath);
-            console.log(`文件复制成功: ${absoluteAsarPath} -> ${targetPath}`);
-        } catch (error) {
-            console.error('复制文件失败:', {
-                sourcePath: absoluteAsarPath,
-                targetPath,
-                error: error.message
-            });
-            throw error;
+            // Linux/macOS 使用 cp，Windows 使用 copy
+            const command = process.platform === 'win32'
+                ? `copy "${absoluteAsarPath}" "${targetPath}"`
+                : `cp "${absoluteAsarPath}" "${targetPath}"`;
+            execSync(command, { stdio: 'inherit' });
+            console.log('ASAR 文件复制成功！');
+        } catch (err) {
+            console.error('复制失败:', err);
         }
 
         // 3. 读取 app.json
         const appJson = JSON.parse(fs.readFileSync(path.join(targetPath, 'app.json'), 'utf8'));
-        const parsedAppJson = JSON.parse(appJson);
 
-        
         // 4. 写入 apps.json
         let appConfigArr = AppsConfig.get('default') ? AppsConfig.get('default') : [];
         appConfigArr.push({
-            sid: uuid,
-            id: parsedAppJson.id || '',
-            name: parsedAppJson.name || '',
-            version: parsedAppJson.version || '',
-            description: parsedAppJson.description || '',
-            author: parsedAppJson.author || '',
-            logo: parsedAppJson.logo || '',
+            id: uuid,
+            name: appJson.name || '',
+            version: appJson.version || '',
+            description: appJson.description || '',
+            author: appJson.author || '',
+            logo: appJson.logo || '',
         });
         AppsConfig.set('default', appConfigArr);
-        // fs.writeFileSync(appsJsonPath, JSON.stringify(appsJson, null, 2));
 
         return { success: true, uuid };
     } catch (error) {

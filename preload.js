@@ -255,10 +255,12 @@ function getAppList() {
         // C:\Users\brood\AppData\Roaming\canbox\Users\apps.json
         // 读取app.json文件内容
         const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, appInfo.id + '.asar/app.json'), 'utf8'));
+        const iconPath = path.join(APP_PATH, appInfo.id + '.asar', appJson.logo);
+        console.info('iconPath: ', iconPath);
         const app = {
             id: appInfo.id,
             appJson: appJson,
-            logo: appInfo.logo,
+            logo: iconPath,
             path: path.join(APP_PATH, appInfo.id + '.asar')
         };
         appList.push(app);
