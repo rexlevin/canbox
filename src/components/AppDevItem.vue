@@ -28,10 +28,9 @@
         </div>
     </div>
 
-    <el-drawer v-model="drawerInfo" :with-header="false" :size="600">
-        <!-- <div style="text-align: left;" v-html="appDevInfoContent"></div> -->
-        <el-tabs>
-            <el-tab-pane label="app介绍">
+    <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
+        <el-tabs v-model="activeName">
+            <el-tab-pane name="appInfo" label="app介绍">
                 <div style="text-align: left;" v-html="appDevInfoContent" id="divAppInfo"></div>
             </el-tab-pane>
             <el-tab-pane label="版本记录"></el-tab-pane>
@@ -55,6 +54,8 @@ const props = defineProps({
 const emit = defineEmits(['reloadAppDev']);
 const drawerInfo = ref(false);
 const appDevInfoContent = ref(null);
+
+let activeName = ref('appInfo');
 
 async function packApp() {
     const { filePaths } = await window.api.selectDirectory({

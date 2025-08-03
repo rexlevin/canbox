@@ -27,7 +27,7 @@
         </div>
     </div>
 
-    <el-drawer v-model="drawerInfo" :with-header="false" :size="600">
+    <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
         <el-tabs>
             <el-tab-pane label="app介绍">
                 <div style="text-align: left;" v-html="appInfoContent" id="divAppInfo"></div>
