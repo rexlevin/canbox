@@ -220,9 +220,9 @@ ipcMain.handle('show-save-dialog', async (event, options) => {
     return dialog.showSaveDialog(options);
 });
 
-ipcMain.on('pack-asar', (event, appDevItemStr) => {
+ipcMain.handle('pack-asar', (event, appDevItemStr) => {
     const appDevItem = JSON.parse(appDevItemStr);
-    console.info('pack-asar appDevItem: ', appDevItem);
+    console.info('main.js==pack-asar appDevItem: ', appDevItem);
     const buildConfigPath = path.join(appDevItem.path, 'cb.build.json');
     
     // 读取 cb.build.json 文件

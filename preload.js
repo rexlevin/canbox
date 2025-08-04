@@ -80,7 +80,7 @@ contextBridge.exposeInMainWorld(
             return ipcRenderer.invoke('import-app', asarPath);
         },
         packToAsar: (appDevItemStr) => {
-            return ipcRenderer.send('pack-asar', appDevItemStr);
+            return ipcRenderer.invoke('pack-asar', appDevItemStr);
         },
         app: {
             info: (appItemJsonStr, fn) => {
