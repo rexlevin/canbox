@@ -58,43 +58,17 @@ const appDevInfoContent = ref(null);
 let activeName = ref('appInfo');
 
 async function packApp() {
-    const { filePaths } = await window.api.selectDirectory({
-        title: '选择打包目录',
-        properties: ['openDirectory'],
-        defaultPath: '../../',
-    });
-
-    if (!filePaths || filePaths.length === 0) return;
-
-    const { response } = await window.api.showDialog({
-        type: 'info',
-        title: `打包${props.appDevItem.appJson.name}`,
-        message: `版本号: ${props.appDevItem.appJson.version}\n\n打包目录: ${filePaths[0]}`,
-        buttons: ['取消', '确定'],
-        defaultId: 1,
-        cancelId: 0,
-    });
-
-    if (response !== 1) return;
-
-    const { canceled, filePaths: selectedFilePaths } = await window.api.selectDirectory({
-        title: '选择打包文件保存目录',
-        properties: ['openDirectory'],
-        defaultPath: '../../',
-    });
-
-    const savePath = selectedFilePaths?.[0];
-    console.info('savePath: ', savePath);
-    if (canceled || !savePath) return;
-
-    const outputPath = savePath + '/' + `${props.appDevItem.appJson.name}.asar`;
-
-    await window.api.packToAsar(filePaths[0], outputPath);
-
-    await window.api.showDialog({
-        type: 'info',
-        message: '打包完成',
-        detail: `文件已保存到: ${outputPath}`,
+    const result = window.api.packToAsar(JSON.stringify(props.appDevItem));
+    if (!result.success) {
+        ElMessage({
+            type: 'error',
+            message: result.error,
+        });
+        return;
+    }
+    ElMessage({
+        message: '打包成功！',
+        type: 'success',
     });
 }
 

@@ -79,14 +79,8 @@ contextBridge.exposeInMainWorld(
         importApp: (asarPath) => {
             return ipcRenderer.invoke('import-app', asarPath);
         },
-        packToAsar: async (sourceDir, outputPath) => {
-            if (!sourceDir || !outputPath) {
-                console.error('Invalid arguments: sourceDir and outputPath are required');
-                return;
-            }
-
-            // 执行打包
-            return ipcRenderer.invoke('pack-asar', { sourceDir, outputPath });
+        packToAsar: (appDevItemStr) => {
+            return ipcRenderer.send('pack-asar', appDevItemStr);
         },
         app: {
             info: (appItemJsonStr, fn) => {
