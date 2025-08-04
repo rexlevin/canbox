@@ -105,7 +105,6 @@ class DB {
     }
     get(param, callback) {
         this.db.get(param._id).then(result => {
-            console.info('res: ', result);
             callback({code: '0000', data: result});
         }).catch(error => {
             console.error('error in get doc from db: ', error);

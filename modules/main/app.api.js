@@ -1,7 +1,5 @@
 const { ipcRenderer } = require("electron");
 
-// var appId = null;
-
 /**
  * 通过 ipc 请求主线程中的 db-api，ipc 消息名为：msg-db
  *
@@ -54,17 +52,10 @@ const db = {
     }
 }
 
-// 从cookie中提取 appId
-const getAppId = () => {
-    const cookie = document.cookie;
-    const appId = cookie.match(/appId=([^;]+)/);
-    return appId ? appId[1] : null;
-}
-
 /**
  * 对 app 暴露的 api
  */
-window.appId = getAppId();
+window.appId = null;
 window.canbox = {
     hooks: {},
     hello: () => {
@@ -73,3 +64,11 @@ window.canbox = {
     },
     db
 };
+
+// 从 additionalArguments 读取 ID（主进程传递）
+for (const arg of process.argv) {
+    if (arg.startsWith('--app-id=')) {
+        appId = arg.split('=')[1];
+        break;
+    }
+}

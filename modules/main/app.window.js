@@ -19,7 +19,7 @@ module.exports = {
      * @returns void
      */
     loadApp: (appItemStr, devTag) => {
-        console.info('loadApp===%o', appItemStr);
+        // console.info('loadApp===%o', appItemStr);
         let appItem;
         try {
             appItem = JSON.parse(appItemStr);
@@ -41,13 +41,10 @@ module.exports = {
         // 使用id来创建唯一的session实例
         const sess = session.fromPartition(appItem.id);
         // 设置预加载脚本：设置preload文件，使app的渲染进程能调用到preload中的自定义window属性
-        sess.setPreloads([path.join(__dirname, 'app.api.js')]);
-        // 将appId存储到cookie
-        const cookie = {name: 'appId', value: appItem.id, url: 'http://localhost:8080'};
-        sess.cookies.set(cookie, err => {
-            if(err) {
-                console.error('Failed to set cookie:', err);
-            }
+        // sess.setPreloads([path.join(__dirname, 'app.api.js')]);
+        sess.registerPreloadScript({
+            type: 'frame',
+            filePath: path.join(__dirname, 'app.api.js')
         });
 
         // app窗口选项
@@ -81,13 +78,14 @@ module.exports = {
                 contextIsolation: true, // 开启上下文隔离：使app的渲染进程能不能调用到preload中的自定义window方法或属性，只能通过contextBridge暴露api
                 // allowRunningInsecureContent: false,
                 // allowEval: false,
-                session: sess
+                session: sess,
+                additionalArguments: [`--app-id=${appItem.id}`],
             };
         }
         if(appItem.appJson.window?.webPreferences?.preload) {
             options.webPreferences.preload = path.resolve(appItem.path, appItem.appJson.window.webPreferences.preload);
         }
-        // console.info('options:', options);
+        // console.info('load app options:', options);
 
         // 开发选线 uat.dev.json
         // console.info('uat.dev.json is exists: ', fs.existsSync(path.resolve(appItem.path, 'uat.dev.json')));
@@ -158,31 +156,12 @@ module.exports = {
                 });
             }
 
-            appWin.on('ready-to-show', () => {
-                appWin.webContents.openDevTools({mode: 'detach'});
-            });
             // 如果是开发模式且配置了开发者工具，则打开开发者工具
-            // if('dev' === devTag && uatDevJson?.devTools) {
-            //     appWin.on('ready-to-show', () => {
-            //         appWin.webContents.openDevTools({mode: uatDevJson?.devTools});
-            //     });
-            // }
-
-            // // 执行钩子函数，将appId注入到渲染进程中
-            // const executeHook = (appId) => {
-            //     console.info('====', appId);
-            //     const js = `
-            //         try {
-            //             window.appId = '${appId}';
-            //         } catch(e) {
-            //             console.error('error', e);
-            //         }
-            //     `;
-            //     appWin.webContents.executeJavaScript(js);
-            // };
-            // appWin.webContents.once('did-finish-load', ()=>{
-            //     executeHook(appItem.id);
-            // });
+            if('dev' === devTag && uatDevJson?.devTools) {
+                appWin.on('ready-to-show', () => {
+                    appWin.webContents.openDevTools({mode: uatDevJson?.devTools});
+                });
+            }
 
             // 将app窗口添加到appMap中
             appMap.set(appItem.id, appWin);
