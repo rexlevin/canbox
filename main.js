@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 const fs = require("fs");
-const asar = require('asar');
+const { execSync } = require('child_process');
 
 const { v4: uuidv4 } = require('uuid');
 
@@ -225,7 +225,7 @@ ipcMain.handle('show-save-dialog', async (event, options) => {
 ipcMain.handle('pack-asar', async (event, appDevItemStr) => {
     const appDevItem = JSON.parse(appDevItemStr);
     console.info('main.js==pack-asar appDevItem: ', appDevItem);
-    return await buildAsar(appDevItem);
+    return buildAsar(appDevItem);
 });
 
 ipcMain.handle('select-file', async (event, options) => {
@@ -235,8 +235,6 @@ ipcMain.handle('select-file', async (event, options) => {
         filters: [{ name: 'App Files', extensions: ['asar'] }],
     });
 });
-
-const { execSync } = require('child_process');
 
 ipcMain.handle('import-app', async (event, asarPath) => {
     try {

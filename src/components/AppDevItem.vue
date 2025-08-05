@@ -59,16 +59,23 @@ let activeName = ref('appInfo');
 
 async function packApp() {
     const result = window.api.packToAsar(JSON.stringify(props.appDevItem));
-    if (!result.success) {
+    result.then((result) => {
+        if (!result.success) {
+            ElMessage({
+                type: 'error',
+                message: result.msg,
+            });
+            return;
+        }
+        ElMessage({
+            message: '打包成功！',
+            type: 'success',
+        });
+    }).catch((err) => {
         ElMessage({
             type: 'error',
-            message: result.error,
+            message: err,
         });
-        return;
-    }
-    ElMessage({
-        message: '打包成功！',
-        type: 'success',
     });
 }
 
