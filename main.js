@@ -9,6 +9,8 @@ const tray = require('./modules/main/tray');
 const api = require('./modules/main/api');
 const appWindow = require('./modules/main/app.window');
 
+const { buildAsar } = require('./modules/main/build-asar');
+
 const Store  = require('electron-store');
 Store.initRenderer();
 
@@ -220,40 +222,10 @@ ipcMain.handle('show-save-dialog', async (event, options) => {
     return dialog.showSaveDialog(options);
 });
 
-ipcMain.handle('pack-asar', (event, appDevItemStr) => {
+ipcMain.handle('pack-asar', async (event, appDevItemStr) => {
     const appDevItem = JSON.parse(appDevItemStr);
     console.info('main.js==pack-asar appDevItem: ', appDevItem);
-    const buildConfigPath = path.join(appDevItem.path, 'cb.build.json');
-    
-    // 读取 cb.build.json 文件
-    fs.readFile(buildConfigPath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('读取 cb.build.json 失败:', err);
-            return {success: false, msg: err.message};
-        }
-        
-        const buildConfig = JSON.parse(data);
-        const outputDir = path.join(appDevItem.path, buildConfig.directories.output);
-        const asarPath = path.join(outputDir, `${appDevItem.appJson.id}-${appDevItem.appJson.version}.asar`);
-        
-        // 确保输出目录存在
-        if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-        }
-        
-        // 打包文件到 asar
-        asar.createPackage(appDevItem.path, asarPath, {
-            glob: buildConfig.files
-        }, (err) => {
-            if (err) {
-                console.error('打包失败:', err);
-                return {success: false, msg: err.message};
-            } else {
-                console.log('打包成功:', asarPath);
-                return {success: true, msg: '打包成功'};
-            }
-        });
-    });
+    return await buildAsar(appDevItem);
 });
 
 ipcMain.handle('select-file', async (event, options) => {
