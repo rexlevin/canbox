@@ -137,42 +137,21 @@ contextBridge.exposeInMainWorld(
                 } else {
                     removeAppById(param.id);
                 }
-                fn({code: '0000'});
+                const appDataDir = path.resolve(DATA_PATH, param.id);
+                fs.rmdir(appDataDir, { recursive: true }, (err) => {
+                    if(err) {
+                        console.info('fs.rmdir error: ', err.message);
+                        return;
+                    }
+                    console.info('删除应用目录成功！%s', appDataDir);
+                    fn({code: '0000'});
+                })
             }
         },
         appDev: {
-            // info: (appDevItemJsonStr, fn) => {
-            //     const appDevItem = JSON.parse(appDevItemJsonStr);
-            //     // console.info('appDevItem==', appDevItem);
-            //     fs.readFile(path.join(appDevItem.path, 'README.md'), 'utf8', (err, content) => {
-            //         if(err) {
-            //             let msg = '';
-            //             if(err.code === 'ENOENT') {
-            //                 console.error('file note found: ', err.path);
-            //                 msg = '文件不存在';
-            //             } else {
-            //                 console.error('read file error: ', err.path);
-            //                 msg = '文件读取失败';
-            //             }
-            //             fn({
-            //                 code: '9202',
-            //                 msg: msg,
-            //                 data: 'There is no introduction information of this app'
-            //             });
-            //             return;
-            //         }
-            //         // console.info(content)
-            //         fn({code: '0000', data: content});
-            //     });
-            // },
             all: (fn) => {
                 fn(getAppDevList());
             },
-            // load: (appDevItem) => {
-            //     // ipcRenderer.send('loadApp', appDevItem, '1');
-            //     // loadApp(appDevItem, '1')
-            //     AppWindow.loadApp(appDevItem, '1');
-            // },
             add: (fn) => {
                 // console.info(uuid.v1());
                 const options = {
