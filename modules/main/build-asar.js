@@ -1,5 +1,7 @@
 const path = require('path');
 const fs = require('fs');
+const fse = require('fs-extra');
+const glob = require('glob'); 
 const asar = require('asar');
 const { execSync } = require('child_process');
 
@@ -11,8 +13,7 @@ const { execSync } = require('child_process');
 const buildAsar = async (appDevItem) => {
     try {
         const buildConfigPath = path.join(appDevItem.path, 'cb.build.json');
-        const data = await fs.promises.readFile(buildConfigPath, 'utf8');
-        const buildConfig = JSON.parse(data);
+        const buildConfig = JSON.parse(fs.readFileSync(buildConfigPath, 'utf8'));
         
         const outputDir = path.join(appDevItem.path, buildConfig.outputDir);
         const tmpDir = path.join(outputDir, 'tmp');
@@ -40,15 +41,36 @@ const buildAsar = async (appDevItem) => {
             console.info('partten: ', pattern);
             const fullPattern = path.join(appDevItem.path, pattern);
             console.info('fullPartten: ', fullPattern);
-            const files = fs.globSync(fullPattern, { nodir: true });
-            files.forEach((file) => {
-                console.info('file: ', path.resolve(file));
-                console.info('path.relative of file: ', path.relative('./', file));
-                const dest = path.join(tmpDir, pattern);
-                // fs.mkdirSync(path.resolve(tmpDir), { recursive: true });
-                fs.cpSync(file, dest, { recursive: true });
+            const matchedFiles = glob.sync(fullPattern, { nodir: true }); // 匹配所有文件（不包括目录）
+            if (matchedFiles.length === 0) {
+                console.warn(`Warning: No files matched "${filePattern}", skipping.`);
+                return;
+            }
+
+            matchedFiles.forEach((filePath) => {
+                const relativePath = path.relative(appDevItem.path, filePath); // 计算相对路径（如 "build/main.js"）
+                const destPath = path.join(tmpDir, relativePath); // 目标路径（保持目录结构）
+
+                // 确保目标目录存在
+                const destDir = path.dirname(destPath);
+                if (!fs.existsSync(destDir)) {
+                    fs.mkdirSync(destDir, { recursive: true });
+                }
+
+                // 复制文件
+                fs.copyFileSync(filePath, destPath);
             });
+            // const files = fs.globSync(fullPattern, { nodir: true });
+            // files.forEach((file) => {
+            //     console.info('file: ', path.resolve(file));
+            //     console.info('path.relative of file: ', path.relative('./', file));
+            //     const dest = path.join(tmpDir, pattern);
+            //     fs.mkdirSync(path.resolve(tmpDir), { recursive: true });
+            //     fs.cpSync(file, dest, { recursive: true });
+            // });
         });
+
+        copyNodeModulesWithoutDevDeps(appDevItem, buildConfig);
         
         // 在临时目录中打包
         const tmpAsarPath = path.join(tmpDir, 'app.asar');
@@ -68,5 +90,49 @@ const buildAsar = async (appDevItem) => {
         return { success: false, msg: err.message };
     }
 };
+
+function copyNodeModulesWithoutDevDeps(appDevItem, buildConfig) {
+    const workDir = appDevItem.path;
+    const tmpDir = path.join(workDir, buildConfig.outputDir, 'tmp');
+    console.info('tmpDir:', tmpDir);
+    // const buildConfig = JSON.parse(fs.readFileSync(buildConfigPath, 'utf8'));
+    const packageJson = JSON.parse(fs.readFileSync(path.join(workDir, 'package.json'), 'utf8'));
+    // path.join(workDir, 'package.json');
+    const dependencies = Object.keys(packageJson.dependencies || {});
+    const devDependencies = Object.keys(packageJson.devDependencies || {});
+    const optionalDependencies = Object.keys(packageJson.optionalDependencies || {});
+
+    // 要排除的依赖（devDependencies + optionalDependencies）
+    const excludedDeps = [...devDependencies, ...optionalDependencies];
+
+    // 确保 node_modules 存在
+    const nodeModulesSrc = path.join(workDir, 'node_modules');
+    const nodeModulesDest = path.join(tmpDir, 'node_modules');
+
+    if (!fs.existsSync(nodeModulesSrc)) {
+        console.warn('Warning: node_modules not found, skipping.');
+        return;
+    }
+
+    console.info('dependencies length: ', dependencies.length);
+    // 遍历 dependencies 并复制
+    dependencies.forEach((dep) => {
+        if (excludedDeps.includes(dep)) {
+            console.log(`⚠️ Skipping devDependency: ${dep}`);
+            return;
+        }
+
+        const depSrc = path.join(nodeModulesSrc, dep);
+        const depDest = path.join(nodeModulesDest, dep);
+
+        if (fs.existsSync(depSrc)) {
+            fse.copySync(depSrc, depDest); // 递归复制整个依赖目录
+        } else {
+            console.warn(`Warning: Dependency "${dep}" not found in node_modules.`);
+        }
+    });
+
+    console.log('✅ node_modules copied (excluding devDependencies).');
+}
 
 module.exports = { buildAsar };
