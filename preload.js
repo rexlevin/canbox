@@ -132,19 +132,12 @@ contextBridge.exposeInMainWorld(
             },
             remove: (param, fn) => {
                 console.info('remove app param======', param);
-                if ('dev' === param.tag) {
-                    removeAppDevById(param.id);
-                } else {
-                    removeAppById(param.id);
-                }
-                const appDataDir = path.resolve(DATA_PATH, param.id);
-                fs.rmdir(appDataDir, { recursive: true }, (err) => {
-                    if(err) {
-                        console.info('fs.rmdir error: ', err.message);
-                        return;
-                    }
-                    console.info('删除应用目录成功！%s', appDataDir);
-                    fn({code: '0000'});
+                ipcRenderer.invoke('remove-app', param).then(() => {
+                    console.info('应用删除成功！');
+                    fn({success: true, msg: '应用删除成功！'});
+                }).catch(err => {
+                    console.info('应用删除失败: ', err);
+                    fn({success: false, msg: '应用删除失败！' + err.message});
                 })
             }
         },
@@ -184,34 +177,6 @@ contextBridge.exposeInMainWorld(
         }
     }
 );
-
-function removeAppById(id) {
-    if(undefined === AppsConfig.get('default')) {
-        return;
-    }
-    const /*Array<Object>*/ appConfigList = AppsConfig.get('default');
-    for(let appConfig of appConfigList) {
-        console.info('appConfig==', appConfig);
-        if(id !== appConfig.id) continue;
-        appConfigList.splice(appConfigList.indexOf(appConfig), 1);
-        AppsConfig.set('default', appConfigList);
-    }
-    fs.unlinkSync(path.join(APP_PATH, id + '.asar'));
-    console.info('%s===remove is success', id);
-}
-function removeAppDevById(id) {
-    if(undefined === AppsDevConfig.get('default')) {
-        return;
-    }
-    const /*Array<Object>*/ appDevInfoList = AppsDevConfig.get('default');
-    for(let appDevInfo of appDevInfoList) {
-        console.info('appDevInfo', appDevInfo);
-        if(id !== appDevInfo.id) continue;
-        appDevInfoList.splice(appDevInfoList.indexOf(appDevInfo), 1);
-        AppsDevConfig.set('default', appDevInfoList);
-    }
-    console.info('%s===remove is success', id);
-}
 
 /**
  * @returns {*[Object]} app信息集合

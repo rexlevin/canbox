@@ -12,6 +12,7 @@ const appWindow = require('./modules/main/app.window');
 const { buildAsar } = require('./modules/main/build-asar');
 
 const Store  = require('electron-store');
+const winState = require('./modules/main/winState');
 Store.initRenderer();
 
 // 清除启动时控制台的“Electron Security Warning (Insecure Content-Security-Policy)”报错信息
@@ -27,12 +28,12 @@ const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' 
  * windows：~\AppData\Roaming\canbox\
  * linux: ~/.config/canbox/
  */
-const userDataPath = app.getPath('userData');
+const USER_DATA_PATH = app.getPath('userData');
+const DATA_PATH = path.join(USER_DATA_PATH, 'Users', 'data');
+const APP_PATH = path.join(USER_DATA_PATH, 'Users', 'apps');
 
-const AppsConfig = new Store({
-    cwd: 'Users',
-    name: 'apps'
-});
+const AppsConfig = new Store({ cwd: 'Users', name: 'apps' });
+const AppsDevConfig = new Store({ cwd: 'Users', name: 'appsDev' });
 
 // canbox 主窗口对象
 let win = null;
@@ -240,7 +241,7 @@ ipcMain.handle('import-app', async (event, asarPath) => {
     try {
         // 1. 生成 UUID 和目标路径
         const uuid = uuidv4().replace(/-/g, '');
-        const targetPath = path.join(userDataPath, 'Users', 'apps', `${uuid}.asar`);
+        const targetPath = path.join(USER_DATA_PATH, 'Users', 'apps', `${uuid}.asar`);
         // const targetPath = path.join(targetDir, `${uuid}.asar`);
 
         console.info('asarPath=', asarPath);
@@ -290,3 +291,60 @@ ipcMain.handle('import-app', async (event, asarPath) => {
         return { success: false, error: error.message };
     }
 });
+
+
+// 处理删除应用目录的 IPC 调用
+ipcMain.handle('remove-app', async (event, param) => {
+    try {
+        if ('dev' === param.tag) {
+            removeAppDevById(param.id);
+        } else {
+            removeAppById(param.id);
+        }
+    } catch (err) {
+        console.error('应用删除失败:', err.message);
+        throw err;
+    }
+    const dirPath = path.resolve(DATA_PATH, param.id);
+    fs.rm(dirPath, { recursive: true, force: true }, (err) => {
+        if (err) {
+            console.error(`Failed to remove directory: ${err.message}`);
+            throw err;
+        }
+        console.info('remove app success: %s', param.id);
+        winState.remove(param.id, (res) => {
+            console.info(res);
+            return { success: true, msg: '删除应用目录成功' };
+        });
+    
+    });
+});
+
+async function removeAppDevById(id) {
+    if(undefined === AppsDevConfig.get('default')) {
+        return;
+    }
+    const /*Array<Object>*/ appDevInfoList = AppsDevConfig.get('default');
+    for(let appDevInfo of appDevInfoList) {
+        console.info('appDevInfo', appDevInfo);
+        if(id !== appDevInfo.id) continue;
+        appDevInfoList.splice(appDevInfoList.indexOf(appDevInfo), 1);
+        AppsDevConfig.set('default', appDevInfoList);
+    }
+    console.info('%s===remove is success', id);
+}
+
+async function removeAppById(id) {
+    if(undefined === AppsConfig.get('default')) {
+        return;
+    }
+    const /*Array<Object>*/ appConfigList = AppsConfig.get('default');
+    for(let appConfig of appConfigList) {
+        console.info('appConfig==', appConfig);
+        if(id !== appConfig.id) continue;
+        appConfigList.splice(appConfigList.indexOf(appConfig), 1);
+        AppsConfig.set('default', appConfigList);
+    }
+    fs.unlinkSync(path.join(APP_PATH, id + '.asar'));
+    console.info('%s===remove is success', id);
+}
