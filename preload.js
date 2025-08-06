@@ -83,23 +83,11 @@ contextBridge.exposeInMainWorld(
         },
         app: {
             info: (appItemJsonStr, fn) => {
-                const appItem = JSON.parse(appItemJsonStr);
-                // console.info('appItem==', appItem);
-                fs.readFile(path.join(appItem.path, 'README.md'), 'utf8', (err, content) => {
-                    if(err) {
-                        let msg;
-                        if(err.code === 'ENOENT') {
-                            console.error('file note found: ', err.path);
-                            msg = '文件不存在';
-                        } else {
-                            console.error('read file error: ', err.path);
-                            msg = '文件读取失败';
-                        }
-                        fn({code: '9101', msg: msg, data: 'There is no introduction information of this app'});
-                        return;
-                    }
-                    // console.info(content)
-                    fn({code: '0000', data: content});
+                ipcRenderer.invoke('getAppInfo', appItemJsonStr).then(result => {
+                    fn(result);
+                }).catch(error => {
+                    console.error('IPC call failed:', error);
+                    fn({ code: '9101', msg: error.message });
                 });
             },
             all: (fn) => {
@@ -109,7 +97,6 @@ contextBridge.exposeInMainWorld(
                 ipcRenderer.send('loadApp', appItemStr, devTag);
             },
             clearData: (id, fn) => {
-                console.info('clearData');
                 ipcRenderer.invoke('clearAppData', id).then(result => {
                     fn(result);
                 }).catch(error => {
@@ -120,7 +107,6 @@ contextBridge.exposeInMainWorld(
             remove: (param, fn) => {
                 console.info('remove app param======', param);
                 ipcRenderer.invoke('remove-app', param).then(() => {
-                    console.info('应用删除成功！');
                     fn({success: true, msg: '应用删除成功！'});
                 }).catch(err => {
                     console.info('应用删除失败: ', err);

@@ -166,6 +166,25 @@ function initIpcHandlers(win) {
             return { code: '9201', msg: 'Failed to clear app data: ' + err.message };
         }
     });
+
+    // 获取应用信息
+    ipcMain.handle('getAppInfo', async (event, appItemJsonStr) => {
+        const appItem = JSON.parse(appItemJsonStr);
+        try {
+            const content = await fs.promises.readFile(path.join(appItem.path, 'README.md'), 'utf8');
+            return { code: '0000', data: content };
+        } catch (err) {
+            let msg;
+            if (err.code === 'ENOENT') {
+                console.error('file not found: ', err.path);
+                msg = '文件不存在';
+            } else {
+                console.error('read file error: ', err.path);
+                msg = '文件读取失败';
+            }
+            return { code: '9101', msg: msg, data: 'There is no introduction information of this app' };
+        }
+    });
 }
 
 async function removeAppDevById(id) {
