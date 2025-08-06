@@ -1,8 +1,12 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
+const { app, BrowserWindow } = require('electron')
 const path = require('path')
 
 const tray = require('./modules/main/tray');
-const api = require('./modules/main/api');
+
+// 引入 IPC 消息处理模块
+const initDbIpcHandlers = require('./modules/main/api');
+// 初始化 IPC 消息处理
+initDbIpcHandlers();
 
 const Store  = require('electron-store');
 Store.initRenderer();
