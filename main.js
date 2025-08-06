@@ -1,18 +1,9 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
-const fs = require("fs");
-const { execSync } = require('child_process');
-
-const { v4: uuidv4 } = require('uuid');
 
 const tray = require('./modules/main/tray');
-const api = require('./modules/main/api');
-const appWindow = require('./modules/main/app.window');
-
-const { buildAsar } = require('./modules/main/build-asar');
 
 const Store  = require('electron-store');
-const winState = require('./modules/main/winState');
 Store.initRenderer();
 
 // 清除启动时控制台的“Electron Security Warning (Insecure Content-Security-Policy)”报错信息
@@ -22,18 +13,6 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 app.disableHardwareAcceleration();
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
-
-/**
- * userData目录：
- * windows：~\AppData\Roaming\canbox\
- * linux: ~/.config/canbox/
- */
-const USER_DATA_PATH = app.getPath('userData');
-const DATA_PATH = path.join(USER_DATA_PATH, 'Users', 'data');
-const APP_PATH = path.join(USER_DATA_PATH, 'Users', 'apps');
-
-const AppsConfig = new Store({ cwd: 'Users', name: 'apps' });
-const AppsDevConfig = new Store({ cwd: 'Users', name: 'appsDev' });
 
 // canbox 主窗口对象
 let win = null;

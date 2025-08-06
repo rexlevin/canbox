@@ -82,7 +82,7 @@ async function packApp() {
 function loadApp() {
     window.api.app.load(JSON.stringify(props.appDevItem), 'dev');
 }
-function clearData(i) {
+function clearData() {
     window.api.app.clearData(props.appDevItem.id, (result)=>{
         console.info('clearData result=', result);
         if(result.code !== '0000') {

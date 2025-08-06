@@ -4,18 +4,18 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 
+/**
+ * app.getPath('userData') 指向 userData 目录：
+ * windows：~\AppData\Roaming\canbox\
+ * linux: ~/.config/canbox/
+ */
+// const USER_DATA_PATH = app.getPath('userData');
+const DATA_PATH = path.join(app.getPath('userData'), 'Users', 'data');
+const APP_PATH = path.join(app.getPath('userData'), 'Users', 'apps');
+
 const Store = require('electron-store');
-const AppsConfig = new Store({
-    cwd: 'Users',
-    name: 'apps'
-});
-
-const AppsDevConfig = new Store({
-    cwd: 'Users',
-    name: 'appsDev'
-});
-
-const userDataPath = app.getPath('userData');
+const AppsConfig = new Store({ cwd: 'Users', name: 'apps' });
+const AppsDevConfig = new Store({ cwd: 'Users', name: 'appsDev' });
 
 /**
  * 初始化所有 IPC 消息处理逻辑
@@ -95,7 +95,7 @@ function initIpcHandlers(win) {
     ipcMain.handle('import-app', async (event, asarPath) => {
         try {
             const uuid = uuidv4().replace(/-/g, '');
-            const targetPath = path.join(userDataPath, 'Users', 'apps', `${uuid}.asar`);
+            const targetPath = path.join(APP_PATH, `${uuid}.asar`);
 
             if (!fs.existsSync(asarPath)) {
                 throw new Error(`源文件不存在: ${asarPath}`);
@@ -148,6 +148,22 @@ function initIpcHandlers(win) {
         } catch (err) {
             console.error('应用删除失败:', err.message);
             throw err;
+        }
+    });
+
+    // 清理应用数据
+    ipcMain.handle('clearAppData', async (event, id) => {
+        const appData = path.join(DATA_PATH, id);
+        try {
+            await fs.promises.access(appData, fs.constants.F_OK);
+            await fs.promises.rm(appData, { recursive: true, force: true });
+            return { code: '0000', msg: 'clear data success' };
+        } catch (err) {
+            if (err.code === 'ENOENT') {
+                return { code: '0000', msg: 'no data to clear' };
+            }
+            console.error(`Failed to remove directory: ${err.message}`);
+            return { code: '9201', msg: 'Failed to clear app data: ' + err.message };
         }
     });
 }

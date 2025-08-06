@@ -1,5 +1,4 @@
 const { contextBridge, ipcRenderer } = require('electron');
-// const { BrowserWindow } = require('@electron/remote');
 const Store  = require('electron-store');
 const path = require('path')
 const fs = require("fs");
@@ -111,24 +110,12 @@ contextBridge.exposeInMainWorld(
             },
             clearData: (id, fn) => {
                 console.info('clearData');
-                const appData = path.join( USER_DATA_PATH, 'Users', 'data', id );
-
-                // 判断有没有appData这个目录，有的话才进行删除操作
-                fs.access(appData, fs.constants.F_OK, (err) => {
-                    if (err) {
-                        console.error(`Directory does not exist: ${err}`);
-                        fn({code: '0000', msg: 'no data to remove'});
-                        return;
-                    }
-                    fs.rmdir(appData, { recursive: true }, (error) => {
-                        if (error) {
-                            console.error(`Failed to remove directory: ${error}`);
-                            fn({code: '9201', msg: error.message, 'data': 'Failed to remove app data'});
-                            return;
-                        }
-                        fn({code: '0000'});
-                    })
-                })
+                ipcRenderer.invoke('clearAppData', id).then(result => {
+                    fn(result);
+                }).catch(error => {
+                    console.error('IPC call failed:', error);
+                    fn({ code: '9201', msg: error.message });
+                });
             },
             remove: (param, fn) => {
                 console.info('remove app param======', param);
