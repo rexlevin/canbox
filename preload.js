@@ -4,7 +4,6 @@ const path = require('path')
 const fs = require("fs");
 const uuid = require('uuid');
 const PackageJson = require('./package.json');
-const ObjectUtils = require('./modules/utils/ObjectUtils')
 
 const AppShortcut = require('./modules/main/app.shortcut');
 const AppRepo = require('./modules/main/app.repo');
@@ -115,38 +114,14 @@ contextBridge.exposeInMainWorld(
             }
         },
         appDev: {
-            all: (fn) => {
-                fn(getAppDevList());
-            },
-            add: (fn) => {
-                // console.info(uuid.v1());
-                const options = {
-                    title: '选择你的 app.json 文件',
-                    filters: [
-                        { name: 'app.json', extensions: ['json'] }
-                    ],
-                    properties: ['openFile']
-                };
-                // 向 main 发送同步消息
-                const filePath = ipcRenderer.sendSync('openAppJson', options);
-                console.info('filePath: ', filePath);
-                if('' === filePath) return;
-                // 这里开始读取filePath的文件内容
-                let appJson = fs.readFileSync(filePath, 'utf-8');
-                appJson = JSON.parse(appJson);
-                // e.sender.send('openAppJsonResult', appJson);
-                const appDevConfig = {
-                    id: uuid.v4().replace(/-/g, ''),
-                    path: filePath.substring(0, filePath.lastIndexOf('app.json')),
-                    name: appJson.name
-                };
-                let appDevConfigArr = undefined === AppsDevConfig.get('default')
-                    ? [] : AppsDevConfig.get('default');
-                console.info('appDevConfigArr', appDevConfigArr);
-                appDevConfigArr.unshift(appDevConfig);
-                AppsDevConfig.set('default', appDevConfigArr);
-                fn(getAppDevList());
-            }
+            all: (fn) => ipcRenderer.invoke('getAppDevList').then(result => fn(result)).catch(error => {
+                console.error('IPC call failed:', error);
+                fn(null);
+            }),
+            add: (fn) => ipcRenderer.invoke('handleAppAdd').then(result => fn(result)).catch(error => {
+                console.error('IPC call failed:', error);
+                fn(null);
+            })
         }
     }
 );
@@ -219,39 +194,6 @@ function getAppList() {
     ]
 }
  */
-function getAppDevList() {
-    // console.info(1,appsDevConfig);
-    // console.info('getAppDevList===', appsDevConfig.get('default'));
-    if(undefined === AppsDevConfig.get('default')) {
-        return [];
-    }
-    let /*Array<Types.AppItemType>*/ appDevInfoList = AppsDevConfig.get('default')
-        , appDevList = []
-        , appDevFalseList = []
-        , tmpItem = {};
-    for(let appDevInfo of appDevInfoList) {
-        // console.info('appDevInfo', appDevInfo);
-        try {
-            const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
-            tmpItem = ObjectUtils.clone(appDevInfo);
-            tmpItem.appJson = appJson;
-            appDevList.push(tmpItem);
-        } catch(e) {
-            // console.error('parse app.json error:', e);
-            appDevFalseList.push(appDevInfo);
-        }
-    }
-    if(appDevFalseList.length > 0) {
-        for(let falseItem of appDevFalseList) {
-            console.info(falseItem);
-            appDevInfoList = appDevInfoList.filter(item => item.id !== falseItem.id);
-        }
-        AppsDevConfig.set('default', appDevInfoList);
-    }
-    // console.info('appDevInfoList===', appDevInfoList);
-    // console.info('appDevList=====%o', appDevList);
-    return {"correct": appDevList, "wrong": appDevFalseList};
-}
 
 Types = function() {}
 Types.AppItemType = function () {

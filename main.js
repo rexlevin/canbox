@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 
 const tray = require('./modules/main/tray');
+const api = require('./modules/main/api');
 
 const Store  = require('electron-store');
 Store.initRenderer();

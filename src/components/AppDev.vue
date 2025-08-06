@@ -28,7 +28,7 @@ const warningContent = ref('');
 
 function addAppDev() {
     window.api.appDev.add((result) => {
-        appDevList.value = result.correct;
+        appDevList.value = result?.correct;
     });
 }
 

@@ -4,6 +4,8 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 
+const ObjectUtils = require('./modules/utils/ObjectUtils')
+
 /**
  * app.getPath('userData') 指向 userData 目录：
  * windows：~\AppData\Roaming\canbox\
@@ -185,6 +187,42 @@ function initIpcHandlers(win) {
             return { code: '9101', msg: msg, data: 'There is no introduction information of this app' };
         }
     });
+
+    // 获取应用开发列表
+    ipcMain.handle('getAppDevList', async () => {
+        return await getAppDevList();
+    });
+
+    // 处理应用添加
+    ipcMain.handle('handleAppAdd', async (event, options) => {
+        try {
+            const result = await dialog.showOpenDialog({
+                title: '选择你的 app.json 文件',
+                filters: [
+                    { name: 'app.json', extensions: ['json'] }
+                ],
+                properties: ['openFile']
+            });
+            if (result.canceled || result.filePaths.length === 0) {
+                return null;
+            }
+            const filePath = result.filePaths[0];
+            console.info('filePath: ', filePath);
+            const appJson = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            const appDevConfig = {
+                id: uuidv4().replace(/-/g, ''),
+                path: filePath.substring(0, filePath.lastIndexOf('app.json')),
+                name: appJson.name
+            };
+            let appDevConfigArr = AppsDevConfig.get('default') || [];
+            appDevConfigArr.unshift(appDevConfig);
+            AppsDevConfig.set('default', appDevConfigArr);
+            return await getAppDevList();
+        } catch (err) {
+            console.error('Failed to handle app add:', err);
+            throw err;
+        }
+    });
 }
 
 async function removeAppDevById(id) {
@@ -212,6 +250,40 @@ async function removeAppById(id) {
     }
     fs.unlinkSync(path.join(APP_PATH, id + '.asar'));
     console.info('%s===remove is success', id);
+}
+
+async function getAppDevList() {
+    // console.info(1,appsDevConfig);
+    // console.info('getAppDevList===', appsDevConfig.get('default'));
+    if(undefined === AppsDevConfig.get('default')) {
+        return null;
+    }
+    let /*Array<Types.AppItemType>*/ appDevInfoList = AppsDevConfig.get('default')
+        , appDevList = []
+        , appDevFalseList = []
+        , tmpItem = {};
+    for(let appDevInfo of appDevInfoList) {
+        // console.info('appDevInfo', appDevInfo);
+        try {
+            const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
+            tmpItem = ObjectUtils.clone(appDevInfo);
+            tmpItem.appJson = appJson;
+            appDevList.push(tmpItem);
+        } catch(e) {
+            console.error('parse app.json error:', e);
+            appDevFalseList.push(appDevInfo);
+        }
+    }
+    if(appDevFalseList.length > 0) {
+        for(let falseItem of appDevFalseList) {
+            console.info('faseItem: ', falseItem);
+            appDevInfoList = appDevInfoList.filter(item => item.id !== falseItem.id);
+        }
+        AppsDevConfig.set('default', appDevInfoList);
+    }
+    // console.info('appDevInfoList===', appDevInfoList);
+    // console.info('appDevList=====%o', appDevList);
+    return {"correct": appDevList, "wrong": appDevFalseList};
 }
 
 module.exports = {
