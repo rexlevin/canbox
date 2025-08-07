@@ -4,6 +4,8 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 
+const winState = require('./modules/main/winState');
+
 const ObjectUtils = require('./modules/utils/ObjectUtils')
 
 /**
@@ -151,6 +153,19 @@ function initIpcHandlers(win) {
             console.error('应用删除失败:', err.message);
             throw err;
         }
+        const dirPath = path.resolve(DATA_PATH, param.id);
+        fs.rm(dirPath, { recursive: true, force: true }, (err) => {
+            if (err) {
+                console.error(`Failed to remove directory: ${err.message}`);
+                throw err;
+            }
+            console.info('remove app success: %s', param.id);
+            winState.remove(param.id, (res) => {
+                console.info(res);
+                return { success: true, msg: '删除应用目录成功' };
+            });
+        
+        });
     });
 
     // 清理应用数据

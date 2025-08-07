@@ -103,7 +103,7 @@ function removeApp() {
         tag: ''
     }, (result) => {
         console.info('remove result=', result);
-        if(result.code !== '0000') {
+        if(!result.success) {
             ElMessage.error(result.msg);
             return;
         }
