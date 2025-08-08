@@ -91,7 +91,7 @@ const createWindow = () => {
         width: 700,
         height: 550,
         resizable: false,
-        icon: path.join(__dirname, 'logo.png'),
+        icon: path.join(__dirname, './logo_512x512.png'),
         webPreferences: {
             sandbox: false, // 因为我想在preload中使用nodejs模块，所以这里设置为false，并且在启动参数中使用 --no-sandbox
             preload: path.join(__dirname, './preload.js'),
