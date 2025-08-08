@@ -9,8 +9,14 @@ const WindowManager = {
      * @param {Object} options - 窗口配置
      * @returns {BrowserWindow} 新窗口实例
      */
-    createWindow: (options) => {
+    createWindow: (options, loadURL, devTools = false, devToolsMode = 'right') => {
         const win = new BrowserWindow(options);
+        if (loadURL) {
+            win.loadURL(loadURL);
+        }
+        if (devTools) {
+            win.webContents.openDevTools({ mode: devToolsMode });
+        }
         return win;
     },
 
