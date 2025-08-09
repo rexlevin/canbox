@@ -1,7 +1,10 @@
 const { app, BrowserWindow } = require('electron')
+const fs = require('fs');
 const path = require('path')
 
 const tray = require('./modules/main/tray');
+const uatDev = fs.existsSync('./uat.dev.json') ? require('./uat.dev') : {};
+console.info('uatDev: ', uatDev);
 
 // 引入 IPC 消息处理模块
 const initDbIpcHandlers = require('./modules/main/api');
@@ -17,7 +20,10 @@ process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 // 禁用当前应用程序的硬件加速
 app.disableHardwareAcceleration();
 
+// 操作系统类型
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
+// 当前是否是打包环境
+const isPackaged = app.isPackaged;
 
 // canbox 主窗口对象
 let win = null;
@@ -53,6 +59,7 @@ if (!getTheLock) {
     app.whenReady().then(() => {
         // 创建窗口
         createWindow();
+        win.setIcon(path.join(__dirname, './logo.png'));
         // 让rederrer能使用@electron/remote
         require('@electron/remote/main').initialize();
         require('@electron/remote/main').enable(win.webContents);
@@ -91,7 +98,7 @@ const createWindow = () => {
         width: 700,
         height: 550,
         resizable: false,
-        icon: path.join(__dirname, './logo_512x512.png'),
+        icon: path.join(__dirname, './logo.png'),
         webPreferences: {
             sandbox: false, // 因为我想在preload中使用nodejs模块，所以这里设置为false，并且在启动参数中使用 --no-sandbox
             preload: path.join(__dirname, './preload.js'),
@@ -109,9 +116,14 @@ const createWindow = () => {
 
     win = new BrowserWindow(config);
 
-    // win.loadURL(path.join('file://', __dirname, './dist/index.html'));
-    win.loadURL('http://localhost:12333/');
-    
+    if (!isPackaged && uatDev?.main) {
+        console.info('now load uatDev==%s', uatDev.main);
+        win.loadURL(uatDev.main);
+    } else {
+        console.info('now load app==%s', path.join('file://', __dirname, './build/index.html'));
+        win.loadURL(path.join('file://', __dirname, './build/index.html'));
+    }
+
     // win.setMenu(Menu.buildFromTemplate(menuTemplate));
     win.setMenu(null);
 
@@ -121,13 +133,23 @@ const createWindow = () => {
         });
     }
 
-    // 打开开发者窗口
-    win.on('ready-to-show', () => {
-        win.webContents.openDevTools({mode: 'detach'});
-    });
-
     win.on('ready-to-show', () => {
         win.show(); // 注释掉这行，即启动最小化到tray
+
+        // 检查是否传入了 --dev-tools 参数
+        let devToolsMode = null;
+        for (const arg of process.argv) {
+            if (arg.startsWith('--dev-tools=')) {
+                devToolsMode = arg.split('=')[1];
+                break;
+            }
+        }
+        // 优先使用命令行参数，其次使用 uatDev 配置
+        if (devToolsMode) {
+            win.webContents.openDevTools({ mode: devToolsMode });
+        } else if (!isPackaged && uatDev?.devTools) {
+            win.webContents.openDevTools({ mode: uatDev?.devTools });
+        }
     });
 
     // 关闭主窗口事件，最小化到托盘

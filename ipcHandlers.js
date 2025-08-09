@@ -321,7 +321,7 @@ function getAppList() {
         // 读取app.json文件内容
         const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, appInfo.id + '.asar/app.json'), 'utf8'));
         const iconPath = path.join(APP_PATH, appInfo.id + '.asar', appJson.logo);
-        console.info('iconPath: ', iconPath);
+        // console.info('iconPath: ', iconPath);
         const app = {
             id: appInfo.id,
             appJson: appJson,
@@ -330,7 +330,7 @@ function getAppList() {
         };
         appList.push(app);
     }
-    console.info('appList=====%o', appList);
+    // console.info('appList=====%o', appList);
     return appList;
 }
 

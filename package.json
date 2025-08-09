@@ -24,6 +24,11 @@
             "build/**/*",
             "modules/**/*",
             "public/**/*",
+            "logo.png",
+            "main.js",
+            "preload.js",
+            "uat.dev.json",
+            "ipcHandlers.js",
             "!node_modules/electron"
         ],
         "directories": {
