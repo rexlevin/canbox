@@ -21,6 +21,7 @@ function initWindowIpcHandlers() {
     ipcMain.on('msg-window', (event, args) => {
         console.info('args: ', args);
         const result = WindowManager[args.type](args.param);
+        console.info('result: ', result);
         event.returnValue = JSON.stringify(result);
     });
 }

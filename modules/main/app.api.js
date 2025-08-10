@@ -76,7 +76,8 @@ const win = {
     createWindow: (options) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncWindow('createWindow', options);
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+            console.info('ret: ', ret);
+            null !== ret ? resolve(ret) : reject(null);
         });
     },
     showDialog: (options) => {

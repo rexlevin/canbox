@@ -10,14 +10,29 @@ const WindowManager = {
      * @returns {BrowserWindow} 新窗口实例
      */
     createWindow: (options, loadURL, devTools = false, devToolsMode = 'right') => {
-        const win = new BrowserWindow(options);
-        if (loadURL) {
-            win.loadURL(loadURL);
+        if (!options || typeof options !== 'object') {
+            console.error('Invalid options parameter: must be an object');
+            options = { width: 800, height: 600 };
         }
-        if (devTools) {
-            win.webContents.openDevTools({ mode: devToolsMode });
+
+        if (!options.width || !options.height) {
+            console.warn('Missing required window dimensions, using defaults');
+            options = { ...options, width: options.width || 800, height: options.height || 600 };
         }
-        return win;
+
+        try {
+            const win = new BrowserWindow(options);
+            // if (loadURL) {
+            //     win.loadURL(loadURL);
+            // }
+            // if (devTools) {
+            //     win.webContents.openDevTools({ mode: devToolsMode });
+            // }
+            return win;
+        } catch (error) {
+            console.error('Failed to create window:', error);
+            return null;
+        }
     },
 
     /**
