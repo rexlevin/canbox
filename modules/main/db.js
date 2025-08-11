@@ -67,60 +67,83 @@ module.exports = {
 }
 
 class DB {
+    static instance = null;
     db;
+
+    static getInstance(option) {
+        if (!DB.instance) {
+            DB.instance = new DB(option);
+        }
+        return DB.instance;
+    }
+
     constructor(option) {
-        const dbPath = path.join( userDataPath, 'Users', 'data', option.name, 'db' );
+        if (DB.instance) {
+            return DB.instance;
+        }
+
+        const dbPath = path.join(userDataPath, 'Users', 'data', option.name, 'db');
         console.info('dbPath: ', dbPath);
 
-        // 根据dbPath怕判断路径是否存在，不存在则创建
+        // 根据dbPath判断路径是否存在，不存在则创建
         if (!fs.existsSync(dbPath)) {
             fs.mkdirSync(dbPath, { recursive: true });
         }
 
         this.db = new PouchDB(
-            path.join( userDataPath, 'Users', 'data', option.name, 'db' ),
-            {auto_compaction: true}
+            path.join(userDataPath, 'Users', 'data', option.name, 'db'),
+            { auto_compaction: true }
         );
+        DB.instance = this;
     }
+
     destroy() {
         this.db.destroy();
+        DB.instance = null;
     }
+
     put(param, callback) {
         this.db.put(param).then(result => {
             console.info('res: ', result);
-            callback({code: '0000', data: result});
+            callback({ code: '0000', data: result });
         }).catch(error => {
             console.error('err: ', error);
-            callback({code: '9100', msg: error.message});
+            callback({ code: '9100', msg: error.message });
         });
     }
+
     bulkDocs(docs, callback) {
         this.db.bulkDocs(docs).then(result => {
             console.info('bulkDocs res: ', result);
-            callback({code: '0000', msg: result});
+            callback({ code: '0000', msg: result });
         }).catch(error => {
             console.error('bulkDocs err: ', error);
-            callback({code: '9100', msg: error.message});
+            callback({ code: '9100', msg: error.message });
         });
     }
+
     get(param, callback) {
         this.db.get(param._id).then(result => {
-            callback({code: '0000', data: result});
+            console.info('get success in db.js');
+            callback({ code: '0000', data: result });
         }).catch(error => {
             console.error('error in get doc from db: ', error);
-            callback({code: '9100', msg: error.message});
+            callback({ code: '9100', msg: error.message });
         });
     }
+
     remove(param, callback) {
         this.db.remove(param._id, param._rev).then(result => {
             console.info('res: ', result);
-            callback({code: '0000', data: result});
+            callback({ code: '0000', data: result });
         }).catch(error => {
             console.error('remove err: ', error);
-            callback({code: '9100', msg: error.message});
+            callback({ code: '9100', msg: error.message });
         });
     }
+
     close() {
         this.db.close();
+        DB.instance = null;
     }
 }

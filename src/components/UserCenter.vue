@@ -7,7 +7,7 @@ import { onBeforeMount } from 'vue';
 
 onBeforeMount(() => {
     const repoInfo = window.api.getRepoInfo();
-    console.info(repoInfo);
+    console.info('repoInfo in UserCenter: ', repoInfo);
     if (!repoInfo) {
         // Redirect to the login page if not authenticated
         // this.$router.push('/login');
