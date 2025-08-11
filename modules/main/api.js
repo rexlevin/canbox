@@ -20,7 +20,7 @@ function initWindowIpcHandlers() {
     const WindowManager = require('./win');
     ipcMain.on('msg-window', (event, args) => {
         console.info('args: ', args);
-        const result = WindowManager[args.type](args.param);
+        const result = WindowManager[args.type](args.param, args.appId);
         console.info('result: ', result);
         event.returnValue = JSON.stringify(result);
     });

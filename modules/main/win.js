@@ -9,7 +9,8 @@ const WindowManager = {
      * @param {Object} options - 窗口配置
      * @returns {BrowserWindow} 新窗口实例
      */
-    createWindow: (options, loadURL, devTools = false, devToolsMode = 'right') => {
+    // createWindow: (options, loadURL, devTools = false, devToolsMode = 'right', parentWindowId = null) => {
+    createWindow: (options, parentWindowId = null) => {
         if (!options || typeof options !== 'object') {
             console.error('Invalid options parameter: must be an object');
             options = { width: 800, height: 600 };
@@ -28,6 +29,14 @@ const WindowManager = {
             // if (devTools) {
             //     win.webContents.openDevTools({ mode: devToolsMode });
             // }
+            
+            // 记录窗口父子关系
+            if (parentWindowId) {
+                const windowManager = require('./windowManager');
+                windowManager.addWindow(win.id, win);
+                windowManager.addRelation(parentWindowId, win.id);
+            }
+            
             return win;
         } catch (error) {
             console.error('Failed to create window:', error);

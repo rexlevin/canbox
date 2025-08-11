@@ -127,7 +127,7 @@ class DB {
             console.info('get success in db.js');
             callback({ code: '0000', data: result });
         }).catch(error => {
-            console.error('error in get doc from db: ', error);
+            console.error('get error in db.js: ', error);
             callback({ code: '9100', msg: error.message });
         });
     }

@@ -5,11 +5,8 @@ const ObjectUtils = require('../utils/ObjectUtils');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
-/**
- * 设置一个 map 集合，用于存放所有打开的 app window
- * 键是应用id，值是窗口对象
- */
-let appMap = new Map();
+// 导入窗口管理模块
+const windowManager = require('./windowManager');
 
 module.exports = {
     /**
@@ -29,8 +26,8 @@ module.exports = {
         }
 
         // 如果app已存在并且未被销毁，则显示app窗口
-        if(appMap.has(appItem.id)) {
-            const win = appMap.get(appItem.id);
+        if (windowManager.hasWindow(appItem.id)) {
+            const win = windowManager.getWindow(appItem.id);
             if (!win.isDestroyed()) {
                 win.show();
                 console.info('%s ( %s ) is already exists', appItem.id, appItem.appJson.name);
@@ -138,15 +135,36 @@ module.exports = {
                     position: isMax ? null : bounds
                 }, () => {});
                 console.info(`now will close app: ${appItem.id}`);
-                if(!appWin.isDestroyed()) {
+                
+                // 关闭所有关联的子窗口
+                const childWindows = windowManager.getChildWindows(appItem.id);
+                childWindows.forEach(childId => {
+                    if (windowManager.hasWindow(childId)) {
+                        const childWin = windowManager.getWindow(childId);
+                        if (!childWin.isDestroyed()) {
+                            try {
+                                childWin.webContents.closeDevTools();
+                                childWin.close();
+                                windowManager.removeWindow(childId);
+                            } catch (e) {
+                                console.error(`Failed to close child window ${childId}:`, e);
+                            }
+                        }
+                    }
+                });
+                windowManager.removeRelation(appItem.id);
+                
+                // 关闭当前窗口
+                if (!appWin.isDestroyed()) {
                     try {
                         appWin.webContents.closeDevTools();
-                    } catch(e) {
-                        // console.error('Failed to close devtools:', e);
+                        appWin.close();
+                    } catch (e) {
+                        console.error(`Failed to close window ${appItem.id}:`, e);
                     }
                 }
-                console.info('appWin is destroyed');
-                appMap.delete(appItem.id);
+                windowManager.removeWindow(appItem.id);
+                console.info('All related windows closed');
             });
 
             appWin.setMenu(null);
@@ -164,8 +182,8 @@ module.exports = {
             }
 
             // 将app窗口添加到appMap中
-            appMap.set(appItem.id, appWin);
-            console.info('appMap length: %o', appMap.size);
+            windowManager.addWindow(appItem.id, appWin);
+            console.info('appMap length: %o', windowManager.appMap.size);
         });
     }
 
