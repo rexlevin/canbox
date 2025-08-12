@@ -20,7 +20,7 @@ module.exports = {
         let appItem;
         try {
             appItem = JSON.parse(appItemStr);
-        } catch(e) {
+        } catch (e) {
             console.error('Failed to parse app item:', e);
             return;
         }
@@ -55,11 +55,11 @@ module.exports = {
         };
 
         // 合并自定义窗口选项：如果app.json中配置了窗口选项，则合并到options中
-        if(appItem.appJson.window) {
+        if (appItem.appJson.window) {
             Object.assign(options, ObjectUtils.clone(appItem.appJson.window));
             // options = ObjectUtils.clone(appItem.appJson.window);
-            
-            if(options.icon) {
+
+            if (options.icon) {
                 options.icon = path.resolve(appItem.path, options.icon);
             } else {
                 options.icon = path.resolve(appItem.path, appItem.appJson.logo);
@@ -79,7 +79,7 @@ module.exports = {
                 additionalArguments: [`--app-id=${appItem.id}`],
             };
         }
-        if(appItem.appJson.window?.webPreferences?.preload) {
+        if (appItem.appJson.window?.webPreferences?.preload) {
             options.webPreferences.preload = path.resolve(appItem.path, appItem.appJson.window.webPreferences.preload);
         }
         // console.info('load app options:', options);
@@ -92,7 +92,7 @@ module.exports = {
         console.info('uatDevJson: ', uatDevJson);
 
         // 合并开发选项：如果当前是开发app，则合并开发选项
-        if('dev' === devTag && uatDevJson?.main) {
+        if ('dev' === devTag && uatDevJson?.main) {
             appItem.appJson.main = uatDevJson.main;
         }
 
@@ -117,9 +117,9 @@ module.exports = {
             if (state?.isMax) {
                 appWin.maximize();
             }
-            const loadUrl = appItem.appJson.main.indexOf('http') !== -1 
-                    ? appItem.appJson.main 
-                    : `file://${path.resolve(appItem.path, appItem.appJson.main)}`;
+            const loadUrl = appItem.appJson.main.indexOf('http') !== -1
+                ? appItem.appJson.main
+                : `file://${path.resolve(appItem.path, appItem.appJson.main)}`;
             console.info(`load app window url===%o`, loadUrl);
             appWin.loadURL(loadUrl).catch(err => {
                 console.error('Failed to load URL:', err);
@@ -133,9 +133,9 @@ module.exports = {
                     restore: 1,
                     isMax,
                     position: isMax ? null : bounds
-                }, () => {});
+                }, () => { });
                 console.info(`now will close app: ${appItem.id}`);
-                
+
                 // 关闭所有关联的子窗口
                 const childWindows = windowManager.getChildWindows(appItem.id);
                 childWindows.forEach(childId => {
@@ -144,6 +144,8 @@ module.exports = {
                         if (!childWin.isDestroyed()) {
                             try {
                                 childWin.webContents.closeDevTools();
+                                // 移除子窗口的关闭事件监听器，避免触发主窗口关闭
+                                childWin.removeAllListeners('close');
                                 childWin.close();
                                 windowManager.removeWindow(childId);
                             } catch (e) {
@@ -153,11 +155,13 @@ module.exports = {
                     }
                 });
                 windowManager.removeRelation(appItem.id);
-                
+
                 // 关闭当前窗口
                 if (!appWin.isDestroyed()) {
                     try {
                         appWin.webContents.closeDevTools();
+                        // 移除主窗口的关闭事件监听器，避免递归调用
+                        appWin.removeAllListeners('close');
                         appWin.close();
                     } catch (e) {
                         console.error(`Failed to close window ${appItem.id}:`, e);
@@ -168,16 +172,16 @@ module.exports = {
             });
 
             appWin.setMenu(null);
-            if(os === 'win') {
+            if (os === 'win') {
                 appWin.setAppDetails({
                     appId: appItem.id
                 });
             }
 
             // 如果是开发模式且配置了开发者工具，则打开开发者工具
-            if('dev' === devTag && uatDevJson?.devTools) {
+            if ('dev' === devTag && uatDevJson?.devTools) {
                 appWin.on('ready-to-show', () => {
-                    appWin.webContents.openDevTools({mode: uatDevJson?.devTools});
+                    appWin.webContents.openDevTools({ mode: uatDevJson?.devTools });
                 });
             }
 

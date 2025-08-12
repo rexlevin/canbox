@@ -67,6 +67,24 @@ const windowManager = {
     },
 
     /**
+     * 移除特定子窗口的父子关系
+     * @param {string} parentId - 父窗口 ID
+     * @param {string} childId - 子窗口 ID
+     */
+    removeChildRelation: function(parentId, childId) {
+        if (this.windowRelations.has(parentId)) {
+            const children = this.windowRelations.get(parentId);
+            const index = children.indexOf(childId);
+            if (index !== -1) {
+                children.splice(index, 1);
+                if (children.length === 0) {
+                    this.windowRelations.delete(parentId);
+                }
+            }
+        }
+    },
+
+    /**
      * 获取子窗口列表
      * @param {string} parentId - 父窗口 ID
      * @returns {Array} - 子窗口 ID 数组
