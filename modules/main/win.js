@@ -29,14 +29,26 @@ const WindowManager = {
             // if (devTools) {
             //     win.webContents.openDevTools({ mode: devToolsMode });
             // }
-            
+
             // 记录窗口父子关系
             if (parentWindowId) {
                 const windowManager = require('./windowManager');
                 windowManager.addWindow(win.id, win);
                 windowManager.addRelation(parentWindowId, win.id);
+                // 存储父窗口ID到子窗口实例
+                win.parentId = parentWindowId;
             }
-            
+
+            win.on('close', () => {
+                const windowManager = require('./windowManager');
+                windowManager.removeWindow(win.id);
+                // 使用父窗口ID删除当前子窗口的父子关系
+                if (win.parentId) {
+                    windowManager.removeChildRelation(win.parentId, win.id);
+                }
+                win.destroy();
+            });
+
             return win;
         } catch (error) {
             console.error('Failed to create window:', error);
