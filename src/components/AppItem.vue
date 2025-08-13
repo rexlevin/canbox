@@ -17,10 +17,10 @@
                         <el-icon :size="33" color="#228b22"><VideoPlay /></el-icon>
                     </span>
                     <span class="operate-icon-span" @click="clearData" title="清除用户数据">
-                        <el-icon :size="33" color=""><Remove /></el-icon>
+                        <el-icon :size="33" color=""><Delete /></el-icon>
                     </span>
-                    <span class="operate-icon-span" @click="removeApp" title="删除这个app">
-                        <el-icon :size="33" color="#ab4e52"><Delete /></el-icon>
+                    <span class="operate-icon-span" @click="removeApp" title="移除这个app">
+                        <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
                     </span>
                 </div>
             </div>
