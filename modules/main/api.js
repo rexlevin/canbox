@@ -7,8 +7,13 @@ function initDbIpcHandlers() {
     const DB = require('./db');
     ipcMain.on('msg-db', (event, args) => {
         console.info('args: ', args);
-        DB[args.type](args.appId, args.param, (res) => {
-            event.returnValue = JSON.stringify(res);
+        DB[args.type](args.appId, args.param, (res, err) => {
+            if (err) {
+                event.returnValue = JSON.stringify({ code: '0000', msg: err.message });
+                return;
+            }
+            console.info('res: ', res);
+            event.returnValue = JSON.stringify({ code: '9100', data: res});
         });
     });
 }

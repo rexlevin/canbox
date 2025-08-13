@@ -1,149 +1,85 @@
 const { app } = require('electron');
-const path = require('path')
+const path = require('path');
 const PouchDB = require('pouchdb');
 const { customAlphabet } = require('nanoid-cjs');
 const fs = require("fs");
 const DateFormat = require('../utils/DateFormat');
 
-/**
- * userData目录：
- * windows：~\AppData\Roaming\canbox\
- * linux: ~/.config/canbox/
- */
 const userDataPath = app.getPath('userData');
-// const canboxDB = new PouchDB(path.join(userDataPath, 'Users', 'data', 'db'), {auto_compaction: true});
+const nanoid = customAlphabet('1234567890abcdef', 10);
 
-// nanoid
-const nanoid = customAlphabet('1234567890abcdef', 10)
+// 数据库连接缓存，记录连接和最后使用时间
+const dbCache = {};
+
+// 定时清理间隔（30分钟）
+const CLEANUP_INTERVAL = 30 * 60 * 1000;
+
+// 初始化定时清理任务
+setInterval(() => {
+    const now = Date.now();
+    Object.entries(dbCache).forEach(([appId, { db, lastUsed }]) => {
+        if (now - lastUsed > CLEANUP_INTERVAL) {
+            db.close();
+            delete dbCache[appId];
+        }
+    });
+}, CLEANUP_INTERVAL);
+
+// 获取或创建数据库连接
+function getDB(appId) {
+    if (!dbCache[appId]) {
+        dbCache[appId] = {
+            db: new PouchDB(path.join(userDataPath, 'Users', 'data', appId), { auto_compaction: true }),
+            lastUsed: Date.now()
+        };
+    } else {
+        dbCache[appId].lastUsed = Date.now();
+    }
+    return dbCache[appId].db;
+}
+
+// 内部方法：关闭所有数据库连接
+function closeAllDBs() {
+    Object.values(dbCache).forEach(({ db }) => db.close());
+    dbCache = {};
+}
+
+// 生成文档 ID 和时间戳
+function prepareDoc(doc) {
+    doc._id = doc._id || nanoid();
+    if (doc._rev) {
+        doc.updateTime = doc.updateTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
+    } else {
+        doc.createTime = doc.createTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
+    }
+    return doc;
+}
 
 module.exports = {
     put: (appId, param, callback) => {
-        param._id = param._id || nanoid();
-        if (param._rev) {
-            param.updateTime = param.updateTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
-        } else {
-            param.createTime = param.createTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
-        }
-        console.info('param in put: ', param);
-        const db = new DB({name: appId});
-        db.put(param, (res) => {
-            db.close(); // 关闭数据库连接
-            callback(res);
-        });
+        const db = getDB(appId);
+        const doc = prepareDoc(param);
+        db.put(doc)
+            .then(res => callback(res))
+            .catch(err => callback(null, err));
     },
     bulkDocs: (appId, docs, callback) => {
-        for(let doc of docs) {
-            doc._id = doc._id || nanoid();
-            if (doc._rev) {
-                doc.updateTime = doc.updateTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
-            } else {
-                doc.createTime = doc.createTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
-            }
-        }
-        const db = new DB({name: appId});
-        db.bulkDocs(docs, res => {
-            db.close();
-            callback(res);
-        });
+        const db = getDB(appId);
+        const preparedDocs = docs.map(prepareDoc);
+        db.bulkDocs(preparedDocs)
+            .then(res => callback(res))
+            .catch(err => callback(null, err));
     },
     get: (appId, param, callback) => {
-        const db = new DB({name: appId});
-        db.get(param, res => {
-            db.close();
-            callback(res);
-        })
+        const db = getDB(appId);
+        db.get(param._id)
+            .then(res => callback(res))
+            .catch(err => callback(null, err));
     },
-    remove: (appId, param, callback) => {
-        const db = new DB({name: appId});
-        db.remove(param, result => {
-            db.close(); // 关闭数据库连接
-            callback(result);
-        });
-    },
-    destroy: (param) => {
-        const db = new DB({name: param.appId});
-        db.destroy();
-    }
-}
-
-class DB {
-    static instance = null;
-    db;
-
-    static getInstance(option) {
-        if (!DB.instance) {
-            DB.instance = new DB(option);
+    closeDB: (appId) => {
+        if (dbCache[appId]) {
+            dbCache[appId].db.close();
+            delete dbCache[appId];
         }
-        return DB.instance;
     }
-
-    constructor(option) {
-        if (DB.instance) {
-            return DB.instance;
-        }
-
-        const dbPath = path.join(userDataPath, 'Users', 'data', option.name, 'db');
-        console.info('dbPath: ', dbPath);
-
-        // 根据dbPath判断路径是否存在，不存在则创建
-        if (!fs.existsSync(dbPath)) {
-            fs.mkdirSync(dbPath, { recursive: true });
-        }
-
-        this.db = new PouchDB(
-            path.join(userDataPath, 'Users', 'data', option.name, 'db'),
-            { auto_compaction: true }
-        );
-        DB.instance = this;
-    }
-
-    destroy() {
-        this.db.destroy();
-        DB.instance = null;
-    }
-
-    put(param, callback) {
-        this.db.put(param).then(result => {
-            console.info('res: ', result);
-            callback({ code: '0000', data: result });
-        }).catch(error => {
-            console.error('err: ', error);
-            callback({ code: '9100', msg: error.message });
-        });
-    }
-
-    bulkDocs(docs, callback) {
-        this.db.bulkDocs(docs).then(result => {
-            console.info('bulkDocs res: ', result);
-            callback({ code: '0000', msg: result });
-        }).catch(error => {
-            console.error('bulkDocs err: ', error);
-            callback({ code: '9100', msg: error.message });
-        });
-    }
-
-    get(param, callback) {
-        this.db.get(param._id).then(result => {
-            console.info('get success in db.js');
-            callback({ code: '0000', data: result });
-        }).catch(error => {
-            console.error('get error in db.js: ', error);
-            callback({ code: '9100', msg: error.message });
-        });
-    }
-
-    remove(param, callback) {
-        this.db.remove(param._id, param._rev).then(result => {
-            console.info('res: ', result);
-            callback({ code: '0000', data: result });
-        }).catch(error => {
-            console.error('remove err: ', error);
-            callback({ code: '9100', msg: error.message });
-        });
-    }
-
-    close() {
-        this.db.close();
-        DB.instance = null;
-    }
-}
+};
