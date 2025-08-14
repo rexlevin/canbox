@@ -21,11 +21,11 @@ function initDbIpcHandlers() {
 /**
  * 初始化窗口相关的 IPC 消息处理逻辑
  */
-function initWindowIpcHandlers() {
+function createWindowIpcHandlers() {
     const WindowManager = require('./win');
-    ipcMain.on('msg-window', (event, args) => {
+    ipcMain.on('msg-createWindow', (event, args) => {
         console.info('args: ', args);
-        const result = WindowManager[args.type](args.param, args.appId);
+        const result = WindowManager.createWindow(args.options, args.url, args.devTools, args.appId);
         console.info('result: ', result);
         event.returnValue = JSON.stringify(result);
     });
@@ -36,7 +36,7 @@ function initWindowIpcHandlers() {
  */
 function initIpcHandlers() {
     initDbIpcHandlers();
-    initWindowIpcHandlers();
+    createWindowIpcHandlers();
 }
 
 module.exports = initIpcHandlers;

@@ -28,13 +28,14 @@ const ipcSendSyncDB = (type, param) => {
  * @param {Object} param api操作请求数据，要求json格式
  * @returns {Object} api操作应答内容
  */
-const ipcSendSyncWindow = (type, param) => {
+const ipcSendSyncCreateWindow = (options, url, devTools) => {
     if(!window.appId) {
         throw new Error('appId is not set');
     }
-    let returnValue = ipcRenderer.sendSync('msg-window', {
-        type,
-        param,
+    let returnValue = ipcRenderer.sendSync('msg-createWindow', {
+        options,
+        url,
+        devTools,
         appId: window.appId
     });
     if (returnValue instanceof Error) throw returnValue;
@@ -73,25 +74,13 @@ const db = {
 }
 
 const win = {
-    createWindow: (options) => {
+    createWindow: (options, url, devTools) => {
         return new Promise((resolve, reject) => {
-            const ret = ipcSendSyncWindow('createWindow', options);
+            const ret = ipcSendSyncCreateWindow(options, url, devTools);
             console.info('ret: ', ret);
             null !== ret ? resolve(ret) : reject(null);
         });
     },
-    showDialog: (options) => {
-        return new Promise((resolve, reject) => {
-            const ret = ipcSendSyncWindow('showDialog', options);
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
-        });
-    },
-    showNotification: (options) => {
-        return new Promise((resolve, reject) => {
-            const ret = ipcSendSyncWindow('showNotification', options);
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
-        });
-    }
 }
 
 /**
