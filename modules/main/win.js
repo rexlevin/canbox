@@ -1,4 +1,4 @@
-const { BrowserWindow, dialog, Notification } = require('electron');
+const { BrowserWindow } = require('electron');
 
 /**
  * 窗口操作模块
@@ -7,6 +7,9 @@ const WindowManager = {
     /**
      * 新开窗口
      * @param {Object} options - 窗口配置
+     * @param {String} loadURL - 窗口打开的url
+     * @param {Boolean} devTools - 是否开启调试模式
+     * @param {Number} parentWindowId - 父窗口实例id
      * @returns {BrowserWindow} 新窗口实例
      */
     createWindow: (options, loadURL, devTools = false, parentWindowId = null) => {

@@ -5,7 +5,7 @@ class WinState {
     constructor() {
         this.store = createStore({
             name: 'winState',
-            cwd: path.join(require('electron').app.getPath('userData'), 'Users', 'data')
+            cwd: 'Users/data'
         });
     }
 

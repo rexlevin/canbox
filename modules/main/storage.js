@@ -1,6 +1,4 @@
 const Store = require('electron-store');
-const path = require('path');
-const { app } = require('electron');
 
 /**
  * 统一管理 electron-store 的配置和操作
@@ -9,7 +7,7 @@ class Storage {
     constructor(options = {}) {
         this.store = new Store({
             name: options.name || 'default',
-            cwd: options.cwd || path.join(app.getPath('userData'), 'Users', 'data'),
+            cwd: options.cwd || 'Users',
             encryptionKey: options.encryptionKey
         });
     }
