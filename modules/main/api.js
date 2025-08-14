@@ -9,11 +9,11 @@ function initDbIpcHandlers() {
         console.info('args: ', args);
         DB[args.type](args.appId, args.param, (res, err) => {
             if (err) {
-                event.returnValue = JSON.stringify({ code: '0000', msg: err.message });
+                event.returnValue = JSON.stringify({ code: '9100', msg: err.message });
                 return;
             }
             console.info('res: ', res);
-            event.returnValue = JSON.stringify({ code: '9100', data: res});
+            event.returnValue = JSON.stringify({ code: '0000', data: res});
         });
     });
 }
