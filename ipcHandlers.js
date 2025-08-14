@@ -17,9 +17,9 @@ const ObjectUtils = require('./modules/utils/ObjectUtils')
 const DATA_PATH = path.join(app.getPath('userData'), 'Users', 'data');
 const APP_PATH = path.join(app.getPath('userData'), 'Users', 'apps');
 
-const Store = require('electron-store');
-const AppsConfig = new Store({ cwd: 'Users', name: 'apps' });
-const AppsDevConfig = new Store({ cwd: 'Users', name: 'appsDev' });
+const { createStore } = require('./modules/main/storage');
+const AppsConfig = createStore({ cwd: 'Users', name: 'apps' });
+const AppsDevConfig = createStore({ cwd: 'Users', name: 'appsDev' });
 
 /**
  * 初始化所有 IPC 消息处理逻辑

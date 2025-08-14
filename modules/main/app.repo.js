@@ -1,6 +1,6 @@
-const Store  = require('electron-store');
+const { createStore } = require('./storage');
 
-const/*Types.Repo*/ RepoConfig = new Store({
+const/*Types.Repo*/ RepoConfig = createStore({
     cwd: 'Users',
     name: 'repo'
 });

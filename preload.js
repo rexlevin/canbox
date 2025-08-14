@@ -1,5 +1,4 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const Store  = require('electron-store');
 const PackageJson = require('./package.json');
 
 const AppShortcut = require('./modules/main/app.shortcut');

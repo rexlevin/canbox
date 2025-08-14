@@ -1,9 +1,9 @@
-const Store = require('electron-store');
+const { createStore } = require('./storage');
 const path = require('path');
 
 class WinState {
     constructor() {
-        this.store = new Store({
+        this.store = createStore({
             name: 'winState',
             cwd: path.join(require('electron').app.getPath('userData'), 'Users', 'data')
         });
@@ -23,7 +23,7 @@ class WinState {
 
     remove(appId, callback) {
         const key = `${appId}`;
-        const state = this.store.delete(key);
+        this.store.delete(key);
         callback({ code: '0000', data: null, msg: '删除成功' });
     }
 }

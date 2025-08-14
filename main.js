@@ -11,9 +11,6 @@ const initDbIpcHandlers = require('./modules/main/api');
 // 初始化 IPC 消息处理
 initDbIpcHandlers();
 
-const Store  = require('electron-store');
-Store.initRenderer();
-
 // 清除启动时控制台的“Electron Security Warning (Insecure Content-Security-Policy)”报错信息
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
