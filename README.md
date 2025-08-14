@@ -310,6 +310,41 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
 }
 ```
 
+
+# 附录
+
+## apps.json
+
+```json
+{
+    "default": [
+        {
+            "id": "18709b4788085ea28a41067436a16f89",
+            "name": "coderbox"
+        }
+    ]
+}
+```
+
+## appsDev.json
+
+```json
+{
+    "default": [
+        {
+            "id": "d80c120e35ec4216a7428241b9ac294a",
+            "path": "/depot/cargo/cb-jsonbox/",
+            "name": "jsonbox"
+        },
+        {
+            "id": "f2dff38866914ad0a81c49504f5da266",
+            "path": "/depot/cargo/canbox-demo/",
+            "name": "demo"
+        }
+    ]
+}
+```
+
 # 阅读
 
 ## BaseWindow

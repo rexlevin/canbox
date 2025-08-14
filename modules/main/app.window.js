@@ -117,7 +117,7 @@ module.exports = {
             if (state?.isMax) {
                 appWin.maximize();
             }
-            const loadUrl = appItem.appJson.main.indexOf('http') !== -1
+            const loadUrl = appItem.appJson.main.startsWith('http')
                 ? appItem.appJson.main
                 : `file://${path.resolve(appItem.path, appItem.appJson.main)}`;
             console.info(`load app window url===%o`, loadUrl);

@@ -1,4 +1,11 @@
 const { BrowserWindow } = require('electron');
+const path = require('path');
+const { app } = require('electron');
+const fs = require('fs');
+
+// 初始化 storage 实例
+const { createStore } = require('./storage');
+const AppsDevConfig = createStore({ cwd: 'Users', name: 'appsDev' });
 
 /**
  * 窗口操作模块
@@ -7,13 +14,19 @@ const WindowManager = {
     /**
      * 新开窗口
      * @param {Object} options - 窗口配置
-     * @param {String} loadURL - 窗口打开的url
+     * @param {String} loadURL - 窗口打开的url（相对路径）
      * @param {Boolean} devTools - 是否开启调试模式
      * @param {Number} parentWindowId - 父窗口实例id
      * @returns {BrowserWindow} 新窗口实例
      */
     createWindow: (options, loadURL, devTools = false, parentWindowId = null) => {
-    // createWindow: (options, parentWindowId = null) => {
+        if (!loadURL) {
+            throw new Error('loadURL is required');
+        }
+        if (!parentWindowId) {
+            throw new Error('parentWindowId is required');
+        }
+
         if (!options || typeof options !== 'object') {
             console.error('Invalid options parameter: must be an object');
             options = { width: 800, height: 600 };
@@ -25,17 +38,41 @@ const WindowManager = {
         }
 
         try {
-            const win = new BrowserWindow(options);
-            if (loadURL) {
-                win.loadURL(loadURL);
+            // 根据 parentWindowId 判断应用类型并拼接完整路径
+            const appDevConfigArr = AppsDevConfig.get('default') || [];
+            if (appDevConfigArr.find(item => item.id === parentWindowId)) {
+                const appDevPath = appDevConfigArr.find(item => item.id === parentWindowId).path;
+                const appJsonPath = path.join(appDevPath, 'app.json');
+                const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf-8'));
+                const uatDevJson = fs.existsSync(path.resolve(appDevPath, 'uat.dev.json'))
+                            ? JSON.parse(fs.readFileSync(path.resolve(appDevPath, 'uat.dev.json'), 'utf-8'))
+                            : null;
+                /*
+                 * uat.dev.json中的main存在，那么以uat.dev.json中的main为基准；
+                 * uat.dev.json中不存在，以app.json中main基准；两者都不存在，以path为基准（相对路径）
+                 * uat.dev.json中的main也可能是一个相对路径，所以需要判断是否是http开头，否则需要拼接项目路径
+                 */
+                const mainPath = uatDevJson
+                    ? uatDevJson.main.startsWith('http')
+                        ? uatDevJson.main
+                        : path.join(appDevPath, uatDevJson.main)
+                    : path.join(appDevPath, appJson.main);
+                console.info('mainPath: ', mainPath);
+                loadURL = path.join(mainPath, loadURL);
+            } else {
+                loadURL = path.join(app.getPath('userData'), 'Users', 'apps', `${parentWindowId}.asar`, loadURL);
             }
+            console.info('win.js, loadURL: ', loadURL);
+
+            const win = new BrowserWindow(options);
+            win.loadURL(loadURL);
+
             win.on('ready-to-show', () => {
                 win.show();
                 if (devTools) {
                     win.webContents.openDevTools();
                 }
             });
-
 
             // 记录窗口父子关系
             if (parentWindowId) {
@@ -49,17 +86,12 @@ const WindowManager = {
             win.on('close', () => {
                 const windowManager = require('./windowManager');
                 windowManager.removeWindow(win.id);
-                // 使用父窗口ID删除当前子窗口的父子关系
-                if (win.parentId) {
-                    windowManager.removeChildRelation(win.parentId, win.id);
-                }
-                win.destroy();
             });
 
             return win.id;
-        } catch (error) {
-            console.error('Failed to create window:', error);
-            return null;
+        } catch (err) {
+            console.error('Failed to create window:', err);
+            throw err;
         }
     }
 };
