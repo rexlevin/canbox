@@ -67,6 +67,7 @@ const WindowManager = {
 
             const win = new BrowserWindow(options);
             win.loadURL(loadURL);
+            win.setMenu(null);
             
             win.on('ready-to-show', () => {
                 win.setTitle(params.title);
