@@ -14,15 +14,16 @@ const WindowManager = {
     /**
      * 新开窗口
      * @param {Object} options - 窗口配置
-     * @param {String} loadURL - 窗口打开的url（相对路径）
-     * @param {Boolean} devTools - 是否开启调试模式
-     * @param {Number} parentWindowId - 父窗口实例id
-     * @returns {BrowserWindow} 新窗口实例
+     * @param {Object} params - 窗口请求参数
+     * @param {string} parentWindowId - 父窗口id
+     * @returns {Number} 新窗口实例
      */
-    createWindow: (options, loadURL, devTools = false, parentWindowId = null) => {
-        if (!loadURL) {
+    createWindow: (options, params, parentWindowId = null) => {
+        if (!params.url) {
             throw new Error('loadURL is required');
         }
+        let loadURL = params.url;
+        const devTools = params.devTools ? true : false;
         if (!parentWindowId) {
             throw new Error('parentWindowId is required');
         }
@@ -66,8 +67,9 @@ const WindowManager = {
 
             const win = new BrowserWindow(options);
             win.loadURL(loadURL);
-
+            
             win.on('ready-to-show', () => {
+                win.setTitle(params.title);
                 win.show();
                 if (devTools) {
                     win.webContents.openDevTools();

@@ -271,12 +271,14 @@ canbox.db.remove({
 
 ## window
 
-### canbox.win.createWindow(options, url, devTools)
+### canbox.win.createWindow(options, params)
 
 - 参数
   1. options: `object` 参考electron：BaseWindowsConstructorOptions
-  2. url：`string` 要打开的页面url
-  3. devTools： `boolean` 是否打开开发者工具
+  2. params: `object` : `{url: '', title: '', devTools: true}`
+     1. `url`: 窗口加载页面相对路径，或路由路径
+     2. `title`: 窗口标题
+     3. `devTools`: 是否开启devTools，默认 `false`
 - 应答：窗口的id编码
 
 ## 应答码
@@ -309,7 +311,6 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
     ]
 }
 ```
-
 
 # 附录
 

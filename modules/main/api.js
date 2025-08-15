@@ -25,7 +25,7 @@ function createWindowIpcHandlers() {
     const WindowManager = require('./win');
     ipcMain.on('msg-createWindow', (event, args) => {
         console.info('args: ', args);
-        const result = WindowManager.createWindow(args.options, args.url, args.devTools, args.appId);
+        const result = WindowManager.createWindow(args.options, args.params, args.appId);
         console.info('result: ', result);
         event.returnValue = JSON.stringify(result);
     });

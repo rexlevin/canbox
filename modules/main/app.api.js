@@ -28,14 +28,13 @@ const ipcSendSyncDB = (type, param) => {
  * @param {Object} param api操作请求数据，要求json格式
  * @returns {Object} api操作应答内容
  */
-const ipcSendSyncCreateWindow = (options, url, devTools) => {
+const ipcSendSyncCreateWindow = (options, params) => {
     if(!window.appId) {
         throw new Error('appId is not set');
     }
     let returnValue = ipcRenderer.sendSync('msg-createWindow', {
         options,
-        url,
-        devTools,
+        params,
         appId: window.appId
     });
     if (returnValue instanceof Error) throw returnValue;
@@ -74,9 +73,15 @@ const db = {
 }
 
 const win = {
-    createWindow: (options, url, devTools) => {
+    /**
+     * 
+     * @param {Object} options - 窗口配置
+     * @param {Object} params - 其他参数，如：{ url: '', title: '', devTools: false }
+     * @returns 
+     */
+    createWindow: (options, params) => {
         return new Promise((resolve, reject) => {
-            const ret = ipcSendSyncCreateWindow(options, url, devTools);
+            const ret = ipcSendSyncCreateWindow(options, params);
             console.info('ret: ', ret);
             null !== ret ? resolve(ret) : reject(null);
         });
