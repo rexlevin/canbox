@@ -57,9 +57,6 @@ if (!getTheLock) {
         // 创建窗口
         createWindow();
         win.setIcon(path.join(__dirname, './logo.png'));
-        // 让rederrer能使用@electron/remote
-        require('@electron/remote/main').initialize();
-        require('@electron/remote/main').enable(win.webContents);
         // 创建托盘
         tray.createTray(win, appMap);
         app.on('activate', () => {

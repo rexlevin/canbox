@@ -54,7 +54,6 @@
         }
     },
     "dependencies": {
-        "@electron/remote": "^2.1.2",
         "asar": "^3.2.0",
         "electron-store": "^8.2.0",
         "element-plus": "^2.8.3",

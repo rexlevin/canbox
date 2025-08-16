@@ -1,4 +1,4 @@
-const { BrowserWindow, session } = require('electron'); // 使用 @electron/remote 是renderer 中能使用 main 进程中的对象，减少ipc
+const { BrowserWindow, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const ObjectUtils = require('../utils/ObjectUtils');
