@@ -37,10 +37,10 @@
             "target": [
                 "appimage"
             ],
-            "icon": "./public/logo.png"
+            "icon": "./logo.png"
         },
         "win": {
-            "icon": "./public/logo.png",
+            "icon": "./logo.png",
             "target": [
                 "nsis"
             ]

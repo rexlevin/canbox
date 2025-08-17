@@ -17,12 +17,12 @@ const { getAppsPath, getAppIconPath } = require('./pathManager');
  * @param {Array} appList - 应用列表
  * @returns {Object} - 操作结果
  */
-function generateShortcuts(appList, execPath) {
+function generateShortcuts(appList) {
     if (!appList || !appList.length) {
         return { success: false, error: '应用列表为空' };
     }
 
-    const execPath = process.execPath;
+    const execPath = process.env.APPIMAGE || process.execPath;
 
     try {
         for (const appItem of appList) {
