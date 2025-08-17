@@ -11,6 +11,9 @@ const initDbIpcHandlers = require('./modules/main/api');
 // 初始化 IPC 消息处理
 initDbIpcHandlers();
 
+// 引入 IPC 消息处理模块
+const { initIpcHandlers, handleLoadAppById } = require('./ipcHandlers');
+
 // 清除启动时控制台的“Electron Security Warning (Insecure Content-Security-Policy)”报错信息
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
@@ -49,7 +52,7 @@ if (!getTheLock) {
         }
         if(win && '' !== appId) {
             // console.info('now loadAppDirect==%s', appId);
-            win.webContents.send('loadAppDirect', appId);
+            handleLoadAppById(appId);
         }
     })
  
@@ -71,7 +74,8 @@ if (!getTheLock) {
         }
         console.info(appId);
         if('' !== appId) {
-            win.webContents.send('loadAppDirect', appId);
+            win.hide();
+            handleLoadAppById(appId);
         }
     })
 }
@@ -94,7 +98,7 @@ const createWindow = () => {
         resizable: false,
         icon: path.join(__dirname, './logo.png'),
         webPreferences: {
-            sandbox: false, // 因为我想在preload中使用nodejs模块，所以这里设置为false，并且在启动参数中使用 --no-sandbox
+            sandbox: true, // 因为我想在preload中使用nodejs模块，所以这里设置为false，并且在启动参数中使用 --no-sandbox
             preload: path.join(__dirname, './preload.js'),
             spellcheck: false,
             webSecurity: false,
@@ -159,9 +163,6 @@ const createWindow = () => {
         app.quit();
     });
 }
-
-// 引入 IPC 消息处理模块
-const { initIpcHandlers } = require('./ipcHandlers');
 
 // 初始化 IPC 消息处理
 initIpcHandlers(win);

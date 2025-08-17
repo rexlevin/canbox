@@ -12,7 +12,7 @@
         "build": "vite build",
         "preview": "vite preview",
         "start": "electron . --no-sandbox",
-        "startExt": "electron . --no-sandbox id:4fc5b570e0d0aecb11c1d5d3aa8e6ecd",
+        "startExt": "electron . --no-sandbox id:c9630c9c60af4c21b4a62da4e002e53f",
         "build-dist:win": "electron-builder -w",
         "build-dist:linux": "electron-builder -l"
     },
@@ -27,7 +27,6 @@
             "logo.png",
             "main.js",
             "preload.js",
-            "uat.dev.json",
             "ipcHandlers.js",
             "!node_modules/electron"
         ],

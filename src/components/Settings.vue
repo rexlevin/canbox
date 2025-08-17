@@ -3,10 +3,10 @@
         <el-form label-width="">
             <el-form-item label="为所有APP" style="margin-bottom: 0px;">
                 <div style="display: flex; gap: 10px;">
-                    <el-button type="primary" size="medium" @click="generateShortcut">
+                    <el-button type="primary" size="" @click="generateShortcut">
                         创建快捷方式
                     </el-button>
-                    <el-button type="danger" size="medium" @click="deleteShortcut">
+                    <el-button type="danger" size="" @click="deleteShortcut">
                         删除快捷方式
                     </el-button>
                 </div>

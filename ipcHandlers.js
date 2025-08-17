@@ -8,12 +8,23 @@ const winState = require('./modules/main/winState');
 
 const ObjectUtils = require('./modules/utils/ObjectUtils')
 
+const appWindow = require('./modules/main/app.window')
+
 const { getAppDataPath, getAppsPath } = require('./modules/main/pathManager');
 
 const { getAppsStore, getAppsDevStore } = require('./modules/main/storageManager');
 
 const AppsConfig = getAppsStore();
 const AppsDevConfig = getAppsDevStore();
+
+/**
+ * 根据appId直接打开app
+ * @param {string} appId 
+ */
+function handleLoadAppById(appId) {
+    const appItem = getAppList().find(item => item.id === appId);
+    appWindow.loadApp(JSON.stringify(appItem), null); // 注意：这里需要根据实际逻辑调整参数
+}
 
 /**
  * 初始化所有 IPC 消息处理逻辑
@@ -52,7 +63,7 @@ function initIpcHandlers(win) {
 
     // 加载应用
     ipcMain.on('loadApp', (event, appItemStr, devTag) => {
-        require('./modules/main/app.window').loadApp(appItemStr, devTag);
+        appWindow.loadApp(appItemStr, devTag);
     });
 
     // 对话框相关 IPC
@@ -153,7 +164,7 @@ function initIpcHandlers(win) {
                 console.info(res);
                 return { success: true, msg: '删除应用目录成功' };
             });
-        
+
         });
     });
 
@@ -284,27 +295,27 @@ async function removeAppById(id) {
 async function getAppDevList() {
     // console.info(1,appsDevConfig);
     // console.info('getAppDevList===', appsDevConfig.get('default'));
-    if(undefined === AppsDevConfig.get('default')) {
-    return {"correct": {}, "wrong": {}};
+    if (undefined === AppsDevConfig.get('default')) {
+        return { "correct": {}, "wrong": {} };
     }
     let /*Array<Types.AppItemType>*/ appDevInfoList = AppsDevConfig.get('default')
         , appDevList = []
         , appDevFalseList = []
         , tmpItem = {};
-    for(let appDevInfo of appDevInfoList) {
+    for (let appDevInfo of appDevInfoList) {
         // console.info('appDevInfo', appDevInfo);
         try {
             const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
             tmpItem = ObjectUtils.clone(appDevInfo);
             tmpItem.appJson = appJson;
             appDevList.push(tmpItem);
-        } catch(e) {
+        } catch (e) {
             console.error('parse app.json error:', e);
             appDevFalseList.push(appDevInfo);
         }
     }
-    if(appDevFalseList.length > 0) {
-        for(let falseItem of appDevFalseList) {
+    if (appDevFalseList.length > 0) {
+        for (let falseItem of appDevFalseList) {
             console.info('faseItem: ', falseItem);
             appDevInfoList = appDevInfoList.filter(item => item.id !== falseItem.id);
         }
@@ -312,7 +323,7 @@ async function getAppDevList() {
     }
     // console.info('appDevInfoList===', appDevInfoList);
     // console.info('appDevList=====%o', appDevList);
-    return {"correct": appDevList, "wrong": appDevFalseList};
+    return { "correct": appDevList, "wrong": appDevFalseList };
 }
 
 /**
@@ -320,12 +331,12 @@ async function getAppDevList() {
  */
 function getAppList() {
     // console.log('appsConfig.get('default'):', appsConfig.get('default'));
-    if(undefined === AppsConfig.get('default')) {
+    if (undefined === AppsConfig.get('default')) {
         return [];
     }
     const /*Array<Types.AppItemType>*/ appInfoList = AppsConfig.get('default');
     let appList = [];
-    for(const appInfo of appInfoList) {
+    for (const appInfo of appInfoList) {
         // /home/lizl6/.config/canbox/Users/apps/541f02efdbf449018c57c880ac98aa59.asar/apps.json
         // C:\Users\brood\AppData\Roaming\canbox\Users\apps\541f02efdbf449018c57c880ac98aa59.asar\apps.json
         // 读取app.json文件内容
@@ -384,7 +395,7 @@ function getAppList() {
 }
  */
 
-Types = function() {}
+Types = function () { }
 Types.AppItemType = function () {
     return {
         "name": "剪贴板",
@@ -417,5 +428,6 @@ Types.AppItemType = function () {
 }
 
 module.exports = {
-    initIpcHandlers
+    initIpcHandlers,
+    handleLoadAppById
 };
