@@ -1,4 +1,4 @@
-const { ipcMain, dialog, shell, app } = require('electron');
+const { ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
@@ -8,14 +8,7 @@ const winState = require('./modules/main/winState');
 
 const ObjectUtils = require('./modules/utils/ObjectUtils')
 
-/**
- * app.getPath('userData') 指向 userData 目录：
- * windows：~\AppData\Roaming\canbox\
- * linux: ~/.config/canbox/
- */
-// const USER_DATA_PATH = app.getPath('userData');
-const DATA_PATH = path.join(app.getPath('userData'), 'Users', 'data');
-const APP_PATH = path.join(app.getPath('userData'), 'Users', 'apps');
+const { getAppDataPath, getAppsPath } = require('./modules/main/pathManager');
 
 const { createStore } = require('./modules/main/storage');
 const AppsConfig = createStore({ cwd: 'Users', name: 'apps' });
@@ -43,11 +36,6 @@ function initIpcHandlers(win) {
         }).catch(error => {
             console.error('Error opening external link:', error);
         });
-    });
-
-    // 获取路径
-    ipcMain.on('getPath', (event, name) => {
-        event.returnValue = app.getPath(name);
     });
 
     // 重新加载窗口
@@ -99,7 +87,7 @@ function initIpcHandlers(win) {
     ipcMain.handle('import-app', async (event, asarPath) => {
         try {
             const uuid = uuidv4().replace(/-/g, '');
-            const targetPath = path.join(APP_PATH, `${uuid}.asar`);
+            const targetPath = path.join(getAppsPath, `${uuid}.asar`);
 
             if (!fs.existsSync(asarPath)) {
                 throw new Error(`源文件不存在: ${asarPath}`);
@@ -153,7 +141,7 @@ function initIpcHandlers(win) {
             console.error('应用删除失败:', err.message);
             throw err;
         }
-        const dirPath = path.resolve(DATA_PATH, param.id);
+        const dirPath = path.resolve(getAppDataPath(), param.id);
         fs.rm(dirPath, { recursive: true, force: true }, (err) => {
             if (err) {
                 console.error(`Failed to remove directory: ${err.message}`);
@@ -170,7 +158,7 @@ function initIpcHandlers(win) {
 
     // 清理应用数据
     ipcMain.handle('clearAppData', async (event, id) => {
-        const appData = path.join(DATA_PATH, id);
+        const appData = path.join(getAppDataPath(), id);
         try {
             await fs.promises.access(appData, fs.constants.F_OK);
             await fs.promises.rm(appData, { recursive: true, force: true });
@@ -209,7 +197,7 @@ function initIpcHandlers(win) {
     });
 
     // 处理应用添加
-    ipcMain.handle('handleAppAdd', async (event, options) => {
+    ipcMain.handle('handleAppAdd', async (event) => {
         try {
             const result = await dialog.showOpenDialog({
                 title: '选择你的 app.json 文件',
@@ -242,6 +230,27 @@ function initIpcHandlers(win) {
     ipcMain.handle('getAppList', async (event) => {
         return await getAppList();
     });
+
+    // 导入快捷方式管理模块
+    const shortcutManager = require('./modules/main/shortcutManager');
+
+    // 生成快捷方式
+    ipcMain.handle('generate-shortcut', async () => {
+        if (!app.isPackaged) {
+            return { success: false, msg: '只能在生产环境下生成快捷方式' };
+        }
+        const appList = await getAppList();
+        return shortcutManager.generateShortcuts(appList, process.execPath);
+    });
+
+    // 删除快捷方式
+    ipcMain.handle('delete-shortcut', async () => {
+        if (!app.isPackaged) {
+            return { success: false, msg: '只能在生产环境下删除快捷方式' };
+        }
+        const appList = await getAppList();
+        return shortcutManager.deleteShortcuts(appList);
+    });
 }
 
 async function removeAppDevById(id) {
@@ -267,7 +276,7 @@ async function removeAppById(id) {
         appConfigList.splice(appConfigList.indexOf(appConfig), 1);
         AppsConfig.set('default', appConfigList);
     }
-    fs.unlinkSync(path.join(APP_PATH, id + '.asar'));
+    fs.unlinkSync(path.join(getAppsPath(), id + '.asar'));
     console.info('%s===remove is success', id);
 }
 
@@ -316,17 +325,17 @@ function getAppList() {
     const /*Array<Types.AppItemType>*/ appInfoList = AppsConfig.get('default');
     let appList = [];
     for(const appInfo of appInfoList) {
-        // /home/lizl6/.config/canbox/Users/apps.json
-        // C:\Users\brood\AppData\Roaming\canbox\Users\apps.json
+        // /home/lizl6/.config/canbox/Users/apps/541f02efdbf449018c57c880ac98aa59.asar/apps.json
+        // C:\Users\brood\AppData\Roaming\canbox\Users\apps\541f02efdbf449018c57c880ac98aa59.asar\apps.json
         // 读取app.json文件内容
-        const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, appInfo.id + '.asar/app.json'), 'utf8'));
-        const iconPath = path.join(APP_PATH, appInfo.id + '.asar', appJson.logo);
+        const appJson = JSON.parse(fs.readFileSync(path.join(getAppsPath(), appInfo.id + '.asar/app.json'), 'utf8'));
+        const iconPath = path.join(getAppsPath(), appInfo.id + '.asar', appJson.logo);
         // console.info('iconPath: ', iconPath);
         const app = {
             id: appInfo.id,
             appJson: appJson,
             logo: iconPath,
-            path: path.join(APP_PATH, appInfo.id + '.asar')
+            path: path.join(getAppsPath(), appInfo.id + '.asar')
         };
         appList.push(app);
     }

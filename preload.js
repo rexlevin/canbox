@@ -1,9 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const PackageJson = require('./package.json');
 
-const AppShortcut = require('./modules/main/app.shortcut');
-const AppRepo = require('./modules/main/app.repo');
-
 window.addEventListener('DOMContentLoaded', () => {
     document.title = PackageJson.description + ' - v' + PackageJson.version;
 });
@@ -25,17 +22,21 @@ contextBridge.exposeInMainWorld(
         openDevTools: () => {
             ipcRenderer.send('openDevTools');
         },
-        getRepoInfo: () => {
-            console.info('AppRepo.info==', AppRepo.info());
-            return AppRepo.info();
+        generateShortcut: (fn) => {
+            ipcRenderer.invoke('generate-shortcut').then(result => {
+                fn(result);
+            }).catch(error => {
+                console.error('IPC call failed:', error);
+                fn({ success: false, msg: error.message });
+            });
         },
-        generateShortcut: () => {
-            // console.info('222222222222222process.execPath==', process.execPath);
-            // ipcRenderer.send('generateStartupShortcut', JSON.stringify(getAppList()));
-            AppShortcut.generateStartupShortcut(JSON.stringify(getAppList()));
-        },
-        deleteShortcut: () => {
-            AppShortcut.deleteStartupShortcut();
+        deleteShortcut: (fn) => {
+            ipcRenderer.invoke('delete-shortcut').then(result => {
+                fn(result);
+            }).catch(error => {
+                console.error('IPC call failed:', error);
+                fn({ success: false, msg: error.message });
+            });
         },
         openUrl: (url) => {
             console.info('url====', url);

@@ -11,17 +11,27 @@
 import { ElMessage } from 'element-plus';
 
 function generateShortcut() {
-    window.api.generateShortcut();
-    ElMessage({
-        message: 'app快捷方式生成成功',
-        type:'success'
+    window.api.generateShortcut(ret => {
+        if (ret.success) {
+            ElMessage({
+                message: 'app快捷方式生成成功',
+                type:'success'
+            });
+        } else {
+            ElMessage.error(ret.msg);
+        }
     });
 }
 function deleteShortcut() {
-    window.api.deleteShortcut();
-    ElMessage({
-        message: 'app快捷方式清除成功',
-        type:'success'
+    window.api.deleteShortcut(ret => {
+        if (ret.success) {
+            ElMessage({
+                message: 'app快捷方式清除成功',
+                type:'success'
+            });
+        } else {
+            ElMessage.error(ret.msg);
+        }
     });
 }
 </script>

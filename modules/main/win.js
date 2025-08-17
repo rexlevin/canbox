@@ -61,7 +61,8 @@ const WindowManager = {
                 console.info('mainPath: ', mainPath);
                 loadURL = path.join(mainPath, loadURL);
             } else {
-                loadURL = path.join(app.getPath('userData'), 'Users', 'apps', `${parentWindowId}.asar`, loadURL);
+                const { getAppsPath } = require('./pathManager');
+                loadURL = path.join(getAppsPath(), `${parentWindowId}.asar`, loadURL);
             }
             console.info('win.js, loadURL: ', loadURL);
 
