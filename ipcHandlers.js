@@ -252,7 +252,7 @@ function initIpcHandlers(win) {
             return { success: false, msg: '只能在生产环境下生成快捷方式' };
         }
         const appList = await getAppList();
-        return shortcutManager.generateShortcuts(appList, process.execPath);
+        return shortcutManager.generateShortcuts(appList);
     });
 
     // 删除快捷方式

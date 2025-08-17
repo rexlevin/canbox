@@ -1,7 +1,7 @@
 const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { execSync } = require('child_process');
+const { execSync, exec } = require('child_process');
 const os = require('os');
 
 const { getAppsPath, getAppIconPath } = require('./pathManager');
@@ -15,13 +15,14 @@ const { getAppsPath, getAppIconPath } = require('./pathManager');
  * macOS: /Applications
  *
  * @param {Array} appList - 应用列表
- * @param {string} execPath - 可执行文件路径
  * @returns {Object} - 操作结果
  */
 function generateShortcuts(appList, execPath) {
     if (!appList || !appList.length) {
         return { success: false, error: '应用列表为空' };
     }
+
+    const execPath = process.execPath;
 
     try {
         for (const appItem of appList) {
