@@ -1,4 +1,4 @@
-const { ipcMain, dialog, shell } = require('electron');
+const { ipcMain, dialog, shell, app } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');

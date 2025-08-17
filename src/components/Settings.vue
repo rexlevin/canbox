@@ -1,10 +1,18 @@
 <template>
-    <el-form label-width="auto" style="margin-top: 10px;">
-        <el-form-item label="快捷启动">
-            <el-button type="primary" @click="generateShortcut">为所有app生成快捷方式</el-button>
-            <el-button type="danger" @click="deleteShortcut">删除所有app快捷方式</el-button>
-        </el-form-item>
-    </el-form>
+    <el-card shadow="hover">
+        <el-form label-width="">
+            <el-form-item label="为所有APP" style="margin-bottom: 0px;">
+                <div style="display: flex; gap: 10px;">
+                    <el-button type="primary" size="medium" @click="generateShortcut">
+                        创建快捷方式
+                    </el-button>
+                    <el-button type="danger" size="medium" @click="deleteShortcut">
+                        删除快捷方式
+                    </el-button>
+                </div>
+            </el-form-item>
+        </el-form>
+    </el-card>
 </template>
 
 <script setup>
