@@ -51,7 +51,8 @@ module.exports = {
             width: 800,
             height: 600,
             resizable: true,
-            webPreferences: {}
+            webPreferences: {},
+            show: false
         };
 
         // 合并自定义窗口选项：如果app.json中配置了窗口选项，则合并到options中
@@ -178,12 +179,13 @@ module.exports = {
                 });
             }
 
-            // 如果是开发模式且配置了开发者工具，则打开开发者工具
-            if ('dev' === devTag && uatDevJson?.devTools) {
-                appWin.on('ready-to-show', () => {
+            appWin.on('ready-to-show', () => {
+                appWin.show();
+                // 如果是开发模式且配置了开发者工具，则打开开发者工具
+                if ('dev' === devTag && uatDevJson?.devTools) {
                     appWin.webContents.openDevTools({ mode: uatDevJson?.devTools });
-                });
-            }
+                }
+            });
 
             // 将app窗口添加到appMap中
             windowManager.addWindow(appItem.id, appWin);

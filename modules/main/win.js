@@ -37,6 +37,9 @@ const WindowManager = {
             options = { ...options, width: options.width || 800, height: options.height || 600, show: false };
         }
 
+        // 没有ready的时候先不显示
+        options.show = false;
+
         try {
             // 根据 parentWindowId 判断应用类型并拼接完整路径
             const appDevConfigArr = AppsDevConfig.get('default') || [];
