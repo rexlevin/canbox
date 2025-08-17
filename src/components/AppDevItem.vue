@@ -13,7 +13,7 @@
             </div>
             <div class="operate-block">
                 <span class="operate-icon-span" @click="packApp" title="打包app">
-                    <el-icon :size="35" color="#6a8759"><FolderAdd /></el-icon>
+                    <el-icon :size="35" color="#6a8759"><Expand /></el-icon>
                 </span>
                 <span class="operate-icon-span" @click="loadApp" title="运行这个开发中的app">
                     <el-icon :size="35" color="#228b22"><VideoPlay /></el-icon>
