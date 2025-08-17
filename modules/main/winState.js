@@ -1,12 +1,8 @@
-const { createStore } = require('./storage');
-const path = require('path');
+const { getWinStateStore } = require('./storageManager');
 
 class WinState {
     constructor() {
-        this.store = createStore({
-            name: 'winState',
-            cwd: 'Users/data'
-        });
+        this.store = getWinStateStore();
     }
 
     save(appId, state, callback) {

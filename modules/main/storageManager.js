@@ -49,8 +49,41 @@ class Storage {
     }
 }
 
-// 导出默认实例（可根据需要扩展）
+/**
+ * 获取 winState 存储实例
+ * @returns {Storage}
+ */
+function getWinStateStore() {
+    return new Storage({
+        name: 'winState',
+        cwd: 'Users/data'
+    });
+}
+
+/**
+ * 获取 apps 存储实例
+ * @returns {Storage}
+ */
+function getAppsStore() {
+    return new Storage({
+        name: 'apps',
+        cwd: 'Users'
+    });
+}
+
+/**
+ * 获取 appsDev 存储实例
+ * @returns {Storage}
+ */
+function getAppsDevStore() {
+    return new Storage({
+        name: 'appsDev',
+        cwd: 'Users'
+    });
+}
+
 module.exports = {
-    Storage,
-    createStore: (options) => new Storage(options)
+    getWinStateStore,
+    getAppsStore,
+    getAppsDevStore
 };

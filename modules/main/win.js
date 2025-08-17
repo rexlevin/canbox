@@ -1,11 +1,10 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
-const { app } = require('electron');
 const fs = require('fs');
 
 // 初始化 storage 实例
-const { createStore } = require('./storage');
-const AppsDevConfig = createStore({ cwd: 'Users', name: 'appsDev' });
+const { getAppsDevStore } = require('./storageManager');
+const AppsDevConfig = getAppsDevStore();
 
 /**
  * 窗口操作模块

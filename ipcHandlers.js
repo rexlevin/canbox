@@ -10,9 +10,10 @@ const ObjectUtils = require('./modules/utils/ObjectUtils')
 
 const { getAppDataPath, getAppsPath } = require('./modules/main/pathManager');
 
-const { createStore } = require('./modules/main/storage');
-const AppsConfig = createStore({ cwd: 'Users', name: 'apps' });
-const AppsDevConfig = createStore({ cwd: 'Users', name: 'appsDev' });
+const { getAppsStore, getAppsDevStore } = require('./modules/main/storageManager');
+
+const AppsConfig = getAppsStore();
+const AppsDevConfig = getAppsDevStore();
 
 /**
  * 初始化所有 IPC 消息处理逻辑
