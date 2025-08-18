@@ -37,7 +37,14 @@
             "target": [
                 "appimage"
             ],
-            "icon": "./logo.png"
+            "icon": "./build/logo.png",
+            "category": "System;Applications;Utility;",
+            "desktop": {
+                "Name": "Canbox",
+                "GenericName": "Canbox",
+                "Comment": "Some useful apps you need for your life",
+                "Terminal": false
+            }
         },
         "win": {
             "icon": "./logo.png",
