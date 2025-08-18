@@ -4,6 +4,7 @@
     "version": "0.0.1",
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
+    "author": "lizl6",
     "engines": {
         "node": ">=22.0.0"
     },
@@ -37,13 +38,18 @@
             "target": [
                 "appimage"
             ],
-            "icon": "./build/logo.png",
-            "category": "System;Applications;Utility;",
+            "icon": "build/logo.png",
+            "category": "System;Applications;Utility",
+            "executableName": "canbox",
             "desktop": {
-                "Name": "Canbox",
-                "GenericName": "Canbox",
-                "Comment": "Some useful apps you need for your life",
-                "Terminal": false
+                "entry": {
+                    "Name": "Canbox",
+                    "Comment": "Some useful apps you need for your life",
+                    "Icon": "logo.png",
+                    "Terminal": false,
+                    "Type": "Application",
+                    "Categories": "Utility;System;Application"
+                }
             }
         },
         "win": {
