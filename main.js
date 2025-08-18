@@ -31,8 +31,13 @@ let win = null;
 // 设置一个map集合，用于存放所有打开的window
 let appMap = new Map();
 
-// 创建锁，保证只有一个实例在运行
-const getTheLock = app.requestSingleInstanceLock();
+// 创建锁，保证开发环境和生产环境各有一个实例在运行
+const isDev = !app.isPackaged;
+const appId = isDev ? 'canbox-dev' : 'canbox';
+
+const getTheLock = app.requestSingleInstanceLock({
+    appId: appId
+});
 if (!getTheLock) {
     app.quit()
 } else {
