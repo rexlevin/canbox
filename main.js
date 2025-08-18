@@ -22,8 +22,6 @@ app.disableHardwareAcceleration();
 
 // 操作系统类型
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
-// 当前是否是打包环境
-const isPackaged = app.isPackaged;
 
 // canbox 主窗口对象
 let win = null;
@@ -121,7 +119,7 @@ const createWindow = () => {
 
     win = new BrowserWindow(config);
 
-    if (!isPackaged && uatDev?.main) {
+    if (isDev && uatDev?.main) {
         console.info('now load uatDev==%s', uatDev.main);
         win.loadURL(uatDev.main);
     } else {
@@ -141,6 +139,10 @@ const createWindow = () => {
     win.on('ready-to-show', () => {
         win.show(); // 注释掉这行，即启动最小化到tray
 
+        const PackageJson = require('./package.json');
+        const devTitle = isDev ? ' - develop' : '';
+        win.setTitle(`${PackageJson.description} - v${PackageJson.version}${devTitle}`);
+
         // 检查是否传入了 --dev-tools 参数
         let devToolsMode = null;
         for (const arg of process.argv) {
@@ -152,7 +154,7 @@ const createWindow = () => {
         // 优先使用命令行参数，其次使用 uatDev 配置
         if (devToolsMode) {
             win.webContents.openDevTools({ mode: devToolsMode });
-        } else if (!isPackaged && uatDev?.devTools) {
+        } else if (isDev && uatDev?.devTools) {
             win.webContents.openDevTools({ mode: uatDev?.devTools });
         }
     });

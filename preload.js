@@ -1,22 +1,4 @@
 const { contextBridge, ipcRenderer } = require('electron');
-// const PackageJson = require('./package.json');
-
-// window.addEventListener('DOMContentLoaded', () => {
-//     document.title = PackageJson.description + ' - v' + PackageJson.version;
-// });
-
-window.addEventListener('DOMContentLoaded', () => {
-    document.title = 'Canbox - Some Useful Apps';
-});
-
-// ipcRenderer.on('loadAppDirect', (e, appId) => {
-//     console.info('loadAppDirect: %s',appId);
-//     for(let appItem of getAppList()) {
-//         if(appItem.id === appId) {
-//             ipcRenderer.send('loadApp', JSON.stringify(appItem));
-//         }
-//     }
-// });
 
 contextBridge.exposeInMainWorld(
     "api", {
