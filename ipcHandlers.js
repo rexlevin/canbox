@@ -99,7 +99,7 @@ function initIpcHandlers(win) {
     ipcMain.handle('import-app', async (event, asarPath) => {
         try {
             const uuid = uuidv4().replace(/-/g, '');
-            const targetPath = path.join(getAppsPath, `${uuid}.asar`);
+            const targetPath = path.join(getAppsPath(), `${uuid}.asar`);
 
             if (!fs.existsSync(asarPath)) {
                 throw new Error(`源文件不存在: ${asarPath}`);
