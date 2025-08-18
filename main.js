@@ -98,11 +98,13 @@ const createWindow = () => {
         resizable: false,
         icon: path.join(__dirname, './logo.png'),
         webPreferences: {
-            sandbox: true, // 因为我想在preload中使用nodejs模块，所以这里设置为false，并且在启动参数中使用 --no-sandbox
+            sandbox: false, // 因为在preload中使用nodejs的api（如：require）
+            // 即使 preload.js 中只是简单地引入 electron 模块，也需要 require 的支持
+            // 所以这里设置为false禁用了沙箱模式，并且在启动参数中使用 --no-sandbox
             preload: path.join(__dirname, './preload.js'),
             spellcheck: false,
             webSecurity: false,
-            nodeIntegration: true,
+            nodeIntegration: false, // false：禁止渲染进程使用nodejs的api
             contextIsolation: true,
             allowRunningInsecureContent: false,
             allowEval: false
