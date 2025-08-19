@@ -5,6 +5,7 @@
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
     "author": "lizl6",
+    "license": "Apache-2.0",
     "engines": {
         "node": ">=22.0.0"
     },
