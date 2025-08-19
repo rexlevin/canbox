@@ -8,6 +8,8 @@ const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' 
 // 导入窗口管理模块
 const windowManager = require('./windowManager');
 
+const { getAppsPath } = require('./pathManager');
+
 module.exports = {
     /**
      *
@@ -64,6 +66,11 @@ module.exports = {
                 options.icon = path.resolve(appItem.path, options.icon);
             } else {
                 options.icon = path.resolve(appItem.path, appItem.appJson.logo);
+            }
+            if (!devTag) {
+                const logoExt = path.extname(appItem.appJson.logo);
+                options.icon = path.resolve(getAppsPath(), `${appItem.id}${logoExt}`);
+                console.info('当前是正式模式， 使用 app 目录下的logo: ', options.icon);
             }
 
             options.webPreferences = {

@@ -138,6 +138,17 @@ function initIpcHandlers(win) {
             });
             AppsConfig.set('default', appConfigArr);
 
+            // 复制logo文件到目标目录
+            const logoPathInAsar = path.join(targetPath, appJson.logo);
+            const logoExt = path.extname(appJson.logo);
+            const logoPathInTarget = path.join(getAppsPath(), `${uuid}${logoExt}`);
+            try {
+                fs.copyFileSync(logoPathInAsar, logoPathInTarget);
+                console.log('Logo 文件复制成功！');
+            } catch (err) {
+                console.error('复制logo文件失败:', err);
+            }
+
             return { success: true, uuid };
         } catch (error) {
             console.error('导入应用失败:', error);
@@ -284,13 +295,20 @@ async function removeAppById(id) {
         return;
     }
     const appConfigList = AppsConfig.get('default');
+    let logo = '';
     for (let appConfig of appConfigList) {
         if (id !== appConfig.id) continue;
+        logo = appConfig.logo;
         appConfigList.splice(appConfigList.indexOf(appConfig), 1);
         AppsConfig.set('default', appConfigList);
     }
     fs.unlinkSync(path.join(getAppsPath(), id + '.asar'));
     console.info('%s===remove is success', id);
+    // 删除图标
+    const logoExt = path.extname(logo);
+    const logoPath = path.join(getAppsPath(), `${id}${logoExt}`);
+    fs.unlinkSync(logoPath);
+    console.info('%s===remove logo is success', id);
 
     // 删除快捷方式
     const appList = await getAppList();
