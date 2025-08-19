@@ -172,9 +172,9 @@ function initIpcHandlers(win) {
         fs.rm(dirPath, { recursive: true, force: true }, (err) => {
             if (err) {
                 console.error(`Failed to remove directory: ${err.message}`);
-                throw err;
+            } else {
+                console.info('remove app success: %s', param.id);
             }
-            console.info('remove app success: %s', param.id);
             winState.remove(param.id, (res) => {
                 console.info(res);
                 return { success: true, msg: '删除应用目录成功' };
@@ -302,13 +302,21 @@ async function removeAppById(id) {
         appConfigList.splice(appConfigList.indexOf(appConfig), 1);
         AppsConfig.set('default', appConfigList);
     }
-    fs.unlinkSync(path.join(getAppsPath(), id + '.asar'));
-    console.info('%s===remove is success', id);
+    try {
+        fs.unlinkSync(path.join(getAppsPath(), id + '.asar'));
+        console.info('%s===remove is success', id);
+    } catch (err) {
+        console.error('remove app asar error:', err);
+    }
     // 删除图标
     const logoExt = path.extname(logo);
     const logoPath = path.join(getAppsPath(), `${id}${logoExt}`);
-    fs.unlinkSync(logoPath);
-    console.info('%s===remove logo is success', id);
+    try {
+        fs.unlinkSync(logoPath);
+        console.info('%s===remove logo is success', id);
+    } catch (err) {
+        console.error('remove app logo error:', err);
+    }
 
     // 删除快捷方式
     const appList = await getAppList();
