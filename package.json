@@ -30,6 +30,8 @@
             "main.js",
             "preload.js",
             "ipcHandlers.js",
+            "LICENSE",
+            "README.md",
             "!node_modules/electron"
         ],
         "directories": {
