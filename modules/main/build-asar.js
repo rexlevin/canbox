@@ -60,29 +60,17 @@ const buildAsar = async (appDevItem) => {
                 // 复制文件
                 fs.copyFileSync(filePath, destPath);
             });
-            // const files = fs.globSync(fullPattern, { nodir: true });
-            // files.forEach((file) => {
-            //     console.info('file: ', path.resolve(file));
-            //     console.info('path.relative of file: ', path.relative('./', file));
-            //     const dest = path.join(tmpDir, pattern);
-            //     fs.mkdirSync(path.resolve(tmpDir), { recursive: true });
-            //     fs.cpSync(file, dest, { recursive: true });
-            // });
         });
 
         copyNodeModulesWithoutDevDeps(appDevItem, buildConfig);
         
         // 在临时目录中打包
-        const tmpAsarPath = path.join(tmpDir, 'app.asar');
-        await asar.createPackage(tmpDir, tmpAsarPath, {
+        await asar.createPackage(tmpDir, asarPath, {
             glob: ['**/*']
         });
         
-        // 移动 asar 文件到输出目录
-        fs.renameSync(tmpAsarPath, asarPath);
-        
         // 删除临时目录
-        // await fs.remove(tmpDir);
+        await fs.remove(tmpDir);
         
         return { success: true, msg: '打包成功', asarPath };
     } catch (err) {
