@@ -12,7 +12,11 @@ const appWindow = require('./modules/main/app.window')
 
 const { getAppDataPath, getAppsPath } = require('./modules/main/pathManager');
 
+// 导入存储管理模块
 const { getAppsStore, getAppsDevStore } = require('./modules/main/storageManager');
+
+// 导入快捷方式管理模块
+const shortcutManager = require('./modules/main/shortcutManager');
 
 const AppsConfig = getAppsStore();
 const AppsDevConfig = getAppsDevStore();
@@ -243,9 +247,6 @@ function initIpcHandlers(win) {
         return await getAppList();
     });
 
-    // 导入快捷方式管理模块
-    const shortcutManager = require('./modules/main/shortcutManager');
-
     // 生成快捷方式
     ipcMain.handle('generate-shortcut', async () => {
         if (!app.isPackaged) {
@@ -290,6 +291,13 @@ async function removeAppById(id) {
     }
     fs.unlinkSync(path.join(getAppsPath(), id + '.asar'));
     console.info('%s===remove is success', id);
+
+    // 删除快捷方式
+    const appList = await getAppList();
+    const targetApp = appList.find(app => app.id === id);
+    if (targetApp) {
+        await shortcutManager.deleteShortcuts([targetApp]);
+    }
 }
 
 async function getAppDevList() {
