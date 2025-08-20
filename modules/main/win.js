@@ -69,7 +69,7 @@ const WindowManager = {
                 const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, `${parentWindowId}.asar`, 'app.json'), 'utf-8'));
                 loadURL = appJson.main.startsWith('http')
                     ? path.join(appJson.main, loadURL)
-                    : `file://${path.join(APP_PATH, `${parentWindowId}.asar`, appJson.main, loadURL)}`;
+                    : `file://${path.join(APP_PATH, `${parentWindowId}.asar`, appJson.main + loadURL)}`;
             }
             console.info('win.js, loadURL: ', loadURL);
 
