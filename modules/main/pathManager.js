@@ -18,7 +18,7 @@ const PathManager = {
         return app.getPath('temp');
     },
     // 可以根据需要扩展其他路径
-    getAppsPath: () => {
+    getAppPath: () => {
         return path.join(app.getPath('userData'), 'Users', 'apps');
     },
     getAppDataPath: () => {
@@ -27,6 +27,9 @@ const PathManager = {
     getAppIconPath: () => {
         return path.join(app.getPath('userData'), 'Users', 'appIcon');
     },
+    getAppTempPath: () => {
+        return path.join(app.getPath('userData'), 'Users', 'temp');
+    }
 };
 
 module.exports = PathManager;

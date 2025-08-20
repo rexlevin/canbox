@@ -70,7 +70,16 @@ const buildAsar = async (appDevItem) => {
         });
         
         // 删除临时目录
-        await fs.remove(tmpDir);
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+
+        // 把目录 outputDir 下所有内容打包为一个zip文件，名字为：${appDevItem.appJson.id}-${appDevItem.appJson.version}
+        const zipPath = path.join(outputDir, `${appDevItem.appJson.id}-${appDevItem.appJson.version}.zip`);
+        if (process.platform === 'win32') {
+            execSync(`powershell -Command "Compress-Archive -Path '${outputDir}\\*' -DestinationPath '${zipPath}'"`, { stdio: 'inherit' });
+        } else {
+            execSync(`cd "${outputDir}" && zip -r "${zipPath}" *`, { stdio: 'inherit' });
+        }
+        console.info('zipPath:', zipPath);
         
         return { success: true, msg: '打包成功', asarPath };
     } catch (err) {

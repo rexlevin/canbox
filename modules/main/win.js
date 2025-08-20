@@ -3,10 +3,12 @@ const path = require('path');
 const fs = require('fs');
 
 // 初始化 pathManager 模块
-const { getAppsPath } = require('./pathManager');
+const { getAppPath } = require('./pathManager');
+const APP_PATH = getAppPath();
 
 // 初始化 storage 实例
 const { getAppsDevStore, getAppsStore } = require('./storageManager');
+const { get } = require('http');
 
 /**
  * 窗口操作模块
@@ -64,10 +66,10 @@ const WindowManager = {
                 console.info('mainPath: ', mainPath);
                 loadURL = path.join(mainPath, loadURL);
             } else {
-                const appJson = JSON.parse(fs.readFileSync(path.join(getAppsPath(), `${parentWindowId}.asar`, 'app.json'), 'utf-8'));
+                const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, `${parentWindowId}.asar`, 'app.json'), 'utf-8'));
                 loadURL = appJson.main.startsWith('http')
                     ? path.join(appJson.main, loadURL)
-                    : `file://${path.join(getAppsPath(), `${parentWindowId}.asar`, appJson.main, loadURL)}`;
+                    : `file://${path.join(APP_PATH, `${parentWindowId}.asar`, appJson.main, loadURL)}`;
             }
             console.info('win.js, loadURL: ', loadURL);
 

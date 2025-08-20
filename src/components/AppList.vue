@@ -75,14 +75,14 @@ async function importApp() {
         const { canceled, filePaths } = await window.api.selectFile({
             title: '选择应用文件',
             properties: ['openFile'],
-            filters: [{ name: 'App Files', extensions: ['asar'] }],
+            filters: [{ name: 'App Files', extensions: ['zip'] }],
         });
         if (canceled || !filePaths?.[0]) return;
 
-        const asarPath = filePaths[0];
+        const zipPath = filePaths[0];
 
         // 2. 导入文件：复制文件并重命名
-        const { success, error } = await window.api.importApp(asarPath);
+        const { success, error } = await window.api.importApp(zipPath);
         if (!success) {
             throw new Error(error);
         }

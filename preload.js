@@ -37,8 +37,8 @@ contextBridge.exposeInMainWorld(
         selectFile: (options) => {
             return ipcRenderer.invoke('select-file', options);
         },
-        importApp: (asarPath) => {
-            return ipcRenderer.invoke('import-app', asarPath);
+        importApp: (zipPath) => {
+            return ipcRenderer.invoke('import-app', zipPath);
         },
         packToAsar: (appDevItemStr) => {
             return ipcRenderer.invoke('pack-asar', appDevItemStr);

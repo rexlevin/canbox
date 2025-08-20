@@ -10,7 +10,10 @@ const ObjectUtils = require('./modules/utils/ObjectUtils')
 
 const appWindow = require('./modules/main/app.window')
 
-const { getAppDataPath, getAppsPath } = require('./modules/main/pathManager');
+const { getAppDataPath, getAppPath, getAppTempPath } = require('./modules/main/pathManager');
+const APP_DATA_PATH = getAppDataPath();
+const APP_PATH = getAppPath();
+const APP_TEMP_PATH = getAppTempPath();
 
 // 导入存储管理模块
 const { getAppsStore, getAppsDevStore } = require('./modules/main/storageManager');
@@ -95,20 +98,33 @@ function initIpcHandlers(win) {
         return dialog.showOpenDialog({
             ...options,
             properties: ['openFile'],
-            filters: [{ name: 'App Files', extensions: ['asar'] }],
+            filters: [{ name: 'App Files', extensions: ['zip'] }],
         });
     });
 
     // 导入应用
-    ipcMain.handle('import-app', async (event, asarPath) => {
+    ipcMain.handle('import-app', async (event, zipPath) => {
         try {
-            const uuid = uuidv4().replace(/-/g, '');
-            const targetPath = path.join(getAppsPath(), `${uuid}.asar`);
 
-            if (!fs.existsSync(asarPath)) {
-                throw new Error(`源文件不存在: ${asarPath}`);
+            // 检查是否有 APP_TEMP_PATH 目录，有则删除
+            if (fs.existsSync(APP_TEMP_PATH)) {
+                if (process.platform === 'win32') {
+                    await execSync(`del /f /q "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
+                } else {
+                    await execSync(`rm -rf "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
+                }
             }
-            const absoluteAsarPath = path.resolve(asarPath);
+            // 创建 APP_TEMP_PATH 目录
+            fs.mkdirSync(APP_TEMP_PATH, { recursive: true });
+
+            // 将文件复制到 APP_TEMP_PATH 目录下
+            const uuid = uuidv4().replace(/-/g, '');
+            const targetPath = path.join(APP_TEMP_PATH, `${uuid}.zip`);
+
+            if (!fs.existsSync(zipPath)) {
+                throw new Error(`源文件不存在: ${zipPath}`);
+            }
+            const absoluteAsarPath = path.resolve(zipPath);
             if (!fs.existsSync(absoluteAsarPath)) {
                 throw new Error(`解析后的路径无效: ${absoluteAsarPath}`);
             }
@@ -121,12 +137,41 @@ function initIpcHandlers(win) {
                     ? `copy "${absoluteAsarPath}" "${targetPath}"`
                     : `cp "${absoluteAsarPath}" "${targetPath}"`;
                 execSync(command, { stdio: 'inherit' });
-                console.log('ASAR 文件复制成功！');
+                console.log('ZIP 文件复制成功！');
             } catch (err) {
                 console.error('复制失败:', err);
             }
 
-            const appJson = JSON.parse(fs.readFileSync(path.join(targetPath, 'app.json'), 'utf8'));
+            // 将 APP_TEMP_PATH 目录下的 zip 文件解压
+            if (process.platform === 'win32') {
+                execSync(`powershell -Command "Expand-Archive -Path '${targetPath}' -DestinationPath '${APP_TEMP_PATH}'"`, { stdio: 'inherit' });
+            } else {
+                execSync(`unzip -o "${targetPath}" -d "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
+            }
+            console.info('解压成功:', APP_TEMP_PATH);
+            // 删除 zip 文件
+            fs.rmSync(targetPath, { recursive: true, force: true });
+            // 重命名文件：检查 APP_TEMP_PATH 下的文件和目录，如果当前存在 xxxx.asar 则改为 ${uuid}.asar，xxxx.asar.unpacked 改为 ${uuid}.asar.unpacked
+            const files = fs.readdirSync(APP_TEMP_PATH);
+            files.forEach(file => {
+                console.info('file:', file);
+                if (file.endsWith('.asar')) {
+                    fs.renameSync(path.join(APP_TEMP_PATH, file), path.join(APP_TEMP_PATH, `${uuid}.asar`));
+                } else if (file.endsWith('.asar.unpacked')) {
+                    fs.renameSync(path.join(APP_TEMP_PATH, file), path.join(APP_TEMP_PATH, `${uuid}.asar.unpacked`));
+                }
+            });
+            // 将 APP_TEMP_PATH 下的文件移动到 APP_PATH 下
+            if (fs.existsSync(APP_TEMP_PATH)) {
+                if (process.platform === 'win32') {
+                    await execSync(`move "${APP_TEMP_PATH}\\*" "${APP_PATH}"`, { stdio: 'inherit' });
+                } else {
+                    await execSync(`mv "${APP_TEMP_PATH}"/* "${APP_PATH}"`, { stdio: 'inherit' });
+                }
+            }
+
+            const asarTargetPath = path.join(APP_PATH, `${uuid}.asar`);
+            const appJson = JSON.parse(fs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8'));
             let appConfigArr = AppsConfig.get('default') ? AppsConfig.get('default') : [];
             appConfigArr.push({
                 id: uuid,
@@ -139,9 +184,9 @@ function initIpcHandlers(win) {
             AppsConfig.set('default', appConfigArr);
 
             // 复制logo文件到目标目录
-            const logoPathInAsar = path.join(targetPath, appJson.logo);
+            const logoPathInAsar = path.join(asarTargetPath, appJson.logo);
             const logoExt = path.extname(appJson.logo);
-            const logoPathInTarget = path.join(getAppsPath(), `${uuid}${logoExt}`);
+            const logoPathInTarget = path.join(APP_PATH, `${uuid}${logoExt}`);
             try {
                 fs.copyFileSync(logoPathInAsar, logoPathInTarget);
                 console.log('Logo 文件复制成功！');
@@ -168,7 +213,7 @@ function initIpcHandlers(win) {
             console.error('应用删除失败:', err.message);
             throw err;
         }
-        const dirPath = path.resolve(getAppDataPath(), param.id);
+        const dirPath = path.resolve(APP_DATA_PATH, param.id);
         fs.rm(dirPath, { recursive: true, force: true }, (err) => {
             if (err) {
                 console.error(`Failed to remove directory: ${err.message}`);
@@ -185,7 +230,7 @@ function initIpcHandlers(win) {
 
     // 清理应用数据
     ipcMain.handle('clearAppData', async (event, id) => {
-        const appData = path.join(getAppDataPath(), id);
+        const appData = path.join(APP_DATA_PATH, id);
         try {
             await fs.promises.access(appData, fs.constants.F_OK);
             await fs.promises.rm(appData, { recursive: true, force: true });
@@ -303,14 +348,14 @@ async function removeAppById(id) {
         AppsConfig.set('default', appConfigList);
     }
     try {
-        fs.unlinkSync(path.join(getAppsPath(), id + '.asar'));
+        fs.unlinkSync(path.join(APP_PATH, id + '.asar'));
         console.info('%s===remove is success', id);
     } catch (err) {
         console.error('remove app asar error:', err);
     }
     // 删除图标
     const logoExt = path.extname(logo);
-    const logoPath = path.join(getAppsPath(), `${id}${logoExt}`);
+    const logoPath = path.join(APP_PATH, `${id}${logoExt}`);
     try {
         fs.unlinkSync(logoPath);
         console.info('%s===remove logo is success', id);
@@ -374,14 +419,14 @@ function getAppList() {
         // /home/lizl6/.config/canbox/Users/apps/541f02efdbf449018c57c880ac98aa59.asar/apps.json
         // C:\Users\brood\AppData\Roaming\canbox\Users\apps\541f02efdbf449018c57c880ac98aa59.asar\apps.json
         // 读取app.json文件内容
-        const appJson = JSON.parse(fs.readFileSync(path.join(getAppsPath(), appInfo.id + '.asar/app.json'), 'utf8'));
-        const iconPath = path.join(getAppsPath(), appInfo.id + '.asar', appJson.logo);
+        const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, appInfo.id + '.asar/app.json'), 'utf8'));
+        const iconPath = path.join(APP_PATH, appInfo.id + '.asar', appJson.logo);
         // console.info('iconPath: ', iconPath);
         const app = {
             id: appInfo.id,
             appJson: appJson,
             logo: iconPath,
-            path: path.join(getAppsPath(), appInfo.id + '.asar')
+            path: path.join(APP_PATH, appInfo.id + '.asar')
         };
         appList.push(app);
     }

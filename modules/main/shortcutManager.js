@@ -3,7 +3,8 @@ const fs = require('fs');
 const { execSync, exec } = require('child_process');
 const os = require('os');
 
-const { getAppsPath, getAppIconPath } = require('./pathManager');
+const { getAppPath, getAppIconPath } = require('./pathManager');
+const APP_PATH = getAppPath();
 
 /**
  * 生成应用快捷方式
@@ -34,7 +35,7 @@ function generateShortcuts(appList) {
             }
 
             // 原始图标路径（asar包内）
-            const originalIconPath = path.join(getAppsPath(), `${appItem.id}.asar`, appItem.appJson.logo);
+            const originalIconPath = path.join(APP_PATH, `${appItem.id}.asar`, appItem.appJson.logo);
             const iconExt = path.extname(originalIconPath);
             // 缓存图标路径
             const iconPath = path.join(getAppIconPath(), `${appItem.id}${iconExt}`);
@@ -108,7 +109,7 @@ function deleteShortcuts(appList) {
             }
             
             // 删除缓存的图标文件
-            const originalIconPath = path.join(getAppsPath(), `${appItem.id}.asar`, appItem.appJson.logo);
+            const originalIconPath = path.join(APP_PATH, `${appItem.id}.asar`, appItem.appJson.logo);
             const iconExt = path.extname(originalIconPath);
             const iconPath = path.join(getAppIconPath(), `${appItem.id}${iconExt}`);
             if (fs.existsSync(iconPath)) {
