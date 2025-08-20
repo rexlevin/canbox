@@ -80,6 +80,14 @@ const buildAsar = async (appDevItem) => {
             execSync(`cd "${outputDir}" && zip -r "${zipPath}" *`, { stdio: 'inherit' });
         }
         console.info('zipPath:', zipPath);
+
+        // 删除 outputDir 目录下除了 ${appDevItem.appJson.id}-${appDevItem.appJson.version}.zip 之外的所有文件
+        const zipFileName = `${appDevItem.appJson.id}-${appDevItem.appJson.version}.zip`;
+        if (process.platform === 'win32') {
+            execSync(`powershell -Command "Get-ChildItem -Path '${outputDir}' | Where-Object { $_.Name -ne '${zipFileName}' } | Remove-Item -Force -Recurse"`, { stdio: 'inherit' });
+        } else {
+            execSync(`find "${outputDir}" -mindepth 1 -maxdepth 1 ! -name '${zipFileName}' -exec rm -rf {} +`, { stdio: 'inherit' });
+        }
         
         return { success: true, msg: '打包成功', asarPath };
     } catch (err) {
