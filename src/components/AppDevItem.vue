@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-wrap" style="margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);">
+    <div class="flex flex-wrap" v-loading="exportAppFlag" style="margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);">
         <div class="card">
             <div class="img-block">
                 <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appDevItem.path + '/' + appDevItem.appJson.logo" alt="" />
@@ -57,7 +57,11 @@ const appDevInfoContent = ref(null);
 
 let activeName = ref('appInfo');
 
+// 控制打包按钮的loading状态
+let exportAppFlag = ref(false);
+
 async function packApp() {
+    exportAppFlag.value = true;
     const result = window.api.packToAsar(JSON.stringify(props.appDevItem));
     result.then((result) => {
         if (!result.success) {
@@ -76,6 +80,8 @@ async function packApp() {
             type: 'error',
             message: err,
         });
+    }).finally(() => {
+        exportAppFlag.value = false;
     });
 }
 
