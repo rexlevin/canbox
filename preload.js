@@ -46,10 +46,11 @@ contextBridge.exposeInMainWorld(
         app: {
             info: (appItemJsonStr, fn) => {
                 ipcRenderer.invoke('getAppInfo', appItemJsonStr).then(result => {
+                    console.info('prealod.js, getAppInfo result==', result);
                     fn(result);
                 }).catch(error => {
                     console.error('IPC call failed:', error);
-                    fn({ code: '9101', msg: error.message });
+                    fn({ success: false, msg: error.message });
                 });
             },
             all: (fn) => {

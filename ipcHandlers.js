@@ -245,22 +245,31 @@ function initIpcHandlers(win) {
     });
 
     // 获取应用信息
+    const readFileWithErrorHandling = async (filePath) => {
+        try {
+            if (fs.existsSync(filePath)) {
+                return fs.readFileSync(filePath, 'utf8');
+            } else {
+                return null;
+            }
+        } catch (err) {
+            console.error(`文件操作失败: ${err.path}`, err);
+            return null;
+        }
+    };
+
     ipcMain.handle('getAppInfo', async (event, appItemJsonStr) => {
         const appItem = JSON.parse(appItemJsonStr);
-        try {
-            const content = await fs.promises.readFile(path.join(appItem.path, 'README.md'), 'utf8');
-            return { code: '0000', data: content };
-        } catch (err) {
-            let msg;
-            if (err.code === 'ENOENT') {
-                console.error('file not found: ', err.path);
-                msg = '文件不存在';
-            } else {
-                console.error('read file error: ', err.path);
-                msg = '文件读取失败';
-            }
-            return { code: '9101', msg: msg, data: 'There is no introduction information of this app' };
-        }
+        const readmePath = path.join(appItem.path, 'README.md');
+        const historyPath = path.join(appItem.path, 'HISTORY.md');
+
+        const [readme, history] = await Promise.all([
+            readFileWithErrorHandling(readmePath),
+            readFileWithErrorHandling(historyPath)
+        ]);
+
+        const msg = (readme || history) ? null : '部分文件读取失败';
+        return { success: null === msg, data: { readme, history }, msg };
     });
 
     // 获取应用开发列表

@@ -30,9 +30,9 @@
     <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
         <el-tabs>
             <el-tab-pane label="app介绍">
-                <div style="text-align: left;" v-html="appInfoContent" id="divAppInfo"></div>
+                <div style="text-align: left;" v-html="readme" id="divAppInfo"></div>
             </el-tab-pane>
-            <el-tab-pane label="版本记录"></el-tab-pane>
+            <el-tab-pane label="版本记录" v-if="historyFlag" v-html="history"></el-tab-pane>
         </el-tabs>
     </el-drawer>
 </template>
@@ -53,18 +53,27 @@ const props = defineProps({
 });
 
 const drawerInfo = ref(false);
-const appInfoContent = ref(null);
+const readme = ref(null);
+const history = ref(null);
+const historyFlag = ref(false);
 
 onBeforeMount(() => {
-    // console.log('AppItem mounted:', props.appItem);
     window.api.app.info(JSON.stringify(props.appItem), result => {
-        // console.info('appDev info result=', result);
-        if(result.code!== '0000') {
-            appInfoContent.value = result.data;//'Cannot laod infomation of this app';
+        if (!result.success) {
+            appInfoContent.value = 'There is no infomation of this app';
             return;
         }
-        // console.info(marked.parse(result.data));
-        appInfoContent.value = marked.parse(result.data);
+        if (result.data.readme) {
+            readme.value = marked.parse(result.data.readme);
+        } else {
+            readme.value = 'There is no infomation of this app';
+        }
+        if (result.data.history !== null) {
+            history.value = marked.parse(result.data.history);
+            historyFlag.value = true;
+        } else {
+            historyFlag.value = false;
+        }
     });
 });
 onUpdated(() => {
@@ -84,7 +93,7 @@ function loadApp() {
     window.api.app.load(JSON.stringify(props.appItem));
 }
 function clearData() {
-    window.api.app.clearData(props.appItem.id, (result)=>{
+    window.api.app.clearData(props.appItem.id, (result) => {
         console.info('clearData result=', result);
         if(result.code !== '0000') {
             ElMessage.error(result.msg);

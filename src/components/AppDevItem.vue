@@ -31,9 +31,9 @@
     <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
         <el-tabs v-model="activeName">
             <el-tab-pane name="appInfo" label="app介绍">
-                <div style="text-align: left;" v-html="appDevInfoContent" id="divAppInfo"></div>
+                <div style="text-align: left;" v-html="readme" id="divAppInfo"></div>
             </el-tab-pane>
-            <el-tab-pane label="版本记录"></el-tab-pane>
+            <el-tab-pane label="版本记录" v-if="historyFlag" v-html="history"></el-tab-pane>
         </el-tabs>
     </el-drawer>
 </template>
@@ -53,9 +53,12 @@ const props = defineProps({
 
 const emit = defineEmits(['reloadAppDev']);
 const drawerInfo = ref(false);
-const appDevInfoContent = ref(null);
 
-let activeName = ref('appInfo');
+const readme = ref(null);
+const history = ref(null);
+const historyFlag = ref(false);
+
+const activeName = ref('appInfo');
 
 // 控制打包按钮的loading状态
 let exportAppFlag = ref(false);
@@ -122,11 +125,21 @@ function removeApp() {
 onBeforeMount(() => {
     window.api.app.info(JSON.stringify(props.appDevItem), result => {
         // console.info('appDev info result=', result);
-        if(result.code!== '0000') {
-            appDevInfoContent.value = result.data;//'Cannot laod infomation of this app';
+        if(!result.success) {
+            readme.value = 'There is no infomation of this app';
             return;
         }
-        appDevInfoContent.value = marked.parse(result.data);
+        if (result.data.readme) {
+            readme.value = marked.parse(result.data.readme);
+        } else {
+            readme.value = 'There is no infomation of this app';
+        }
+        if (result.data.history) {
+            history.value = marked.parse(result.data.history);
+            historyFlag.value = true;
+        } else {
+            historyFlag.value = false;
+        }
     });
 });
 
