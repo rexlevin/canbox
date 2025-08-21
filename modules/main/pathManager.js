@@ -29,6 +29,9 @@ const PathManager = {
     },
     getAppTempPath: () => {
         return path.join(app.getPath('userData'), 'Users', 'temp');
+    },
+    getReposPath: () => {
+        return path.join(app.getPath('userData'), 'Users', 'repos');
     }
 };
 

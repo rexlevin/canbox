@@ -99,6 +99,18 @@ contextBridge.exposeInMainWorld(
                 console.error('IPC call failed:', error);
                 fn(null);
             })
+        },
+        getReposData: (fn) => {
+            ipcRenderer.invoke('get-repos-data').then(result => {
+                console.info('preload.js: getReposList result====', result);
+                fn(result);
+            }).catch(error => {
+                console.error('getReposList: IPC call failed:', error);
+                fn({success: false, msg: error.message});
+            });
+        },
+        removeRepo: (uid) => {
+            return ipcRenderer.invoke('remove-repo', uid);
         }
     }
 );

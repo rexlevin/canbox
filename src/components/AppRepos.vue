@@ -49,11 +49,34 @@
                 </div>
             </template>
         </el-dialog>
+
+        <!-- 第二部分：应用列表区域 -->
+        <div class="app-list-section" v-show="Object.keys(reposData).length > 0">
+            <el-row v-for="(repo, uid) in reposData" :key="uid">
+                <el-col :span="24">
+                    <div class="repo-item">
+                        <div class="repo-info">
+                            <span class="repo-name">{{ repo.name }}</span>
+                            <span class="repo-branch">{{ repo.branch || 'main' }}</span>
+                        </div>
+                        <div class="repo-actions">
+                            <!-- <el-button type="primary" size="small" @click="loadAppsFromRepo(repo)">加载应用</el-button> -->
+                            <el-button type="danger" size="small" @click="removeRepo(uid)">删除</el-button>
+                        </div>
+                    </div>
+                </el-col>
+            </el-row>
+        </div>
+
+        <!-- 空状态提示 -->
+        <div class="empty-section" v-show="Object.keys(reposData).length == 0">
+            <p>暂无仓库</p>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onBeforeMount, ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
 
 const dialogVisible = ref(false);
@@ -71,6 +94,45 @@ const handleClose = (done) => {
 
 const formRef = ref();
 const loading = ref(false);
+let reposData = reactive({});
+
+onBeforeMount(() => {
+    fetchReposData();
+});
+
+// 获取仓库列表
+const fetchReposData = async () => {
+    loading.value = true;
+    window.api.getReposData(result => {
+        if (result.success) {
+            reposData = reactive(result.data || {});
+        }
+        loading.value = false;
+    });
+};
+
+// 加载仓库中的应用
+// const loadAppsFromRepo = (repo) => {
+//     window.api.loadAppsFromRepo(repo.id, result => {
+//         if (result.success) {
+//             ElMessage.success(`已加载仓库 ${repo.repo} 中的应用`);
+//         } else {
+//             ElMessage.error(result.error || '加载应用失败');
+//         }
+//     });
+// };
+
+// 删除仓库
+const removeRepo = (uid) => {
+    window.api.removeRepo(uid, result => {
+        if (result.success) {
+            ElMessage.success('仓库删除成功');
+            fetchReposData();
+        } else {
+            ElMessage.error(result.error || '仓库删除失败');
+        }
+    });
+};
 
 const addAppRepo = async () => {
     loading.value = true;
@@ -87,6 +149,7 @@ const addAppRepo = async () => {
             dialogVisible.value = false;
             repoUrl.value = '';
             branch.value = '';
+            fetchReposData();
         } else {
             ElMessage.error(result.error || '仓库添加失败');
         }
@@ -135,5 +198,51 @@ button {
 
 button:hover {
     background-color: #45a049;
+}
+
+/* 仓库列表样式 */
+.app-list-section {
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.repo-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ebeef5;
+    border-radius: 4px;
+    background-color: #fafafa;
+}
+
+.repo-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.repo-name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.repo-branch {
+    color: #909399;
+    font-size: 12px;
+}
+
+.repo-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.empty-section {
+    height: calc(100vh - 60px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #909399;
 }
 </style>

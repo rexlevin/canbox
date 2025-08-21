@@ -10,10 +10,11 @@ const ObjectUtils = require('./modules/utils/ObjectUtils')
 
 const appWindow = require('./modules/main/app.window')
 
-const { getAppDataPath, getAppPath, getAppTempPath } = require('./modules/main/pathManager');
+const { getAppDataPath, getAppPath, getAppTempPath, getReposPath } = require('./modules/main/pathManager');
 const APP_DATA_PATH = getAppDataPath();
 const APP_PATH = getAppPath();
 const APP_TEMP_PATH = getAppTempPath();
+const APP_REPOS_PATH = getReposPath();
 
 // 导入存储管理模块
 const { getAppsStore, getAppsDevStore, getReposStore } = require('./modules/main/storageManager');
@@ -339,6 +340,16 @@ function initIpcHandlers(win) {
     ipcMain.handle('import-app-repos', async (event) => {
         return handleImportAppRepos();
     });
+
+    // 获取仓库列表
+    ipcMain.handle('get-repos-data', async (event) => {
+        return getReposData();
+    });
+
+    // 删除仓库
+    ipcMain.handle('remove-repo', async (event, uid) => {
+        return removeRepo(uid);
+    });
 }
 
 async function removeAppDevById(id) {
@@ -419,7 +430,7 @@ async function handleAddAppRepo(repoUrl, branch) {
         console.info('ipcHandlers.js: handleAddAppRepo: repoUrl: ', repoUrl, ' branch: ', branch);
 
         const uuid = uuidv4().replace(/-/g, '');
-        const reposPath = path.join(app.getPath('userData'), 'Users', 'repos', uuid);
+        const reposPath = path.join(APP_REPOS_PATH, uuid);
         fs.mkdirSync(reposPath, { recursive: true });
 
         // 解析仓库类型并构建文件下载URL
@@ -456,7 +467,7 @@ async function handleAddAppRepo(repoUrl, branch) {
             }
         };
 
-        let appJson;
+        let appJson, logoPath;
         // 下载文件
         const filesToDownload = ['app.json', 'README.md', 'HISTORY.md'];
         for (const file of filesToDownload) {
@@ -483,7 +494,8 @@ async function handleAddAppRepo(repoUrl, branch) {
                     if (appJson.logo) {
                         try {
                             const logoUrl = getFileUrl(repoUrl, branch, appJson.logo);
-                            const logoPath = path.join(reposPath, appJson.logo);
+                            const logoExt = path.extname(appJson.logo);
+                            logoPath = path.join(reposPath, `logo${logoExt}`);
                             const logoDir = path.dirname(logoPath);
                             
                             if (!fs.existsSync(logoDir)) {
@@ -517,7 +529,8 @@ async function handleAddAppRepo(repoUrl, branch) {
             branch: branch,
             author: appJson.author || '',
             version: appJson.version || '',
-            description: appJson.description || ''
+            description: appJson.description || '',
+            logo: logoPath
         };
         reposStore.set('default', reposData);
 
@@ -654,9 +667,49 @@ function getAppList() {
 }
 
 
+/**
+ * 获取仓库列表
+ * @returns {Promise<{success: boolean, data: Array, error?: string}>}
+ */
+async function getReposData() {
+    try {
+        const reposData = getReposStore().get('default') || {};
+        return { success: true, data: reposData };
+    } catch (error) {
+        console.error('获取仓库列表失败:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 删除仓库
+ * @param {string} uid 
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+async function removeRepo(uid) {
+    try {
+        const reposStore = getReposStore();
+        const reposData = reposStore.get('default') || {};
+        if (!reposData[uid]) {
+            return { success: false, error: '仓库不存在' };
+        }
+        delete reposData[uid];
+        reposStore.set('default', reposData);
+        // 删除仓库目录
+        const repoPath = path.join(APP_PATH, 'repos', uid);
+        fs.rmdirSync(repoPath, { recursive: true });
+        return { success: true };
+    } catch (error) {
+        console.error('删除仓库失败:', error);
+        return { success: false, error: error.message };
+    }
+}
+
 module.exports = {
     initIpcHandlers,
     handleLoadAppById,
     handleAddAppRepo,
-    handleImportAppRepos
+    handleImportAppRepos,
+    getReposList: getReposData,
+    removeRepo
 };
