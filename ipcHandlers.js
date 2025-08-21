@@ -37,7 +37,7 @@ function handleLoadAppById(appId) {
 /**
  * 初始化所有 IPC 消息处理逻辑
  */
-function initIpcHandlers(win) {
+function initIpcHandlers() {
     // 打开文件选择窗口
     ipcMain.on('openAppJson', (event, options) => {
         dialog.showOpenDialog(options).then(result => {
@@ -56,17 +56,6 @@ function initIpcHandlers(win) {
         }).catch(error => {
             console.error('Error opening external link:', error);
         });
-    });
-
-    // 重新加载窗口
-    ipcMain.on('reload', () => {
-        win.reload();
-    });
-
-    // 打开开发者工具
-    ipcMain.on('openDevTools', () => {
-        if (win.webContents.isDevToolsOpened()) win.webContents.closeDevTools();
-        else win.webContents.openDevTools({ mode: 'detach' });
     });
 
     // 加载应用
@@ -525,6 +514,7 @@ async function handleAddAppRepo(repoUrl, branch) {
         const reposData = reposStore.get('default') || {};
         reposData[uuid] = {
             id: appJson.id,
+            name: appJson.name,
             repo: repoUrl,
             branch: branch,
             author: appJson.author || '',
@@ -696,7 +686,7 @@ async function removeRepo(uid) {
         delete reposData[uid];
         reposStore.set('default', reposData);
         // 删除仓库目录
-        const repoPath = path.join(APP_PATH, 'repos', uid);
+        const repoPath = path.join(APP_REPOS_PATH, uid);
         fs.rmdirSync(repoPath, { recursive: true });
         return { success: true };
     } catch (error) {

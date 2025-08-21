@@ -64,24 +64,4 @@ const changeActiveTab = (name) => {
     console.info('name: ', name)
     activeName.value = name;
 }
-
-// 监听键盘事件
-const handleKeydown = (event) => {
-    // console.info(event);
-    if(event.ctrlKey && event.key == 'r') {
-        window.api.reload();
-    } else if (event.altKey && event.shiftKey && (event.key === 'i' || event.key === 'I')) {
-        window.api.openDevTools();
-    }
-};
-
-onMounted(() => {
-    // 挂载键盘监听
-    window.addEventListener('keydown', handleKeydown);
-});
-// 组件卸载时解绑事件
-onUnmounted(() => {
-    // 移除keydown监听
-    window.removeEventListener('keydown', handleKeydown);
-});
 </script>

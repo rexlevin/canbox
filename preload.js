@@ -2,12 +2,6 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld(
     "api", {
-        reload: () => {
-            ipcRenderer.send('reload');
-        },
-        openDevTools: () => {
-            ipcRenderer.send('openDevTools');
-        },
         generateShortcut: (fn) => {
             ipcRenderer.invoke('generate-shortcut').then(result => {
                 fn(result);

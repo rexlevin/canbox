@@ -172,4 +172,4 @@ const createWindow = () => {
 }
 
 // 初始化 IPC 消息处理
-initIpcHandlers(win);
+initIpcHandlers();
