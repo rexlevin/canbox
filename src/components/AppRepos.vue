@@ -1,5 +1,5 @@
 <template>
-    <div class="app-repos">
+    <div class="app-repos" v-loading="loading">
         <div class="button-section">
             <el-button type="primary" @click="showDialog">添加 APP 源</el-button>
             <el-button type="primary" @click="importAppRepos">导入 APP 源列表</el-button>
@@ -77,6 +77,8 @@ const addAppRepo = async () => {
     
     // 验证表单
     await formRef.value?.validate();
+
+    dialogVisible.value = false;
     
     // 调用IPC接口
     window.api.addAppRepo(repoUrl.value, branch.value, result => {
