@@ -380,68 +380,6 @@ async function removeAppById(id) {
     }
 }
 
-async function getAppDevList() {
-    // console.info(1,appsDevConfig);
-    // console.info('getAppDevList===', appsDevConfig.get('default'));
-    if (undefined === AppsDevConfig.get('default')) {
-        return { "correct": {}, "wrong": {} };
-    }
-    let /*Array<Types.AppItemType>*/ appDevInfoList = AppsDevConfig.get('default')
-        , appDevList = []
-        , appDevFalseList = []
-        , tmpItem = {};
-    for (let appDevInfo of appDevInfoList) {
-        // console.info('appDevInfo', appDevInfo);
-        try {
-            const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
-            tmpItem = ObjectUtils.clone(appDevInfo);
-            tmpItem.appJson = appJson;
-            appDevList.push(tmpItem);
-        } catch (e) {
-            console.error('parse app.json error:', e);
-            appDevFalseList.push(appDevInfo);
-        }
-    }
-    if (appDevFalseList.length > 0) {
-        for (let falseItem of appDevFalseList) {
-            console.info('faseItem: ', falseItem);
-            appDevInfoList = appDevInfoList.filter(item => item.id !== falseItem.id);
-        }
-        AppsDevConfig.set('default', appDevInfoList);
-    }
-    // console.info('appDevInfoList===', appDevInfoList);
-    // console.info('appDevList=====%o', appDevList);
-    return { "correct": appDevList, "wrong": appDevFalseList };
-}
-
-/**
- * @returns {*[Object]} app信息集合
- */
-function getAppList() {
-    // console.log('appsConfig.get('default'):', appsConfig.get('default'));
-    if (undefined === AppsConfig.get('default')) {
-        return [];
-    }
-    const /*Array<Types.AppItemType>*/ appInfoList = AppsConfig.get('default');
-    let appList = [];
-    for (const appInfo of appInfoList) {
-        // /home/lizl6/.config/canbox/Users/apps/541f02efdbf449018c57c880ac98aa59.asar/apps.json
-        // C:\Users\brood\AppData\Roaming\canbox\Users\apps\541f02efdbf449018c57c880ac98aa59.asar\apps.json
-        // 读取app.json文件内容
-        const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, appInfo.id + '.asar/app.json'), 'utf8'));
-        const iconPath = path.join(APP_PATH, appInfo.id + '.asar', appJson.logo);
-        // console.info('iconPath: ', iconPath);
-        const app = {
-            id: appInfo.id,
-            appJson: appJson,
-            logo: iconPath,
-            path: path.join(APP_PATH, appInfo.id + '.asar')
-        };
-        appList.push(app);
-    }
-    // console.info('appList=====%o', appList);
-    return appList;
-}
 
 /**
  * 获取当前开发中的app列表
@@ -482,38 +420,62 @@ function getAppList() {
     ]
 }
  */
-
-Types = function () { }
-Types.AppItemType = function () {
-    return {
-        "name": "剪贴板",
-        "id": "com.gitee.dev001.clipboard",
-        "description": "一个好用的剪贴板",
-        "author": "dev001",
-        "homepage": "https://gitee.com/dev001/clipboard",
-        "main": "index.html",
-        "logo": "logo.png",
-        "version": "0.0.6",
-        "window": {
-            "minWidth": 800,
-            "minHeight": 400,
-            "width": 900,
-            "height": 500,
-            "icon": "logo.png",
-            "resizable": false,
-            "webPreferences": {
-                "preload": "preload.js"
-            }
-        },
-        "platform": ["win32", "darwin", "linux"],
-        "categories": ["development", "utility"],
-        "tags": ["json", "jsonformatter"],
-        "development": {
-            "main": "index.html",
-            "devTools": "detach"
+async function getAppDevList() {
+    if (undefined === AppsDevConfig.get('default')) {
+        return { "correct": {}, "wrong": {} };
+    }
+    let appDevInfoList = AppsDevConfig.get('default')
+        , appDevList = []
+        , appDevFalseList = []
+        , tmpItem = {};
+    for (let appDevInfo of appDevInfoList) {
+        try {
+            const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
+            tmpItem = ObjectUtils.clone(appDevInfo);
+            tmpItem.appJson = appJson;
+            appDevList.push(tmpItem);
+        } catch (e) {
+            console.error('parse app.json error:', e);
+            appDevFalseList.push(appDevInfo);
         }
-    };
+    }
+    if (appDevFalseList.length > 0) {
+        for (let falseItem of appDevFalseList) {
+            console.info('faseItem: ', falseItem);
+            appDevInfoList = appDevInfoList.filter(item => item.id !== falseItem.id);
+        }
+        AppsDevConfig.set('default', appDevInfoList);
+    }
+    // console.info('appDevInfoList===', appDevInfoList);
+    // console.info('appDevList=====%o', appDevList);
+    return { "correct": appDevList, "wrong": appDevFalseList };
 }
+
+/**
+ * @returns {*[Object]} app信息集合
+ */
+function getAppList() {
+    // console.log('appsConfig.get('default'):', appsConfig.get('default'));
+    if (undefined === AppsConfig.get('default')) {
+        return [];
+    }
+    const appInfoList = AppsConfig.get('default');
+    let appList = [];
+    for (const appInfo of appInfoList) {
+        // 读取app.json文件内容
+        const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, appInfo.id + '.asar/app.json'), 'utf8'));
+        const iconPath = path.join(APP_PATH, appInfo.id + '.asar', appJson.logo);
+        const app = {
+            id: appInfo.id,
+            appJson: appJson,
+            logo: iconPath,
+            path: path.join(APP_PATH, appInfo.id + '.asar')
+        };
+        appList.push(app);
+    }
+    return appList;
+}
+
 
 module.exports = {
     initIpcHandlers,
