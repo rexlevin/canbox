@@ -161,4 +161,8 @@ onUpdated(() => {
 .operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 10px;}
 .operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
 .operate-icon-span:active {background-color: hsl(0, 0%, 70%); }
+
+.drawer-body{padding:0;}
+.el-tabs--card { height: calc(100vh - 100px); }
+.el-tab-pane { height: calc(100vh - 100px); overflow-y: auto; }
 </style>
