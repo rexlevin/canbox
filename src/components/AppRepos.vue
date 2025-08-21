@@ -105,7 +105,10 @@ const fetchReposData = async () => {
     loading.value = true;
     window.api.getReposData(result => {
         if (result.success) {
-            reposData = reactive(result.data || {});
+            // Object.assign(reposData, result.data || {});
+            reposData = reactive(result.data);
+        } else {
+            ElMessage.error(result.error || '获取仓库列表失败');
         }
         loading.value = false;
     });
@@ -134,6 +137,7 @@ const removeRepo = (uid) => {
     });
 };
 
+// 添加app源
 const addAppRepo = async () => {
     loading.value = true;
     
