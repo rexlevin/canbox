@@ -456,6 +456,7 @@ async function handleAddAppRepo(repoUrl, branch) {
             }
         };
 
+        let appJson;
         // 下载文件
         const filesToDownload = ['app.json', 'README.md', 'HISTORY.md'];
         for (const file of filesToDownload) {
@@ -465,12 +466,43 @@ async function handleAddAppRepo(repoUrl, branch) {
                 console.log(`尝试下载文件: ${fileUrl}`);
                 const response = await fetch(fileUrl);
                 if (!response.ok) {
+                    if (file === 'app.json') {
+                        console.warn(`无法下载app.json: ${fileUrl}`);
+                        return { success: false, error: '无法下载app.json, 请检查仓库地址是否正确或是否有权限' };
+                    }
                     console.warn(`下载失败(${response.status}): ${fileUrl}`);
                     continue;
                 }
                 const content = await response.text();
                 fs.writeFileSync(filePath, content);
                 console.log(`文件下载成功: ${file}`);
+
+                // 如果是app.json，下载logo图片
+                if (file === 'app.json') {
+                    appJson = JSON.parse(content);
+                    if (appJson.logo) {
+                        try {
+                            const logoUrl = getFileUrl(repoUrl, branch, appJson.logo);
+                            const logoPath = path.join(reposPath, appJson.logo);
+                            const logoDir = path.dirname(logoPath);
+                            
+                            if (!fs.existsSync(logoDir)) {
+                                fs.mkdirSync(logoDir, { recursive: true });
+                            }
+                            
+                            const logoResponse = await fetch(logoUrl);
+                            if (logoResponse.ok) {
+                                const buffer = await logoResponse.arrayBuffer();
+                                fs.writeFileSync(logoPath, Buffer.from(buffer));
+                                console.log(`Logo图片下载成功: ${appJson.logo}`);
+                            } else {
+                                console.warn(`无法下载logo图片: ${logoUrl}`);
+                            }
+                        } catch (error) {
+                            console.error('下载logo图片失败:', error);
+                        }
+                    }
+                }
             } catch (error) {
                 console.error(`下载文件错误(${fileUrl}):`, error);
             }
@@ -480,12 +512,12 @@ async function handleAddAppRepo(repoUrl, branch) {
         const reposStore = getReposStore();
         const reposData = reposStore.get('default') || {};
         reposData[uuid] = {
-            id: uuid,
+            id: appJson.id,
             repo: repoUrl,
             branch: branch,
-            author: '',
-            version: '',
-            description: ''
+            author: appJson.author || '',
+            version: appJson.version || '',
+            description: appJson.description || ''
         };
         reposStore.set('default', reposData);
 
