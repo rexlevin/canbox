@@ -16,7 +16,7 @@ const APP_PATH = getAppPath();
 const APP_TEMP_PATH = getAppTempPath();
 
 // 导入存储管理模块
-const { getAppsStore, getAppsDevStore } = require('./modules/main/storageManager');
+const { getAppsStore, getAppsDevStore, getReposStore } = require('./modules/main/storageManager');
 
 // 导入快捷方式管理模块
 const shortcutManager = require('./modules/main/shortcutManager');
@@ -329,6 +329,16 @@ function initIpcHandlers(win) {
         const appList = await getAppList();
         return shortcutManager.deleteShortcuts(appList);
     });
+
+    // 添加app源
+    ipcMain.handle('add-app-repo', async (event, repoUrl, branch) => {
+        return handleAddAppRepo(repoUrl, branch);
+    });
+
+    // 导入app源列表
+    ipcMain.handle('import-app-repos', async (event) => {
+        return handleImportAppRepos();
+    });
 }
 
 async function removeAppDevById(id) {
@@ -377,6 +387,141 @@ async function removeAppById(id) {
     const targetApp = appList.find(app => app.id === id);
     if (targetApp) {
         await shortcutManager.deleteShortcuts([targetApp]);
+    }
+}
+
+/**
+ * 处理添加单个仓库的逻辑
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+async function handleAddAppRepo(repoUrl, branch) {
+    try {
+        if (!repoUrl) {
+            return { success: false, error: '未输入仓库地址' };
+        }
+        branch = branch || 'main';
+
+        // 校验repoUrl格式
+        const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+        if (!urlPattern.test(repoUrl)) {
+            return { success: false, error: '仓库地址格式无效' };
+        }
+
+        // 尝试访问仓库地址
+        try {
+            const response = await fetch(`${repoUrl}/blob/${branch || 'main'}/app.json`);
+            if (!response.ok) {
+                return { success: false, error: '无法访问该仓库，请检查地址是否正确或是否有权限' };
+            }
+        } catch (error) {
+            return { success: false, error: '仓库地址不可访问: ' + error.message };
+        }
+        console.info('ipcHandlers.js: handleAddAppRepo: repoUrl: ', repoUrl, ' branch: ', branch);
+
+        const uuid = uuidv4().replace(/-/g, '');
+        const reposPath = path.join(app.getPath('userData'), 'Users', 'repos', uuid);
+        fs.mkdirSync(reposPath, { recursive: true });
+
+        // 解析仓库类型并构建文件下载URL
+        const getFileUrl = (repoUrl, branch, file) => {
+            try {
+                const url = new URL(repoUrl);
+                const host = url.hostname;
+                const pathParts = url.pathname.split('/').filter(Boolean);
+                
+                // GitHub
+                if (host.includes('github.com')) {
+                    return `${repoUrl}/raw/${branch}/${file}`;
+                }
+                // GitLab
+                else if (host.includes('gitlab.com') || host.includes('gitlab.')) {
+                    return `${repoUrl}/-/raw/${branch}/${file}`;
+                }
+                // Bitbucket
+                else if (host.includes('bitbucket.org')) {
+                    return `${repoUrl}/raw/${branch}/${file}`;
+                }
+                // Gitee
+                else if (host.includes('gitee.com')) {
+                    return `${repoUrl}/raw/${branch}/${file}`;
+                }
+                // 自托管服务（如Gitea/GitLab CE）
+                else {
+                    // 尝试常见模式
+                    return `${repoUrl}/raw/branch/${branch}/${file}`;
+                }
+            } catch (e) {
+                console.error('解析仓库URL失败:', e);
+                return `${repoUrl}/raw/${branch}/${file}`; // 默认回退
+            }
+        };
+
+        // 下载文件
+        const filesToDownload = ['app.json', 'README.md', 'HISTORY.md'];
+        for (const file of filesToDownload) {
+            const fileUrl = getFileUrl(repoUrl, branch, file);
+            const filePath = path.join(reposPath, file);
+            try {
+                console.log(`尝试下载文件: ${fileUrl}`);
+                const response = await fetch(fileUrl);
+                if (!response.ok) {
+                    console.warn(`下载失败(${response.status}): ${fileUrl}`);
+                    continue;
+                }
+                const content = await response.text();
+                fs.writeFileSync(filePath, content);
+                console.log(`文件下载成功: ${file}`);
+            } catch (error) {
+                console.error(`下载文件错误(${fileUrl}):`, error);
+            }
+        }
+
+        // 保存仓库信息
+        const reposStore = getReposStore();
+        const reposData = reposStore.get('default') || {};
+        reposData[uuid] = {
+            id: uuid,
+            repo: repoUrl,
+            branch: branch,
+            author: '',
+            version: '',
+            description: ''
+        };
+        reposStore.set('default', reposData);
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error adding app repository:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 处理批量导入仓库列表的逻辑
+ * @returns {Promise<{success: boolean, error?: string}>}
+ */
+async function handleImportAppRepos() {
+    try {
+        const result = await dialog.showOpenDialog({
+            title: '选择仓库列表文件',
+            properties: ['openFile'],
+            filters: [{ name: 'Text Files', extensions: ['txt'] }]
+        });
+        if (result.canceled || result.filePaths.length === 0) {
+            return { success: false, error: '未选择文件' };
+        }
+        const filePath = result.filePaths[0];
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const repoUrls = content.split('\n').filter(url => url.trim() !== '');
+
+        for (const repoUrl of repoUrls) {
+            await handleAddAppRepo(repoUrl);
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error importing app repositories:', error);
+        return { success: false, error: error.message };
     }
 }
 
@@ -479,5 +624,7 @@ function getAppList() {
 
 module.exports = {
     initIpcHandlers,
-    handleLoadAppById
+    handleLoadAppById,
+    handleAddAppRepo,
+    handleImportAppRepos
 };

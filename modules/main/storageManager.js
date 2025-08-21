@@ -82,8 +82,20 @@ function getAppsDevStore() {
     });
 }
 
+/**
+ * 获取 repos 存储实例
+ * @returns {Storage}
+ */
+function getReposStore() {
+    return new Storage({
+        name: 'repos',
+        cwd: 'Users'
+    });
+}
+
 module.exports = {
     getWinStateStore,
     getAppsStore,
-    getAppsDevStore
+    getAppsDevStore,
+    getReposStore
 };

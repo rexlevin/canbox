@@ -24,6 +24,20 @@ contextBridge.exposeInMainWorld(
                 fn({ success: false, msg: error.message });
             });
         },
+        addAppRepo: (repoUrl, branch, fn) => ipcRenderer.invoke('add-app-repo', repoUrl, branch).then(result => {
+            fn(result);
+        }).catch(error => {
+            console.error('addAppRepo: IPC call failed:', error);
+            fn({ success: false, msg: error.message });
+        }),
+        importAppRepos: (fn) => {
+            ipcRenderer.invoke('import-app-repos').then(result => {
+                fn(result);
+            }).catch(error => {
+                console.error('importAppRepos: IPC call failed:', error);
+                fn({ success: false, msg: error.message });
+            });
+        },
         openUrl: (url) => {
             console.info('url====', url);
             ipcRenderer.send('open-url', url);
@@ -46,7 +60,6 @@ contextBridge.exposeInMainWorld(
         app: {
             info: (appItemJsonStr, fn) => {
                 ipcRenderer.invoke('getAppInfo', appItemJsonStr).then(result => {
-                    console.info('prealod.js, getAppInfo result==', result);
                     fn(result);
                 }).catch(error => {
                     console.error('IPC call failed:', error);
