@@ -18,7 +18,7 @@ module.exports = {
      * @returns void
      */
     loadApp: (appItemStr, devTag) => {
-        // console.info('loadApp===%o', appItemStr);
+        console.info('loadApp===%o', appItemStr);
         let appItem;
         try {
             appItem = JSON.parse(appItemStr);
@@ -120,6 +120,9 @@ module.exports = {
             }
             // console.info('load app window options===%o', options);
 
+            if (os === 'linux') {
+                options.windowClass = appItem.name;
+            }
             // 创建窗口
             appWin = new BrowserWindow(options);
             if (state?.isMax) {

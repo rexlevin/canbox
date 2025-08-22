@@ -114,7 +114,9 @@ const createWindow = () => {
         show: false,
         autoHideMenuBar: true
     };
-
+    if (os === 'linux') {
+        config.windowClass = 'canbox';
+    }
     win = new BrowserWindow(config);
 
     if (isDev && uatDev?.main) {
