@@ -105,8 +105,9 @@ const fetchReposData = async () => {
     loading.value = true;
     window.api.getReposData(result => {
         if (result.success) {
-            // Object.assign(reposData, result.data || {});
-            reposData = reactive(result.data);
+            // 清空对象并重新赋值，确保响应式更新
+            Object.keys(reposData).forEach(key => delete reposData[key]);
+            Object.assign(reposData, result.data || {});
         } else {
             ElMessage.error(result.error || '获取仓库列表失败');
         }
