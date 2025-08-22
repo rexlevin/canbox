@@ -51,17 +51,26 @@
         </el-dialog>
 
         <!-- 第二部分：应用列表区域 -->
-        <div class="app-list-section" v-show="Object.keys(reposData).length > 0">
+        <div class="app-list-section" v-show="Object.keys(reposData).length > 0" style="margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);">
             <el-row v-for="(repo, uid) in reposData" :key="uid">
                 <el-col :span="24">
-                    <div class="repo-item">
-                        <div class="repo-info">
-                            <span class="repo-name">{{ repo.name }}</span>
-                            <span class="repo-branch">{{ repo.branch || 'main' }}</span>
+                    <div class="card">
+                        <div class="img-block">
+                            <img style="width: 58px; height: 58px; cursor: pointer;" :src="'file://' + repo.logo" alt="" />
                         </div>
-                        <div class="repo-actions">
-                            <!-- <el-button type="primary" size="small" @click="loadAppsFromRepo(repo)">加载应用</el-button> -->
-                            <el-button type="danger" size="small" @click="removeRepo(uid)">删除</el-button>
+                        <div class="info-block vertical-block">
+                            <div class="app-name">
+                                <span style="font-weight: bold; font-size: 20px;">{{ repo.name }}</span>
+                                <span style="padding-left: 20px; color: gray;">v{{ repo.version }}</span>
+                            </div>
+                            <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ repo.description }}</div>
+                        </div>
+                        <div class="operate-block">
+                            <div>
+                                <span class="operate-icon-span" @click="removeRepo(uid)" title="移除这个app源">
+                                    <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </el-col>
@@ -209,39 +218,27 @@ button:hover {
 .app-list-section {
     height: calc(100vh - 60px);
     overflow-y: auto;
-    padding: 10px;
 }
 
-.repo-item {
-    display: flex;
-    justify-content: space-between;
+.card {width: 100%; height: 60px; display: flex; justify-content: flex-start;}
+.img-block {width: 60px; height: 100%; margin: 0; padding: 0;}
+.info-block {line-height: 60px; text-align: left; margin-left: 10px;}
+.info-block div{width: 300px;}
+.info-block .app-name {height: 30px; line-height: 30px; cursor: pointer;}
+.info-block .app-name:hover{color: #409eff; font-weight: bold;}
+.vertical-block {display: table;}
+
+.operate-block {width: 100%; margin-right: 20px;
+    display: flex; flex: 1;
     align-items: center;
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ebeef5;
-    border-radius: 4px;
-    background-color: #fafafa;
+    justify-content: right;
 }
-
-.repo-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.repo-name {
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-.repo-branch {
-    color: #909399;
-    font-size: 12px;
-}
-
-.repo-actions {
-    display: flex;
-    gap: 10px;
-}
+.operate-block div {display: table-cell;}
+.operate-block div:first-child {text-align: left; padding-left: 10px;}
+.operate-block div:first-child span {color: gray;}
+.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 10px;}
+.operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
+.operate-icon-span:active {background-color: hsl(0, 0%, 70%); }
 
 .empty-section {
     height: calc(100vh - 60px);
