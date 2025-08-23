@@ -67,6 +67,9 @@
                         </div>
                         <div class="operate-block">
                             <div>
+                                <span class="operate-icon-span" @click="downloadAppsFromRepo(uid)" title="下载这个APP">
+                                    <el-icon :size="33" color="#228b22"><Download /></el-icon>
+                                </span>
                                 <span class="operate-icon-span" @click="removeRepo(uid)" title="移除这个app源">
                                     <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
                                 </span>
@@ -124,16 +127,17 @@ const fetchReposData = async () => {
     });
 };
 
-// 加载仓库中的应用
-// const loadAppsFromRepo = (repo) => {
-//     window.api.loadAppsFromRepo(repo.id, result => {
-//         if (result.success) {
-//             ElMessage.success(`已加载仓库 ${repo.repo} 中的应用`);
-//         } else {
-//             ElMessage.error(result.error || '加载应用失败');
-//         }
-//     });
-// };
+// 下载仓库中的应用
+const downloadAppsFromRepo = (uid) => {
+    window.api.downloadAppsFromRepo(uid, result => {
+        if (result.success) {
+            ElMessage.success('app下载成功');
+            // 这里需要能够调用到AppList.vue里面的loadAppList方法，是不是要用emit
+        } else {
+            ElMessage.error(result.error || 'app下载失败');
+        }
+    });
+};
 
 // 删除仓库
 const removeRepo = (uid) => {

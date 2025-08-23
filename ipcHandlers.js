@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
+const axios = require('axios');
 
 const winState = require('./modules/main/winState');
 
@@ -10,11 +11,12 @@ const ObjectUtils = require('./modules/utils/ObjectUtils')
 
 const appWindow = require('./modules/main/app.window')
 
-const { getAppDataPath, getAppPath, getAppTempPath, getReposPath } = require('./modules/main/pathManager');
+const { getAppDataPath, getAppPath, getAppTempPath, getReposPath, getReposTempPath } = require('./modules/main/pathManager');
 const APP_DATA_PATH = getAppDataPath();
 const APP_PATH = getAppPath();
 const APP_TEMP_PATH = getAppTempPath();
-const APP_REPOS_PATH = getReposPath();
+const REPOS_PATH = getReposPath();
+const REPOS_TEMP_PATH = getReposTempPath();
 
 // 导入存储管理模块
 const { getAppsStore, getAppsDevStore, getReposStore } = require('./modules/main/storageManager');
@@ -93,130 +95,10 @@ function initIpcHandlers() {
     });
 
     // 导入应用
-    ipcMain.handle('import-app', async (event, zipPath) => {
-        try {
-
-            // 检查是否有 APP_TEMP_PATH 目录，有则删除
-            if (fs.existsSync(APP_TEMP_PATH)) {
-                if (process.platform === 'win32') {
-                    await execSync(`del /f /q "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
-                } else {
-                    await execSync(`rm -rf "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
-                }
-            }
-            // 创建 APP_TEMP_PATH 目录
-            fs.mkdirSync(APP_TEMP_PATH, { recursive: true });
-
-            // 将文件复制到 APP_TEMP_PATH 目录下
-            const uuid = uuidv4().replace(/-/g, '');
-            const targetPath = path.join(APP_TEMP_PATH, `${uuid}.zip`);
-
-            if (!fs.existsSync(zipPath)) {
-                throw new Error(`源文件不存在: ${zipPath}`);
-            }
-            const absoluteAsarPath = path.resolve(zipPath);
-            if (!fs.existsSync(absoluteAsarPath)) {
-                throw new Error(`解析后的路径无效: ${absoluteAsarPath}`);
-            }
-            const targetDir = path.dirname(targetPath);
-            if (!fs.existsSync(targetDir)) {
-                fs.mkdirSync(targetDir, { recursive: true });
-            }
-            try {
-                const command = process.platform === 'win32'
-                    ? `copy "${absoluteAsarPath}" "${targetPath}"`
-                    : `cp "${absoluteAsarPath}" "${targetPath}"`;
-                execSync(command, { stdio: 'inherit' });
-                console.log('ZIP 文件复制成功！');
-            } catch (err) {
-                console.error('复制失败:', err);
-            }
-
-            // 将 APP_TEMP_PATH 目录下的 zip 文件解压
-            if (process.platform === 'win32') {
-                execSync(`powershell -Command "Expand-Archive -Path '${targetPath}' -DestinationPath '${APP_TEMP_PATH}'"`, { stdio: 'inherit' });
-            } else {
-                execSync(`unzip -o "${targetPath}" -d "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
-            }
-            console.info('解压成功:', APP_TEMP_PATH);
-            // 删除 zip 文件
-            fs.rmSync(targetPath, { recursive: true, force: true });
-            // 重命名文件：检查 APP_TEMP_PATH 下的文件和目录，如果当前存在 xxxx.asar 则改为 ${uuid}.asar，xxxx.asar.unpacked 改为 ${uuid}.asar.unpacked
-            const files = fs.readdirSync(APP_TEMP_PATH);
-            files.forEach(file => {
-                console.info('file:', file);
-                if (file.endsWith('.asar')) {
-                    fs.renameSync(path.join(APP_TEMP_PATH, file), path.join(APP_TEMP_PATH, `${uuid}.asar`));
-                } else if (file.endsWith('.asar.unpacked')) {
-                    fs.renameSync(path.join(APP_TEMP_PATH, file), path.join(APP_TEMP_PATH, `${uuid}.asar.unpacked`));
-                }
-            });
-            // 将 APP_TEMP_PATH 下的文件移动到 APP_PATH 下
-            if (fs.existsSync(APP_TEMP_PATH)) {
-                if (process.platform === 'win32') {
-                    await execSync(`move "${APP_TEMP_PATH}\\*" "${APP_PATH}"`, { stdio: 'inherit' });
-                } else {
-                    await execSync(`mv "${APP_TEMP_PATH}"/* "${APP_PATH}"`, { stdio: 'inherit' });
-                }
-            }
-
-            const asarTargetPath = path.join(APP_PATH, `${uuid}.asar`);
-            const appJson = JSON.parse(fs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8'));
-            let appConfigArr = AppsConfig.get('default') ? AppsConfig.get('default') : [];
-            appConfigArr.push({
-                id: uuid,
-                name: appJson.name || '',
-                version: appJson.version || '',
-                description: appJson.description || '',
-                author: appJson.author || '',
-                logo: appJson.logo || '',
-            });
-            AppsConfig.set('default', appConfigArr);
-
-            // 复制logo文件到目标目录
-            const logoPathInAsar = path.join(asarTargetPath, appJson.logo);
-            const logoExt = path.extname(appJson.logo);
-            const logoPathInTarget = path.join(APP_PATH, `${uuid}${logoExt}`);
-            try {
-                fs.copyFileSync(logoPathInAsar, logoPathInTarget);
-                console.log('Logo 文件复制成功！');
-            } catch (err) {
-                console.error('复制logo文件失败:', err);
-            }
-
-            return { success: true, uuid };
-        } catch (error) {
-            console.error('导入应用失败:', error);
-            return { success: false, error: error.message };
-        }
-    });
+    ipcMain.handle('import-app', handleImportApp);
 
     // 删除应用
-    ipcMain.handle('remove-app', async (event, param) => {
-        try {
-            if ('dev' === param.tag) {
-                await removeAppDevById(param.id);
-            } else {
-                await removeAppById(param.id);
-            }
-        } catch (err) {
-            console.error('应用删除失败:', err.message);
-            throw err;
-        }
-        const dirPath = path.resolve(APP_DATA_PATH, param.id);
-        fs.rm(dirPath, { recursive: true, force: true }, (err) => {
-            if (err) {
-                console.error(`Failed to remove directory: ${err.message}`);
-            } else {
-                console.info('remove app success: %s', param.id);
-            }
-            winState.remove(param.id, (res) => {
-                console.info(res);
-                return { success: true, msg: '删除应用目录成功' };
-            });
-
-        });
-    });
+    ipcMain.handle('remove-app', handleRemoveApp);
 
     // 清理应用数据
     ipcMain.handle('clearAppData', async (event, id) => {
@@ -268,7 +150,7 @@ function initIpcHandlers() {
     });
 
     // 处理应用添加
-    ipcMain.handle('handleAppAdd', async (event) => {
+    ipcMain.handle('handleAppAdd', async () => {
         try {
             const result = await dialog.showOpenDialog({
                 title: '选择你的 app.json 文件',
@@ -339,6 +221,135 @@ function initIpcHandlers() {
     ipcMain.handle('remove-repo', async (event, uid) => {
         return removeRepo(uid);
     });
+
+    // 从仓库下载应用
+    ipcMain.handle('download-apps-from-repo', async (event, uid) => {
+        return downloadAppsFromRepo(uid);
+    });
+}
+
+async function handleRemoveApp(event, param) {
+    try {
+        if ('dev' === param.tag) {
+            await removeAppDevById(param.id);
+        } else {
+            await removeAppById(param.id);
+        }
+    } catch (err) {
+        console.error('应用删除失败:', err.message);
+        throw err;
+    }
+    const dirPath = path.resolve(APP_DATA_PATH, param.id);
+    fs.rm(dirPath, { recursive: true, force: true }, (err) => {
+        if (err) {
+            console.error(`Failed to remove directory: ${err.message}`);
+        } else {
+            console.info('remove app success: %s', param.id);
+        }
+        winState.remove(param.id, (res) => {
+            console.info(res);
+            return { success: true, msg: '删除应用目录成功' };
+        });
+
+    });
+}
+
+async function handleImportApp(event, zipPath) {
+    try {
+
+        // 检查是否有 APP_TEMP_PATH 目录，有则删除
+        if (fs.existsSync(APP_TEMP_PATH)) {
+            if (process.platform === 'win32') {
+                await execSync(`del /f /q "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
+            } else {
+                await execSync(`rm -rf "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
+            }
+        }
+        // 创建 APP_TEMP_PATH 目录
+        fs.mkdirSync(APP_TEMP_PATH, { recursive: true });
+
+        // 将文件复制到 APP_TEMP_PATH 目录下
+        const uuid = uuidv4().replace(/-/g, '');
+        const targetPath = path.join(APP_TEMP_PATH, `${uuid}.zip`);
+
+        if (!fs.existsSync(zipPath)) {
+            throw new Error(`源文件不存在: ${zipPath}`);
+        }
+        const absoluteAsarPath = path.resolve(zipPath);
+        if (!fs.existsSync(absoluteAsarPath)) {
+            throw new Error(`解析后的路径无效: ${absoluteAsarPath}`);
+        }
+        const targetDir = path.dirname(targetPath);
+        if (!fs.existsSync(targetDir)) {
+            fs.mkdirSync(targetDir, { recursive: true });
+        }
+        try {
+            const command = process.platform === 'win32'
+                ? `copy "${absoluteAsarPath}" "${targetPath}"`
+                : `cp "${absoluteAsarPath}" "${targetPath}"`;
+            execSync(command, { stdio: 'inherit' });
+            console.log('ZIP 文件复制成功！');
+        } catch (err) {
+            console.error('复制失败:', err);
+        }
+
+        // 将 APP_TEMP_PATH 目录下的 zip 文件解压
+        if (process.platform === 'win32') {
+            execSync(`powershell -Command "Expand-Archive -Path '${targetPath}' -DestinationPath '${APP_TEMP_PATH}'"`, { stdio: 'inherit' });
+        } else {
+            execSync(`unzip -o "${targetPath}" -d "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
+        }
+        console.info('解压成功:', APP_TEMP_PATH);
+        // 删除 zip 文件
+        fs.rmSync(targetPath, { recursive: true, force: true });
+        // 重命名文件：检查 APP_TEMP_PATH 下的文件和目录，如果当前存在 xxxx.asar 则改为 ${uuid}.asar，xxxx.asar.unpacked 改为 ${uuid}.asar.unpacked
+        const files = fs.readdirSync(APP_TEMP_PATH);
+        files.forEach(file => {
+            console.info('file:', file);
+            if (file.endsWith('.asar')) {
+                fs.renameSync(path.join(APP_TEMP_PATH, file), path.join(APP_TEMP_PATH, `${uuid}.asar`));
+            } else if (file.endsWith('.asar.unpacked')) {
+                fs.renameSync(path.join(APP_TEMP_PATH, file), path.join(APP_TEMP_PATH, `${uuid}.asar.unpacked`));
+            }
+        });
+        // 将 APP_TEMP_PATH 下的所有文件移动到 APP_PATH 下
+        if (fs.existsSync(APP_TEMP_PATH)) {
+            if (process.platform === 'win32') {
+                await execSync(`move "${APP_TEMP_PATH}\\*" "${APP_PATH}"`, { stdio: 'inherit' });
+            } else {
+                await execSync(`mv "${APP_TEMP_PATH}"/* "${APP_PATH}"`, { stdio: 'inherit' });
+            }
+        }
+
+        const asarTargetPath = path.join(APP_PATH, `${uuid}.asar`);
+        const appJson = JSON.parse(fs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8'));
+        let appConfigArr = AppsConfig.get('default') ? AppsConfig.get('default') : [];
+        appConfigArr.push({
+            id: uuid,
+            name: appJson.name || '',
+            version: appJson.version || '',
+            description: appJson.description || '',
+            author: appJson.author || '',
+            logo: appJson.logo || '',
+        });
+        AppsConfig.set('default', appConfigArr);
+
+        // 复制logo文件到目标目录
+        const logoPathInAsar = path.join(asarTargetPath, appJson.logo);
+        const logoExt = path.extname(appJson.logo);
+        const logoPathInTarget = path.join(APP_PATH, `${uuid}${logoExt}`);
+        try {
+            fs.copyFileSync(logoPathInAsar, logoPathInTarget);
+            console.log('Logo 文件复制成功！');
+        } catch (err) {
+            console.error('复制logo文件失败:', err);
+        }
+
+        return { success: true, uuid };
+    } catch (error) {
+        console.error('导入应用失败:', error);
+        return { success: false, error: error.message };
+    }
 }
 
 async function removeAppDevById(id) {
@@ -419,7 +430,7 @@ async function handleAddAppRepo(repoUrl, branch) {
         console.info('ipcHandlers.js: handleAddAppRepo: repoUrl: ', repoUrl, ' branch: ', branch);
 
         const uuid = uuidv4().replace(/-/g, '');
-        const reposPath = path.join(APP_REPOS_PATH, uuid);
+        const reposPath = path.join(REPOS_PATH, uuid);
         fs.mkdirSync(reposPath, { recursive: true });
 
         // 解析仓库类型并构建文件下载URL
@@ -523,6 +534,23 @@ async function handleAddAppRepo(repoUrl, branch) {
             logo: logoPath
         };
         reposStore.set('default', reposData);
+
+        /*
+{
+    "default": {
+        "3a6f487d7f9f4fae86dcfbc3dde401a2": {
+            "id": "com.gitee.lizl6.cb-jsonbox",
+            "name": "jsonbox",
+            "repo": "https://gitee.com/lizl6/cb-jsonbox",
+            "branch": "master",
+            "author": "lizl6",
+            "version": "0.0.1",
+            "description": "JsonBox - 跨平台的 JSON 格式化工具",
+            "logo": "/home/lizl6/.config/canbox/Users/repos/3a6f487d7f9f4fae86dcfbc3dde401a2/logo.png"
+        }
+    }
+}
+        */
 
         return { success: true };
     } catch (error) {
@@ -686,13 +714,83 @@ async function removeRepo(uid) {
         delete reposData[uid];
         reposStore.set('default', reposData);
         // 删除仓库目录
-        const repoPath = path.join(APP_REPOS_PATH, uid);
+        const repoPath = path.join(REPOS_PATH, uid);
         fs.rmdirSync(repoPath, { recursive: true });
         return { success: true };
     } catch (error) {
         console.error('删除仓库失败:', error);
         return { success: false, error: error.message };
     }
+}
+
+async function downloadAppsFromRepo(uid) {
+    const repoInfo = (getReposStore().get('default') || {})[uid]
+    if (undefined === repoInfo) {
+        return { success: false, msg: 'App 仓库不存在'}
+    }
+    console.info('repoInfo: ', repoInfo);
+
+    try {
+        let downloadUrl;
+        const { repo, id, version } = repoInfo;
+        const fileName = `${id}-${version}.zip`;
+
+        // 解析仓库平台并构建下载 URL
+        if (repo.includes('github.com')) {
+            downloadUrl = `${repo.replace('github.com', 'github.com/releases/download')}/v${version}/${fileName}`;
+        } else if (repo.includes('gitlab.com')) {
+            downloadUrl = `${repo}/-/archive/v${version}/${fileName}`;
+        } else if (repo.includes('bitbucket.org')) {
+            downloadUrl = `${repo}/downloads/${fileName}`;
+        } else if (repo.includes('gitee.com')) {
+            // downloadUrl = `${repo}/repository/archive/${fileName}`;
+            downloadUrl = `${repo}/releases/download/${version}/${fileName}`;
+        } else {
+            // 自托管服务（如 Gitea/GitLab CE）
+            downloadUrl = `${repo}/archive/${fileName}`;
+        }
+
+        // 确保 APP_TEMP_PATH 目录存在
+        if (!fs.existsSync(REPOS_TEMP_PATH)) {
+            fs.mkdirSync(REPOS_TEMP_PATH, { recursive: true });
+        } else {
+            // 当 APP_TEMP_PATH 存在时，使用命令行清空 REPOS_TEMP_PATH 目录下的所有内容，注意区分OS不同
+            if (process.platform === 'win32') {
+                execSync(`rd /s /q ${REPOS_TEMP_PATH}\\*`);
+            } else {
+                execSync(`rm -rf ${REPOS_TEMP_PATH}/*`);
+            }
+        }
+
+        // 下载文件
+        const zipPath = path.join(REPOS_TEMP_PATH, fileName);
+        const response = await axios({
+            method: 'get',
+            url: downloadUrl,
+            responseType: 'stream',
+        });
+
+        const writer = fs.createWriteStream(zipPath);
+        response.data.pipe(writer);
+
+        await new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
+        });
+
+        // 调用 handleImportApp 导入应用
+        const ret = await handleImportApp(null, zipPath);
+
+        // 删除临时文件
+        fs.unlinkSync(zipPath);
+
+        return ret;
+    } catch (error) {
+        console.error('下载应用失败:', error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true };
 }
 
 module.exports = {

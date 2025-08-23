@@ -1,4 +1,5 @@
 const { app } = require('electron');
+const { get } = require('http');
 const path = require('path');
 
 /**
@@ -28,10 +29,13 @@ const PathManager = {
         return path.join(app.getPath('userData'), 'Users', 'appIcon');
     },
     getAppTempPath: () => {
-        return path.join(app.getPath('userData'), 'Users', 'temp');
+        return path.join(app.getPath('userData'), 'Users', 'temp', 'appTemp');
     },
     getReposPath: () => {
         return path.join(app.getPath('userData'), 'Users', 'repos');
+    },
+    getReposTempPath: () => {
+        return path.join(app.getPath('userData'), 'Users', 'temp', 'repos');
     }
 };
 

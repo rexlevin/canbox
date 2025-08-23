@@ -12,7 +12,7 @@ function initDbIpcHandlers() {
                 event.returnValue = JSON.stringify({ code: '9100', msg: err.message });
                 return;
             }
-            console.info('res: ', res);
+            console.info('api.js: dbHandler res: ', res);
             event.returnValue = JSON.stringify({ code: '0000', data: res});
         });
     });

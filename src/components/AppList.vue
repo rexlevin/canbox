@@ -60,10 +60,14 @@ const toAnotherTab = (name) => {
 
 let appList = ref({});
 onBeforeMount(() => {
+    loadAppList();
+});
+
+function loadAppList() {
     window.api.app.all(result => {
         appList.value = result;
     });
-});
+}
 
 function handleRemoveApp(appId) {
     appList.value = appList.value.filter(app => app.id !== appId);

@@ -109,6 +109,14 @@ contextBridge.exposeInMainWorld(
                 console.error('removeRepo: IPC call failed:', error);
                 fn({ success: false, msg: error.message });
             });
+        },
+        downloadAppsFromRepo: (uid, fn) => {
+            ipcRenderer.invoke('download-apps-from-repo', uid).then(result => {
+                fn(result);
+            }).catch(error => {
+                console.error('downloadAppsFromRepo: IPC call failed:', error);
+                fn({ success: false, msg: error.message });
+            });
         }
     }
 );
