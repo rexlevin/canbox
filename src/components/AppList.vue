@@ -48,9 +48,10 @@
 </style>
 
 <script setup>
-import { onBeforeMount, onMounted, ref } from 'vue';
-import { ElMessage } from 'element-plus'
+import { onBeforeMount, onMounted, ref, watch } from 'vue';
+import { ElMessage } from 'element-plus';
 import AppItem from '@/components/AppItem.vue';
+import { useAppStore } from '@/stores/appStore';
 
 // 定义触发的自定义事件
 const emit = defineEmits(['switchTab']);
@@ -59,9 +60,18 @@ const toAnotherTab = (name) => {
 }
 
 let appList = ref({});
+const appStore = useAppStore();
+
 onBeforeMount(() => {
     loadAppList();
 });
+
+watch(
+  () => appStore.appListUpdated,
+  () => {
+    loadAppList();
+  }
+);
 
 function loadAppList() {
     window.api.app.all(result => {

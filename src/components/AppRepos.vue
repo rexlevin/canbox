@@ -90,6 +90,7 @@
 <script setup>
 import { onBeforeMount, ref, reactive } from 'vue';
 import { ElMessage } from 'element-plus';
+import { useAppStore } from '@/stores/appStore';
 
 const dialogVisible = ref(false);
 const repoUrl = ref('');
@@ -132,7 +133,8 @@ const downloadAppsFromRepo = (uid) => {
     window.api.downloadAppsFromRepo(uid, result => {
         if (result.success) {
             ElMessage.success('app下载成功');
-            // 这里需要能够调用到AppList.vue里面的loadAppList方法，是不是要用emit
+            const appStore = useAppStore();
+            appStore.triggerAppListUpdate();
         } else {
             ElMessage.error(result.error || 'app下载失败');
         }
