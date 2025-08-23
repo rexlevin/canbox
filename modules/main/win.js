@@ -8,12 +8,14 @@ const APP_PATH = getAppPath();
 
 // 初始化 storage 实例
 const { getAppsDevStore, getAppsStore } = require('./storageManager');
-const { get } = require('http');
+
+// 初始化 windowManager 实例
+const windowManager = require('./windowManager');
 
 /**
  * 窗口操作模块
  */
-const WindowManager = {
+const winFactory = {
     /**
      * 新开窗口
      * @param {Object} options - 窗口配置
@@ -40,6 +42,8 @@ const WindowManager = {
             console.warn('Missing required window dimensions, using defaults');
             options = { ...options, width: options.width || 800, height: options.height || 600, show: false };
         }
+
+        options.parent = windowManager.getWindow(parentWindowId);
 
         // 没有ready的时候先不显示
         options.show = false;
@@ -77,6 +81,15 @@ const WindowManager = {
             win.loadURL(loadURL);
             win.setMenu(null);
             
+            // 监听 ESC 键关闭窗口
+            if (params.escClose) {
+                win.webContents.on('before-input-event', (event, input) => {
+                    if (input.key === 'Escape') {
+                        win.close();
+                    }
+                });
+            }
+            
             win.on('ready-to-show', () => {
                 win.setTitle(params.title);
                 win.show();
@@ -107,4 +120,4 @@ const WindowManager = {
     }
 };
 
-module.exports = WindowManager;
+module.exports = winFactory;

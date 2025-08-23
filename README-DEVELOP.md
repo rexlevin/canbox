@@ -269,6 +269,7 @@ canbox.db.remove({
      1. `url`: 窗口加载页面相对路径，或路由路径
      2. `title`: 窗口标题
      3. `devTools`: 是否开启devTools，默认 `false`
+     4. `ecsClose`: 点击 `ecs` 关闭窗口，默认 `false`
 - 应答：窗口的id编码
 
 ## 应答码

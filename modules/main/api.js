@@ -22,10 +22,10 @@ function initDbIpcHandlers() {
  * 初始化窗口相关的 IPC 消息处理逻辑
  */
 function createWindowIpcHandlers() {
-    const WindowManager = require('./win');
+    const winFactory = require('./win');
     ipcMain.on('msg-createWindow', (event, args) => {
         console.info('args: ', args);
-        const result = WindowManager.createWindow(args.options, args.params, args.appId);
+        const result = winFactory.createWindow(args.options, args.params, args.appId);
         console.info('result: ', result);
         event.returnValue = JSON.stringify(result);
     });
