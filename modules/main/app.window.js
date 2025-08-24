@@ -90,6 +90,10 @@ module.exports = {
         if (appItem.appJson.window?.webPreferences?.preload) {
             options.webPreferences.preload = path.resolve(appItem.path, appItem.appJson.window.webPreferences.preload);
         }
+        if (os === 'linux') {
+            // 与shortcutManager中生成快捷方式中的name保持一致
+            options.windowClass = `canbox-${appItem.appJson.name}`;
+        }
         // console.info('load app options:', options);
 
         // 开发选线 uat.dev.json
@@ -118,11 +122,8 @@ module.exports = {
                     options.height = state.position.height;
                 }
             }
-            // console.info('load app window options===%o', options);
+            console.info('load app window options===%o', options);
 
-            if (os === 'linux') {
-                options.windowClass = appItem.name;
-            }
             // 创建窗口
             appWin = new BrowserWindow(options);
             if (state?.isMax) {
