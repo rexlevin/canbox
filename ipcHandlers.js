@@ -254,7 +254,7 @@ async function handleRemoveApp(event, param) {
     });
 }
 
-async function handleImportApp(event, zipPath) {
+async function handleImportApp(event, zipPath, uid) {
     try {
 
         // 检查是否有 APP_TEMP_PATH 目录，有则删除
@@ -269,7 +269,7 @@ async function handleImportApp(event, zipPath) {
         fs.mkdirSync(APP_TEMP_PATH, { recursive: true });
 
         // 将文件复制到 APP_TEMP_PATH 目录下
-        const uuid = uuidv4().replace(/-/g, '');
+        const uuid = uid || uuidv4().replace(/-/g, '');
         const targetPath = path.join(APP_TEMP_PATH, `${uuid}.zip`);
 
         if (!fs.existsSync(zipPath)) {
@@ -779,7 +779,7 @@ async function downloadAppsFromRepo(uid) {
         });
 
         // 调用 handleImportApp 导入应用
-        const ret = await handleImportApp(null, zipPath);
+        const ret = await handleImportApp(null, zipPath, uid);
 
         // 删除临时文件
         fs.unlinkSync(zipPath);
@@ -789,8 +789,6 @@ async function downloadAppsFromRepo(uid) {
         console.error('下载应用失败:', error);
         return { success: false, error: error.message };
     }
-
-    return { success: true };
 }
 
 module.exports = {
