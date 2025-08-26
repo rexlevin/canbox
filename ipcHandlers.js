@@ -29,6 +29,80 @@ function handleError(error, context) {
     return { success: false, error: error.message };
 }
 
+/**
+ * 校验仓库地址格式
+ * @param {string} repoUrl - 仓库地址
+ * @returns {boolean} - 是否有效
+ */
+function validateRepoUrl(repoUrl) {
+    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+    return urlPattern.test(repoUrl);
+}
+
+/**
+ * 根据仓库类型生成文件下载 URL
+ * @param {string} repoUrl - 仓库地址
+ * @param {string} branch - 分支
+ * @param {string} file - 文件路径
+ * @returns {string} - 文件下载 URL
+ */
+function getFileUrl(repoUrl, branch, file) {
+    try {
+        const url = new URL(repoUrl);
+        const host = url.hostname;
+        const pathParts = url.pathname.split('/').filter(Boolean);
+        
+        // GitHub
+        if (host.includes('github.com')) {
+            return `${repoUrl}/raw/${branch}/${file}`;
+        }
+        // GitLab
+        else if (host.includes('gitlab.com') || host.includes('gitlab.')) {
+            return `${repoUrl}/-/raw/${branch}/${file}`;
+        }
+        // Bitbucket
+        else if (host.includes('bitbucket.org')) {
+            return `${repoUrl}/raw/${branch}/${file}`;
+        }
+        // Gitee
+        else if (host.includes('gitee.com')) {
+            return `${repoUrl}/raw/${branch}/${file}`;
+        }
+        // 自托管服务（如Gitea/GitLab CE）
+        else {
+            // 尝试常见模式
+            return `${repoUrl}/raw/branch/${branch}/${file}`;
+        }
+    } catch (e) {
+        console.error('解析仓库URL失败:', e);
+        return `${repoUrl}/raw/${branch}/${file}`; // 默认回退
+    }
+}
+
+/**
+ * 下载文件并保存到指定路径
+ * @param {string} fileUrl - 文件下载 URL
+ * @param {string} filePath - 保存路径
+ * @returns {Promise<boolean>} - 是否成功
+ */
+async function downloadFileFromRepo(fileUrl, filePath) {
+    try {
+        console.log(`尝试下载文件: ${fileUrl}`);
+        const response = await fetch(fileUrl);
+        if (!response.ok) {
+            console.warn(`下载失败(${response.status}): ${fileUrl}`);
+            return false;
+        }
+        const content = await response.text();
+        fs.writeFileSync(filePath, content);
+        console.log(`文件下载成功: ${filePath}`);
+        return true;
+    } catch (error) {
+        console.error(`下载文件错误(${fileUrl}):`, error);
+        return false;
+    }
+}
+
 // 导入存储管理模块
 const { getAppsStore, getAppsDevStore, getReposStore } = require('./modules/main/storageManager');
 
@@ -423,9 +497,8 @@ async function handleAddAppRepo(repoUrl, branch) {
         }
         branch = branch || 'main';
 
-        // 校验repoUrl格式
-        const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-        if (!urlPattern.test(repoUrl)) {
+        // 校验仓库地址格式
+        if (!validateRepoUrl(repoUrl)) {
             return handleError(new Error('仓库地址格式无效'), 'handleAddAppRepo');
         }
 
@@ -444,90 +517,35 @@ async function handleAddAppRepo(repoUrl, branch) {
         const reposPath = path.join(REPOS_PATH, uuid);
         fs.mkdirSync(reposPath, { recursive: true });
 
-        // 解析仓库类型并构建文件下载URL
-        const getFileUrl = (repoUrl, branch, file) => {
-            try {
-                const url = new URL(repoUrl);
-                const host = url.hostname;
-                const pathParts = url.pathname.split('/').filter(Boolean);
-                
-                // GitHub
-                if (host.includes('github.com')) {
-                    return `${repoUrl}/raw/${branch}/${file}`;
-                }
-                // GitLab
-                else if (host.includes('gitlab.com') || host.includes('gitlab.')) {
-                    return `${repoUrl}/-/raw/${branch}/${file}`;
-                }
-                // Bitbucket
-                else if (host.includes('bitbucket.org')) {
-                    return `${repoUrl}/raw/${branch}/${file}`;
-                }
-                // Gitee
-                else if (host.includes('gitee.com')) {
-                    return `${repoUrl}/raw/${branch}/${file}`;
-                }
-                // 自托管服务（如Gitea/GitLab CE）
-                else {
-                    // 尝试常见模式
-                    return `${repoUrl}/raw/branch/${branch}/${file}`;
-                }
-            } catch (e) {
-                console.error('解析仓库URL失败:', e);
-                return `${repoUrl}/raw/${branch}/${file}`; // 默认回退
-            }
-        };
-
         let appJson, logoPath;
         // 下载文件
         const filesToDownload = ['app.json', 'README.md', 'HISTORY.md'];
         for (const file of filesToDownload) {
             const fileUrl = getFileUrl(repoUrl, branch, file);
             const filePath = path.join(reposPath, file);
-            try {
-                console.log(`尝试下载文件: ${fileUrl}`);
-                const response = await fetch(fileUrl);
-                if (!response.ok) {
-                    if (file === 'app.json') {
-                        console.warn(`无法下载app.json: ${fileUrl}`);
-                        return { success: false, error: '无法下载app.json, 请检查仓库地址是否正确或是否有权限' };
-                    }
-                    console.warn(`下载失败(${response.status}): ${fileUrl}`);
-                    continue;
-                }
-                const content = await response.text();
-                fs.writeFileSync(filePath, content);
-                console.log(`文件下载成功: ${file}`);
+            const downloadSuccess = await downloadFileFromRepo(fileUrl, filePath);
+            if (!downloadSuccess && file === 'app.json') {
+                return { success: false, error: '无法下载app.json, 请检查仓库地址是否正确或是否有权限' };
+            }
 
-                // 如果是app.json，下载logo图片
-                if (file === 'app.json') {
-                    appJson = JSON.parse(content);
-                    if (appJson.logo) {
-                        try {
-                            const logoUrl = getFileUrl(repoUrl, branch, appJson.logo);
-                            const logoExt = path.extname(appJson.logo);
-                            logoPath = path.join(reposPath, `logo${logoExt}`);
-                            const logoDir = path.dirname(logoPath);
-                            
-                            if (!fs.existsSync(logoDir)) {
-                                fs.mkdirSync(logoDir, { recursive: true });
-                            }
-                            
-                            const logoResponse = await fetch(logoUrl);
-                            if (logoResponse.ok) {
-                                const buffer = await logoResponse.arrayBuffer();
-                                fs.writeFileSync(logoPath, Buffer.from(buffer));
-                                console.log(`Logo图片下载成功: ${appJson.logo}`);
-                            } else {
-                                console.warn(`无法下载logo图片: ${logoUrl}`);
-                            }
-                        } catch (error) {
-                            console.error('下载logo图片失败:', error);
-                        }
+            // 如果是app.json，下载logo图片
+            if (file === 'app.json' && downloadSuccess) {
+                appJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                if (appJson.logo) {
+                    const logoUrl = getFileUrl(repoUrl, branch, appJson.logo);
+                    const logoExt = path.extname(appJson.logo);
+                    logoPath = path.join(reposPath, `logo${logoExt}`);
+                    const logoDir = path.dirname(logoPath);
+                    
+                    if (!fs.existsSync(logoDir)) {
+                        fs.mkdirSync(logoDir, { recursive: true });
+                    }
+                    
+                    const logoDownloadSuccess = await downloadFileFromRepo(logoUrl, logoPath);
+                    if (!logoDownloadSuccess) {
+                        console.warn(`无法下载logo图片: ${logoUrl}`);
                     }
                 }
-            } catch (error) {
-                console.error(`下载文件错误(${fileUrl}):`, error);
             }
         }
 
