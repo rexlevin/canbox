@@ -18,6 +18,17 @@ const APP_TEMP_PATH = getAppTempPath();
 const REPOS_PATH = getReposPath();
 const REPOS_TEMP_PATH = getReposTempPath();
 
+/**
+ * 统一错误处理函数
+ * @param {Error} error - 错误对象
+ * @param {string} context - 错误上下文描述
+ * @returns {{success: boolean, error: string}} - 标准化错误返回
+ */
+function handleError(error, context) {
+    console.error(`[${context}] Error:`, error.message);
+    return { success: false, error: error.message };
+}
+
 // 导入存储管理模块
 const { getAppsStore, getAppsDevStore, getReposStore } = require('./modules/main/storageManager');
 
@@ -408,24 +419,24 @@ async function removeAppById(id) {
 async function handleAddAppRepo(repoUrl, branch) {
     try {
         if (!repoUrl) {
-            return { success: false, error: '未输入仓库地址' };
+            return handleError(new Error('未输入仓库地址'), 'handleAddAppRepo');
         }
         branch = branch || 'main';
 
         // 校验repoUrl格式
         const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
         if (!urlPattern.test(repoUrl)) {
-            return { success: false, error: '仓库地址格式无效' };
+            return handleError(new Error('仓库地址格式无效'), 'handleAddAppRepo');
         }
 
         // 尝试访问仓库地址
         try {
             const response = await fetch(`${repoUrl}/blob/${branch || 'main'}/app.json`);
             if (!response.ok) {
-                return { success: false, error: '无法访问该仓库，请检查地址是否正确或是否有权限' };
+                return handleError(new Error('无法访问该仓库，请检查地址是否正确或是否有权限'), 'handleAddAppRepo');
             }
         } catch (error) {
-            return { success: false, error: '仓库地址不可访问: ' + error.message };
+            return handleError(error, 'handleAddAppRepo');
         }
         console.info('ipcHandlers.js: handleAddAppRepo: repoUrl: ', repoUrl, ' branch: ', branch);
 
@@ -571,7 +582,7 @@ async function handleImportAppRepos() {
             filters: [{ name: 'Text Files', extensions: ['txt'] }]
         });
         if (result.canceled || result.filePaths.length === 0) {
-            return { success: false, error: '未选择文件' };
+            return handleError(new Error('未选择文件'), 'handleImportAppRepos');
         }
         const filePath = result.filePaths[0];
         const content = fs.readFileSync(filePath, 'utf-8');
@@ -583,8 +594,7 @@ async function handleImportAppRepos() {
 
         return { success: true };
     } catch (error) {
-        console.error('Error importing app repositories:', error);
-        return { success: false, error: error.message };
+        return handleError(error, 'handleImportAppRepos');
     }
 }
 
