@@ -19,8 +19,8 @@ const REPOS_PATH = getReposPath();
 const REPOS_TEMP_PATH = getReposTempPath();
 
 // 引入工具模块
-const repoUtils = require('./repoUtils');
-const fileUtils = require('./fileUtils');
+const repoUtils = require('./modules/utils/repoUtils');
+const fileUtils = require('./modules/utils/fileUtils');
 
 /**
  * 统一错误处理函数
