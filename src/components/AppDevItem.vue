@@ -94,7 +94,7 @@ function loadApp() {
 function clearData() {
     window.api.app.clearData(props.appDevItem.id, (result)=>{
         console.info('clearData result=', result);
-        if(result.code !== '0000') {
+        if(!result.success) {
             ElMessage.error(result.msg);
             return;
         }

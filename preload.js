@@ -57,7 +57,7 @@ contextBridge.exposeInMainWorld(
                     fn(result);
                 }).catch(error => {
                     console.error('IPC call failed:', error);
-                    fn({ code: '9201', msg: error.message });
+                    fn({ success: false, msg: error.message });
                 });
             },
             remove: (param, fn) => {

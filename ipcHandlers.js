@@ -22,11 +22,11 @@ const REPOS_TEMP_PATH = getReposTempPath();
  * 统一错误处理函数
  * @param {Error} error - 错误对象
  * @param {string} context - 错误上下文描述
- * @returns {{success: boolean, error: string}} - 标准化错误返回
+ * @returns {{success: boolean, msg: string}} - 标准化错误返回
  */
 function handleError(error, context) {
     console.error(`[${context}] Error:`, error.message);
-    return { success: false, error: error.message };
+    return handleError(error, 'remove-repo');
 }
 
 /**
@@ -191,13 +191,13 @@ function initIpcHandlers() {
         try {
             await fs.promises.access(appData, fs.constants.F_OK);
             await fs.promises.rm(appData, { recursive: true, force: true });
-            return { code: '0000', msg: 'clear data success' };
+            return { success: true, msg: 'clear data success' };
         } catch (err) {
             if (err.code === 'ENOENT') {
-                return { code: '0000', msg: 'no data to clear' };
+                return { success: true, msg: 'no data to clear' };
             }
             console.error(`Failed to remove directory: ${err.message}`);
-            return { code: '9201', msg: 'Failed to clear app data: ' + err.message };
+            return handleError(err, 'clearAppData');
         }
     });
 
@@ -272,7 +272,7 @@ function initIpcHandlers() {
     // 生成快捷方式
     ipcMain.handle('generate-shortcut', async () => {
         if (!app.isPackaged) {
-            return { success: false, msg: '只能在生产环境下生成快捷方式' };
+            return handleError(new Error('只能在生产环境下生成快捷方式'), 'generate-shortcut');
         }
         const appList = await getAppList();
         return shortcutManager.generateShortcuts(appList);
@@ -281,7 +281,7 @@ function initIpcHandlers() {
     // 删除快捷方式
     ipcMain.handle('delete-shortcut', async () => {
         if (!app.isPackaged) {
-            return { success: false, msg: '只能在生产环境下删除快捷方式' };
+            return handleError(new Error('只能在生产环境下删除快捷方式'), 'delete-shortcut');
         }
         const appList = await getAppList();
         return shortcutManager.deleteShortcuts(appList);
@@ -433,7 +433,7 @@ async function handleImportApp(event, zipPath, uid) {
         return { success: true, uuid };
     } catch (error) {
         console.error('导入应用失败:', error);
-        return { success: false, error: error.message };
+        return handleError(error, 'remove-repo');
     }
 }
 
@@ -525,7 +525,7 @@ async function handleAddAppRepo(repoUrl, branch) {
             const filePath = path.join(reposPath, file);
             const downloadSuccess = await downloadFileFromRepo(fileUrl, filePath);
             if (!downloadSuccess && file === 'app.json') {
-                return { success: false, error: '无法下载app.json, 请检查仓库地址是否正确或是否有权限' };
+                return handleError(new Error('无法下载app.json, 请检查仓库地址是否正确或是否有权限'), 'handleAddAppRepo');
             }
 
             // 如果是app.json，下载logo图片
@@ -584,7 +584,7 @@ async function handleAddAppRepo(repoUrl, branch) {
         return { success: true };
     } catch (error) {
         console.error('Error adding app repository:', error);
-        return { success: false, error: error.message };
+        return handleError(error, 'remove-repo');
     }
 }
 
@@ -723,7 +723,7 @@ async function getReposData() {
         return { success: true, data: reposData };
     } catch (error) {
         console.error('获取仓库列表失败:', error);
-        return { success: false, error: error.message };
+        return handleError(error, 'remove-repo');
     }
 }
 
@@ -737,7 +737,7 @@ async function removeRepo(uid) {
         const reposStore = getReposStore();
         const reposData = reposStore.get('default') || {};
         if (!reposData[uid]) {
-            return { success: false, error: '仓库不存在' };
+            return handleError(new Error('仓库不存在'), 'remove-repo');
         }
         delete reposData[uid];
         reposStore.set('default', reposData);
@@ -747,14 +747,14 @@ async function removeRepo(uid) {
         return { success: true };
     } catch (error) {
         console.error('删除仓库失败:', error);
-        return { success: false, error: error.message };
+        return handleError(error, 'remove-repo');
     }
 }
 
 async function downloadAppsFromRepo(uid) {
     const repoInfo = (getReposStore().get('default') || {})[uid]
     if (undefined === repoInfo) {
-        return { success: false, msg: 'App 仓库不存在'}
+        return handleError(new Error('仓库不存在'), 'downloadAppsFromRepo');
     }
     console.info('repoInfo: ', repoInfo);
 
@@ -814,8 +814,7 @@ async function downloadAppsFromRepo(uid) {
 
         return ret;
     } catch (error) {
-        console.error('下载应用失败:', error);
-        return { success: false, error: error.message };
+        return handleError(new Error('下载应用失败: ' + error.message), 'downloadAppsFromRepo');
     }
 }
 

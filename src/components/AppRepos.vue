@@ -122,7 +122,7 @@ const fetchReposData = async () => {
             Object.keys(reposData).forEach(key => delete reposData[key]);
             Object.assign(reposData, result.data || {});
         } else {
-            ElMessage.error(result.error || '获取仓库列表失败');
+            ElMessage.error(result.msg || '获取仓库列表失败');
         }
         loading.value = false;
     });
@@ -136,7 +136,7 @@ const downloadAppsFromRepo = (uid) => {
             const appStore = useAppStore();
             appStore.triggerAppListUpdate();
         } else {
-            ElMessage.error(result.error || 'app下载失败');
+            ElMessage.error(result.msg || 'app下载失败');
         }
     });
 };
@@ -148,7 +148,7 @@ const removeRepo = (uid) => {
             ElMessage.success('仓库删除成功');
             fetchReposData();
         } else {
-            ElMessage.error(result.error || '仓库删除失败');
+            ElMessage.error(result.msg || '仓库删除失败');
         }
     });
 };
@@ -171,7 +171,7 @@ const addAppRepo = async () => {
             branch.value = '';
             fetchReposData();
         } else {
-            ElMessage.error(result.error || '仓库添加失败');
+            ElMessage.error(result.msg || '仓库添加失败');
         }
         loading.value = false;
     });
