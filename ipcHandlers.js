@@ -128,7 +128,6 @@ function initIpcHandlers() {
             if (err.code === 'ENOENT') {
                 return { success: true, msg: 'no data to clear' };
             }
-            console.error(`Failed to remove directory: ${err.message}`);
             return handleError(err, 'clearAppData');
         }
     });
@@ -748,9 +747,5 @@ async function downloadAppsFromRepo(uid) {
 
 module.exports = {
     initIpcHandlers,
-    handleLoadAppById,
-    handleAddAppRepo,
-    handleImportAppRepos,
-    getReposList: getReposData,
-    removeRepo
+    handleLoadAppById
 };
