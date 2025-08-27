@@ -132,72 +132,9 @@ function initIpcHandlers() {
         }
     });
 
-    // 获取应用信息
-    const getAppFilePath = (basePath, fileName) => path.join(basePath, fileName);
-
-    const readFileWithErrorHandling = async (filePath) => {
-        try {
-            if (fs.existsSync(filePath)) {
-                return fs.readFileSync(filePath, 'utf8');
-            } else {
-                return null;
-            }
-        } catch (err) {
-            console.error(`文件操作失败: ${err.path}`, err);
-            return null;
-        }
-    };
-
-    ipcMain.handle('getAppInfo', async (event, appItemJsonStr) => {
-        const appItem = JSON.parse(appItemJsonStr);
-        const [readme, history] = await Promise.all([
-            readFileWithErrorHandling(getAppFilePath(appItem.path, 'README.md')),
-            readFileWithErrorHandling(getAppFilePath(appItem.path, 'HISTORY.md'))
-        ]);
-
-        const msg = (readme || history) ? null : '部分文件读取失败';
-        return { success: null === msg, data: { readme, history }, msg };
-    });
-
-    // 获取应用开发列表
-    ipcMain.handle('getAppDevList', async () => {
-        return await getAppDevList();
-    });
-
-    // 处理应用添加
-    ipcMain.handle('handleAppAdd', async () => {
-        try {
-            const result = await dialog.showOpenDialog({
-                title: '选择你的 app.json 文件',
-                filters: [
-                    { name: 'app.json', extensions: ['json'] }
-                ],
-                properties: ['openFile']
-            });
-            if (result.canceled || result.filePaths.length === 0) {
-                return null;
-            }
-            const filePath = result.filePaths[0];
-            console.info('filePath: ', filePath);
-            const appJson = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-            const appDevConfig = {
-                id: uuidv4().replace(/-/g, ''),
-                path: filePath.substring(0, filePath.lastIndexOf('app.json')),
-                name: appJson.name
-            };
-            let appDevConfigArr = AppsDevConfig.get('default') || [];
-            appDevConfigArr.unshift(appDevConfig);
-            AppsDevConfig.set('default', appDevConfigArr);
-            return await getAppDevList();
-        } catch (err) {
-            console.error('Failed to handle app add:', err);
-            return null;
-        }
-    });
-
-    ipcMain.handle('getAppList', async (event) => {
-        return await getAppList();
-    });
+    // 引入应用管理模块
+    const appIpcHandler = require('./modules/main/ipc/appIpcHandler');
+    appIpcHandler.init();
 
     // 引入快捷方式管理模块
     const shortcutIpcManager = require('./modules/main/ipc/shortcutIpcHandler');
