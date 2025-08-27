@@ -193,7 +193,7 @@ function initIpcHandlers() {
             return await getAppDevList();
         } catch (err) {
             console.error('Failed to handle app add:', err);
-            throw err;
+            return null;
         }
     });
 
@@ -253,8 +253,7 @@ async function handleRemoveApp(event, param) {
             await removeAppById(param.id);
         }
     } catch (err) {
-        console.error('应用删除失败:', err.message);
-        throw err;
+        return handleError(err, 'handleRemoveApp');
     }
     const dirPath = path.resolve(APP_DATA_PATH, param.id);
     fs.rm(dirPath, { recursive: true, force: true }, (err) => {
