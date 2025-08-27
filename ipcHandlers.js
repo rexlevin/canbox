@@ -134,6 +134,8 @@ function initIpcHandlers() {
     });
 
     // 获取应用信息
+    const getAppFilePath = (basePath, fileName) => path.join(basePath, fileName);
+
     const readFileWithErrorHandling = async (filePath) => {
         try {
             if (fs.existsSync(filePath)) {
@@ -149,12 +151,9 @@ function initIpcHandlers() {
 
     ipcMain.handle('getAppInfo', async (event, appItemJsonStr) => {
         const appItem = JSON.parse(appItemJsonStr);
-        const readmePath = path.join(appItem.path, 'README.md');
-        const historyPath = path.join(appItem.path, 'HISTORY.md');
-
         const [readme, history] = await Promise.all([
-            readFileWithErrorHandling(readmePath),
-            readFileWithErrorHandling(historyPath)
+            readFileWithErrorHandling(getAppFilePath(appItem.path, 'README.md')),
+            readFileWithErrorHandling(getAppFilePath(appItem.path, 'HISTORY.md'))
         ]);
 
         const msg = (readme || history) ? null : '部分文件读取失败';
