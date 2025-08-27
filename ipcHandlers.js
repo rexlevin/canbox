@@ -199,23 +199,9 @@ function initIpcHandlers() {
         return await getAppList();
     });
 
-    // 生成快捷方式
-    ipcMain.handle('generate-shortcut', async () => {
-        if (!app.isPackaged) {
-            return handleError(new Error('只能在生产环境下生成快捷方式'), 'generate-shortcut');
-        }
-        const appList = await getAppList();
-        return shortcutManager.generateShortcuts(appList);
-    });
-
-    // 删除快捷方式
-    ipcMain.handle('delete-shortcut', async () => {
-        if (!app.isPackaged) {
-            return handleError(new Error('只能在生产环境下删除快捷方式'), 'delete-shortcut');
-        }
-        const appList = await getAppList();
-        return shortcutManager.deleteShortcuts(appList);
-    });
+    // 引入快捷方式管理模块
+    const shortcutIpcManager = require('./modules/main/ipc/shortcutIpcHandler');
+    shortcutIpcManager.init();
 
     // 添加app源
     ipcMain.handle('add-app-repo', async (event, repoUrl, branch) => {
