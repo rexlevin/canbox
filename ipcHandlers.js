@@ -18,6 +18,10 @@ const APP_TEMP_PATH = getAppTempPath();
 const REPOS_PATH = getReposPath();
 const REPOS_TEMP_PATH = getReposTempPath();
 
+// 引入工具模块
+const repoUtils = require('./repoUtils');
+const fileUtils = require('./fileUtils');
+
 /**
  * 统一错误处理函数
  * @param {Error} error - 错误对象
@@ -26,82 +30,10 @@ const REPOS_TEMP_PATH = getReposTempPath();
  */
 function handleError(error, context) {
     console.error(`[${context}] Error:`, error.message);
-    return handleError(error, 'remove-repo');
+    return { success: false, msg: error.message };
 }
 
-/**
- * 校验仓库地址格式
- * @param {string} repoUrl - 仓库地址
- * @returns {boolean} - 是否有效
- */
-function validateRepoUrl(repoUrl) {
-    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-    return urlPattern.test(repoUrl);
-}
 
-/**
- * 根据仓库类型生成文件下载 URL
- * @param {string} repoUrl - 仓库地址
- * @param {string} branch - 分支
- * @param {string} file - 文件路径
- * @returns {string} - 文件下载 URL
- */
-function getFileUrl(repoUrl, branch, file) {
-    try {
-        const url = new URL(repoUrl);
-        const host = url.hostname;
-        const pathParts = url.pathname.split('/').filter(Boolean);
-        
-        // GitHub
-        if (host.includes('github.com')) {
-            return `${repoUrl}/raw/${branch}/${file}`;
-        }
-        // GitLab
-        else if (host.includes('gitlab.com') || host.includes('gitlab.')) {
-            return `${repoUrl}/-/raw/${branch}/${file}`;
-        }
-        // Bitbucket
-        else if (host.includes('bitbucket.org')) {
-            return `${repoUrl}/raw/${branch}/${file}`;
-        }
-        // Gitee
-        else if (host.includes('gitee.com')) {
-            return `${repoUrl}/raw/${branch}/${file}`;
-        }
-        // 自托管服务（如Gitea/GitLab CE）
-        else {
-            // 尝试常见模式
-            return `${repoUrl}/raw/branch/${branch}/${file}`;
-        }
-    } catch (e) {
-        console.error('解析仓库URL失败:', e);
-        return `${repoUrl}/raw/${branch}/${file}`; // 默认回退
-    }
-}
-
-/**
- * 下载文件并保存到指定路径
- * @param {string} fileUrl - 文件下载 URL
- * @param {string} filePath - 保存路径
- * @returns {Promise<boolean>} - 是否成功
- */
-async function downloadFileFromRepo(fileUrl, filePath) {
-    try {
-        console.log(`尝试下载文件: ${fileUrl}`);
-        const response = await fetch(fileUrl);
-        if (!response.ok) {
-            console.warn(`下载失败(${response.status}): ${fileUrl}`);
-            return false;
-        }
-        const content = await response.text();
-        fs.writeFileSync(filePath, content);
-        console.log(`文件下载成功: ${filePath}`);
-        return true;
-    } catch (error) {
-        console.error(`下载文件错误(${fileUrl}):`, error);
-        return false;
-    }
-}
 
 // 导入存储管理模块
 const { getAppsStore, getAppsDevStore, getReposStore } = require('./modules/main/storageManager');
@@ -433,7 +365,7 @@ async function handleImportApp(event, zipPath, uid) {
         return { success: true, uuid };
     } catch (error) {
         console.error('导入应用失败:', error);
-        return handleError(error, 'remove-repo');
+        return handleError(error, 'handleImportApp');
     }
 }
 
@@ -498,7 +430,7 @@ async function handleAddAppRepo(repoUrl, branch) {
         branch = branch || 'main';
 
         // 校验仓库地址格式
-        if (!validateRepoUrl(repoUrl)) {
+        if (!repoUtils.validateRepoUrl(repoUrl)) {
             return handleError(new Error('仓库地址格式无效'), 'handleAddAppRepo');
         }
 
@@ -521,9 +453,9 @@ async function handleAddAppRepo(repoUrl, branch) {
         // 下载文件
         const filesToDownload = ['app.json', 'README.md', 'HISTORY.md'];
         for (const file of filesToDownload) {
-            const fileUrl = getFileUrl(repoUrl, branch, file);
+            const fileUrl = repoUtils.getFileUrl(repoUrl, branch, file);
             const filePath = path.join(reposPath, file);
-            const downloadSuccess = await downloadFileFromRepo(fileUrl, filePath);
+            const downloadSuccess = await repoUtils.downloadFileFromRepo(fileUrl, filePath);
             if (!downloadSuccess && file === 'app.json') {
                 return handleError(new Error('无法下载app.json, 请检查仓库地址是否正确或是否有权限'), 'handleAddAppRepo');
             }
@@ -532,16 +464,14 @@ async function handleAddAppRepo(repoUrl, branch) {
             if (file === 'app.json' && downloadSuccess) {
                 appJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
                 if (appJson.logo) {
-                    const logoUrl = getFileUrl(repoUrl, branch, appJson.logo);
+                    const logoUrl = repoUtils.getFileUrl(repoUrl, branch, appJson.logo);
                     const logoExt = path.extname(appJson.logo);
                     logoPath = path.join(reposPath, `logo${logoExt}`);
                     const logoDir = path.dirname(logoPath);
                     
-                    if (!fs.existsSync(logoDir)) {
-                        fs.mkdirSync(logoDir, { recursive: true });
-                    }
+                    fileUtils.ensureDirExists(logoDir);
                     
-                    const logoDownloadSuccess = await downloadFileFromRepo(logoUrl, logoPath);
+                    const logoDownloadSuccess = await repoUtils.downloadFileFromRepo(logoUrl, logoPath);
                     if (!logoDownloadSuccess) {
                         console.warn(`无法下载logo图片: ${logoUrl}`);
                     }
@@ -584,7 +514,7 @@ async function handleAddAppRepo(repoUrl, branch) {
         return { success: true };
     } catch (error) {
         console.error('Error adding app repository:', error);
-        return handleError(error, 'remove-repo');
+        return handleError(error, 'handleAddAppRepo');
     }
 }
 
@@ -723,7 +653,7 @@ async function getReposData() {
         return { success: true, data: reposData };
     } catch (error) {
         console.error('获取仓库列表失败:', error);
-        return handleError(error, 'remove-repo');
+        return handleError(error, 'getReposData');
     }
 }
 
@@ -737,7 +667,7 @@ async function removeRepo(uid) {
         const reposStore = getReposStore();
         const reposData = reposStore.get('default') || {};
         if (!reposData[uid]) {
-            return handleError(new Error('仓库不存在'), 'remove-repo');
+            return handleError(new Error('仓库不存在'), 'removeRepo');
         }
         delete reposData[uid];
         reposStore.set('default', reposData);
@@ -747,7 +677,7 @@ async function removeRepo(uid) {
         return { success: true };
     } catch (error) {
         console.error('删除仓库失败:', error);
-        return handleError(error, 'remove-repo');
+        return handleError(error, 'removeRepo');
     }
 }
 
