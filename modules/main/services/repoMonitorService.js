@@ -6,8 +6,8 @@ const { app } = require('electron');
 const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 
-const { handleError } = require('./errorHandler');
-const repoUtils = require('../utils/repoUtils');
+const { handleError } = require('../ipc/errorHandler');
+const repoUtils = require('../../utils/repoUtils');
 const fileUtils = require('../../utils/fileUtils');
 
 class RepoMonitorService {

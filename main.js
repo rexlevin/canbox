@@ -6,6 +6,9 @@ const tray = require('./modules/main/tray');
 const uatDev = fs.existsSync('./uat.dev.json') ? require('./uat.dev') : {};
 console.info('uatDev: ', uatDev);
 
+// 引入 RepoMonitorService
+const RepoMonitorService = require('./modules/main/services/repoMonitorService');
+
 // 引入 IPC 消息处理模块
 const initDbIpcHandlers = require('./modules/main/api');
 // 初始化 IPC 消息处理
@@ -66,6 +69,10 @@ if (!getTheLock) {
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) createWindow();
         });
+
+        // 初始化并启动仓库监控服务
+        const repoMonitorService = new RepoMonitorService();
+        repoMonitorService.startScheduler('0 * * * *'); // 每小时执行一次
 
         // app第一次启动的时候，启动参数可以从process.argv里面获取到
         let appId = '';
