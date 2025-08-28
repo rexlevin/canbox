@@ -22,12 +22,6 @@ contextBridge.exposeInMainWorld(
             console.info('url====', url);
             ipcRenderer.send('open-url', url);
         },
-        showDialog: (options) => {
-            return ipcRenderer.invoke('show-dialog', options);
-        },
-        selectDirectory: (options) => {
-            return ipcRenderer.invoke('select-directory', options);
-        },
         selectFile: (options) => {
             return ipcRenderer.invoke('select-file', options);
         },

@@ -1,21 +1,6 @@
-const { ipcMain, dialog, shell, app } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const { execSync } = require('child_process');
-const { v4: uuidv4 } = require('uuid');
-const axios = require('axios');
-
-const winState = require('./modules/main/winState');
-
-const ObjectUtils = require('./modules/utils/ObjectUtils')
+const { ipcMain, dialog, shell } = require('electron');
 
 const appWindow = require('./modules/main/app.window')
-
-const { getAppDataPath, getAppPath, getAppTempPath } = require('./modules/main/pathManager');
-const APP_DATA_PATH = getAppDataPath();
-const APP_PATH = getAppPath();
-const APP_TEMP_PATH = getAppTempPath();
-
 
 
 /**
@@ -28,17 +13,6 @@ function handleError(error, context) {
     console.error(`[${context}] Error:`, error.message);
     return { success: false, msg: error.message };
 }
-
-
-
-// 导入存储管理模块
-const { getAppsStore, getAppsDevStore } = require('./modules/main/storageManager');
-
-// 导入快捷方式管理模块
-const shortcutManager = require('./modules/main/shortcutManager');
-
-const AppsConfig = getAppsStore();
-const AppsDevConfig = getAppsDevStore();
 
 /**
  * 根据appId直接打开app
@@ -71,19 +45,6 @@ function initIpcHandlers() {
         }).catch(error => {
             console.error('Error opening external link:', error);
         });
-    });
-
-    // 对话框相关 IPC
-    ipcMain.handle('show-dialog', async (event, options) => {
-        return dialog.showMessageBox(options);
-    });
-
-    ipcMain.handle('select-directory', async (event, options) => {
-        return dialog.showOpenDialog(options);
-    });
-
-    ipcMain.handle('show-save-dialog', async (event, options) => {
-        return dialog.showSaveDialog(options);
     });
 
     // 打包 ASAR

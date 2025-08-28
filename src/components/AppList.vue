@@ -85,7 +85,7 @@ function handleRemoveApp(appId) {
 
 async function importApp() {
     try {
-        // 1. 选择 .asar 文件
+        // 1. 选择 .zip 文件
         const { canceled, filePaths } = await window.api.selectFile({
             title: '选择应用文件',
             properties: ['openFile'],
