@@ -61,6 +61,23 @@ class RepoMonitorService {
     }
 
     /**
+     * 计算文件哈希值
+     * @param {string} filePath - 文件路径
+     * @returns {Promise<string>} - 文件哈希值
+     */
+    async calculateFileHash(filePath) {
+        const crypto = require('crypto');
+        const fs = require('fs');
+        return new Promise((resolve, reject) => {
+            const hash = crypto.createHash('sha256');
+            const stream = fs.createReadStream(filePath);
+            stream.on('data', (data) => hash.update(data));
+            stream.on('end', () => resolve(hash.digest('hex')));
+            stream.on('error', reject);
+        });
+    }
+
+    /**
      * 扫描仓库并更新数据
      */
     async scanRepo() {
@@ -72,7 +89,6 @@ class RepoMonitorService {
                 try {
                     this.log(`扫描仓库: ${repoInfo.repo} (分支: ${repoInfo.branch})`);
                     
-                    // 下载仓库文件（参考 repoIpcHandler 逻辑）
                     const repoUrl = repoInfo.repo;
                     const branch = repoInfo.branch;
                     const uuid = uid;
@@ -84,10 +100,36 @@ class RepoMonitorService {
                     for (const file of filesToDownload) {
                         const fileUrl = repoUtils.getFileUrl(repoUrl, branch, file);
                         const filePath = path.join(reposPath, file);
+                        
+                        // 获取远程文件哈希值（或下载到临时目录计算）
+                        let remoteHash;
+                        try {
+                            remoteHash = await repoUtils.getFileHash(repoUrl, branch, file);
+                        } catch (error) {
+                            const { getReposTempPath } = require('../pathManager');
+                            const REPOS_TEMP_PATH = getReposTempPath();
+                            const tempFilePath = path.join(REPOS_TEMP_PATH, file);
+                            await repoUtils.downloadFileFromRepo(fileUrl, tempFilePath);
+                            remoteHash = await this.calculateFileHash(tempFilePath);
+                            fs.unlinkSync(tempFilePath);
+                        }
+
+                        // 对比哈希值
+                        const storedHash = this.store.get(`repos.default.${uid}.files.${file}`);
+                        if (storedHash === remoteHash) {
+                            this.log(`文件 ${file} 未变化，跳过下载`);
+                            continue;
+                        }
+
+                        // 下载文件并更新哈希值
                         const downloadSuccess = await repoUtils.downloadFileFromRepo(fileUrl, filePath);
                         if (!downloadSuccess && file === 'app.json') {
                             return handleError(new Error('无法下载app.json, 请检查仓库地址是否正确或是否有权限'), 'handleAddAppRepo');
                         }
+
+                        // 更新哈希值
+                        const newHash = await this.calculateFileHash(filePath);
+                        this.store.set(`repos.default.${uid}.files.${file}`, newHash);
 
                         // 如果是 app.json，下载logo图片
                         if (file === 'app.json' && downloadSuccess) {
