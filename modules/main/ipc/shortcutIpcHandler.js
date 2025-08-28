@@ -1,5 +1,5 @@
 const { ipcMain } = require('electron');
-const { getAppList } = require('../../storageManager');
+const { getAppList } = require('../storageManager');
 const shortcutManager = require('../shortcutManager');
 
 /**

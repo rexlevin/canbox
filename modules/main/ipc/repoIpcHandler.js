@@ -6,10 +6,12 @@ const axios = require('axios');
 const { dialog } = require('electron');
 const { handleError } = require('./errorHandler');
 
-const { getReposStore, getReposPath, getReposTempPath } = require('../storageManager');
+const { getReposStore } = require('../storageManager');
 const repoUtils = require('../../utils/repoUtils');
 const fileUtils = require('../../utils/fileUtils');
 
+
+const { getReposPath, getReposTempPath } = require('../pathManager');
 const REPOS_PATH = getReposPath();
 const REPOS_TEMP_PATH = getReposTempPath();
 
