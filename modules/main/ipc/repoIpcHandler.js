@@ -85,8 +85,23 @@ async function handleAddAppRepo(repoUrl, branch) {
             author: appJson.author || '',
             version: appJson.version || '',
             description: appJson.description || '',
-            logo: logoPath
+            logo: logoPath,
+            files: {}
         };
+
+        // 计算并保存文件哈希值
+        for (const file of filesToDownload) {
+            const filePath = path.join(reposPath, file);
+            if (fs.existsSync(filePath)) {
+                const crypto = require('crypto');
+                const hash = crypto.createHash('sha256');
+                const content = fs.readFileSync(filePath);
+                hash.update(content);
+                const fileHash = hash.digest('hex');
+                reposData[uuid].files[file] = fileHash;
+            }
+        }
+
         reposStore.set('default', reposData);
         /*
 {
