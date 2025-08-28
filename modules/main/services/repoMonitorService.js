@@ -6,6 +6,10 @@ const { app } = require('electron');
 const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 
+const { handleError } = require('./errorHandler');
+const repoUtils = require('../utils/repoUtils');
+const fileUtils = require('../../utils/fileUtils');
+
 class RepoMonitorService {
     constructor() {
         // 初始化存储路径
@@ -58,13 +62,69 @@ class RepoMonitorService {
 
     /**
      * 扫描仓库并更新数据
-     * @param {string} repoUrl - 仓库 URL
-     * @param {string} branch - 分支名称
      */
-    async scanRepo(repoUrl, branch) {
+    async scanRepo() {
         try {
-            // TODO: 实现仓库扫描逻辑
-            this.log(`扫描仓库: ${repoUrl} (分支: ${branch})`);
+            const repos = this.store.get('repos.default') || {};
+            this.log(`开始扫描仓库，共 ${Object.keys(repos).length} 个仓库`);
+
+            for (const [uid, repoInfo] of Object.entries(repos)) {
+                try {
+                    this.log(`扫描仓库: ${repoInfo.repo} (分支: ${repoInfo.branch})`);
+                    
+                    // 下载仓库文件（参考 repoIpcHandler 逻辑）
+                    const repoUrl = repoInfo.repo;
+                    const branch = repoInfo.branch;
+                    const uuid = uid;
+                    const reposPath = path.join(this.userDir, 'repos', uuid);
+                    fs.mkdirSync(reposPath, { recursive: true });
+
+                    let appJson, logoPath;
+                    const filesToDownload = ['app.json', 'README.md', 'HISTORY.md'];
+                    for (const file of filesToDownload) {
+                        const fileUrl = repoUtils.getFileUrl(repoUrl, branch, file);
+                        const filePath = path.join(reposPath, file);
+                        const downloadSuccess = await repoUtils.downloadFileFromRepo(fileUrl, filePath);
+                        if (!downloadSuccess && file === 'app.json') {
+                            return handleError(new Error('无法下载app.json, 请检查仓库地址是否正确或是否有权限'), 'handleAddAppRepo');
+                        }
+
+                        // 如果是 app.json，下载logo图片
+                        if (file === 'app.json' && downloadSuccess) {
+                            appJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+                            if (appJson.logo) {
+                                const logoUrl = repoUtils.getFileUrl(repoUrl, branch, appJson.logo);
+                                const logoExt = path.extname(appJson.logo);
+                                logoPath = path.join(reposPath, `logo${logoExt}`);
+                                const logoDir = path.dirname(logoPath);
+                                
+                                fileUtils.ensureDirExists(logoDir);
+                                
+                                const logoDownloadSuccess = await repoUtils.downloadFileFromRepo(logoUrl, logoPath);
+                                if (!logoDownloadSuccess) {
+                                    console.warn(`无法下载logo图片: ${logoUrl}`);
+                                }
+                            }
+                        }
+                    }
+
+                    // 保存仓库信息
+                    repos[uid] = {
+                        ...repoInfo,
+                        id: appJson.id,
+                        name: appJson.name,
+                        author: appJson.author || repoInfo.author,
+                        version: appJson.version || repoInfo.version,
+                        description: appJson.description || repoInfo.description,
+                        logo: logoPath
+                    };
+                    this.store.set('repos.default', repos);
+                    this.log(`仓库 ${repoInfo.name} 信息已更新`);
+                } catch (error) {
+                    this.log(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`);
+                }
+            }
+            this.log('仓库扫描完成');
         } catch (error) {
             this.log(`扫描失败: ${error.message}`);
         }
