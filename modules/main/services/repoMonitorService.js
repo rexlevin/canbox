@@ -135,9 +135,14 @@ class RepoMonitorService {
      * @param {string} schedule - cron 表达式
      */
     startScheduler(schedule) {
-        cron.schedule(schedule, () => {
-            this.log('开始定时扫描任务');
-            // TODO: 调用 scanRepo 扫描所有仓库
+        cron.schedule(schedule, async () => {
+            try {
+                this.log('开始定时扫描任务');
+                await this.scanRepo();
+                this.log('定时扫描任务完成');
+            } catch (error) {
+                this.log(`定时扫描任务失败: ${error.message}`);
+            }
         });
         this.log(`定时任务已启动，计划: ${schedule}`);
     }
