@@ -4,7 +4,8 @@ const fs = require('fs');
 const { getAppsStore, getAppsDevStore } = require('../storageManager');
 const shortcutManager = require('../shortcutManager');
 const { getAppPath, getAppDataPath } = require('../pathManager');
-const appWindow = require('../app.window')
+const appWindow = require('../app.window');
+const { handleError } = require('./errorHandler')
 
 const AppsConfig = getAppsStore();
 const AppsDevConfig = getAppsDevStore();

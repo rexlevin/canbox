@@ -4,6 +4,7 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const { dialog } = require('electron');
+const { handleError } = require('./errorHandler');
 
 const { getReposStore, getReposPath, getReposTempPath } = require('../storageManager');
 const repoUtils = require('../../utils/repoUtils');
@@ -18,23 +19,23 @@ const REPOS_TEMP_PATH = getReposTempPath();
 async function handleAddAppRepo(repoUrl, branch) {
     try {
         if (!repoUrl) {
-            return { success: false, msg: '未输入仓库地址' };
+            return handleError(new Error('未输入仓库地址'), 'handleAddAppRepo');
         }
         branch = branch || 'main';
 
         // 校验仓库地址格式
         if (!repoUtils.validateRepoUrl(repoUrl)) {
-            return { success: false, msg: '仓库地址格式无效' };
+            return handleError(new Error('仓库地址格式无效'), 'handleAddAppRepo');
         }
 
         // 尝试访问仓库地址
         try {
             const response = await fetch(`${repoUrl}/blob/${branch || 'main'}/app.json`);
             if (!response.ok) {
-                return { success: false, msg: '无法访问该仓库，请检查地址是否正确或是否有权限' };
+                return handleError(new Error('无法访问该仓库，请检查地址是否正确或是否有权限'), 'handleAddAppRepo');
             }
         } catch (error) {
-            return { success: false, msg: error.message };
+            return handleError(error, 'handleAddAppRepo');
         }
 
         const uuid = uuidv4().replace(/-/g, '');
@@ -49,7 +50,7 @@ async function handleAddAppRepo(repoUrl, branch) {
             const filePath = path.join(reposPath, file);
             const downloadSuccess = await repoUtils.downloadFileFromRepo(fileUrl, filePath);
             if (!downloadSuccess && file === 'app.json') {
-                return { success: false, msg: '无法下载app.json, 请检查仓库地址是否正确或是否有权限' };
+                return handleError(new Error('无法下载app.json, 请检查仓库地址是否正确或是否有权限'), 'handleAddAppRepo');
             }
 
             // 如果是app.json，下载logo图片
@@ -85,11 +86,25 @@ async function handleAddAppRepo(repoUrl, branch) {
             logo: logoPath
         };
         reposStore.set('default', reposData);
-
+        /*
+{
+    "default": {
+        "3a6f487d7f9f4fae86dcfbc3dde401a2": {
+            "id": "com.gitee.lizl6.cb-jsonbox",
+            "name": "jsonbox",
+            "repo": "https://gitee.com/lizl6/cb-jsonbox",
+            "branch": "master",
+            "author": "lizl6",
+            "version": "0.0.1",
+            "description": "JsonBox - 跨平台的 JSON 格式化工具",
+            "logo": "/home/lizl6/.config/canbox/Users/repos/3a6f487d7f9f4fae86dcfbc3dde401a2/logo.png"
+        }
+    }
+}
+        */
         return { success: true };
     } catch (error) {
-        console.error('Error adding app repository:', error);
-        return { success: false, msg: error.message };
+        return handleError(error, 'handleAddAppRepo');
     }
 }
 
@@ -104,7 +119,7 @@ async function handleImportAppRepos() {
             filters: [{ name: 'Text Files', extensions: ['txt'] }]
         });
         if (result.canceled || result.filePaths.length === 0) {
-            return { success: false, msg: '未选择文件' };
+            return handleError(new Error('未选择文件'), 'handleImportAppRepos');
         }
         const filePath = result.filePaths[0];
         const content = fs.readFileSync(filePath, 'utf-8');
@@ -116,7 +131,7 @@ async function handleImportAppRepos() {
 
         return { success: true };
     } catch (error) {
-        return { success: false, msg: error.message };
+        return handleError(error, 'handleImportAppRepos');
     }
 }
 
@@ -128,8 +143,7 @@ async function getReposData() {
         const reposData = getReposStore().get('default') || {};
         return { success: true, data: reposData };
     } catch (error) {
-        console.error('获取仓库列表失败:', error);
-        return { success: false, msg: error.message };
+        return handleError(error, 'getReposData');
     }
 }
 
@@ -141,7 +155,7 @@ async function removeRepo(uid) {
         const reposStore = getReposStore();
         const reposData = reposStore.get('default') || {};
         if (!reposData[uid]) {
-            return { success: false, msg: '仓库不存在' };
+            return handleError(new Error('仓库不存在'), 'removeRepo');
         }
         delete reposData[uid];
         reposStore.set('default', reposData);
@@ -150,8 +164,7 @@ async function removeRepo(uid) {
         fs.rmdirSync(repoPath, { recursive: true });
         return { success: true };
     } catch (error) {
-        console.error('删除仓库失败:', error);
-        return { success: false, msg: error.message };
+        return handleError(error, 'removeRepo');
     }
 }
 
@@ -161,7 +174,7 @@ async function removeRepo(uid) {
 async function downloadAppsFromRepo(uid) {
     const repoInfo = (getReposStore().get('default') || {})[uid];
     if (!repoInfo) {
-        return { success: false, msg: '仓库不存在' };
+        return handleError(new Error('仓库不存在'), 'downloadAppsFromRepo');
     }
 
     try {
@@ -214,8 +227,7 @@ async function downloadAppsFromRepo(uid) {
         // 返回下载结果
         return { success: true, zipPath };
     } catch (error) {
-        console.error('下载应用失败:', error);
-        return { success: false, msg: error.message };
+        return handleError(new Error('下载应用失败: ' + error.message), 'downloadAppsFromRepo');
     }
 }
 
