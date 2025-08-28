@@ -14,7 +14,6 @@ class RepoMonitorService {
     constructor() {
         // 初始化存储路径
         this.userDir = path.join(app.getPath('userData'), 'Users');
-        this.configPath = path.join(this.userDir, 'repo-monitor.json');
 
         // 确保目录存在
         if (!fs.existsSync(this.userDir)) {
@@ -34,14 +33,16 @@ class RepoMonitorService {
         this.logger = winston.createLogger({
             level: 'info',
             format: winston.format.combine(
-                winston.format.timestamp(),
+                winston.format.timestamp({
+                    format: 'YYYY-MM-DD HH:mm:ss'
+                }),
                 winston.format.printf(({ timestamp, level, message }) => {
                     return `[${timestamp}] ${level}: ${message}`;
                 })
             ),
             transports: [
                 new DailyRotateFile({
-                    filename: path.join(this.userDir, 'repo-monitor-%DATE%.log'),
+                    filename: path.join(this.userDir, 'logs', 'repo-monitor-%DATE%.log'),
                     datePattern: 'YYYY-MM-DD',
                     maxSize: '10m',
                     maxFiles: '7d',
@@ -115,7 +116,7 @@ class RepoMonitorService {
                         }
 
                         // 对比哈希值
-                        const storedHash = this.store.get(`repos.default.${uid}.files.${file}`);
+                        const storedHash = this.store.get(`default.${uid}.files.${file}`);
                         if (storedHash === remoteHash) {
                             this.log(`文件 ${file} 未变化，跳过下载`);
                             continue;
@@ -129,7 +130,7 @@ class RepoMonitorService {
 
                         // 更新哈希值
                         const newHash = await this.calculateFileHash(filePath);
-                        this.store.set(`repos.default.${uid}.files.${file}`, newHash);
+                        this.store.set(`default.${uid}.files.${file}`, newHash);
 
                         // 如果是 app.json，下载logo图片
                         if (file === 'app.json' && downloadSuccess) {
@@ -149,6 +150,7 @@ class RepoMonitorService {
                             }
                         }
                     }
+                    console.info('appJson:', appJson);
 
                     // 保存仓库信息
                     repos[uid] = {
@@ -160,7 +162,7 @@ class RepoMonitorService {
                         description: appJson.description || repoInfo.description,
                         logo: logoPath
                     };
-                    this.store.set('repos.default', repos);
+                    this.store.set('default', repos);
                     this.log(`仓库 ${repoInfo.name} 信息已更新`);
                 } catch (error) {
                     this.log(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`);
