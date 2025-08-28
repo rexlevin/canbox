@@ -59,15 +59,6 @@ function initIpcHandlers() {
         });
     });
 
-    // 引入应用管理模块
-    const appIpcHandler = require('./modules/main/ipc/appIpcHandler');
-    appIpcHandler.init();
-
-    // 引入快捷方式管理模块
-    const shortcutIpcManager = require('./modules/main/ipc/shortcutIpcHandler');
-    shortcutIpcManager.init();
-
-    
 }
 
 module.exports = {
