@@ -1,18 +1,9 @@
 const { ipcMain, dialog, shell } = require('electron');
+const appIpcHandler = require('./modules/main/ipc/appIpcHandler');
+const repoIpcHandler = require('./modules/main/ipc/repoIpcHandler');
+const shortcutIpcHandler = require('./modules/main/ipc/shortcutIpcHandler');
 
 const appWindow = require('./modules/main/app.window')
-
-
-/**
- * 统一错误处理函数
- * @param {Error} error - 错误对象
- * @param {string} context - 错误上下文描述
- * @returns {{success: boolean, msg: string}} - 标准化错误返回
- */
-function handleError(error, context) {
-    console.error(`[${context}] Error:`, error.message);
-    return { success: false, msg: error.message };
-}
 
 /**
  * 根据appId直接打开app
@@ -27,6 +18,11 @@ function handleLoadAppById(appId) {
  * 初始化所有 IPC 消息处理逻辑
  */
 function initIpcHandlers() {
+    // 初始化拆分后的 IPC 处理逻辑
+    appIpcHandler.init(ipcMain);
+    repoIpcHandler.init(ipcMain);
+    shortcutIpcHandler.init(ipcMain);
+
     // 打开文件选择窗口
     ipcMain.on('openAppJson', (event, options) => {
         dialog.showOpenDialog(options).then(result => {
