@@ -89,18 +89,25 @@ async function handleAddAppRepo(repoUrl, branch) {
             files: {}
         };
 
-        // 计算并保存文件哈希值
-        for (const file of filesToDownload) {
+        // 异步计算并保存文件哈希值
+        await Promise.all(filesToDownload.map(async (file) => {
             const filePath = path.join(reposPath, file);
             if (fs.existsSync(filePath)) {
                 const crypto = require('crypto');
                 const hash = crypto.createHash('sha256');
-                const content = fs.readFileSync(filePath);
-                hash.update(content);
-                const fileHash = hash.digest('hex');
-                reposData[uuid].files[file] = fileHash;
+                const stream = fs.createReadStream(filePath);
+                
+                await new Promise((resolve, reject) => {
+                    stream.on('data', (chunk) => hash.update(chunk));
+                    stream.on('end', () => {
+                        const fileHash = hash.digest('hex');
+                        reposData[uuid].files[file] = fileHash;
+                        resolve();
+                    });
+                    stream.on('error', reject);
+                });
             }
-        }
+        }));
 
         reposStore.set('default', reposData);
         /*
