@@ -111,6 +111,10 @@ let reposData = reactive({});
 
 onBeforeMount(() => {
     fetchReposData();
+    // 监听仓库数据更新事件
+    window.api.on('repo-data-updated', () => {
+        fetchReposData();
+    });
 });
 
 // 获取仓库列表

@@ -2,6 +2,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld(
     "api", {
+        on: (eventName, callback) => {
+            ipcRenderer.on(eventName, callback);
+        },
         generateShortcut: (fn) => {
             ipcRenderer.invoke('generate-shortcut').then(result => {
                 fn(result);

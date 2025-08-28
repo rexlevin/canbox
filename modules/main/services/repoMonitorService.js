@@ -24,7 +24,7 @@ class RepoMonitorService {
         // 初始化 electron-store
         this.store = new Store({
             cwd: 'Users',
-            name: 'repo-monitor',
+            name: 'repos',
             defaults: {
                 repos: {}
             }
@@ -82,7 +82,7 @@ class RepoMonitorService {
      */
     async scanRepo() {
         try {
-            const repos = this.store.get('repos.default') || {};
+            const repos = this.store.get('default') || {};
             this.log(`开始扫描仓库，共 ${Object.keys(repos).length} 个仓库`);
 
             for (const [uid, repoInfo] of Object.entries(repos)) {
@@ -167,6 +167,9 @@ class RepoMonitorService {
                 }
             }
             this.log('仓库扫描完成');
+            // 通知前端数据已更新
+            const { ipcMain } = require('electron');
+            ipcMain.emit('repo-data-updated');
         } catch (error) {
             this.log(`扫描失败: ${error.message}`);
         }
