@@ -106,10 +106,7 @@ class RepoMonitorService {
                         }
 
                         // 更新哈希值
-                        console.info(`default.${uid}.files.${file}`);
-                        console.info(this.store.get(`default.${uid}.files.${file}`));
                         this.store.set(`default.${uid}.files.${file}`, remoteHash);
-                        console.info(this.store.get(`default.${uid}.files.${file}`));
 
                         // 如果是 app.json，下载logo图片
                         if (file === 'app.json') {
@@ -132,6 +129,7 @@ class RepoMonitorService {
                     console.info('appJson:', appJson);
 
                     // 保存仓库信息
+                    const existingFiles = this.store.get(`default.${uid}.files`) || {};
                     repos[uid] = {
                         ...repoInfo,
                         id: appJson.id,
@@ -139,7 +137,8 @@ class RepoMonitorService {
                         author: appJson.author || repoInfo.author,
                         version: appJson.version || repoInfo.version,
                         description: appJson.description || repoInfo.description,
-                        logo: logoPath
+                        logo: logoPath,
+                        files: existingFiles
                     };
                     this.store.set('default', repos);
                     logger.info(`仓库 ${repoInfo.name} 信息已更新`);
