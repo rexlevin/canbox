@@ -23,21 +23,9 @@ class RepoMonitorService {
         this.store = new Store({
             cwd: 'Users',
             name: 'repos',
-            defaults: {
-                repos: {}
-            }
+            defaults: {}
         });
 
-        // 使用全局日志实例
-        this.logger = logger;
-    }
-
-    /**
-     * 记录日志
-     * @param {string} message - 日志内容
-     */
-    log(message) {
-        this.logger.info(message);
     }
 
     /**
@@ -63,11 +51,11 @@ class RepoMonitorService {
     async scanRepo() {
         try {
             const repos = this.store.get('default') || {};
-            this.log(`开始扫描仓库，共 ${Object.keys(repos).length} 个仓库`);
+            logger.info(`开始扫描仓库，共 ${Object.keys(repos).length} 个仓库`);
 
             for (const [uid, repoInfo] of Object.entries(repos)) {
                 try {
-                    this.log(`扫描仓库: ${repoInfo.repo} (分支: ${repoInfo.branch})`);
+                    logger.info(`扫描仓库: ${repoInfo.repo} (分支: ${repoInfo.branch})`);
                     
                     const repoUrl = repoInfo.repo;
                     const branch = repoInfo.branch;
@@ -82,35 +70,49 @@ class RepoMonitorService {
                         const filePath = path.join(reposPath, file);
                         
                         // 获取远程文件哈希值（或下载到临时目录计算）
-                        let remoteHash, tempFilePath;
+                        let remoteHash = '', tempFilePath, downloadSuccess = false;
                         try {
                             remoteHash = await repoUtils.getFileHash(repoUrl, branch, file);
                         } catch (error) {
+                            logger.warn(`无法获取 ${file} 的哈希值，将尝试下载文件...${error}`);
                             const { getReposTempPath } = require('../pathManager');
                             const REPOS_TEMP_PATH = getReposTempPath();
                             tempFilePath = path.join(REPOS_TEMP_PATH, file);
-                            await repoUtils.downloadFileFromRepo(fileUrl, tempFilePath);
-                            remoteHash = await this.calculateFileHash(tempFilePath);
+                            downloadSuccess = await repoUtils.downloadFileFromRepo(fileUrl, tempFilePath);
+                            if (downloadSuccess) {
+                                remoteHash = await this.calculateFileHash(tempFilePath);
+                            }
+                        }
+
+                        if (!downloadSuccess && file === 'app.json') {
+                            return handleError(new Error('无法下载app.json, 请检查仓库地址是否正确或是否有权限'), 'handleAddAppRepo');
+                        }
+                        if (!downloadSuccess) {
+                            logger.error(`文件 ${file} 下载失败`);
+                            continue;
                         }
 
                         // 对比哈希值
                         const storedHash = this.store.get(`default.${uid}.files.${file}`);
                         if (storedHash === remoteHash) {
                             fs.unlinkSync(tempFilePath); // 哈希一致，删除临时文件
-                            this.log(`文件 ${file} 未变化，跳过下载`);
+                            logger.info(`文件 ${file} 未变化，跳过下载`);
                             continue;
                         } else {
                             // 哈希不一致，复制临时文件到目标路径
+                            logger.info(`文件 ${file} 已更新，下载完成`);
                             fs.copyFileSync(tempFilePath, filePath);
                             fs.unlinkSync(tempFilePath); // 删除临时文件
                         }
 
                         // 更新哈希值
-                        const newHash = await this.calculateFileHash(filePath);
-                        this.store.set(`default.${uid}.files.${file}`, newHash);
+                        console.info(`default.${uid}.files.${file}`);
+                        console.info(this.store.get(`default.${uid}.files.${file}`));
+                        this.store.set(`default.${uid}.files.${file}`, remoteHash);
+                        console.info(this.store.get(`default.${uid}.files.${file}`));
 
                         // 如果是 app.json，下载logo图片
-                        if (file === 'app.json' && downloadSuccess) {
+                        if (file === 'app.json') {
                             appJson = JSON.parse(fs.readFileSync(filePath, 'utf8'));
                             if (appJson.logo) {
                                 const logoUrl = repoUtils.getFileUrl(repoUrl, branch, appJson.logo);
@@ -122,7 +124,7 @@ class RepoMonitorService {
                                 
                                 const logoDownloadSuccess = await repoUtils.downloadFileFromRepo(logoUrl, logoPath);
                                 if (!logoDownloadSuccess) {
-                                    console.warn(`无法下载logo图片: ${logoUrl}`);
+                                    logger.warn(`无法下载logo图片: ${logoUrl}`);
                                 }
                             }
                         }
@@ -140,17 +142,17 @@ class RepoMonitorService {
                         logo: logoPath
                     };
                     this.store.set('default', repos);
-                    this.log(`仓库 ${repoInfo.name} 信息已更新`);
+                    logger.info(`仓库 ${repoInfo.name} 信息已更新`);
                 } catch (error) {
-                    this.log(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`);
+                    logger.warn(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`);
                 }
             }
-            this.log('仓库扫描完成');
+            logger.info('仓库扫描完成');
             // 通知前端数据已更新
             const { ipcMain } = require('electron');
             ipcMain.emit('repo-data-updated');
         } catch (error) {
-            this.log(`扫描失败: ${error.message}`);
+            logger.error(`扫描失败: ${error.message}`);
         }
     }
 
@@ -161,14 +163,14 @@ class RepoMonitorService {
     startScheduler(schedule) {
         cron.schedule(schedule, async () => {
             try {
-                this.log('开始定时扫描任务');
+                logger.info('开始定时扫描任务');
                 await this.scanRepo();
-                this.log('定时扫描任务完成');
+                logger.info('定时扫描任务完成');
             } catch (error) {
-                this.log(`定时扫描任务失败: ${error.message}`);
+                logger.error(`定时扫描任务失败: ${error.message}`);
             }
         });
-        this.log(`定时任务已启动，计划: ${schedule}`);
+        logger.info(`定时任务已启动，计划: ${schedule}`);
     }
 }
 
