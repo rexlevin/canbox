@@ -66,7 +66,7 @@ class RepoMonitorService {
                     const reposPath = path.join(this.userDir, 'repos', uuid);
                     fs.mkdirSync(reposPath, { recursive: true });
 
-                    let appJson, logoPath;
+                    let appJson, logoPath, modifyFlag = false;
                     const filesToDownload = ['app.json', 'README.md', 'HISTORY.md'];
                     for (const file of filesToDownload) {
                         const fileUrl = repoUtils.getFileUrl(repoUrl, branch, file);
@@ -106,10 +106,11 @@ class RepoMonitorService {
                             logger.info(`文件 ${file} 已更新，下载完成`);
                             fs.copyFileSync(tempFilePath, filePath);
                             fs.unlinkSync(tempFilePath); // 删除临时文件
+                            // 更新哈希值
+                            this.store.set(`default.${uid}.files.${file}`, remoteHash);
+                            // 更新修改标识
+                            modifyFlag = true;
                         }
-
-                        // 更新哈希值
-                        this.store.set(`default.${uid}.files.${file}`, remoteHash);
 
                         // 如果是 app.json，下载logo图片
                         if (file === 'app.json') {
@@ -129,7 +130,10 @@ class RepoMonitorService {
                             }
                         }
                     }
-                    console.info('appJson:', appJson);
+                    if (!modifyFlag) {
+                        logger.info(`扫描仓库: ${repoInfo.repo} (分支: ${repoInfo.branch})结束，仓库未更新`);
+                        continue;
+                    }
 
                     // 保存仓库信息
                     const existingFiles = this.store.get(`default.${uid}.files`) || {};
