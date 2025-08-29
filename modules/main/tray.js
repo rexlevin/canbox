@@ -5,7 +5,7 @@ const package = require('../../package.json');
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
 module.exports = {
-    createTray: (win, appMap) => {
+    createTray: (win) => {
         // console.info(1, __dirname);
         let trayMenuTemplate = [{
             label: '显示窗口',

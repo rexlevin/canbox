@@ -29,9 +29,6 @@ const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' 
 // canbox 主窗口对象
 let win = null;
 
-// 设置一个map集合，用于存放所有打开的window
-let appMap = new Map();
-
 const isDev = !app.isPackaged;
 console.info('main.js is running in %s mode', isDev ? 'development' : 'production');
 
@@ -65,7 +62,7 @@ if (!getTheLock) {
         createWindow();
         win.setIcon(path.join(__dirname, './logo.png'));
         // 创建托盘
-        tray.createTray(win, appMap);
+        tray.createTray(win);
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) createWindow();
         });
