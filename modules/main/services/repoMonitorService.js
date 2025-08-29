@@ -3,11 +3,11 @@ const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 const { app } = require('electron');
-const logger = require('../../utils/logger');
+const logger = require('../utils/logger');
 
 const { handleError } = require('../ipc/errorHandler');
-const repoUtils = require('../../utils/repoUtils');
-const fileUtils = require('../../utils/fileUtils');
+const repoUtils = require('../utils/repoUtils');
+const fileUtils = require('../utils/fileUtils');
 
 class RepoMonitorService {
     constructor() {

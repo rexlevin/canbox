@@ -1,46 +1,44 @@
-const winston = require('winston');
-const DailyRotateFile = require('winston-daily-rotate-file');
+const log4js = require('log4js');
 const path = require('path');
 const { app } = require('electron');
 
-// 初始化日志目录
-const userDir = path.join(app.getPath('userData'), 'Users');
-const logDir = path.join(userDir, 'logs');
+// 日志文件路径
+const logDir = path.join(app.getPath('userData'), 'Users', 'logs');
+const logFile = path.join(logDir, 'app.log');
 
-// 确保日志目录存在
-if (!require('fs').existsSync(logDir)) {
-    require('fs').mkdirSync(logDir, { recursive: true });
-}
-
-// 创建日志实例
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp({
-            format: 'YYYY-MM-DD HH:mm:ss'
-        }),
-        winston.format.printf(({ timestamp, level, message }) => {
-            // 获取调用堆栈信息
-            const stack = new Error().stack.split('\n');
-            // 解析调用位置（跳过第一行 Error 信息和第二行 logger.js 内部调用）
-            const callerLine = stack[2].trim();
-            // 提取文件名和行号
-            const matches = callerLine.match(/\/([^/]+):(\d+):(\d+)\)?$/);
-            const filename = matches ? matches[1] : 'unknown';
-            const lineNumber = matches ? matches[2] : 'unknown';
-            return `[${timestamp}] ${level} (${filename}:${lineNumber}): ${message}`;
-        })
-    ),
-    transports: [
-        new DailyRotateFile({
-            filename: path.join(logDir, 'application-%DATE%.log'),
-            datePattern: 'YYYY-MM-DD',
-            maxSize: '10m',
-            maxFiles: '7d',
-            zippedArchive: true
-        }),
-        new winston.transports.Console()
-    ]
+// 配置 log4js
+log4js.configure({
+  appenders: {
+    console: { type: 'console' },
+    file: {
+      type: 'file',
+      filename: logFile,
+      maxLogSize: 10485760, // 10MB
+      backups: 5, // 保留5个备份
+      compress: true,
+      keepFileExt: true
+    }
+  },
+  categories: {
+    default: {
+      appenders: ['console', 'file'],
+      level: 'info'
+    }
+  },
+  // 自定义格式
+  layout: {
+    type: 'pattern',
+    pattern: '%[[%d{yyyy-MM-dd hh:mm:ss}] [%p] %f:%l%] - %m'
+  }
 });
 
-module.exports = logger;
+// 创建 logger 实例
+const logger = log4js.getLogger();
+
+// 导出与原接口兼容的 logger
+module.exports = {
+  info: (message) => logger.info(message),
+  error: (message) => logger.error(message),
+  warn: (message) => logger.warn(message),
+  debug: (message) => logger.debug(message)
+};

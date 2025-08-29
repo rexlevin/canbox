@@ -7,8 +7,8 @@ const { dialog } = require('electron');
 const { handleError } = require('./errorHandler');
 
 const { getReposStore } = require('../storageManager');
-const repoUtils = require('../../utils/repoUtils');
-const fileUtils = require('../../utils/fileUtils');
+const repoUtils = require('../utils/repoUtils');
+const fileUtils = require('../utils/fileUtils');
 
 
 const { getReposPath, getReposTempPath } = require('../pathManager');
