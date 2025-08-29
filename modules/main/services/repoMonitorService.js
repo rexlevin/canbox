@@ -145,7 +145,9 @@ class RepoMonitorService {
                         version: appJson.version || repoInfo.version,
                         description: appJson.description || repoInfo.description,
                         logo: logoPath,
-                        files: existingFiles
+                        files: existingFiles,
+                        createTime: repoInfo.createTime,
+                        updateTime: Date.now()
                     };
                     this.store.set('default', repos);
                     logger.info(`仓库 ${repoInfo.name} 信息已更新`);
