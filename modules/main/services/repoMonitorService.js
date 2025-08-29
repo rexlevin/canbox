@@ -112,7 +112,16 @@ class RepoMonitorService {
                             const tempFilePath = path.join(REPOS_TEMP_PATH, file);
                             await repoUtils.downloadFileFromRepo(fileUrl, tempFilePath);
                             remoteHash = await this.calculateFileHash(tempFilePath);
-                            fs.unlinkSync(tempFilePath);
+
+                            // 对比哈希值
+                            const storedHash = this.store.get(`default.${uid}.files.${file}`);
+                            if (storedHash === remoteHash) {
+                                fs.unlinkSync(tempFilePath); // 哈希一致，删除临时文件
+                            } else {
+                                // 哈希不一致，复制临时文件到目标路径
+                                fs.copyFileSync(tempFilePath, filePath);
+                                fs.unlinkSync(tempFilePath); // 删除临时文件
+                            }
                         }
 
                         // 对比哈希值
