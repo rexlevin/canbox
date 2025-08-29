@@ -3,8 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 const { app } = require('electron');
-const winston = require('winston');
-const DailyRotateFile = require('winston-daily-rotate-file');
+const logger = require('../../utils/logger');
 
 const { handleError } = require('../ipc/errorHandler');
 const repoUtils = require('../../utils/repoUtils');
@@ -29,28 +28,8 @@ class RepoMonitorService {
             }
         });
 
-        // 初始化 winston 日志
-        this.logger = winston.createLogger({
-            level: 'info',
-            format: winston.format.combine(
-                winston.format.timestamp({
-                    format: 'YYYY-MM-DD HH:mm:ss'
-                }),
-                winston.format.printf(({ timestamp, level, message }) => {
-                    return `[${timestamp}] ${level}: ${message}`;
-                })
-            ),
-            transports: [
-                new DailyRotateFile({
-                    filename: path.join(this.userDir, 'logs', 'repo-monitor-%DATE%.log'),
-                    datePattern: 'YYYY-MM-DD',
-                    maxSize: '10m',
-                    maxFiles: '7d',
-                    zippedArchive: true
-                }),
-                new winston.transports.Console()
-            ]
-        });
+        // 使用全局日志实例
+        this.logger = logger;
     }
 
     /**
@@ -103,13 +82,13 @@ class RepoMonitorService {
                         const filePath = path.join(reposPath, file);
                         
                         // 获取远程文件哈希值（或下载到临时目录计算）
-                        let remoteHash;
+                        let remoteHash, tempFilePath;
                         try {
                             remoteHash = await repoUtils.getFileHash(repoUrl, branch, file);
                         } catch (error) {
                             const { getReposTempPath } = require('../pathManager');
                             const REPOS_TEMP_PATH = getReposTempPath();
-                            const tempFilePath = path.join(REPOS_TEMP_PATH, file);
+                            tempFilePath = path.join(REPOS_TEMP_PATH, file);
                             await repoUtils.downloadFileFromRepo(fileUrl, tempFilePath);
                             remoteHash = await this.calculateFileHash(tempFilePath);
                         }
