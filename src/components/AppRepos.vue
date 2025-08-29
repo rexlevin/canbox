@@ -61,7 +61,7 @@
                         <div class="info-block vertical-block">
                             <div class="app-name">
                                 <span style="font-weight: bold; font-size: 20px;">{{ repo.name }}</span>
-                                <span style="padding-left: 20px; color: gray;">v{{ repo.version }}</span>
+                                <span style="padding-left: 20px; color: gray;">{{ repo.version }}</span>
                             </div>
                             <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ repo.description }}</div>
                         </div>

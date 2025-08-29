@@ -7,7 +7,7 @@
             <div class="info-block vertical-block">
                 <div class="app-name" @click="drawerInfo = true">
                     <span style="font-weight: bold; font-size: 20px;">{{ appDevItem.appJson.name }}</span>
-                    <span style="padding-left: 20px; color: gray;">v{{ appDevItem.appJson.version }}</span>
+                    <span style="padding-left: 20px; color: gray;">{{ appDevItem.appJson.version }}</span>
                 </div>
                 <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appDevItem.appJson.description }}</div>
             </div>
