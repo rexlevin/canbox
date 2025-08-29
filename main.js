@@ -6,6 +6,9 @@ const tray = require('./modules/main/tray');
 const uatDev = fs.existsSync('./uat.dev.json') ? require('./uat.dev') : {};
 console.info('uatDev: ', uatDev);
 
+// 导入窗口管理模块
+const windowManager = require('./modules/main/windowManager');
+
 // 引入 RepoMonitorService
 const RepoMonitorService = require('./modules/main/services/repoMonitorService');
 
@@ -163,6 +166,9 @@ const createWindow = () => {
             win.webContents.openDevTools({ mode: uatDev?.devTools });
         }
     });
+
+    // 将app窗口添加到appMap中
+    windowManager.addWindow('canbox', win);
 
     // 关闭主窗口事件，最小化到托盘
     win.on('close', (e) => {

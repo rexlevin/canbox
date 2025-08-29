@@ -9,6 +9,9 @@ const { handleError } = require('../ipc/errorHandler');
 const repoUtils = require('../utils/repoUtils');
 const fileUtils = require('../utils/fileUtils');
 
+// 导入窗口管理模块
+const windowManager = require('../windowManager');
+
 class RepoMonitorService {
     constructor() {
         // 初始化存储路径
@@ -148,8 +151,8 @@ class RepoMonitorService {
             }
             logger.info('仓库扫描完成');
             // 通知前端数据已更新
-            const { ipcMain } = require('electron');
-            ipcMain.emit('repo-data-updated');
+            const win = windowManager.getWindow('canbox');
+            win.webContents.send('repo-data-updated');
         } catch (error) {
             logger.error(`扫描失败: ${error.message}`);
         }
