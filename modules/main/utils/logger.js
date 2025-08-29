@@ -8,37 +8,66 @@ const logFile = path.join(logDir, 'app.log');
 
 // 配置 log4js
 log4js.configure({
-  appenders: {
-    console: { type: 'console' },
-    file: {
-      type: 'file',
-      filename: logFile,
-      maxLogSize: 10485760, // 10MB
-      backups: 5, // 保留5个备份
-      compress: true,
-      keepFileExt: true
+    appenders: {
+        console: {
+            type: 'console',
+            layout: {
+                type: 'pattern',
+                pattern: '%[[%d{yyyy-MM-dd hh:mm:ss}] [%p] %f:%l : %m%]'
+            }
+        },
+        file: {
+            type: 'file',
+            filename: logFile,
+            maxLogSize: 10485760, // 10MB
+            backups: 5, // 保留5个备份
+            compress: true,
+            keepFileExt: true,
+            layout: {
+                type: 'pattern',
+                pattern: '[%d{yyyy-MM-dd hh:mm:ss}] [%p] %f:%l : %m'
+            }
+        }
+    },
+    categories: {
+        default: {
+            appenders: ['console', 'file'],
+            level: 'info'
+        }
     }
-  },
-  categories: {
-    default: {
-      appenders: ['console', 'file'],
-      level: 'info'
-    }
-  },
-  // 自定义格式
-  layout: {
-    type: 'pattern',
-    pattern: '%[[%d{yyyy-MM-dd hh:mm:ss}] [%p] %f:%l%] - %m'
-  }
 });
 
 // 创建 logger 实例
 const logger = log4js.getLogger();
 
-// 导出与原接口兼容的 logger
+// 动态获取调用位置
+const getCallerFileAndLine = () => {
+    const stack = new Error().stack.split('\n');
+    // 跳过当前函数和 logger.js 的调用栈
+    const callerLine = stack[3] || '';
+    const match = callerLine.match(/\/([^\/]+):(\d+):(\d+)\)?$/);
+    if (match) {
+        return { file: match[1], line: match[2] };
+    }
+    return { file: 'unknown', line: '0' };
+};
+
+// 导出接口，支持动态传递调用位置
 module.exports = {
-  info: (message) => logger.info(message),
-  error: (message) => logger.error(message),
-  warn: (message) => logger.warn(message),
-  debug: (message) => logger.debug(message)
+    info: (message) => {
+        const { file, line } = getCallerFileAndLine();
+        logger.info(`${file}:${line} : ${message}`);
+    },
+    error: (message) => {
+        const { file, line } = getCallerFileAndLine();
+        logger.error(`${file}:${line} : ${message}`);
+    },
+    warn: (message) => {
+        const { file, line } = getCallerFileAndLine();
+        logger.warn(`${file}:${line} : ${message}`);
+    },
+    debug: (message) => {
+        const { file, line } = getCallerFileAndLine();
+        logger.debug(`${file}:${line} : ${message}`);
+    }
 };
