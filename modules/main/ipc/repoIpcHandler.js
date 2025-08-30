@@ -87,7 +87,9 @@ async function handleAddAppRepo(repoUrl, branch) {
             description: appJson.description || '',
             logo: logoPath,
             files: {},
-            createTime: Date.now()
+            createTime: Date.now(),
+            updateTime: null,
+            download: false
         };
 
         // 异步计算并保存文件哈希值

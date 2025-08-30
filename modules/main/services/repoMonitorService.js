@@ -147,7 +147,8 @@ class RepoMonitorService {
                         logo: logoPath,
                         files: existingFiles,
                         createTime: repoInfo.createTime,
-                        updateTime: Date.now()
+                        updateTime: Date.now(),
+                        download: false
                     };
                     this.store.set('default', repos);
                     logger.info(`仓库 ${repoInfo.name} 信息已更新`);

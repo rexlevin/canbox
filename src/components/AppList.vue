@@ -10,7 +10,9 @@
         <!-- 第二部分：应用列表区域 -->
         <div class="app-list-section" v-show="appList.length > 0">
             <el-row v-for="(item, index) in appList">
-                <el-col :span="24"><AppItem :appItem="appList[index]" @remove-app="handleRemoveApp"/></el-col>
+                <el-col :span="24">
+                    <AppItem :appItem="appList[index]" @remove-app="handleRemoveApp" />
+                </el-col>
             </el-row>
         </div>
 
@@ -67,10 +69,10 @@ onBeforeMount(() => {
 });
 
 watch(
-  () => appStore.appListUpdated,
-  () => {
-    loadAppList();
-  }
+    () => appStore.appListUpdated,
+    () => {
+        loadAppList();
+    }
 );
 
 function loadAppList() {

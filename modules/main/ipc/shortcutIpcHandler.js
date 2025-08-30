@@ -1,6 +1,6 @@
-const { ipcMain } = require('electron');
-const { getAppList } = require('../storageManager');
+const { app, ipcMain } = require('electron');
 const shortcutManager = require('../shortcutManager');
+const { getAppList } = require('../appManager');
 
 /**
  * 初始化快捷方式相关的 IPC 处理逻辑
