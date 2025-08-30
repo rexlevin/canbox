@@ -12,6 +12,8 @@ const fileUtils = require('../utils/fileUtils');
 // 导入窗口管理模块
 const windowManager = require('../windowManager');
 
+const { getReposStore } =require('../storageManager');
+
 class RepoMonitorService {
     constructor() {
         // 初始化存储路径
@@ -23,11 +25,7 @@ class RepoMonitorService {
         }
 
         // 初始化 electron-store
-        this.store = new Store({
-            cwd: 'Users',
-            name: 'repos',
-            defaults: {}
-        });
+        this.store = getReposStore();
 
     }
 
