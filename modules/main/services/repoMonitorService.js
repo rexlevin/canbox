@@ -148,7 +148,9 @@ class RepoMonitorService {
                         files: existingFiles,
                         createTime: repoInfo.createTime,
                         updateTime: DateFormat.format(new Date()),
-                        downloaded: false
+                        downloaded: repoInfo.downloaded,
+                        downloadTime: repoInfo.downloadTime,
+                        toUpdate: true
                     };
                     this.store.set('default', repos);
                     logger.info(`仓库 ${repoInfo.name} 信息已更新`);

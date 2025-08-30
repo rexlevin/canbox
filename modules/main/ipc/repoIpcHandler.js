@@ -256,7 +256,7 @@ async function downloadAppsFromRepo(uid) {
         const reposStore = getReposStore();
         const reposData = reposStore.get('default') || {};
         const uuid = uuidv4().replace(/-/g, '');
-        reposData[uuid] = { ...repoInfo, downloaded: true, downloadTime: DateFormat.format(new Date()) };
+        reposData[uuid] = { ...repoInfo, downloaded: true, downloadTime: DateFormat.format(new Date()), toUpdate: false };
         reposStore.set('default', reposData);
 
         // 返回下载结果

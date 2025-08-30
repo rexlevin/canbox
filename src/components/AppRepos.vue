@@ -70,8 +70,11 @@
                                 <span class="operate-icon-span" v-show="!repo.downloaded" @click="downloadAppsFromRepo(uid)" title="下载这个APP">
                                     <el-icon :size="33" color="#228b22"><Download /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" v-show="repo.downloaded" style="cursor: not-allowed;" title="这个app已添加">
+                                <span class="operate-icon-span" v-show="repo.downloaded && !repo.toUpdate" style="cursor: not-allowed;" title="这个app已下载">
                                     <el-icon :size="33" color="#228b22"><CircleCheck /></el-icon>
+                                </span>
+                                <span class="operate-icon-span" v-show="repo.downloaded && repo.toUpdate" @click="downloadAppsFromRepo(uid)" title="更新这个app">
+                                    <el-icon :size="33" color="#228b22"><Refresh /></el-icon>
                                 </span>
                                 <span class="operate-icon-span" @click="removeRepo(uid)" title="移除这个app源">
                                     <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
