@@ -11,22 +11,15 @@ const fileUtils = require('../utils/fileUtils');
 
 // 导入窗口管理模块
 const windowManager = require('../windowManager');
-
+// 导入electron-store管理器
 const { getReposStore } =require('../storageManager');
+// 导入路径管理器
+const { getReposPath } = require('../pathManager');
 
 class RepoMonitorService {
     constructor() {
-        // 初始化存储路径
-        this.userDir = path.join(app.getPath('userData'), 'Users');
-
-        // 确保目录存在
-        if (!fs.existsSync(this.userDir)) {
-            fs.mkdirSync(this.userDir, { recursive: true });
-        }
-
         // 初始化 electron-store
         this.store = getReposStore();
-
     }
 
     /**
@@ -61,7 +54,7 @@ class RepoMonitorService {
                     const repoUrl = repoInfo.repo;
                     const branch = repoInfo.branch;
                     const uuid = uid;
-                    const reposPath = path.join(this.userDir, 'repos', uuid);
+                    const reposPath = path.join(getReposPath(), uuid);
                     fs.mkdirSync(reposPath, { recursive: true });
 
                     let appJson, logoPath, modifyFlag = false;
