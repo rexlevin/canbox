@@ -67,8 +67,11 @@
                         </div>
                         <div class="operate-block">
                             <div>
-                                <span class="operate-icon-span" @click="downloadAppsFromRepo(uid)" title="下载这个APP">
+                                <span class="operate-icon-span" v-show="!repo.downloaded" @click="downloadAppsFromRepo(uid)" title="下载这个APP">
                                     <el-icon :size="33" color="#228b22"><Download /></el-icon>
+                                </span>
+                                <span class="operate-icon-span" v-show="repo.downloaded" style="cursor: not-allowed;" title="这个app已添加">
+                                    <el-icon :size="33" color="#228b22"><CircleCheck /></el-icon>
                                 </span>
                                 <span class="operate-icon-span" @click="removeRepo(uid)" title="移除这个app源">
                                     <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>

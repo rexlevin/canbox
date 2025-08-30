@@ -336,3 +336,36 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
     ]
 }
 ```
+
+## repos.json
+
+```json
+{
+    "default": {
+        "3a6f487d7f9f4fae86dcfbc3dde401a2": {
+            "id": "com.gitee.lizl6.cb-jsonbox",
+            "name": "jsonbox",
+            "repo": "https://gitee.com/lizl6/cb-jsonbox",
+            "branch": "master",
+            "author": "lizl6",
+            "version": "0.0.2",
+            "description": "JsonBox - 跨平台的 JSON 格式化工具",
+            "logo": "/home/lizl6/.config/canbox/Users/repos/3a6f487d7f9f4fae86dcfbc3dde401a2/logo.png",
+            "files": {
+                "app": {
+                    "json": "39f57b38922a67772fc8b1535b3f3a678f95854f7e5b0791fde9caab8009be8a"
+                },
+                "README": {
+                    "md": "b98eaa8cdea3f6325a13764d259c80cb4996a7bc0adaab228dbd68d2e275c51d"
+                },
+                "HISTORY": {
+                    "md": "a3c15b800afcc01ff4d9b8e8bc700957b84cea81"
+                }
+            },
+            "createTime": "2025-08-09 11:31:50"
+            "downloaded": true,
+            "downloadedTime": "2025-08-29 14:12:33"
+        }
+    }
+}
+```
