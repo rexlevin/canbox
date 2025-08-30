@@ -303,7 +303,11 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
 }
 ```
 
-# 附录
+# electron-store
+
+这里罗列出了canbox中所有使用electron-store保存的数据
+
+你可以在electron的userData目录下找到它们：`app.getPath('userData'), 'Users')`
 
 ## apps.json
 
@@ -311,12 +315,27 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
 {
     "default": [
         {
-            "id": "18709b4788085ea28a41067436a16f89",
-            "name": "coderbox"
+            "id": "e50febde524a41f7bcfae2195dc42f06",
+            "name": "jsonbox",
+            "version": "0.0.2",
+            "description": "JsonBox - 跨平台的 JSON 格式化工具",
+            "author": "lizl6",
+            "logo": "logo.png",
+            "sourceTag": ""
         }
     ]
 }
 ```
+
+| 字段        | 释义                                                |
+| ----------- | --------------------------------------------------- |
+| id          | 应用唯一标识，由canbox生成，用于区分不同的应用      |
+| name        | 应用名称                                            |
+| version     | 应用版本                                            |
+| description | 应用描述                                            |
+| author      | 应用作者                                            |
+| logo        | 应用logo                                            |
+| sourceTag   | 应用来源标记，用于区分应用来源：`import`、`git` |
 
 ## appsDev.json
 
@@ -351,7 +370,6 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
             "version": "0.0.2",
             "description": "JsonBox - 跨平台的 JSON 格式化工具",
             "logo": "/home/lizl6/.config/canbox/Users/repos/3a6f487d7f9f4fae86dcfbc3dde401a2/logo.png",
-            "sourceTag": "import",
             "files": {
                 "app": {
                     "json": "39f57b38922a67772fc8b1535b3f3a678f95854f7e5b0791fde9caab8009be8a"
@@ -365,24 +383,25 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
             },
             "createTime": "2025-08-09 11:31:50"
             "downloaded": true,
-            "downloadedTime": "2025-08-29 14:12:33"
+            "downloadedTime": "2025-08-29 14:12:33",
+            "toUpdate": true
         }
     }
 }
 ```
 
-| 字段           | 类型    | 释义                                               |
-| -------------- | ------- | -------------------------------------------------- |
-| id             | string  | 仓库唯一标识，由仓库的作者和仓库名称组成           |
-| name           |         | 仓库名称                                           |
-| repo           |         | 仓库地址，一段git仓库url，务必注意仓库一定要可访问 |
-| branch         |         | 仓库分支，默认 main                                |
-| author         |         | 仓库作者                                           |
-| version        |         | 仓库版本                                           |
-| description    |         | 仓库描述                                           |
-| logo           |         | 仓库logo                                           |
-| sourceTag      | string  | 仓库来源，目前支持：`import`、`git`            |
-| files          |         | 仓库文件                                           |
-| createTime     |         | 仓库创建时间，yyyy-MM-dd HH:mm:ss                  |
-| downloaded     | boolean | 是否下载过                                         |
-| downloadedTime |         | 下载时间                                           |
+| 字段           | 释义                                               |
+| -------------- | -------------------------------------------------- |
+| id             | 仓库唯一标识，由仓库的作者和仓库名称组成           |
+| name           | 仓库名称                                           |
+| repo           | 仓库地址，一段git仓库url，务必注意仓库一定要可访问 |
+| branch         | 仓库分支，默认 main                                |
+| author         | 仓库作者                                           |
+| version        | 仓库版本                                           |
+| description    | 仓库描述                                           |
+| logo           | 仓库logo                                           |
+| files          | 仓库文件                                           |
+| createTime     | 仓库创建时间，yyyy-MM-dd HH:mm:ss                  |
+| downloaded     | `boolean` ，是否已经下载                         |
+| downloadedTime | 下载时间                                           |
+| toUpdate       | `boolean` ，是否可更新                           |
