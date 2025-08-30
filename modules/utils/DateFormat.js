@@ -39,11 +39,8 @@ class DateFormat {
 
         let pattern = format;
         for (const [key, value] of Object.entries(o)) {
-            const regex = new RegExp(`(${key.replace('{', '\\{').replace('}', '\\}')})`, 'g');
-            pattern = pattern.replace(regex, (match) => {
-                const count = parseInt(key.match(/\{(\d+)(?:,(\d+))?\}/)[1]);
-                return String(value).padStart(count, '0').slice(-count);
-            });
+            const regex = new RegExp(key, 'g');
+            pattern = pattern.replace(regex, String(value));
         }
         return pattern;
     }

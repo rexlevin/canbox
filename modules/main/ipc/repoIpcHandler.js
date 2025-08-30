@@ -260,7 +260,7 @@ async function downloadAppsFromRepo(uid) {
         reposStore.set('default', reposData);
 
         // 返回下载结果
-        return { success: true, zipPath };
+        return { success: true };
     } catch (error) {
         return handleError(new Error('下载应用失败: ' + error.message), 'downloadAppsFromRepo');
     }

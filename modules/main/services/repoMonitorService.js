@@ -9,6 +9,8 @@ const { handleError } = require('../ipc/errorHandler');
 const repoUtils = require('../utils/repoUtils');
 const fileUtils = require('../utils/fileUtils');
 
+const DateFormat = require('../../utils/DateFormat');
+
 // 导入窗口管理模块
 const windowManager = require('../windowManager');
 // 导入electron-store管理器
@@ -146,7 +148,8 @@ class RepoMonitorService {
                     this.store.set('default', repos);
                     logger.info(`仓库 ${repoInfo.name} 信息已更新`);
                 } catch (error) {
-                    logger.warn(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`);
+                    logger.warn(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`, error);
+                    console.info(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`, error);
                 }
             }
             logger.info('仓库扫描完成');

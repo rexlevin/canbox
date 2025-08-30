@@ -9,6 +9,7 @@ const { getAppPath, getAppDataPath, getReposTempPath } = require('../pathManager
 const appWindow = require('../app.window');
 const { handleError } = require('./errorHandler')
 const ObjectUtils = require('../../utils/ObjectUtils');
+const DateFormat = require('../../utils/DateFormat');
 const { getAppList, getAppInfo } = require('../appManager');
 
 const AppsConfig = getAppsStore();
@@ -84,6 +85,9 @@ async function handleImportApp(event, zipPath, uid) {
             }
         }
 
+        console.info(DateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+        console.info(DateFormat.format(new Date()));
+
         const asarTargetPath = path.join(APP_PATH, `${uuid}.asar`);
         const appJson = JSON.parse(fs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8'));
         let appConfigArr = AppsConfig.get('default') ? AppsConfig.get('default') : [];
@@ -94,7 +98,8 @@ async function handleImportApp(event, zipPath, uid) {
             description: appJson.description || '',
             author: appJson.author || '',
             logo: appJson.logo || '',
-            sourceTag: ''
+            sourceTag: 'import',
+            importTime: DateFormat.format(new Date())
         });
         AppsConfig.set('default', appConfigArr);
 
