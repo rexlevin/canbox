@@ -105,7 +105,7 @@ async function handleAddAppRepo(repoUrl, branch) {
                     stream.on('data', (chunk) => hash.update(chunk));
                     stream.on('end', () => {
                         const fileHash = hash.digest('hex');
-                        reposData[uuid].files[file] = fileHash;
+                        reposData[uuid].files[file.replace(/\./g, '_')] = fileHash;
                         resolve();
                     });
                     stream.on('error', reject);

@@ -93,6 +93,7 @@ async function handleImportApp(event, zipPath, uid) {
             description: appJson.description || '',
             author: appJson.author || '',
             logo: appJson.logo || '',
+            sourceTag: ''
         });
         AppsConfig.set('default', appConfigArr);
 

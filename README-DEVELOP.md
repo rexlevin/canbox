@@ -351,6 +351,7 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
             "version": "0.0.2",
             "description": "JsonBox - 跨平台的 JSON 格式化工具",
             "logo": "/home/lizl6/.config/canbox/Users/repos/3a6f487d7f9f4fae86dcfbc3dde401a2/logo.png",
+            "sourceTag": "import",
             "files": {
                 "app": {
                     "json": "39f57b38922a67772fc8b1535b3f3a678f95854f7e5b0791fde9caab8009be8a"
@@ -369,3 +370,19 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
     }
 }
 ```
+
+| 字段           | 类型    | 释义                                               |
+| -------------- | ------- | -------------------------------------------------- |
+| id             | string  | 仓库唯一标识，由仓库的作者和仓库名称组成           |
+| name           |         | 仓库名称                                           |
+| repo           |         | 仓库地址，一段git仓库url，务必注意仓库一定要可访问 |
+| branch         |         | 仓库分支，默认 main                                |
+| author         |         | 仓库作者                                           |
+| version        |         | 仓库版本                                           |
+| description    |         | 仓库描述                                           |
+| logo           |         | 仓库logo                                           |
+| sourceTag      | string  | 仓库来源，目前支持：`import`、`git`            |
+| files          |         | 仓库文件                                           |
+| createTime     |         | 仓库创建时间，yyyy-MM-dd HH:mm:ss                  |
+| downloaded     | boolean | 是否下载过                                         |
+| downloadedTime |         | 下载时间                                           |

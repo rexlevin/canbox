@@ -87,7 +87,7 @@ class RepoMonitorService {
                         }
 
                         // 对比哈希值
-                        const storedHash = this.store.get(`default.${uid}.files.${file}`);
+                        const storedHash = this.store.get(`default.${uid}.files.${file.replace(/\./g, '_')}`);
                         if (storedHash === remoteHash) {
                             fs.unlinkSync(tempFilePath); // 哈希一致，删除临时文件
                             logger.info(`文件 ${file} 未变化，跳过下载`);
@@ -98,7 +98,7 @@ class RepoMonitorService {
                             fs.copyFileSync(tempFilePath, filePath);
                             fs.unlinkSync(tempFilePath); // 删除临时文件
                             // 更新哈希值
-                            this.store.set(`default.${uid}.files.${file}`, remoteHash);
+                            this.store.set(`default.${uid}.files.${file.replace(/\./g, '_')}`, remoteHash);
                             // 更新修改标识
                             modifyFlag = true;
                         }
