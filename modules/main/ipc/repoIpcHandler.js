@@ -9,6 +9,7 @@ const { handleError } = require('./errorHandler');
 const { getReposStore } = require('../storageManager');
 const repoUtils = require('../utils/repoUtils');
 const fileUtils = require('../utils/fileUtils');
+const DateFormat = require('../../utils/DateFormat');
 
 
 const { getReposPath, getReposTempPath } = require('../pathManager');
@@ -89,7 +90,7 @@ async function handleAddAppRepo(repoUrl, branch) {
             files: {},
             createTime: Date.now(),
             updateTime: null,
-            download: false
+            downloaded: false
         };
 
         // 异步计算并保存文件哈希值
@@ -250,6 +251,13 @@ async function downloadAppsFromRepo(uid) {
             writer.on('finish', resolve);
             writer.on('error', reject);
         });
+
+        // 更新下载标识
+        const reposStore = getReposStore();
+        const reposData = reposStore.get('default') || {};
+        const uuid = uuidv4().replace(/-/g, '');
+        reposData[uuid] = { ...repoInfo, downloaded: true, downloadTime: DateFormat.format(new Date()) };
+        reposStore.set('default', reposData);
 
         // 返回下载结果
         return { success: true, zipPath };

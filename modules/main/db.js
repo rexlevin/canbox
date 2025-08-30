@@ -2,7 +2,6 @@ const { app } = require('electron');
 const path = require('path');
 const PouchDB = require('pouchdb');
 const { customAlphabet } = require('nanoid-cjs');
-const fs = require("fs");
 const DateFormat = require('../utils/DateFormat');
 
 const { getAppDataPath } = require('./pathManager');
@@ -49,9 +48,9 @@ function closeAllDBs() {
 function prepareDoc(doc) {
     doc._id = doc._id || nanoid();
     if (doc._rev) {
-        doc.updateTime = doc.updateTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
+        doc.updateTime = doc.updateTime || DateFormat.format(new Date());
     } else {
-        doc.createTime = doc.createTime || (new DateFormat('yyyyMMddHHmmss')).format(new Date());
+        doc.createTime = doc.createTime || DateFormat.format(new Date());
     }
     return doc;
 }
