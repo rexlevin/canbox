@@ -1,4 +1,5 @@
 const { ipcMain } = require('electron');
+const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
@@ -255,8 +256,7 @@ async function downloadAppsFromRepo(uid) {
         // 更新下载标识
         const reposStore = getReposStore();
         const reposData = reposStore.get('default') || {};
-        const uuid = uuidv4().replace(/-/g, '');
-        reposData[uuid] = { ...repoInfo, downloaded: true, downloadTime: DateFormat.format(new Date()), toUpdate: false };
+        reposData[uid] = { ...repoInfo, downloaded: true, downloadTime: DateFormat.format(new Date()), toUpdate: false };
         reposStore.set('default', reposData);
 
         // 返回下载结果
