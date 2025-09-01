@@ -21,6 +21,11 @@ contextBridge.exposeInMainWorld(
                 fn({ success: false, msg: error.message });
             });
         },
+        updateReposStatus: (appId, fn) => ipcRenderer.invoke('update-repos-status', appId).then(result => {
+            fn(result);
+        }).catch(error => {
+            fn({ success: false, msg: error.message });
+        }),
         openUrl: (url) => {
             console.info('url====', url);
             ipcRenderer.send('open-url', url);

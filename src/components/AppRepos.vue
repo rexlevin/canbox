@@ -94,9 +94,11 @@
 </template>
 
 <script setup>
-import { onBeforeMount, ref, reactive } from 'vue';
+import { onBeforeMount, ref, reactive, watch } from 'vue';
 import { ElMessage } from 'element-plus';
+
 import { useAppStore } from '@/stores/appStore';
+const appStore = useAppStore();
 
 const dialogVisible = ref(false);
 const repoUrl = ref('');
@@ -114,6 +116,15 @@ const handleClose = (done) => {
 const formRef = ref();
 const loading = ref(false);
 let reposData = reactive({});
+
+watch(() => appStore.removedAppId, (newAppId) => {
+    if (newAppId) {
+        window.api.updateReposStatus(newAppId).then(() => {
+            console.log('Repos status updated');
+        });
+        appStore.setRemovedAppId(null);
+    }
+});
 
 onBeforeMount(() => {
     fetchReposData();

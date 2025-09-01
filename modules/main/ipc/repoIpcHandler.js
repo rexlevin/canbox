@@ -18,6 +18,14 @@ const { getReposPath, getReposTempPath } = require('../pathManager');
 const REPOS_PATH = getReposPath();
 const REPOS_TEMP_PATH = getReposTempPath();
 
+async function updateReposStatus(uid) {
+    const reposStore = getReposStore();
+    const reposData = reposStore.get('default') || {};
+    reposData[uid].dowloaded = false;
+    reposStore.set('default', reposData);
+    return { success: true };
+}
+
 /**
  * 处理添加单个仓库的逻辑
  */
@@ -304,6 +312,10 @@ function initRepoHandlers() {
     // 从仓库下载应用
     ipcMain.handle('download-apps-from-repo', async (event, uid) => {
         return downloadAppsFromRepo(uid);
+    });
+
+    ipcMain.handle('update-repos-status', async (event, uid) => {
+        return updateReposStatus(uid);
     });
 }
 

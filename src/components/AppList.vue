@@ -83,6 +83,8 @@ function loadAppList() {
 
 function handleRemoveApp(appId) {
     appList.value = appList.value.filter(app => app.id !== appId);
+    const appStore = useAppStore();
+    appStore.setRemovedAppId(appId);
 }
 
 async function importApp() {
