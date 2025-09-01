@@ -3,7 +3,8 @@ const appIpcHandler = require('./modules/main/ipc/appIpcHandler');
 const repoIpcHandler = require('./modules/main/ipc/repoIpcHandler');
 const shortcutIpcHandler = require('./modules/main/ipc/shortcutIpcHandler');
 
-const appWindow = require('./modules/main/app.window')
+const appWindow = require('./modules/main/app.window');
+const { getAppList } = require('./modules/main/appManager');
 
 /**
  * 根据appId直接打开app
