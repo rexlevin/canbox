@@ -145,6 +145,7 @@ const downloadAppsFromRepo = (uid) => {
             ElMessage.success('app下载成功');
             const appStore = useAppStore();
             appStore.triggerAppListUpdate();
+            fetchReposData();   // 更新仓库列表
         } else {
             ElMessage.error(result.msg || 'app下载失败');
         }
