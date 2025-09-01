@@ -5,16 +5,17 @@ const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 const { getAppsStore, getAppsDevStore } = require('./storageManager');
 const shortcutManager = require('./shortcutManager');
-const { getAppPath, getAppDataPath, getReposTempPath } = require('./pathManager');
+const { getAppPath, getAppDataPath, getAppTempPath } = require('./pathManager');
 const appWindow = require('./app.window');
 const { handleError } = require('./ipc/errorHandler')
 const ObjectUtils = require('../utils/ObjectUtils');
+const DateFormat = require('../utils/DateFormat');
 
 const AppsConfig = getAppsStore();
 const AppsDevConfig = getAppsDevStore();
 const APP_PATH = getAppPath();
 const APP_DATA_PATH = getAppDataPath();
-const APP_TEMP_PATH = getReposTempPath();
+const APP_TEMP_PATH = getAppTempPath();
 
 /**
  * 获取应用列表

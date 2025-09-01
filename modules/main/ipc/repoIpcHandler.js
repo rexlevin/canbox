@@ -255,13 +255,13 @@ async function downloadAppsFromRepo(uid) {
         });
 
         // 调用 handleImportApp 导入应用
-        const ret = await handleImportApp(null, zipPath, uid).then((ret) => {
-            if (!ret.success) {
-                return handleError(ret.msg, 'downloadAppsFromRepo');
-            }
-            // 删除临时文件
-            fs.unlinkSync(zipPath);
-        });
+        const ret = await handleImportApp(null, zipPath, uid);
+        if (!ret.success) {
+            fs.unlinkSync(zipPath); // 确保临时文件被删除
+            return handleError(ret.msg, 'downloadAppsFromRepo');
+        }
+        // 删除临时文件
+        fs.unlinkSync(zipPath);
 
 
         // 更新下载标识
