@@ -12,6 +12,7 @@ const repoUtils = require('../utils/repoUtils');
 const fileUtils = require('../utils/fileUtils');
 const DateFormat = require('../../utils/DateFormat');
 
+const { handleImportApp } = require('../appManager');
 
 const { getReposPath, getReposTempPath } = require('../pathManager');
 const REPOS_PATH = getReposPath();
@@ -252,6 +253,16 @@ async function downloadAppsFromRepo(uid) {
             writer.on('finish', resolve);
             writer.on('error', reject);
         });
+
+        // 调用 handleImportApp 导入应用
+        const ret = await handleImportApp(null, zipPath, uid).then((ret) => {
+            if (!ret.success) {
+                return handleError(ret.msg, 'downloadAppsFromRepo');
+            }
+            // 删除临时文件
+            fs.unlinkSync(zipPath);
+        });
+
 
         // 更新下载标识
         const reposStore = getReposStore();
