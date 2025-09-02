@@ -30,7 +30,7 @@
                                 <span class="operate-icon-span" @click="clearData" title="清除用户数据">
                                     <el-icon :size="33" color=""><Delete /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" @click="removeApp" title="移除这个app">
+                                <span class="operate-icon-span" @click="removeApp(uid)" title="移除这个app">
                                     <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
                                 </span>
                             </div>
@@ -136,9 +136,25 @@ function loadApp(uid) {
     window.api.app.load(uid);
 }
 
-function handleRemoveApp(appId) {
-    appsData.value = appsData.value.filter(app => app.id !== appId);
-    appStore.setRemovedAppId(appId);
+function removeApp(uid) {
+    // 这里增加一个确认弹框
+    window.api.app.remove({
+        id: uid,
+        devTag: false
+    }, (result) => {
+        console.info('remove result=', result);
+        if(!result.success) {
+            ElMessage.error(result.msg);
+            return;
+        }
+        // 触发删除当前应用的事件
+        delete appsData.value[uid];
+        appStore.setRemovedAppId(uid);
+        ElMessage({
+            message: 'APP 删除成功',
+            type:'success'
+        }); 
+    });
 }
 
 async function importApp() {

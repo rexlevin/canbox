@@ -72,8 +72,8 @@ if (!getTheLock) {
 
         // 初始化并启动仓库监控服务
         const repoMonitorService = new RepoMonitorService();
-        // repoMonitorService.startScheduler('0 * * * *'); // 每小时执行一次
-        repoMonitorService.startScheduler('*/1 * * * *'); // 每分钟执行一次
+        repoMonitorService.startScheduler('0 * * * *'); // 每小时执行一次
+        // repoMonitorService.startScheduler('*/1 * * * *'); // 每分钟执行一次
 
         // app第一次启动的时候，启动参数可以从process.argv里面获取到
         let appId = '';

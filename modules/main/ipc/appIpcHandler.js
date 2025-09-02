@@ -51,7 +51,7 @@ async function removeAppById(uid) {
 
     const logo = appConfig[uid].logo;
     const logoExt = path.extname(logo);
-    const logoPath = path.join(getAppPath(), `${id}${logoExt}`);
+    const logoPath = path.join(getAppPath(), `${uid}${logoExt}`);
 
     try {
         fs.unlinkSync(path.join(getAppPath(), uid + '.asar'));
