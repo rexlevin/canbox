@@ -27,7 +27,7 @@
                                 <span class="operate-icon-span" @click="loadApp(uid)" title="运行这个app">
                                     <el-icon :size="33" color="#228b22"><VideoPlay /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" @click="clearData" title="清除用户数据">
+                                <span class="operate-icon-span" @click="clearData(uid)" title="清除用户数据">
                                     <el-icon :size="33" color=""><Delete /></el-icon>
                                 </span>
                                 <span class="operate-icon-span" @click="removeApp(uid)" title="移除这个app">
@@ -136,6 +136,22 @@ function loadApp(uid) {
     window.api.app.load(uid);
 }
 
+// 删除app数据
+function clearData(uid) {
+    window.api.app.clearData(uid, (result) => {
+        console.info('clearData result=', result);
+        if(!result.success) {
+            ElMessage.error(result.msg);
+            return;
+        }
+        ElMessage({
+            message: '清除数据成功',
+            type:'success'
+        });
+    });
+}
+
+// 移除app
 function removeApp(uid) {
     // 这里增加一个确认弹框
     window.api.app.remove({
@@ -157,6 +173,7 @@ function removeApp(uid) {
     });
 }
 
+// 从zip压缩文件导入app
 async function importApp() {
     try {
         // 1. 选择 .zip 文件

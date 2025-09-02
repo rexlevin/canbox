@@ -12,9 +12,6 @@ const ObjectUtils = require('../../utils/ObjectUtils');
 const DateFormat = require('../../utils/DateFormat');
 const { getAppsData, getAppList, getAppInfo, handleImportApp } = require('../appManager');
 
-const APP_DATA_PATH = getAppDataPath();
-const APP_TEMP_PATH = getReposTempPath();
-
 /**
  * 删除应用
  * 
@@ -221,8 +218,8 @@ function initAppHandlers() {
     });
 
     // 清理应用数据
-    ipcMain.handle('clearAppData', async (event, id) => {
-        const appData = path.join(APP_DATA_PATH, id);
+    ipcMain.handle('clearAppData', async (event, uid) => {
+        const appData = path.join(getAppDataPath(), uid);
         try {
             await fs.promises.access(appData, fs.constants.F_OK);
             await fs.promises.rm(appData, { recursive: true, force: true });
