@@ -24,7 +24,7 @@
                         </div>
                         <div class="operate-block">
                             <div>
-                                <span class="operate-icon-span" @click="loadApp" title="运行这个app">
+                                <span class="operate-icon-span" @click="loadApp(uid)" title="运行这个app">
                                     <el-icon :size="33" color="#228b22"><VideoPlay /></el-icon>
                                 </span>
                                 <span class="operate-icon-span" @click="clearData" title="清除用户数据">
@@ -128,6 +128,11 @@ function loadAppsData() {
             ElMessage.error(result.msg || '获取APP列表失败');
         }
     });
+}
+
+// 运行app
+function loadApp(uid) {
+    window.api.app.load(uid);
 }
 
 function handleRemoveApp(appId) {

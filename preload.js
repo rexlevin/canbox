@@ -52,8 +52,8 @@ contextBridge.exposeInMainWorld(
                 // ipcRenderer.invoke('getAppList').then(result => {fn(result)}).catch(error => {fn([])});
                 ipcRenderer.invoke('get-apps-data').then(result => {fn(result)}).catch(error => {fn({})});
             },
-            load: (appItemStr, devTag) => {
-                ipcRenderer.send('loadApp', appItemStr, devTag);
+            load: (uid, devTag) => {
+                ipcRenderer.send('load-app', uid, devTag);
             },
             clearData: (id, fn) => {
                 ipcRenderer.invoke('clearAppData', id).then(result => {

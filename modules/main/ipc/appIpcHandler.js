@@ -215,8 +215,8 @@ function initAppHandlers() {
     });
     
     // 加载应用
-    ipcMain.on('loadApp', (event, appItemStr, devTag) => {
-        appWindow.loadApp(appItemStr, devTag);
+    ipcMain.on('load-app', (event, uid, devTag) => {
+        appWindow.loadApp(uid, devTag);
     });
 
     // 清理应用数据
