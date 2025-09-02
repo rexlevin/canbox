@@ -313,29 +313,39 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
 
 ```json
 {
-    "default": [
-        {
-            "id": "e50febde524a41f7bcfae2195dc42f06",
+    "default": {
+        "3a6f487d7f9f4fae86dcfbc3dde401a2": {
+            "id": "com.gitee.lizl6.cb-jsonbox",
             "name": "jsonbox",
-            "version": "0.0.2",
+            "version": "0.0.1",
             "description": "JsonBox - 跨平台的 JSON 格式化工具",
             "author": "lizl6",
+            "logo": "logo.png"
+        },
+        "885f615f9c374c96a022294950fed558": {
+            "id": "com.gitee.lizl6.cb-passgen",
+            "name": "passgen",
+            "version": "0.0.2",
+            "description": "PassGen - 密码生成器",
+            "author": "lizl6",
             "logo": "logo.png",
-            "sourceTag": ""
+            "sourceTag": "import",
+            "importTime": "2025-09-02 10:28:12"
         }
-    ]
+    }
 }
 ```
 
-| 字段        | 释义                                                |
-| ----------- | --------------------------------------------------- |
-| id          | 应用唯一标识，由canbox生成，用于区分不同的应用      |
-| name        | 应用名称                                            |
-| version     | 应用版本                                            |
-| description | 应用描述                                            |
-| author      | 应用作者                                            |
-| logo        | 应用logo                                            |
-| sourceTag   | 应用来源标记，用于区分应用来源：`import`、`git` |
+| 字段        | 类型   | 释义                                                |
+| ----------- | ------ | --------------------------------------------------- |
+| uid         | object | 应用唯一标识，由canbox生成，用于区分不同的应用      |
+| id          | string | 应用id，形如：com.github.username.appname           |
+| name        |        | 应用名称                                            |
+| version     |        | 应用版本                                            |
+| description |        | 应用描述                                            |
+| author      |        | 应用作者                                            |
+| logo        |        | 应用logo                                            |
+| sourceTag   |        | 应用来源标记，用于区分应用来源：`import`、`git` |
 
 ## appsDev.json
 

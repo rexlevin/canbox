@@ -10,7 +10,7 @@ const appWindow = require('../app.window');
 const { handleError } = require('./errorHandler')
 const ObjectUtils = require('../../utils/ObjectUtils');
 const DateFormat = require('../../utils/DateFormat');
-const { getAppList, getAppInfo, handleImportApp } = require('../appManager');
+const { getAppsData, getAppList, getAppInfo, handleImportApp } = require('../appManager');
 
 const AppsConfig = getAppsStore();
 const AppsDevConfig = getAppsDevStore();
@@ -154,6 +154,12 @@ async function getAppDevList() {
  * 初始化应用管理相关的 IPC 处理逻辑
  */
 function initAppHandlers() {
+
+    // 获取所有应用数据
+    ipcMain.handle('get-apps-data', async (event) => {
+        return await getAppsData();
+    });
+
     // 获取应用列表
     ipcMain.handle('getAppList', async () => {
         return getAppList();

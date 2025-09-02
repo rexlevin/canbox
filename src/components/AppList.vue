@@ -8,16 +8,40 @@
         </div>
 
         <!-- 第二部分：应用列表区域 -->
-        <div class="app-list-section" v-show="appList.length > 0">
-            <el-row v-for="(item, index) in appList">
+        <div class="app-list-section" v-show="Object.keys(appsData).length > 0">
+            <el-row v-for="(appItem, uid) in appsData" :key="uid">
                 <el-col :span="24">
-                    <AppItem :appItem="appList[index]" @remove-app="handleRemoveApp" />
+                     <div class="card">
+                         <div class="img-block">
+                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.logo" alt="" />
+                        </div>
+                        <div class="info-block vertical-block">
+                            <div class="app-name" @click="drawerInfo = true">
+                                <span style="font-weight: bold; font-size: 20px;">{{ appItem.name }}</span>
+                                <span style="padding-left: 20px; color: gray;">{{ appItem.version }}</span>
+                            </div>
+                            <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.description }}</div>
+                        </div>
+                        <div class="operate-block">
+                            <div>
+                                <span class="operate-icon-span" @click="loadApp" title="运行这个app">
+                                    <el-icon :size="33" color="#228b22"><VideoPlay /></el-icon>
+                                </span>
+                                <span class="operate-icon-span" @click="clearData" title="清除用户数据">
+                                    <el-icon :size="33" color=""><Delete /></el-icon>
+                                </span>
+                                <span class="operate-icon-span" @click="removeApp" title="移除这个app">
+                                    <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
+                                </span>
+                            </div>
+                        </div>
+                     </div>
                 </el-col>
             </el-row>
         </div>
 
         <!-- 空状态提示 -->
-        <div class="empty-section" v-show="appList.length == 0">
+        <div class="empty-section" v-show="Object.keys(appsData).length == 0">
             <p>暂无应用</p>
         </div>
     </div>
@@ -41,6 +65,26 @@
     overflow-y: auto;
 }
 
+.card {width: 100%; height: 60px; display: flex; justify-content: flex-start;}
+.img-block {width: 60px; height: 100%; margin: 0; padding: 0;}
+.info-block {line-height: 60px; text-align: left; margin-left: 10px;}
+.info-block div{width: 300px;}
+.info-block .app-name {height: 30px; line-height: 30px; cursor: pointer;}
+.info-block .app-name:hover{color: #409eff; font-weight: bold;}
+.vertical-block {display: table;}
+
+.operate-block {width: 100%; margin-right: 20px;
+    display: flex; flex: 1;
+    align-items: center;
+    justify-content: right;
+}
+.operate-block div {display: table-cell;}
+.operate-block div:first-child {text-align: left; padding-left: 10px;}
+.operate-block div:first-child span {color: gray;}
+.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 10px;}
+.operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
+.operate-icon-span:active {background-color: hsl(0, 0%, 70%); }
+
 .empty-section {
     height: calc(100vh - 60px);
     display: flex;
@@ -61,29 +105,33 @@ const toAnotherTab = (name) => {
     emit('switchTab', name);
 }
 
-let appList = ref({});
+let appsData = ref({});
 const appStore = useAppStore();
 
 onBeforeMount(() => {
-    loadAppList();
+    loadAppsData();
 });
 
 watch(
     () => appStore.appListUpdated,
     () => {
-        loadAppList();
+        loadAppsData();
     }
 );
 
-function loadAppList() {
+function loadAppsData() {
     window.api.app.all(result => {
-        appList.value = result;
+        if (result.success) {
+            appsData.value = result.data;
+            console.log('appsData.value:', appsData.value);
+        } else {
+            ElMessage.error(result.msg || '获取APP列表失败');
+        }
     });
 }
 
 function handleRemoveApp(appId) {
-    appList.value = appList.value.filter(app => app.id !== appId);
-    const appStore = useAppStore();
+    appsData.value = appsData.value.filter(app => app.id !== appId);
     appStore.setRemovedAppId(appId);
 }
 
@@ -106,7 +154,7 @@ async function importApp() {
         }
 
         window.api.app.all(result => {
-            appList.value = result;
+            appsData.value = result;
         });
 
         ElMessage({

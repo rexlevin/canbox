@@ -18,6 +18,19 @@ const APP_DATA_PATH = getAppDataPath();
 const APP_TEMP_PATH = getAppTempPath();
 
 /**
+ * 获取所有应用数据
+ * @returns {Object} 应用数据
+ */
+function getAppsData() {
+    try {
+        const appsData = AppsConfig.get('default') || {};
+        return { success: true, data: appsData };
+    } catch (err) {
+        return handleError(err, 'getAppsData');
+    }
+}
+
+/**
  * 获取应用列表
  * @returns {*[Object]} app信息集合
  */
@@ -172,6 +185,7 @@ async function handleImportApp(event, zipPath, uid) {
 }
 
 module.exports = {
+    getAppsData,
     getAppList,
     getAppInfo,
     handleImportApp
