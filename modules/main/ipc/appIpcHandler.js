@@ -58,7 +58,11 @@ async function removeAppById(uid) {
         delete appConfig[uid];
         getAppsStore().set('default', appConfig);
     } catch (err) {
-        throw err;
+        if (err.message.includes('ENOENT: no such file or directory')) {
+            console.info(`找不到这个文件: ${path.join(getAppPath(), uid + '.asar')}`);
+        } else {
+            throw err;
+        }
     }
 
     // 删除图标

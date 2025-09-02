@@ -11,19 +11,13 @@ const { handleError } = require('./ipc/errorHandler')
 const ObjectUtils = require('../utils/ObjectUtils');
 const DateFormat = require('../utils/DateFormat');
 
-const AppsConfig = getAppsStore();
-const AppsDevConfig = getAppsDevStore();
-const APP_PATH = getAppPath();
-const APP_DATA_PATH = getAppDataPath();
-const APP_TEMP_PATH = getAppTempPath();
-
 /**
  * 获取所有应用数据
  * @returns {Object} 应用数据
  */
 function getAppsData() {
     try {
-        const appsData = AppsConfig.get('default') || {};
+        const appsData = getAppsStore().get('default') || {};
         return { success: true, data: appsData };
     } catch (err) {
         return handleError(err, 'getAppsData');
@@ -35,19 +29,19 @@ function getAppsData() {
  * @returns {*[Object]} app信息集合
  */
 function getAppList() {
-    if (undefined === AppsConfig.get('default')) {
+    if (undefined === getAppsStore().get('default')) {
         return [];
     }
-    const appInfoList = AppsConfig.get('default');
+    const appInfoList = getAppsStore().get('default');
     let appList = [];
     for (const appInfo of appInfoList) {
-        const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, appInfo.id + '.asar/app.json'), 'utf8'));
-        const iconPath = path.join(APP_PATH, appInfo.id + '.asar', appJson.logo);
+        const appJson = JSON.parse(fs.readFileSync(path.join(getAppPath(), appInfo.id + '.asar/app.json'), 'utf8'));
+        const iconPath = path.join(getAppPath(), appInfo.id + '.asar', appJson.logo);
         const app = {
             id: appInfo.id,
             appJson: appJson,
             logo: iconPath,
-            path: path.join(APP_PATH, appInfo.id + '.asar')
+            path: path.join(getAppPath(), appInfo.id + '.asar')
         };
         appList.push(app);
     }
@@ -83,20 +77,20 @@ function getAppInfo(appItemJsonStr) {
 async function handleImportApp(event, zipPath, uid) {
     try {
 
-        // 检查是否有 APP_TEMP_PATH 目录，有则删除
-        if (fs.existsSync(APP_TEMP_PATH)) {
+        // 检查是否有 getAppTempPath() 目录，有则删除
+        if (fs.existsSync(getAppTempPath())) {
             if (process.platform === 'win32') {
-                await execSync(`del /f /q "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
+                await execSync(`del /f /q "${getAppTempPath()}"`, { stdio: 'inherit' });
             } else {
-                await execSync(`rm -rf "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
+                await execSync(`rm -rf "${getAppTempPath()}"`, { stdio: 'inherit' });
             }
         }
-        // 创建 APP_TEMP_PATH 目录
-        fs.mkdirSync(APP_TEMP_PATH, { recursive: true });
+        // 创建 getAppTempPath() 目录
+        fs.mkdirSync(getAppTempPath(), { recursive: true });
 
-        // 将文件复制到 APP_TEMP_PATH 目录下
+        // 将文件复制到 getAppTempPath() 目录下
         const uuid = uid || uuidv4().replace(/-/g, '');
-        const targetPath = path.join(APP_TEMP_PATH, `${uuid}.zip`);
+        const targetPath = path.join(getAppTempPath(), `${uuid}.zip`);
 
         if (!fs.existsSync(zipPath)) {
             return handleError(new Error(`源文件不存在: ${zipPath}`), 'handleImportApp');
@@ -120,40 +114,40 @@ async function handleImportApp(event, zipPath, uid) {
             console.error('复制失败:', err);
         }
 
-        // 将 APP_TEMP_PATH 目录下的 zip 文件解压
+        // 将 getAppTempPath() 目录下的 zip 文件解压
         if (process.platform === 'win32') {
-            execSync(`powershell -Command "Expand-Archive -Path '${targetPath}' -DestinationPath '${APP_TEMP_PATH}'"`, { stdio: 'inherit' });
+            execSync(`powershell -Command "Expand-Archive -Path '${targetPath}' -DestinationPath '${getAppTempPath()}'"`, { stdio: 'inherit' });
         } else {
-            execSync(`unzip -o "${targetPath}" -d "${APP_TEMP_PATH}"`, { stdio: 'inherit' });
+            execSync(`unzip -o "${targetPath}" -d "${getAppTempPath()}"`, { stdio: 'inherit' });
         }
-        console.info('解压成功:', APP_TEMP_PATH);
+        console.info('解压成功:', getAppTempPath());
         // 删除 zip 文件
         fs.rmSync(targetPath, { recursive: true, force: true });
-        // 重命名文件：检查 APP_TEMP_PATH 下的文件和目录，如果当前存在 xxxx.asar 则改为 ${uuid}.asar，xxxx.asar.unpacked 改为 ${uuid}.asar.unpacked
-        const files = fs.readdirSync(APP_TEMP_PATH);
+        // 重命名文件：检查 getAppTempPath() 下的文件和目录，如果当前存在 xxxx.asar 则改为 ${uuid}.asar，xxxx.asar.unpacked 改为 ${uuid}.asar.unpacked
+        const files = fs.readdirSync(getAppTempPath());
         files.forEach(file => {
             console.info('file:', file);
             if (file.endsWith('.asar')) {
-                fs.renameSync(path.join(APP_TEMP_PATH, file), path.join(APP_TEMP_PATH, `${uuid}.asar`));
+                fs.renameSync(path.join(getAppTempPath(), file), path.join(getAppTempPath(), `${uuid}.asar`));
             } else if (file.endsWith('.asar.unpacked')) {
-                fs.renameSync(path.join(APP_TEMP_PATH, file), path.join(APP_TEMP_PATH, `${uuid}.asar.unpacked`));
+                fs.renameSync(path.join(getAppTempPath(), file), path.join(getAppTempPath(), `${uuid}.asar.unpacked`));
             }
         });
-        // 将 APP_TEMP_PATH 下的所有文件移动到 APP_PATH 下
-        if (fs.existsSync(APP_TEMP_PATH)) {
+        // 将 getAppTempPath() 下的所有文件移动到 getAppPath() 下
+        if (fs.existsSync(getAppTempPath())) {
             if (process.platform === 'win32') {
-                await execSync(`move "${APP_TEMP_PATH}\\*" "${APP_PATH}"`, { stdio: 'inherit' });
+                await execSync(`move "${getAppTempPath()}\\*" "${getAppPath()}"`, { stdio: 'inherit' });
             } else {
-                await execSync(`mv "${APP_TEMP_PATH}"/* "${APP_PATH}"`, { stdio: 'inherit' });
+                await execSync(`mv "${getAppTempPath()}"/* "${getAppPath()}"`, { stdio: 'inherit' });
             }
         }
 
         console.info(DateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
         console.info(DateFormat.format(new Date()));
 
-        const asarTargetPath = path.join(APP_PATH, `${uuid}.asar`);
+        const asarTargetPath = path.join(getAppPath(), `${uuid}.asar`);
         const appJson = JSON.parse(fs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8'));
-        let appConfigArr = AppsConfig.get('default') ? AppsConfig.get('default') : [];
+        let appConfigArr = getAppsStore().get('default') ? getAppsStore().get('default') : [];
         appConfigArr.push({
             id: uuid,
             name: appJson.name || '',
@@ -164,12 +158,12 @@ async function handleImportApp(event, zipPath, uid) {
             sourceTag: 'import',
             importTime: DateFormat.format(new Date())
         });
-        AppsConfig.set('default', appConfigArr);
+        getAppsStore().set('default', appConfigArr);
 
         // 复制logo文件到目标目录
         const logoPathInAsar = path.join(asarTargetPath, appJson.logo);
         const logoExt = path.extname(appJson.logo);
-        const logoPathInTarget = path.join(APP_PATH, `${uuid}${logoExt}`);
+        const logoPathInTarget = path.join(getAppPath(), `${uuid}${logoExt}`);
         try {
             fs.copyFileSync(logoPathInAsar, logoPathInTarget);
             console.log('Logo 文件复制成功！');
