@@ -97,7 +97,6 @@
 <script setup>
 import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import AppItem from '@/components/AppItem.vue';
 import { useAppStore } from '@/stores/appStore';
 
 // 定义触发的自定义事件
@@ -193,7 +192,10 @@ async function importApp() {
         }
 
         window.api.app.all(result => {
-            appsData.value = result;
+            if (!result.success) {
+                return;
+            }
+            appsData.value = result.data;
         });
 
         ElMessage({

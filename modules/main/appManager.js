@@ -147,9 +147,10 @@ async function handleImportApp(event, zipPath, uid) {
 
         const asarTargetPath = path.join(getAppPath(), `${uuid}.asar`);
         const appJson = JSON.parse(fs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8'));
-        let appConfigArr = getAppsStore().get('default') ? getAppsStore().get('default') : [];
-        appConfigArr.push({
-            id: uuid,
+
+        let appsConfig = getAppsStore().get('default') || {};
+        appsConfig[uuid] = {
+            id: appJson.id || '',
             name: appJson.name || '',
             version: appJson.version || '',
             description: appJson.description || '',
@@ -157,8 +158,8 @@ async function handleImportApp(event, zipPath, uid) {
             logo: appJson.logo || '',
             sourceTag: 'import',
             importTime: DateFormat.format(new Date())
-        });
-        getAppsStore().set('default', appConfigArr);
+        };
+        getAppsStore().set('default', appsConfig);
 
         // 复制logo文件到目标目录
         const logoPathInAsar = path.join(asarTargetPath, appJson.logo);
