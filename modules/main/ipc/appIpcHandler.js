@@ -12,60 +12,56 @@ const ObjectUtils = require('../../utils/ObjectUtils');
 const DateFormat = require('../../utils/DateFormat');
 const { getAppsData, getAppList, getAppInfo, handleImportApp } = require('../appManager');
 
-const AppsConfig = getAppsStore();
-const AppsDevConfig = getAppsDevStore();
-const APP_PATH = getAppPath();
 const APP_DATA_PATH = getAppDataPath();
 const APP_TEMP_PATH = getReposTempPath();
 
 /**
  * 删除应用
+ * 
+ * @param {Object} param id: uid, devTag: 是否为开发中的应用, true:是
+ * @returns 
  */
 async function removeApp(param) {
     try {
-        if ('dev' === param.tag) {
+        if (param.devTag) {
             await removeAppDevById(param.id);
         } else {
             await removeAppById(param.id);
         }
     } catch (err) {
-        return { success: false, msg: err.message };
+        return handleError(err, 'removeApp');
     }
     return { success: true, msg: '删除成功' };
 }
 
-async function removeAppDevById(id) {
-    if (undefined === AppsDevConfig.get('default')) {
+async function removeAppDevById(uid) {
+    let appDevConfig = getAppsDevStore().get('default') || {};
+    if (!appDevConfig || Object.keys(appDevConfig).length === 0) {
         return;
     }
-    const appDevInfoList = AppsDevConfig.get('default');
-    for (let appDevInfo of appDevInfoList) {
-        if (id !== appDevInfo.id) continue;
-        appDevInfoList.splice(appDevInfoList.indexOf(appDevInfo), 1);
-        AppsDevConfig.set('default', appDevInfoList);
-    }
+    delete appDevConfig[uid];
+    getAppsDevStore().set('default', appDevConfig);
 }
 
-async function removeAppById(id) {
-    if (undefined === AppsConfig.get('default')) {
+async function removeAppById(uid) {
+    let appConfig = getAppsStore().get('default') || {};
+    if (!appConfig || Object.keys(appConfig).length === 0) {
         return;
     }
-    const appConfigList = AppsConfig.get('default');
-    let logo = '';
-    for (let appConfig of appConfigList) {
-        if (id !== appConfig.id) continue;
-        logo = appConfig.logo;
-        appConfigList.splice(appConfigList.indexOf(appConfig), 1);
-        AppsConfig.set('default', appConfigList);
-    }
-    try {
-        fs.unlinkSync(path.join(APP_PATH, id + '.asar'));
-    } catch (err) {
-        console.error('remove app asar error:', err);
-    }
-    // 删除图标
+
+    const logo = appConfig[uid].logo;
     const logoExt = path.extname(logo);
-    const logoPath = path.join(APP_PATH, `${id}${logoExt}`);
+    const logoPath = path.join(getAppPath(), `${id}${logoExt}`);
+
+    try {
+        fs.unlinkSync(path.join(getAppPath(), uid + '.asar'));
+        delete appConfig[uid];
+        getAppsStore().set('default', appConfig);
+    } catch (err) {
+        throw err;
+    }
+
+    // 删除图标
     try {
         fs.unlinkSync(logoPath);
     } catch (err) {
@@ -119,35 +115,33 @@ async function removeAppById(id) {
     ]
 }
  */
-async function getAppDevList() {
-    if (undefined === AppsDevConfig.get('default')) {
-        return { "correct": {}, "wrong": {} };
+async function getAppDevData() {
+    let appDevInfoData = getAppsDevStore().get('default') || {};
+    if (!appDevInfoData || Object.keys(appDevInfoData).length === 0) {
+        return { correct: {}, wrong: {} };
     }
-    let appDevInfoList = AppsDevConfig.get('default')
-        , appDevList = []
-        , appDevFalseList = []
-        , tmpItem = {};
-    for (let appDevInfo of appDevInfoList) {
+    
+    let appDevData = {} , appDevFalseData = {};
+    Object.keys(appDevInfoData).forEach((key) => {
         try {
-            const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfo.path, 'app.json'), 'utf8'));
-            tmpItem = ObjectUtils.clone(appDevInfo);
-            tmpItem.appJson = appJson;
-            appDevList.push(tmpItem);
-        } catch (e) {
-            console.error('parse app.json error:', e);
-            appDevFalseList.push(appDevInfo);
+            const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfoData[key].path, 'app.json'), 'utf8'));
+            appDevData[key] = ObjectUtils.clone(appDevInfoData[key]);
+            appDevData[key].appJson = ObjectUtils.clone(appJson);
+        } catch (error) {
+            appDevFalseData[key] = ObjectUtils.clone(appDevInfoData[key]);
         }
-    }
-    if (appDevFalseList.length > 0) {
-        for (let falseItem of appDevFalseList) {
-            console.info('faseItem: ', falseItem);
-            appDevInfoList = appDevInfoList.filter(item => item.id !== falseItem.id);
+    });
+
+    // 删除有问题的应用
+    if (Object.keys(appDevFalseData).length > 0) {
+        for (const key in appDevFalseData) {
+            delete appDevInfoData[key];
         }
-        AppsDevConfig.set('default', appDevInfoList);
+        getAppsDevStore().set('default', appDevInfoData);
     }
-    // console.info('appDevInfoList===', appDevInfoList);
-    // console.info('appDevList=====%o', appDevList);
-    return { "correct": appDevList, "wrong": appDevFalseList };
+    // console.info('appDevInfoData: ', appDevInfoData);
+    // console.info('appDevData: ', appDevData);
+    return { correct: appDevData, wrong: appDevFalseData };
 }
 
 /**
@@ -171,12 +165,12 @@ function initAppHandlers() {
     });
 
     // 获取应用开发列表
-    ipcMain.handle('getAppDevList', async () => {
-        return await getAppDevList();
+    ipcMain.handle('get-apps-dev-data', async () => {
+        return await getAppDevData();
     });
 
     // 处理应用添加
-    ipcMain.handle('handleAppAdd', async () => {
+    ipcMain.handle('handle-app-dev-add', async () => {
         try {
             const result = await dialog.showOpenDialog({
                 title: '选择你的 app.json 文件',
@@ -191,15 +185,15 @@ function initAppHandlers() {
             const filePath = result.filePaths[0];
             console.info('filePath: ', filePath);
             const appJson = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-            const appDevConfig = {
-                id: uuidv4().replace(/-/g, ''),
-                path: filePath.substring(0, filePath.lastIndexOf('app.json')),
-                name: appJson.name
+            const uid = uuidv4().replace(/-/g, '');
+            let appDevConfig = getAppsDevStore().get('default') || {};
+            appDevConfig[uid] = {
+                id: appJson.id,
+                name: appJson.name,
+                path: filePath.substring(0, filePath.lastIndexOf('app.json'))
             };
-            let appDevConfigArr = AppsDevConfig.get('default') || [];
-            appDevConfigArr.unshift(appDevConfig);
-            AppsDevConfig.set('default', appDevConfigArr);
-            return await getAppDevList();
+            getAppsDevStore().set('default', appDevConfig);
+            return await getAppDevData();
         } catch (err) {
             console.error('Failed to handle app add:', err);
             return null;

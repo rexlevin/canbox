@@ -51,7 +51,7 @@
         </el-dialog>
 
         <!-- 第二部分：应用列表区域 -->
-        <div class="app-list-section" v-show="Object.keys(reposData).length > 0" style="margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);">
+        <div class="app-list-section" v-show="Object.keys(reposData).length > 0">
             <el-row v-for="(repo, uid) in reposData" :key="uid">
                 <el-col :span="24">
                     <div class="card">
@@ -246,6 +246,7 @@ button:hover {
 .app-list-section {
     height: calc(100vh - 60px);
     overflow-y: auto;
+    margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);
 }
 
 .card {width: 100%; height: 60px; display: flex; justify-content: flex-start;}

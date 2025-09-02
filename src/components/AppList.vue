@@ -63,6 +63,7 @@
 .app-list-section {
     height: calc(100vh - 60px);
     overflow-y: auto;
+    margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);
 }
 
 .card {width: 100%; height: 60px; display: flex; justify-content: flex-start;}

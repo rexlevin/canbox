@@ -65,8 +65,8 @@ contextBridge.exposeInMainWorld(
             },
             remove: (param, fn) => {
                 console.info('remove app param======', param);
-                ipcRenderer.invoke('remove-app', param).then(() => {
-                    fn({success: true, msg: '应用删除成功！'});
+                ipcRenderer.invoke('remove-app', param).then((result) => {
+                    fn(result);
                 }).catch(err => {
                     console.info('应用删除失败: ', err);
                     fn({success: false, msg: '应用删除失败！' + err.message});
@@ -74,11 +74,11 @@ contextBridge.exposeInMainWorld(
             }
         },
         appDev: {
-            all: (fn) => ipcRenderer.invoke('getAppDevList').then(result => fn(result)).catch(error => {
+            all: (fn) => ipcRenderer.invoke('get-apps-dev-data').then(result => fn(result)).catch(error => {
                 console.error('IPC call failed:', error);
                 fn(null);
             }),
-            add: (fn) => ipcRenderer.invoke('handleAppAdd').then(result => fn(result)).catch(error => {
+            add: (fn) => ipcRenderer.invoke('handle-app-dev-add').then(result => fn(result)).catch(error => {
                 console.error('IPC call failed:', error);
                 fn(null);
             })
