@@ -21,6 +21,13 @@ const REPOS_TEMP_PATH = getReposTempPath();
 async function updateReposStatus(uid) {
     const reposStore = getReposStore();
     const reposData = reposStore.get('default') || {};
+    if (!reposData || Object.keys(reposData).length === 0) {
+        return { success: true };
+    }
+    const repo = reposData[uid];
+    if (!repo) {
+        return { success: true };
+    }
     reposData[uid].dowloaded = false;
     reposStore.set('default', reposData);
     return { success: true };

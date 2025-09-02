@@ -52,6 +52,8 @@ async function removeAppById(uid) {
     const logo = appConfig[uid].logo;
     const logoExt = path.extname(logo);
     const logoPath = path.join(getAppPath(), `${uid}${logoExt}`);
+    const targetApp = {};   // 要删除的app集合
+    targetApp[uid] = ObjectUtils.clone(appConfig[uid]);
 
     try {
         fs.unlinkSync(path.join(getAppPath(), uid + '.asar'));
@@ -59,7 +61,9 @@ async function removeAppById(uid) {
         getAppsStore().set('default', appConfig);
     } catch (err) {
         if (err.message.includes('ENOENT: no such file or directory')) {
-            console.info(`找不到这个文件: ${path.join(getAppPath(), uid + '.asar')}`);
+            console.info(`跳过这个错误：找不到这个文件: ${path.join(getAppPath(), uid + '.asar')}`);
+            delete appConfig[uid];
+            getAppsStore().set('default', appConfig);
         } else {
             throw err;
         }
@@ -69,15 +73,14 @@ async function removeAppById(uid) {
     try {
         fs.unlinkSync(logoPath);
     } catch (err) {
-        console.error('remove app logo error:', err);
+        console.error('跳过图片删除异常 remove app logo error: ', err.message);
     }
 
     // 删除快捷方式
-    const appList = await getAppList();
-    const targetApp = appList.find(app => app.id === id);
     if (targetApp) {
-        await shortcutManager.deleteShortcuts([targetApp]);
+        await shortcutManager.deleteShortcuts(targetApp);
     }
+    console.info(`删除成功: ${uid}`);
 }
 
 /**

@@ -1,5 +1,3 @@
-const { ipcMain } = require('electron');
-
 /**
  * 通用的错误处理函数
  * @param {Error} error - 错误对象
