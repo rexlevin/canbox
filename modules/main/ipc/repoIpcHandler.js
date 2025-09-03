@@ -81,9 +81,9 @@ async function handleAddAppRepo(repoUrl, branch) {
                     const logoExt = path.extname(appJson.logo);
                     logoPath = path.join(reposPath, `logo${logoExt}`);
                     const logoDir = path.dirname(logoPath);
-                    
+
                     fileUtils.ensureDirExists(logoDir);
-                    
+
                     const logoDownloadSuccess = await repoUtils.downloadFileFromRepo(logoUrl, logoPath);
                     if (!logoDownloadSuccess) {
                         console.warn(`无法下载logo图片: ${logoUrl}`);

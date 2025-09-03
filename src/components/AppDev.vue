@@ -10,7 +10,7 @@
 
             <el-row v-for="(appDevItem, uid) in appDevData" :key="uid">
                 <el-col :span="24">
-                    <div class="card">
+                    <div class="card" v-loading="exportAppFlag">
                         <div class="img-block">
                             <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appDevItem.path + '/' + appDevItem.appJson.logo" alt="" />
                         </div>
