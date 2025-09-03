@@ -13,7 +13,7 @@
                 <el-col :span="24">
                      <div class="card">
                          <div class="img-block">
-                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.logo" alt="" />
+                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.appJson.logo" alt="" />
                         </div>
                         <div class="info-block vertical-block">
                             <div class="app-name" @click="drawerInfo = true">
@@ -123,9 +123,8 @@ function loadAppsData() {
     window.api.app.all(result => {
         if (result.success) {
             appsData.value = result.data;
-            console.log('appsData.value:', appsData.value);
         } else {
-            ElMessage.error(result.msg || '获取APP列表失败');
+            console.info(result.msg || '获取APP列表失败');
         }
     });
 }

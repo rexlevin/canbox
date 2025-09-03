@@ -190,7 +190,6 @@ function removeApp(uid) {
 function load() {
     window.api.appDev.all((result) => {
         appDevData.value = result.correct;
-        console.info('appDevData:', appDevData.value);
         if(result.wrong && Object.keys(result.wrong).length > 0) {
             warningContent.value = `以下 app.json 存在问题，已经移除： \n ${Object.entris(result.wrong).map(item => item.name).join('\n')}`;
             centerDialogVisible.value = true;

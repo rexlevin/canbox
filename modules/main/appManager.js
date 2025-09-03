@@ -11,12 +11,22 @@ const DateFormat = require('../utils/DateFormat');
  * 获取所有应用数据
  * @returns {Object} 应用数据
  */
-function getAppsData() {
+function getAllApps() {
     try {
         const appsData = getAppsStore().get('default') || {};
+        if (!appsData || Object.keys(appsData).length === 0) {
+            return handleError(new Error('没有应用数据'), 'getAllApps');
+        }
+        Object.entries(appsData).forEach(([uid, appItem]) => {
+            const appJson = JSON.parse(fs.readFileSync(path.join(getAppPath(), uid + '.asar/app.json'), 'utf8'));
+            const iconPath = path.join(getAppPath(), uid + '.asar', appJson.logo);
+            const appJsonData = {...appJson, logo: iconPath };
+            appItem.appJson = appJsonData;
+        });
+        console.log('getAllApps:', appsData);
         return { success: true, data: appsData };
     } catch (err) {
-        return handleError(err, 'getAppsData');
+        return handleError(err, 'getAllApps');
     }
 }
 
@@ -152,7 +162,7 @@ async function handleImportApp(event, zipPath, uid) {
 }
 
 module.exports = {
-    getAppsData,
+    getAllApps,
     getAppInfo,
     handleImportApp
 }
