@@ -1,8 +1,6 @@
 const { app, dialog, Menu, Tray } = require('electron');
 const path = require('path')
-const package = require('../../package.json');
-
-const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
+const package = require('./package.json');
 
 module.exports = {
     createTray: (win) => {
@@ -60,7 +58,7 @@ module.exports = {
             }
         }]
         let tray;
-        tray = new Tray(path.join(__dirname, '../../logo.png'));
+        tray = new Tray(path.join(__dirname, './logo.png'));
         const menu = Menu.buildFromTemplate(trayMenuTemplate);
         tray.setContextMenu(menu);
         tray.on('click', () => {

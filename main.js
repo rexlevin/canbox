@@ -2,7 +2,7 @@ const { app, BrowserWindow } = require('electron')
 const fs = require('fs');
 const path = require('path')
 
-const tray = require('./modules/main/tray');
+const tray = require('./tray');
 const uatDev = fs.existsSync('./uat.dev.json') ? require('./uat.dev') : {};
 console.info('uatDev: ', uatDev);
 

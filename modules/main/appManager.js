@@ -23,7 +23,6 @@ function getAllApps() {
             const appJsonData = {...appJson, logo: iconPath };
             appItem.appJson = appJsonData;
         });
-        console.log('getAllApps:', appsData);
         return { success: true, data: appsData };
     } catch (err) {
         return handleError(err, 'getAllApps');
