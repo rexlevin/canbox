@@ -1,5 +1,7 @@
 const { ipcMain } = require('electron');
 
+const winFactory = require('./win');
+
 /**
  * 初始化数据库相关的 IPC 消息处理逻辑
  */
@@ -22,7 +24,6 @@ function initDbIpcHandlers() {
  * 初始化窗口相关的 IPC 消息处理逻辑
  */
 function createWindowIpcHandlers() {
-    const winFactory = require('./win');
     ipcMain.on('msg-createWindow', (event, args) => {
         console.info('args: ', args);
         const result = winFactory.createWindow(args.options, args.params, args.appId);
@@ -31,8 +32,10 @@ function createWindowIpcHandlers() {
     });
 }
 
+/**
+ * 初始化通知相关的 IPC 消息处理逻辑
+ */
 function notificationHandlers() {
-    const winFactory = require('./win');
     ipcMain.on('msg-notification', (event, args) => {
         console.info('args: ', args);
         winFactory.showNotification(args.options, args.appId);
