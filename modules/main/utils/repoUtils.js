@@ -7,7 +7,7 @@ const fs = require('fs');
  * @param {string} repoUrl - 仓库地址
  * @returns {boolean} - 是否有效
  */
-exports.validateRepoUrl = function(repoUrl) {
+exports.validateRepoUrl = function (repoUrl) {
     const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
     return urlPattern.test(repoUrl);
 };
@@ -19,12 +19,12 @@ exports.validateRepoUrl = function(repoUrl) {
  * @param {string} file - 文件路径
  * @returns {string} - 文件下载 URL
  */
-exports.getFileUrl = function(repoUrl, branch, file) {
+exports.getFileUrl = function (repoUrl, branch, file) {
     try {
         const url = new URL(repoUrl);
         const host = url.hostname;
         const pathParts = url.pathname.split('/').filter(Boolean);
-        
+
         // GitHub
         if (host.includes('github.com')) {
             return `${repoUrl}/raw/${branch}/${file}`;
@@ -58,7 +58,7 @@ exports.getFileUrl = function(repoUrl, branch, file) {
  * @param {string} filePath - 保存路径
  * @returns {Promise<boolean>} - 是否成功
  */
-exports.downloadFileFromRepo = async function(fileUrl, filePath) {
+exports.downloadFileFromRepo = async function (fileUrl, filePath) {
     try {
         console.log(`尝试下载文件: ${fileUrl}`);
         const response = await fetch(fileUrl);
@@ -68,6 +68,37 @@ exports.downloadFileFromRepo = async function(fileUrl, filePath) {
         }
         const content = await response.text();
         fs.writeFileSync(filePath, content);
+        console.log(`文件下载成功: ${filePath}`);
+        return true;
+    } catch (error) {
+        console.error(`下载文件错误(${fileUrl}):`, error);
+        return false;
+    }
+};
+
+/**
+ * 下载图片并保存到指定路径
+ * @param {string} fileUrl - 文件下载 URL
+ * @param {string} filePath - 保存路径
+ * @returns {Promise<boolean>} - 是否成功
+ */
+exports.downloadLogoFromRepo = async function (fileUrl, filePath) {
+    try {
+        console.log(`尝试下载文件: ${fileUrl}`);
+        const response = await fetch(fileUrl);
+        if (!response.ok) {
+            console.warn(`下载失败(${response.status}): ${fileUrl}`);
+            return false;
+        }
+        // 根据文件类型选择处理方式
+        const isBinary = filePath.endsWith('.png') || filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.gif');
+        if (isBinary) {
+            const buffer = await response.arrayBuffer();
+            fs.writeFileSync(filePath, Buffer.from(buffer));
+        } else {
+            const content = await response.text();
+            fs.writeFileSync(filePath, content);
+        }
         console.log(`文件下载成功: ${filePath}`);
         return true;
     } catch (error) {
