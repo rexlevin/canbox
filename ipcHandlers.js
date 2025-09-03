@@ -4,15 +4,13 @@ const repoIpcHandler = require('./modules/main/ipc/repoIpcHandler');
 const shortcutIpcHandler = require('./modules/main/ipc/shortcutIpcHandler');
 
 const appWindow = require('./modules/main/app.window');
-const { getAppList } = require('./modules/main/appManager');
 
 /**
  * 根据appId直接打开app
  * @param {string} appId 
  */
 function handleLoadAppById(appId) {
-    const appItem = getAppList().find(item => item.id === appId);
-    appWindow.loadApp(JSON.stringify(appItem), null); // 注意：这里需要根据实际逻辑调整参数
+    appWindow.loadApp(appId, false); // 注意：这里需要根据实际逻辑调整参数
 }
 
 /**

@@ -10,7 +10,7 @@ const appWindow = require('../app.window');
 const { handleError } = require('./errorHandler')
 const ObjectUtils = require('../../utils/ObjectUtils');
 const DateFormat = require('../../utils/DateFormat');
-const { getAppsData, getAppList, getAppInfo, handleImportApp } = require('../appManager');
+const { getAppsData, getAppInfo, handleImportApp } = require('../appManager');
 
 /**
  * 删除应用
@@ -154,13 +154,8 @@ async function getAppDevData() {
 function initAppHandlers() {
 
     // 获取所有应用数据
-    ipcMain.handle('get-apps-data', async (event) => {
+    ipcMain.handle('get-all-apps', async (event) => {
         return await getAppsData();
-    });
-
-    // 获取应用列表
-    ipcMain.handle('getAppList', async () => {
-        return getAppList();
     });
 
     // 获取应用信息

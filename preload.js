@@ -49,8 +49,7 @@ contextBridge.exposeInMainWorld(
                 });
             },
             all: (fn) => {
-                // ipcRenderer.invoke('getAppList').then(result => {fn(result)}).catch(error => {fn([])});
-                ipcRenderer.invoke('get-apps-data').then(result => {fn(result)}).catch(error => {fn({})});
+                ipcRenderer.invoke('get-all-apps').then(result => {fn(result)}).catch(error => {fn({})});
             },
             load: (uid, devTag) => {
                 ipcRenderer.send('load-app', uid, devTag);

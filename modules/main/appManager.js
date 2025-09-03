@@ -21,30 +21,6 @@ function getAppsData() {
 }
 
 /**
- * 获取应用列表
- * @returns {*[Object]} app信息集合
- */
-function getAppList() {
-    if (undefined === getAppsStore().get('default')) {
-        return [];
-    }
-    const appInfoList = getAppsStore().get('default');
-    let appList = [];
-    for (const appInfo of appInfoList) {
-        const appJson = JSON.parse(fs.readFileSync(path.join(getAppPath(), appInfo.id + '.asar/app.json'), 'utf8'));
-        const iconPath = path.join(getAppPath(), appInfo.id + '.asar', appJson.logo);
-        const app = {
-            id: appInfo.id,
-            appJson: appJson,
-            logo: iconPath,
-            path: path.join(getAppPath(), appInfo.id + '.asar')
-        };
-        appList.push(app);
-    }
-    return appList;
-}
-
-/**
  * 获取应用信息
  */
 function getAppInfo(appItemJsonStr) {
@@ -177,7 +153,6 @@ async function handleImportApp(event, zipPath, uid) {
 
 module.exports = {
     getAppsData,
-    getAppList,
     getAppInfo,
     handleImportApp
 }

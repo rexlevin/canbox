@@ -1,6 +1,6 @@
 const { app, ipcMain } = require('electron');
 const shortcutManager = require('../shortcutManager');
-const { getAppList } = require('../appManager');
+const { getAppsData } = require('../appManager');
 
 /**
  * 初始化快捷方式相关的 IPC 处理逻辑
@@ -11,8 +11,8 @@ function initShortcutHandlers() {
         if (!app.isPackaged) {
             return { success: false, msg: '只能在生产环境下生成快捷方式' };
         }
-        const appList = await getAppList();
-        return shortcutManager.generateShortcuts(appList);
+        const apps = await getAppsData();
+        return shortcutManager.generateShortcuts(apps);
     });
 
     // 删除快捷方式
@@ -20,8 +20,8 @@ function initShortcutHandlers() {
         if (!app.isPackaged) {
             return { success: false, msg: '只能在生产环境下删除快捷方式' };
         }
-        const appList = await getAppList();
-        return shortcutManager.deleteShortcuts(appList);
+        const apps = await getAppsData();
+        return shortcutManager.deleteShortcuts(apps);
     });
 }
 
