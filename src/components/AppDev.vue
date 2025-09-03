@@ -22,13 +22,13 @@
                             <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appDevItem.appJson.description }}</div>
                         </div>
                         <div class="operate-block">
-                            <span class="operate-icon-span" @click="packApp" title="打包app">
+                            <span class="operate-icon-span" @click="packApp(uid)" title="打包app">
                                 <el-icon :size="35" color="#6a8759"><Expand /></el-icon>
                             </span>
-                            <span class="operate-icon-span" @click="loadApp" title="运行这个开发中的app">
+                            <span class="operate-icon-span" @click="loadApp(uid)" title="运行这个开发中的app">
                                 <el-icon :size="35" color="#228b22"><VideoPlay /></el-icon>
                             </span>
-                            <span class="operate-icon-span" @click="clearData" title="清除用户数据">
+                            <span class="operate-icon-span" @click="clearData(uid)" title="清除用户数据">
                                 <el-icon :size="35" color=""><Delete /></el-icon>
                             </span>
                             <span class="operate-icon-span" @click="removeApp(uid)" title="移除这个开发中的app">
@@ -118,6 +118,54 @@ function addAppDev() {
         if (result?.correct) {
             appDevData.value = result.correct;
         }
+    });
+}
+
+// 控制打包按钮的loading状态
+let exportAppFlag = ref(false);
+// 打包app
+async function packApp(uid) {
+    exportAppFlag.value = true;
+    const result = window.api.packToAsar(uid);
+    result.then((result) => {
+        if (!result.success) {
+            ElMessage({
+                type: 'error',
+                message: result.msg,
+            });
+            return;
+        }
+        ElMessage({
+            message: '打包成功！',
+            type: 'success',
+        });
+    }).catch((err) => {
+        ElMessage({
+            type: 'error',
+            message: err,
+        });
+    }).finally(() => {
+        exportAppFlag.value = false;
+    });
+}
+
+// 运行app
+function loadApp(uid) {
+    window.api.app.load(uid, 'dev');
+}
+
+// 清除app运行数据
+function clearData(uid) {
+    window.api.app.clearData(uid, (result)=>{
+        console.info('clearData result=', result);
+        if(!result.success) {
+            ElMessage.error(result.msg);
+            return;
+        }
+        ElMessage({
+            message: '清除数据成功',
+            type:'success'
+        });
     });
 }
 

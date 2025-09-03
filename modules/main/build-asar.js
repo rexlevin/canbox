@@ -5,19 +5,24 @@ const glob = require('glob');
 const asar = require('asar');
 const { execSync } = require('child_process');
 
+const { getAppsDevStore } = require('./storageManager');
+
 /**
  * 打包应用为 asar 文件
  * @param {Object} appDevItem - 应用开发项
  * @returns {Promise<{success: boolean, msg: string}>} - 打包结果
  */
-const buildAsar = async (appDevItem) => {
+const buildAsar = async (uid) => {
+    const appDevInfoData = getAppsDevStore().get('default') || {};
+    const appDevItem = appDevInfoData[uid];
+    const appJson = JSON.parse(fs.readFileSync(path.join(appDevItem.path, 'app.json'), 'utf8'));
     try {
         const buildConfigPath = path.join(appDevItem.path, 'cb.build.json');
         const buildConfig = JSON.parse(fs.readFileSync(buildConfigPath, 'utf8'));
-        
+
         const outputDir = path.join(appDevItem.path, buildConfig.outputDir);
         const tmpDir = path.join(outputDir, 'tmp');
-        const asarPath = path.join(outputDir, `${appDevItem.appJson.id}-${appDevItem.appJson.version}.asar`);
+        const asarPath = path.join(outputDir, `${appJson.id}-${appJson.version}.asar`);
 
         // 创建输出目录和临时目录
         if (fs.existsSync(outputDir)) {
@@ -63,17 +68,17 @@ const buildAsar = async (appDevItem) => {
         });
 
         copyNodeModulesWithoutDevDeps(appDevItem, buildConfig);
-        
+
         // 在临时目录中打包
         await asar.createPackage(tmpDir, asarPath, {
             glob: ['**/*']
         });
-        
+
         // 删除临时目录
         fs.rmSync(tmpDir, { recursive: true, force: true });
 
         // 把目录 outputDir 下所有内容打包为一个zip文件，名字为：${appDevItem.appJson.id}-${appDevItem.appJson.version}
-        const zipPath = path.join(outputDir, `${appDevItem.appJson.id}-${appDevItem.appJson.version}.zip`);
+        const zipPath = path.join(outputDir, `${appJson.id}-${appJson.version}.zip`);
         if (process.platform === 'win32') {
             execSync(`powershell -Command "Compress-Archive -Path '${outputDir}\\*' -DestinationPath '${zipPath}'"`, { stdio: 'inherit' });
         } else {
@@ -82,13 +87,13 @@ const buildAsar = async (appDevItem) => {
         console.info('zipPath:', zipPath);
 
         // 删除 outputDir 目录下除了 ${appDevItem.appJson.id}-${appDevItem.appJson.version}.zip 之外的所有文件
-        const zipFileName = `${appDevItem.appJson.id}-${appDevItem.appJson.version}.zip`;
+        const zipFileName = `${appJson.id}-${appJson.version}.zip`;
         if (process.platform === 'win32') {
             execSync(`powershell -Command "Get-ChildItem -Path '${outputDir}' | Where-Object { $_.Name -ne '${zipFileName}' } | Remove-Item -Force -Recurse"`, { stdio: 'inherit' });
         } else {
             execSync(`find "${outputDir}" -mindepth 1 -maxdepth 1 ! -name '${zipFileName}' -exec rm -rf {} +`, { stdio: 'inherit' });
         }
-        
+
         return { success: true, msg: '打包成功', asarPath };
     } catch (err) {
         console.error('打包失败:', err);

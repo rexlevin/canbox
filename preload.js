@@ -36,8 +36,8 @@ contextBridge.exposeInMainWorld(
         importApp: (zipPath) => {
             return ipcRenderer.invoke('import-app', zipPath);
         },
-        packToAsar: (appDevItemStr) => {
-            return ipcRenderer.invoke('pack-asar', appDevItemStr);
+        packToAsar: (uid) => {
+            return ipcRenderer.invoke('pack-asar', uid);
         },
         app: {
             info: (appItemJsonStr, fn) => {

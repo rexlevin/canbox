@@ -45,10 +45,9 @@ function initIpcHandlers() {
     });
 
     // 打包 ASAR
-    ipcMain.handle('pack-asar', async (event, appDevItemStr) => {
-        const appDevItem = JSON.parse(appDevItemStr);
-        console.info('main.js==pack-asar appDevItem: ', appDevItem);
-        return require('./modules/main/build-asar').buildAsar(appDevItem);
+    ipcMain.handle('pack-asar', async (event, uid) => {
+        console.info('main.js==pack-asar uid: ', uid);
+        return require('./modules/main/build-asar').buildAsar(uid);
     });
 
     // 选择文件

@@ -1,14 +1,10 @@
-const { ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
-const { getAppsStore, getAppsDevStore } = require('./storageManager');
-const shortcutManager = require('./shortcutManager');
-const { getAppPath, getAppDataPath, getAppTempPath } = require('./pathManager');
-const appWindow = require('./app.window');
+const { getAppsStore } = require('./storageManager');
+const { getAppPath, getAppTempPath } = require('./pathManager');
 const { handleError } = require('./ipc/errorHandler')
-const ObjectUtils = require('../utils/ObjectUtils');
 const DateFormat = require('../utils/DateFormat');
 
 /**
