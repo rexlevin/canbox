@@ -31,12 +31,23 @@ function createWindowIpcHandlers() {
     });
 }
 
+function notificationHandlers() {
+    const winFactory = require('./win');
+    ipcMain.on('msg-notification', (event, args) => {
+        console.info('args: ', args);
+        winFactory.showNotification(args.options, args.appId);
+        // console.info('result: ', result);
+        // event.returnValue = JSON.stringify(result);
+    });
+}
+
 /**
  * 统一初始化所有 IPC 消息处理逻辑
  */
 function initIpcHandlers() {
     initDbIpcHandlers();
     createWindowIpcHandlers();
+    notificationHandlers();
 }
 
 module.exports = initIpcHandlers;

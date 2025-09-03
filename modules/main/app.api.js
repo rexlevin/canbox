@@ -41,6 +41,16 @@ const ipcSendSyncCreateWindow = (options, params) => {
     return JSON.parse(returnValue);
 };
 
+const ipcSendNotification = (options) => {
+    if(!window.appId) {
+        throw new Error('appId is not set');
+    }
+    ipcRenderer.send('msg-notification', {
+        options,
+        appId: window.appId
+    });
+};
+
 const db = {
     put: (param) => {
         return new Promise((resolve, reject) => {
@@ -86,6 +96,12 @@ const win = {
             null !== ret ? resolve(ret) : reject(null);
         });
     },
+    notification: (options) => {
+        return new Promise((resolve) => {
+            ipcSendNotification(options);
+            resolve(); // 直接 resolve，表示通知已发送
+        });
+    }
 }
 
 /**

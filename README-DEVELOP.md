@@ -272,6 +272,32 @@ canbox.db.remove({
      4. `ecsClose`: 点击 `ecs` 关闭窗口，默认 `false`
 - 应答：窗口的id编码
 
+### canbox.win.notification(options)
+
+- 参数
+  - `options` : 参考electron：Notification
+- 应答
+
+```javascript
+// 直接调用
+canbox.win.notification({ title: 'canbox', body: 'hello world' });
+
+// 如果需要处理已发送业务
+canbox.win.notification({ title: 'canbox', body: 'hello world' })
+    .then(() = > {
+        console.info('通知已发送，这里是一些处理业务');
+    });
+
+// 当前api方法不会reject，但可以保留错误处理的逻辑
+canbox.win.notification(options)
+    .then(() => {
+        console.log('通知已发送，这里是一些处理业务');
+    })
+    .catch((error) => {
+        console.error('发送通知失败:', error);
+    });
+```
+
 ## 应答码
 
 | code | 释义                                                 |

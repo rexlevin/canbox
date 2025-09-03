@@ -1,4 +1,4 @@
-const { BrowserWindow } = require('electron');
+const { BrowserWindow, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -100,7 +100,6 @@ const winFactory = {
 
             // 记录窗口父子关系
             if (parentWindowId) {
-                const windowManager = require('./windowManager');
                 windowManager.addWindow(win.id, win);
                 windowManager.addRelation(parentWindowId, win.id);
                 // 存储父窗口ID到子窗口实例
@@ -108,7 +107,6 @@ const winFactory = {
             }
 
             win.on('close', () => {
-                const windowManager = require('./windowManager');
                 windowManager.removeWindow(win.id);
             });
 
@@ -117,6 +115,23 @@ const winFactory = {
             console.error('Failed to create window:', err);
             throw err;
         }
+    },
+
+    /**
+     * 打开对话框
+     * @param {Object} options - 对话框配置
+     * @returns {Promise} 对话框结果
+     */
+    showDialog: (options) => {
+        return dialog.showOpenDialog(options);
+    },
+
+    /**
+     * 发出通知
+     * @param {Object} options - 通知配置
+     */
+    showNotification: (options) => {
+        new Notification(options).show();
     }
 };
 
