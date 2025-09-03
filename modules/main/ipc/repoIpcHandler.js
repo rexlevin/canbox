@@ -28,7 +28,7 @@ async function updateReposStatus(uid) {
     if (!repo) {
         return { success: true };
     }
-    reposData[uid].dowloaded = false;
+    reposData[uid].downloaded = false;
     reposStore.set('default', reposData);
     return { success: true };
 }
@@ -106,7 +106,6 @@ async function handleAddAppRepo(repoUrl, branch) {
             logo: logoPath,
             files: {},
             createTime: Date.now(),
-            updateTime: null,
             downloaded: false
         };
 
