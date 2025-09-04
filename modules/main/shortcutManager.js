@@ -164,14 +164,14 @@ const markVersion = (currentVersion) => {
  */
 async function initShortcuts(currentVersion, appsData) {
     try {
-        if (needRegenerateShortcuts(currentVersion)) {
+        if (needRegenerateShortcuts(currentVersion) && appsData) {
             const result = generateShortcuts(appsData);
             if (result.success) {
                 markVersion(currentVersion);
             }
             return result;
         }
-        return { success: true };
+        return { success: true, msg: '不需要更新shortcuts' };
     } catch (error) {
         return handleError(new Error('初始化快捷方式失败' + error.message), 'initShortcuts');
     }

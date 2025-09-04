@@ -2,6 +2,8 @@ const { app, BrowserWindow } = require('electron')
 const fs = require('fs');
 const path = require('path')
 
+const logger = require('./modules/main/utils/logger');
+
 const tray = require('./tray');
 const uatDev = fs.existsSync('./uat.dev.json') ? require('./uat.dev') : {};
 console.info('uatDev: ', uatDev);
@@ -77,9 +79,9 @@ if (!getTheLock) {
 
         // 启动时立即执行一次仓库检查
         repoMonitorService.scanRepo().then(() => {
-            console.info('启动时仓库检查完成');
+            logger.info('启动时仓库检查完成');
         }).catch(error => {
-            console.error('启动时仓库检查失败:', error);
+            logger.error('启动时仓库检查失败:', error);
         });
 
         // app第一次启动的时候，启动参数可以从process.argv里面获取到
@@ -98,7 +100,15 @@ if (!getTheLock) {
         const shortcutManager = require('./modules/main/shortcutManager');
         const { getAllApps } = require('./modules/main/appManager');
         const package = require('./package.json');
-        shortcutManager.initShortcuts(package.version, getAllApps()).catch(console.error);
+        shortcutManager.initShortcuts(package.version, getAllApps()).then((result) => {
+            if (result.success) {
+                logger.info('快捷方式初始化完成' + result.msg);
+            } else {
+                logger.error('快捷方式初始化失败:', result.msg);
+            }
+        }).catch((error) => {
+            logger.error('快捷方式初始化失败:', error); 
+        });
     })
 }
 
