@@ -15,7 +15,9 @@ function getAllApps() {
     try {
         const appsData = getAppsStore().get('default') || {};
         if (!appsData || Object.keys(appsData).length === 0) {
-            return handleError(new Error('当前没有应用数据'), 'getAllApps');
+            // return handleError(new Error('当前没有应用数据'), 'getAllApps');
+            console.info('当前没有应用数据');
+            return { success: true, data: {}};
         }
         Object.entries(appsData).forEach(([uid, appItem]) => {
             const appJson = JSON.parse(fs.readFileSync(path.join(getAppPath(), uid + '.asar/app.json'), 'utf8'));
