@@ -6,6 +6,7 @@ const { getAppsStore } = require('./storageManager');
 const { getAppPath, getAppTempPath } = require('./pathManager');
 const { handleError } = require('./ipc/errorHandler')
 const DateFormat = require('../utils/DateFormat');
+const logger = require('./utils/logger');
 
 /**
  * 获取所有应用数据
@@ -58,6 +59,7 @@ function getAppInfo(appItemJsonStr) {
 }
 
 async function handleImportApp(event, zipPath, uid) {
+    logger.info('{} handleImportApp: {}', uid||'', zipPath);
     try {
 
         // 检查是否有 getAppTempPath() 目录，有则删除

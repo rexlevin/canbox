@@ -75,23 +75,35 @@ const getCallerInfo = () => {
 const monitorLogger = log4js.getLogger('monitor');
 
 // 创建日志方法的公共函数
+const formatMessage = (message, ...args) => {
+    let formatted = message;
+    args.forEach(arg => {
+        formatted = formatted.replace(/{}/, arg);
+    });
+    return formatted;
+};
+
 const createLoggerMethods = (loggerInstance) => {
     return {
-        info: (message) => {
+        info: (message, ...args) => {
             const { file, line } = getCallerInfo();
-            loggerInstance.info(`[${file}:${line}] : ${message}`);
+            const formattedMessage = formatMessage(message, ...args);
+            loggerInstance.info(`[${file}:${line}] : ${formattedMessage}`);
         },
-        error: (message) => {
+        error: (message, ...args) => {
             const { file, line } = getCallerInfo();
-            loggerInstance.error(`[${file}:${line}] : ${message}`);
+            const formattedMessage = formatMessage(message, ...args);
+            loggerInstance.error(`[${file}:${line}] : ${formattedMessage}`);
         },
-        warn: (message) => {
+        warn: (message, ...args) => {
             const { file, line } = getCallerInfo();
-            loggerInstance.warn(`[${file}:${line}] : ${message}`);
+            const formattedMessage = formatMessage(message, ...args);
+            loggerInstance.warn(`[${file}:${line}] : ${formattedMessage}`);
         },
-        debug: (message) => {
+        debug: (message, ...args) => {
             const { file, line } = getCallerInfo();
-            loggerInstance.debug(`[${file}:${line}] : ${message}`);
+            const formattedMessage = formatMessage(message, ...args);
+            loggerInstance.debug(`[${file}:${line}] : ${formattedMessage}`);
         }
     };
 };
