@@ -94,15 +94,11 @@ if (!getTheLock) {
             handleLoadAppById(appId);
         }
 
-        // 检查是否是第一次运行或版本升级，并重新生成 desktop 文件
+        // 初始化快捷方式（异步）
         const shortcutManager = require('./modules/main/shortcutManager');
         const { getAllApps } = require('./modules/main/appManager');
         const package = require('./package.json');
-        if (shortcutManager.needRegenerateShortcuts(package.version)) {
-            const appsData = getAllApps();
-            shortcutManager.generateShortcuts(appsData);
-            shortcutManager.markVersion(package.version);
-        }
+        shortcutManager.initShortcuts(package.version, getAllApps()).catch(console.error);
     })
 }
 

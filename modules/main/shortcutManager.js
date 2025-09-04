@@ -156,9 +156,29 @@ const markVersion = (currentVersion) => {
     canboxStore.set('version', currentVersion);
 };
 
+/**
+ * 初始化快捷方式（异步）
+ * @param {string} currentVersion - 当前版本号
+ * @param {Object} appsData - 应用数据
+ * @returns {Promise<Object>} - 操作结果
+ */
+async function initShortcuts(currentVersion, appsData) {
+    try {
+        if (needRegenerateShortcuts(currentVersion)) {
+            const result = generateShortcuts(appsData);
+            if (result.success) {
+                markVersion(currentVersion);
+            }
+            return result;
+        }
+        return { success: true };
+    } catch (error) {
+        return handleError(new Error('初始化快捷方式失败' + error.message), 'initShortcuts');
+    }
+}
+
 module.exports = {
     generateShortcuts,
     deleteShortcuts,
-    needRegenerateShortcuts,
-    markVersion
+    initShortcuts
 };
