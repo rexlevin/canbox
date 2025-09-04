@@ -75,6 +75,13 @@ if (!getTheLock) {
         repoMonitorService.startScheduler('0 * * * *'); // 每小时执行一次
         // repoMonitorService.startScheduler('*/1 * * * *'); // 每分钟执行一次
 
+        // 启动时立即执行一次仓库检查
+        repoMonitorService.scanRepo().then(() => {
+            console.info('启动时仓库检查完成');
+        }).catch(error => {
+            console.error('启动时仓库检查失败:', error);
+        });
+
         // app第一次启动的时候，启动参数可以从process.argv里面获取到
         let appId = '';
         for(let arg of process.argv) {
