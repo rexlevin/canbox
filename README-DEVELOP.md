@@ -97,6 +97,30 @@ canbox.hello();  # hello, hope you have a nice day
 
 preload遵循 `CommonJS` 规范，可以使用 `require` 来引入 nodejs 模块：
 
+## cb.build.json
+
+canbox使用asar进行打包，打包依据 `cb.build.json` 内容进行：
+
+```json
+{
+    "files": [
+        "build/**/*",
+        "preload.js",
+        "logo.png",
+        "app.json",
+        "README.md"
+    ],
+    "outputDir": "./dist"
+}
+```
+
+xxx
+
+| 字段      | 类型   | 说明                                                                                      |
+| --------- | ------ | ----------------------------------------------------------------------------------------- |
+| files     | array  | 相对 cb.build.json 的所有文件列表                                                         |
+| outputDir | string | 相对 cb.build.json 的一个目录，打包过程中这个目录会有清空操作，所以不要放置其他需要的文件 |
+
 ## README.md
 
 和 app.json 同级的 README.md 文件将会被解析为 app 信息在 canbox 展示
