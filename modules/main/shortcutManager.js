@@ -35,7 +35,7 @@ function generateShortcuts(appsData) {
             }
 
             // 原始图标路径（asar包内）
-            const originalIconPath = path.join(getAppPath(), `${appItem.id}.asar`, appItem.logo);
+            const originalIconPath = path.join(getAppPath(), `${uid}.asar`, appItem.logo);
             const iconExt = path.extname(originalIconPath);
             // 缓存图标路径
             const iconPath = path.join(getAppIconPath(), `${uid}${iconExt}`);

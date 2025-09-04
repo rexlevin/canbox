@@ -12,7 +12,7 @@ function initShortcutHandlers() {
             return { success: false, msg: '只能在生产环境下生成快捷方式' };
         }
         const apps = await getAllApps();
-        return shortcutManager.generateShortcuts(apps);
+        return shortcutManager.generateShortcuts(apps.data);
     });
 
     // 删除快捷方式
@@ -21,7 +21,7 @@ function initShortcutHandlers() {
             return { success: false, msg: '只能在生产环境下删除快捷方式' };
         }
         const apps = await getAllApps();
-        return shortcutManager.deleteShortcuts(apps);
+        return shortcutManager.deleteShortcuts(apps.data);
     });
 }
 

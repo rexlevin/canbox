@@ -28,6 +28,7 @@
             "public/**/*",
             "logo.png",
             "main.js",
+            "tray.js",
             "preload.js",
             "ipcHandlers.js",
             "LICENSE",
