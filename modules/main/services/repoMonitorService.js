@@ -47,11 +47,11 @@ class RepoMonitorService {
     async scanRepo() {
         try {
             const repos = this.store.get('default') || {};
-            logger.info(`开始扫描仓库，共 ${Object.keys(repos).length} 个仓库`);
+            logger.monitor.info(`开始扫描仓库，共 ${Object.keys(repos).length} 个仓库`);
 
             for (const [uid, repoInfo] of Object.entries(repos)) {
                 try {
-                    logger.info(`扫描仓库: ${repoInfo.repo} (分支: ${repoInfo.branch})`);
+                    logger.monitor.info(`扫描仓库: ${repoInfo.repo} (分支: ${repoInfo.branch})`);
                     
                     const repoUrl = repoInfo.repo;
                     const branch = repoInfo.branch;
@@ -70,7 +70,7 @@ class RepoMonitorService {
                         try {
                             remoteHash = await repoUtils.getFileHash(repoUrl, branch, file);
                         } catch (error) {
-                            logger.warn(`无法获取 ${file} 的哈希值，将尝试下载文件...${error}`);
+                            logger.monitor.warn(`无法获取 ${file} 的哈希值，将尝试下载文件...${error}`);
                             const { getReposTempPath } = require('../pathManager');
                             const REPOS_TEMP_PATH = getReposTempPath();
                             tempFilePath = path.join(REPOS_TEMP_PATH, file);
@@ -84,7 +84,7 @@ class RepoMonitorService {
                             return handleError(new Error('无法下载app.json, 请检查仓库地址是否正确或是否有权限'), 'handleAddAppRepo');
                         }
                         if (!downloadSuccess) {
-                            logger.error(`文件 ${file} 下载失败`);
+                            logger.monitor.error(`文件 ${file} 下载失败`);
                             continue;
                         }
 
@@ -92,11 +92,11 @@ class RepoMonitorService {
                         const storedHash = this.store.get(`default.${uid}.files.${file.replace(/\./g, '_')}`);
                         if (storedHash === remoteHash) {
                             fs.unlinkSync(tempFilePath); // 哈希一致，删除临时文件
-                            logger.info(`文件 ${file} 未变化，跳过下载`);
+                            logger.monitor.info(`文件 ${file} 未变化，跳过下载`);
                             continue;
                         } else {
                             // 哈希不一致，复制临时文件到目标路径
-                            logger.info(`文件 ${file} 已更新，下载完成`);
+                            logger.monitor.info(`文件 ${file} 已更新，下载完成`);
                             fs.copyFileSync(tempFilePath, filePath);
                             fs.unlinkSync(tempFilePath); // 删除临时文件
                             // 更新哈希值
@@ -118,13 +118,13 @@ class RepoMonitorService {
                                 
                                 const logoDownloadSuccess = await repoUtils.downloadFileFromRepo(logoUrl, logoPath);
                                 if (!logoDownloadSuccess) {
-                                    logger.warn(`无法下载logo图片: ${logoUrl}`);
+                                    logger.monitor.warn(`无法下载logo图片: ${logoUrl}`);
                                 }
                             }
                         }
                     }
                     if (!modifyFlag) {
-                        logger.info(`扫描仓库: ${repoInfo.repo} (分支: ${repoInfo.branch})结束，仓库未更新`);
+                        logger.monitor.info(`扫描仓库: ${repoInfo.repo} (分支: ${repoInfo.branch})结束，仓库未更新`);
                         continue;
                     }
 
@@ -146,18 +146,18 @@ class RepoMonitorService {
                         toUpdate: true
                     };
                     this.store.set('default', repos);
-                    logger.info(`仓库 ${repoInfo.name} 信息已更新`);
+                    logger.monitor.info(`仓库 ${repoInfo.name} 信息已更新`);
                 } catch (error) {
-                    logger.warn(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`, error);
+                    logger.monitor.warn(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`, error);
                     console.info(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`, error);
                 }
             }
-            logger.info('仓库扫描完成');
+            logger.monitor.info('仓库扫描完成');
             // 通知前端数据已更新
             const win = windowManager.getWindow('canbox');
             win.webContents.send('repo-data-updated');
         } catch (error) {
-            logger.error(`扫描失败: ${error.message}`);
+            logger.monitor.error(`扫描失败: ${error.message}`);
         }
     }
 
@@ -168,14 +168,14 @@ class RepoMonitorService {
     startScheduler(schedule) {
         cron.schedule(schedule, async () => {
             try {
-                logger.info('开始定时扫描任务');
+                logger.monitor.info('开始定时扫描任务');
                 await this.scanRepo();
-                logger.info('定时扫描任务完成');
+                logger.monitor.info('定时扫描任务完成');
             } catch (error) {
-                logger.error(`定时扫描任务失败: ${error.message}`);
+                logger.monitor.error(`定时扫描任务失败: ${error.message}`);
             }
         });
-        logger.info(`定时任务已启动，计划: ${schedule}`);
+        logger.monitor.info(`定时任务已启动，计划: ${schedule}`);
     }
 }
 

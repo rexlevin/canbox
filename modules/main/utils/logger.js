@@ -27,11 +27,27 @@ log4js.configure({
                 type: 'pattern',
                 pattern: '[%d{yyyy-MM-dd hh:mm:ss}] [%p] %m'
             }
+        },
+        monitor: {
+            type: 'file',
+            filename: path.join(logDir, 'monitor.log'),
+            maxLogSize: 10485760, // 10MB
+            backups: 5, // 保留5个备份
+            compress: true,
+            keepFileExt: true,
+            layout: {
+                type: 'pattern',
+                pattern: '[%d{yyyy-MM-dd hh:mm:ss}] [%p] %m'
+            }
         }
     },
     categories: {
         default: {
             appenders: ['console', 'file'],
+            level: 'info'
+        },
+        monitor: {
+            appenders: ['monitor'],
             level: 'info'
         }
     }
@@ -55,22 +71,33 @@ const getCallerInfo = () => {
     return { file: 'unknown', line: '0' };
 };
 
+// 创建 monitor logger 实例
+const monitorLogger = log4js.getLogger('monitor');
+
+// 创建日志方法的公共函数
+const createLoggerMethods = (loggerInstance) => {
+    return {
+        info: (message) => {
+            const { file, line } = getCallerInfo();
+            loggerInstance.info(`[${file}:${line}] : ${message}`);
+        },
+        error: (message) => {
+            const { file, line } = getCallerInfo();
+            loggerInstance.error(`[${file}:${line}] : ${message}`);
+        },
+        warn: (message) => {
+            const { file, line } = getCallerInfo();
+            loggerInstance.warn(`[${file}:${line}] : ${message}`);
+        },
+        debug: (message) => {
+            const { file, line } = getCallerInfo();
+            loggerInstance.debug(`[${file}:${line}] : ${message}`);
+        }
+    };
+};
+
 // 导出接口
 module.exports = {
-    info: (message) => {
-        const { file, line } = getCallerInfo();
-        logger.info(`[${file}:${line}] : ${message}`);
-    },
-    error: (message) => {
-        const { file, line } = getCallerInfo();
-        logger.error(`[${file}:${line}] : ${message}`);
-    },
-    warn: (message) => {
-        const { file, line } = getCallerInfo();
-        logger.warn(`[${file}:${line}] : ${message}`);
-    },
-    debug: (message) => {
-        const { file, line } = getCallerInfo();
-        logger.debug(`[${file}:${line}] : ${message}`);
-    }
+    ...createLoggerMethods(logger),
+    monitor: createLoggerMethods(monitorLogger)
 };
