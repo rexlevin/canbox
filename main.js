@@ -86,6 +86,16 @@ if (!getTheLock) {
             win.hide();
             handleLoadAppById(appId);
         }
+
+        // 检查是否是第一次运行或版本升级，并重新生成 desktop 文件
+        const shortcutManager = require('./modules/main/shortcutManager');
+        const { getAllApps } = require('./modules/main/appManager');
+        const { package } = require('../../package.json');
+        if (shortcutManager.needRegenerateShortcuts(package.version)) {
+            const appsData = getAllApps();
+            shortcutManager.generateShortcuts(appsData);
+            shortcutManager.markVersion(package.version);
+        }
     })
 }
 

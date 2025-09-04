@@ -3,6 +3,7 @@ const fs = require('fs');
 const { execSync, exec } = require('child_process');
 const os = require('os');
 
+const { getCanboxStore } = require('./storageManager');
 const { getAppPath, getAppIconPath } = require('./pathManager');
 const { handleError } = require('./ipc/errorHandler');
 
@@ -123,7 +124,41 @@ function deleteShortcuts(appsData) {
     }
 }
 
+/**
+ * 是否需要重新生成快捷方式
+ * 
+ * @param {string} currentVersion 
+ * @returns {boolean} - true：需要，false：不需要
+ */
+const needRegenerateShortcuts = (currentVersion) => {
+    const savedVersion = getCanboxStore().get('version');
+    if (savedVersion === currentVersion) {
+        return false;
+    }
+
+    // 检查是否存在 canbox-*.desktop 文件
+    if (process.platform === 'linux') {
+        const applicationsPath = path.join(os.homedir(), '.local', 'share', 'applications');
+        if (fs.existsSync(applicationsPath)) {
+            const files = fs.readdirSync(applicationsPath);
+            const hasDesktopFile = files.some(file => file.startsWith('canbox-') && file.endsWith('.desktop'));
+            if (hasDesktopFile) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+};
+
+const markVersion = (currentVersion) => {
+    const canboxStore = getCanboxStore();
+    canboxStore.set('version', currentVersion);
+};
+
 module.exports = {
     generateShortcuts,
-    deleteShortcuts
+    deleteShortcuts,
+    needRegenerateShortcuts,
+    markVersion
 };
