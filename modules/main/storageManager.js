@@ -93,9 +93,21 @@ function getReposStore() {
     });
 }
 
+/**
+ * 获取 canbox 信息存储实例
+ * @returns {Storage}
+ */
+function getCanboxStore() {
+    return new Storage({
+        name: 'canbox',
+        cwd: 'Users'
+    });
+}
+
 module.exports = {
     getWinStateStore,
     getAppsStore,
     getAppsDevStore,
-    getReposStore
+    getReposStore,
+    getCanboxStore
 };
