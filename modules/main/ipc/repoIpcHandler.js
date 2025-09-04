@@ -28,7 +28,11 @@ async function updateReposStatus(uid) {
     if (!repo) {
         return { success: true };
     }
+
+    // 下载状态置为false，并删除下载时间和可更新状态
     reposData[uid].downloaded = false;
+    delete reposData[uid].downloadTime;
+    delete reposData[uid].toUpdate;
     reposStore.set('default', reposData);
     return { success: true };
 }

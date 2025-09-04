@@ -123,8 +123,9 @@ let reposData = reactive({});
 watch(() => appStore.removedAppId, (newAppId) => {
     if (newAppId) {
         window.api.updateReposStatus(newAppId, (result) => {
-            console.log('Repos status updated: ', result);
+            console.log('Repos status %s updated: %o', newAppId, result);
             appStore.setRemovedAppId(null);
+            fetchReposData();
         });
     }
 });
