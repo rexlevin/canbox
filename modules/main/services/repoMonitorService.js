@@ -116,10 +116,11 @@ class RepoMonitorService {
                                 
                                 fileUtils.ensureDirExists(logoDir);
                                 
-                                const logoDownloadSuccess = await repoUtils.downloadFileFromRepo(logoUrl, logoPath);
-                                if (!logoDownloadSuccess) {
-                                    logger.monitor.warn(`无法下载logo图片: ${logoUrl}`);
-                                }
+                                repoUtils.downloadLogoFromRepo(logoUrl, logoPath).then((logoDownloadSuccess) => {
+                                    if (!logoDownloadSuccess) {
+                                        logger.monitor.warn(`无法下载logo图片: ${logoUrl}`);
+                                    }
+                                });
                             }
                         }
                     }
