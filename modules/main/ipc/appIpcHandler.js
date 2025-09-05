@@ -159,8 +159,8 @@ function initAppHandlers() {
     });
 
     // 获取应用信息
-    ipcMain.handle('getAppInfo', async (event, appItemJsonStr) => {
-        return getAppInfo(appItemJsonStr);
+    ipcMain.handle('getAppInfo', async (event, uid) => {
+        return getAppInfo(uid);
     });
 
     // 获取应用开发列表

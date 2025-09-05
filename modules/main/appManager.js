@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
-const { getAppsStore } = require('./storageManager');
+const { getAppsStore, getAppsDevStore } = require('./storageManager');
 const { getAppPath, getAppTempPath } = require('./pathManager');
 const { handleError } = require('./ipc/errorHandler')
 const DateFormat = require('../utils/DateFormat');
@@ -35,8 +35,17 @@ function getAllApps() {
 /**
  * 获取应用信息
  */
-function getAppInfo(appItemJsonStr) {
-    const appItem = JSON.parse(appItemJsonStr);
+function getAppInfo(uid) {
+    if (!uid) {
+        return handleError(new Error('uid 不能为空'), 'getAppInfo');
+    }
+    // 判断是否为开发中的应用
+    const devFlag = JSON.stringify(getAppsStore().get('default')[uid] || {}) === '{}';
+    const appItem = getAppsStore().get('default')[uid] || getAppsDevStore().get('default')[uid];
+    const appPath = devFlag ? appItem.path : path.join(getAppPath(), uid + '.asar');
+
+    // const appItemJsonStr = fs.readFileSync(path.join(appPath, 'app.json'), 'utf8');
+    // const appItem = JSON.parse(appItemJsonStr);
     const readFileWithErrorHandling = (filePath) => {
         try {
             if (fs.existsSync(filePath)) {
@@ -50,8 +59,8 @@ function getAppInfo(appItemJsonStr) {
     };
 
     const [readme, history] = [
-        readFileWithErrorHandling(path.join(appItem.path, 'README.md')),
-        readFileWithErrorHandling(path.join(appItem.path, 'HISTORY.md'))
+        readFileWithErrorHandling(path.join(appPath, 'README.md')),
+        readFileWithErrorHandling(path.join(appPath, 'HISTORY.md'))
     ];
 
     const msg = (readme || history) ? null : '部分文件读取失败';

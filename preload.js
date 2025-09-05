@@ -40,8 +40,8 @@ contextBridge.exposeInMainWorld(
             return ipcRenderer.invoke('pack-asar', uid);
         },
         app: {
-            info: (appItemJsonStr, fn) => {
-                ipcRenderer.invoke('getAppInfo', appItemJsonStr).then(result => {
+            info: (uid, fn) => {
+                ipcRenderer.invoke('getAppInfo', uid).then(result => {
                     fn(result);
                 }).catch(error => {
                     console.error('IPC call failed:', error);

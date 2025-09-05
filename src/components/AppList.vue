@@ -45,6 +45,15 @@
             <p>暂无应用</p>
         </div>
     </div>
+
+    <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
+        <el-tabs>
+            <el-tab-pane label="app介绍">
+                <div style="text-align: left;" v-html="readme" id="divAppInfo"></div>
+            </el-tab-pane>
+            <el-tab-pane label="版本记录" v-if="historyFlag" v-html="history"></el-tab-pane>
+        </el-tabs>
+    </el-drawer>
 </template>
 
 <style scoped>
@@ -107,6 +116,10 @@ const toAnotherTab = (name) => {
 
 let appsData = ref({});
 const appStore = useAppStore();
+const drawerInfo = ref(false);
+const readme = ref(null);
+const history = ref(null);
+const historyFlag = ref(false);
 
 onBeforeMount(() => {
     loadAppsData();
