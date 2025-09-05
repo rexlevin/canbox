@@ -61,13 +61,19 @@ const getCallerInfo = () => {
     const err = new Error();
     Error.captureStackTrace(err);
     const stack = err.stack.split('\n');
+    
     // 跳过当前函数和 logger.js 的调用栈
-    const callerLine = stack[3] || '';
-    const match = callerLine.match(/\((.+):(\d+):(\d+)\)/);
-    if (match) {
-        const file = path.basename(match[1]);
-        return { file, line: match[2] };
+    for (let i = 3; i < stack.length; i++) {
+        const callerLine = stack[i] || '';
+        // 支持多种调用栈格式（同步/异步/Electron主进程）
+        const match = callerLine.match(/\(?(.+):(\d+):(\d+)\)?/) || callerLine.match(/at (.+):(\d+):(\d+)/);
+        if (match) {
+            const file = path.basename(match[1]);
+            return { file, line: match[2] };
+        }
     }
+    
+    // 如果无法解析，返回默认值
     return { file: 'unknown', line: '0' };
 };
 

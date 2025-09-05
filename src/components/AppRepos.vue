@@ -118,7 +118,7 @@ const handleClose = (done) => {
 
 const formRef = ref();
 const loading = ref(false);
-let reposData = reactive({});
+let reposData = ref({});
 
 watch(() => appStore.removedAppId, (newAppId) => {
     if (newAppId) {
@@ -144,8 +144,9 @@ const fetchReposData = async () => {
     window.api.getReposData(result => {
         if (result.success) {
             // 清空对象并重新赋值，确保响应式更新
-            Object.keys(reposData).forEach(key => delete reposData[key]);
-            Object.assign(reposData, result.data || {});
+            reposData.value = result.data;
+            // Object.keys(reposData).forEach(key => delete reposData[key]);
+            // Object.assign(reposData, result.data || {});
         } else {
             ElMessage.error(result.msg || '获取仓库列表失败');
         }
