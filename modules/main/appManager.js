@@ -36,6 +36,7 @@ function getAllApps() {
  * 获取应用信息
  */
 function getAppInfo(uid) {
+    console.info('uid:', uid);
     if (!uid) {
         return handleError(new Error('uid 不能为空'), 'getAppInfo');
     }

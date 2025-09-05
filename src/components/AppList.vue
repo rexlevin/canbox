@@ -132,10 +132,39 @@ watch(
     }
 );
 
+/**
+ * 导入已有app
+ */
 function loadAppsData() {
     window.api.app.all(result => {
         if (result.success) {
+            // 初始化加载状态
             appsData.value = result.data;
+            return;
+
+            // 并行获取每个应用的详细信息
+            const promises = Object.keys(result.data).map(uid => {
+                console.info('uid: ', uid);
+                return new Promise((resolve) => {
+                    window.api.app.info(uid, (infoResult) => {
+                        if (infoResult.success) {
+                            resolve({ uid, data: infoResult.data });
+                        } else {
+                            console.error(`获取应用 ${uid} 信息失败:`, infoResult.msg);
+                            resolve(null);
+                        }
+                    });
+                });
+            });
+
+            // 等待所有应用信息加载完成
+            Promise.all(promises).then(results => {
+                results.forEach(item => {
+                    if (item) {
+                        appsData.value[item.uid] = item.data;
+                    }
+                });
+            });
         } else {
             console.info(result.msg || '获取APP列表失败');
         }
