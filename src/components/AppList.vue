@@ -14,6 +14,7 @@
                      <div class="card">
                          <div class="img-block">
                             <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.appJson.logo" alt="" />
+                            <span v-if="appItem.sourceTag === 'import'" class="import-tag" title="这是一个导入的app"><el-tag type="info" effect="dark">导入</el-tag></span>
                         </div>
                         <div class="info-block vertical-block">
                             <div class="app-name" @click="drawerInfo = true">
@@ -100,6 +101,14 @@
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.import-tag {
+  position: absolute;
+  left: 300px;
+  top: 5px;
+  /* width: 30px;
+  right: 5px; */
 }
 </style>
 
