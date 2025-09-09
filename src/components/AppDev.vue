@@ -10,7 +10,7 @@
 
             <el-row v-for="(appDevItem, uid) in appDevData" :key="uid">
                 <el-col :span="24">
-                    <div class="card" v-loading="exportAppFlag">
+                    <div class="card" v-loading="exportAppFlag[uid]">
                         <div class="img-block">
                             <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appDevItem.path + '/' + appDevItem.appJson.logo" alt="" />
                         </div>
@@ -122,10 +122,10 @@ function addAppDev() {
 }
 
 // 控制打包按钮的loading状态
-let exportAppFlag = ref(false);
+let exportAppFlag = ref({});
 // 打包app
 async function packApp(uid) {
-    exportAppFlag.value = true;
+    exportAppFlag.value[uid] = true;
     const result = window.api.packToAsar(uid);
     result.then((result) => {
         if (!result.success) {
@@ -145,7 +145,7 @@ async function packApp(uid) {
             message: err,
         });
     }).finally(() => {
-        exportAppFlag.value = false;
+        exportAppFlag.value[uid] = false;
     });
 }
 
