@@ -54,7 +54,7 @@
         <div class="app-list-section" v-show="Object.keys(reposData).length > 0">
             <el-row v-for="(repo, uid) in reposData" :key="uid">
                 <el-col :span="24">
-                    <div class="card" v-loading="loadingTag">
+                    <div class="card" v-loading="loadingTag[uid]">
                         <div class="img-block">
                             <img style="width: 58px; height: 58px; cursor: pointer;" :src="'file://' + repo.logo" alt="" />
                         </div>
@@ -105,7 +105,7 @@ const repoUrl = ref('');
 const branch = ref('');
 
 // 控制loading状态
-let loadingTag = ref(false);
+let loadingTag = ref({});
 
 const showDialog = () => {
     dialogVisible.value = true;
@@ -156,7 +156,7 @@ const fetchReposData = async () => {
 
 // 下载仓库中的应用
 const downloadAppsFromRepo = (uid) => {
-    loadingTag.value = true;
+    loadingTag.value[uid] = true;
     window.api.downloadAppsFromRepo(uid, result => {
         if (result.success) {
             ElMessage.success('app下载成功');
@@ -166,7 +166,7 @@ const downloadAppsFromRepo = (uid) => {
         } else {
             ElMessage.error(result.msg || 'app下载失败');
         }
-        loadingTag.value = false;
+        loadingTag.value[uid] = false;
     });
 };
 
