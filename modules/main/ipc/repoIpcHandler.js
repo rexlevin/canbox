@@ -54,7 +54,8 @@ async function handleAddAppRepo(repoUrl, branch) {
 
         // 尝试访问仓库地址
         try {
-            const response = await fetch(`${repoUrl}/blob/${branch || 'main'}/app.json`);
+            const url = repoUtils.getFileUrl(repoUrl, branch, 'app.json');
+            const response = await fetch(url);
             if (!response.ok) {
                 return handleError(new Error('无法访问该仓库，请检查地址是否正确或是否有权限'), 'handleAddAppRepo');
             }
@@ -236,18 +237,8 @@ async function downloadAppsFromRepo(uid) {
         const fileName = `${id}-${version}.zip`;
 
         // 解析仓库平台并构建下载 URL
-        if (repo.includes('github.com')) {
-            downloadUrl = `${repo.replace('github.com', 'github.com/releases/download')}/v${version}/${fileName}`;
-        } else if (repo.includes('gitlab.com')) {
-            downloadUrl = `${repo}/-/archive/v${version}/${fileName}`;
-        } else if (repo.includes('bitbucket.org')) {
-            downloadUrl = `${repo}/downloads/${fileName}`;
-        } else if (repo.includes('gitee.com')) {
-            downloadUrl = `${repo}/releases/download/${version}/${fileName}`;
-        } else {
-            // 自托管服务（如 Gitea/GitLab CE）
-            downloadUrl = `${repo}/archive/${fileName}`;
-        }
+        const { getDownloadUrl } = require('../utils/repoUtils');
+        downloadUrl = getDownloadUrl(repo, version, fileName);
 
         // 确保 REPOS_TEMP_PATH 目录存在
         if (!fs.existsSync(REPOS_TEMP_PATH)) {

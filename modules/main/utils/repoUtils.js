@@ -27,7 +27,7 @@ exports.getFileUrl = function (repoUrl, branch, file) {
 
         // GitHub
         if (host.includes('github.com')) {
-            return `${repoUrl}/raw/${branch}/${file}`;
+            return `https://raw.githubusercontent.com/${repoUrl.split('/').slice(3).join('/')}/${branch}/${file}`;
         }
         // GitLab
         else if (host.includes('gitlab.com') || host.includes('gitlab.')) {
@@ -49,6 +49,44 @@ exports.getFileUrl = function (repoUrl, branch, file) {
     } catch (e) {
         console.error('解析仓库URL失败:', e);
         return `${repoUrl}/raw/${branch}/${file}`; // 默认回退
+    }
+};
+
+/**
+ * 根据仓库类型生成下载 URL（用于版本文件或归档文件）
+ * @param {string} repo - 仓库地址
+ * @param {string} version - 版本号
+ * @param {string} fileName - 文件名
+ * @returns {string} - 下载 URL
+ */
+exports.getDownloadUrl = function (repo, version, fileName) {
+    try {
+        const url = new URL(repo);
+        const host = url.hostname;
+
+        // GitHub
+        if (host.includes('github.com')) {
+            return `${repo.replace('github.com', 'github.com/releases/download')}/v${version}/${fileName}`;
+        }
+        // GitLab
+        else if (host.includes('gitlab.com')) {
+            return `${repo}/-/archive/v${version}/${fileName}`;
+        }
+        // Bitbucket
+        else if (host.includes('bitbucket.org')) {
+            return `${repo}/downloads/${fileName}`;
+        }
+        // Gitee
+        else if (host.includes('gitee.com')) {
+            return `${repo}/releases/download/${version}/${fileName}`;
+        }
+        // 自托管服务（如 Gitea/GitLab CE）
+        else {
+            return `${repo}/archive/${fileName}`;
+        }
+    } catch (e) {
+        console.error('解析仓库URL失败:', e);
+        return `${repo}/archive/${fileName}`; // 默认回退
     }
 };
 
