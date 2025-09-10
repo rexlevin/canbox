@@ -68,8 +68,17 @@ function getAppInfo(uid) {
     return { success: null === msg, data: { readme, history }, msg };
 }
 
+/**
+ * 导入应用
+ * @param {*} event 
+ * @param {string} zipPath 
+ * @param {string} uid 
+ * @returns 
+ */
 async function handleImportApp(event, zipPath, uid) {
     logger.info('{} handleImportApp: {}', uid||'', zipPath);
+    // 如果uid有值说明是从repos下载的，importTag为false，否则是导入的，importTag为true
+    const importTag = !uid?.trim();
     try {
 
         // 检查是否有 getAppTempPath() 目录，有则删除
@@ -150,10 +159,12 @@ async function handleImportApp(event, zipPath, uid) {
             version: appJson.version || '',
             description: appJson.description || '',
             author: appJson.author || '',
-            logo: appJson.logo || '',
-            sourceTag: 'import',
-            importTime: DateFormat.format(new Date())
+            logo: appJson.logo || ''
         };
+        if (importTag) {
+            appsConfig[uuid].sourceTag = 'import';
+            appsConfig[uuid].importTime = DateFormat.format(new Date());
+        }
         getAppsStore().set('default', appsConfig);
 
         // 复制logo文件到目标目录
