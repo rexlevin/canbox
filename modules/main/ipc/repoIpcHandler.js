@@ -258,8 +258,7 @@ async function downloadAppsFromRepo(uid) {
             method: 'get',
             url: downloadUrl,
             responseType: 'stream',
-        }).catch(error => {
-            return handleError(new Error('下载应用失败: ' + error.message), 'downloadAppsFromRepo');
+            timeout: 5000,
         });
 
         const writer = fs.createWriteStream(zipPath);
@@ -289,6 +288,9 @@ async function downloadAppsFromRepo(uid) {
         // 返回下载结果
         return { success: true };
     } catch (error) {
+        if (error.code === 'ECONNABORTED') {
+            return handleError(new Error('下载超时'), 'downloadAppsFromRepo');
+        }
         return handleError(new Error('下载应用失败: ' + error.message), 'downloadAppsFromRepo');
     }
 }
