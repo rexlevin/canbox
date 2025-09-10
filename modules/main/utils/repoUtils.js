@@ -66,7 +66,7 @@ exports.getDownloadUrl = function (repo, version, fileName) {
 
         // GitHub
         if (host.includes('github.com')) {
-            return `${repo.replace('github.com', 'github.com/releases/download')}/v${version}/${fileName}`;
+            return `${repo.replace('github.com', 'github.com/releases/download')}/${version}/${fileName}`;
         }
         // GitLab
         else if (host.includes('gitlab.com')) {

@@ -158,6 +158,7 @@ const fetchReposData = async () => {
 const downloadAppsFromRepo = (uid) => {
     loadingTag.value[uid] = true;
     window.api.downloadAppsFromRepo(uid, result => {
+        console.info('downloadAppsFromRepo result: %o', result);
         if (result.success) {
             ElMessage.success('app下载成功');
             const appStore = useAppStore();

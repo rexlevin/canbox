@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const { dialog } = require('electron');
 const { handleError } = require('./errorHandler');
+const logger = require('../utils/logger');
 
 const { getReposStore } = require('../storageManager');
 const repoUtils = require('../utils/repoUtils');
@@ -232,13 +233,12 @@ async function downloadAppsFromRepo(uid) {
     }
 
     try {
-        let downloadUrl;
         const { repo, id, version } = repoInfo;
         const fileName = `${id}-${version}.zip`;
 
         // 解析仓库平台并构建下载 URL
-        const { getDownloadUrl } = require('../utils/repoUtils');
-        downloadUrl = getDownloadUrl(repo, version, fileName);
+        const downloadUrl = repoUtils.getDownloadUrl(repo, version, fileName);
+        logger.info(`从 ${repo} 下载 ${fileName}...${downloadUrl}`);
 
         // 确保 REPOS_TEMP_PATH 目录存在
         if (!fs.existsSync(REPOS_TEMP_PATH)) {
@@ -258,6 +258,8 @@ async function downloadAppsFromRepo(uid) {
             method: 'get',
             url: downloadUrl,
             responseType: 'stream',
+        }).catch(error => {
+            return handleError(new Error('下载应用失败: ' + error.message), 'downloadAppsFromRepo');
         });
 
         const writer = fs.createWriteStream(zipPath);
