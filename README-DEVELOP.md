@@ -322,6 +322,28 @@ canbox.win.notification(options)
     });
 ```
 
+## dialog
+
+直接的封装，没有做任何修建，请求参数和应答均可参见electron的 [`dialog`](https://www.electronjs.org/zh/docs/latest/api/dialog) 模块
+
+### showOpenDialog
+
+文件选择框
+
+与 Electron `showOpenDialog` 一致
+
+### showSaveDialog
+
+文件保存框
+
+与 Electron `showSaveDialog` 一致
+
+### showMessageBox
+
+消息框
+
+与 Electron `showMessageBox` 一致
+
 ## 应答码
 
 | code | 释义                                                 |

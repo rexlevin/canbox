@@ -41,6 +41,26 @@ const ipcSendSyncCreateWindow = (options, params) => {
     return JSON.parse(returnValue);
 };
 
+/**
+ * 通过 ipc 请求主线程中的 dialog-api，ipc 消息名为：msg-dialog
+ *
+ * @param {String} type api操作方法
+ * @param {Object} options api操作请求数据，要求json格式
+ * @returns {Object} api操作应答内容
+ */
+const ipcSendSyncDialog = (type, options) => {
+    if(!window.appId) {
+        throw new Error('appId is not set');
+    }
+    let returnValue = ipcRenderer.sendSync('msg-dialog', {
+        type,
+        options,
+        appId: window.appId
+    });
+    if (returnValue instanceof Error) throw returnValue;
+    return JSON.parse(returnValue);
+};
+
 const ipcSendNotification = (options) => {
     if(!window.appId) {
         throw new Error('appId is not set');
@@ -82,6 +102,42 @@ const db = {
     }
 }
 
+const dialog = {
+    /**
+     * 打开文件对话框
+     * @param {Object} options - 对话框配置
+     * @returns {Promise} 对话框结果
+     */
+    showOpenDialog: (options) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcSendSyncDialog('showOpenDialog', options);
+            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+        });
+    },
+    /**
+     * 打开保存对话框
+     * @param {Object} options - 对话框配置
+     * @returns {Promise} 对话框结果
+     */
+    showSaveDialog: (options) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcSendSyncDialog('showSaveDialog', options);
+            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+        });
+    },
+    /**
+     * 打开消息对话框
+     * @param {Object} options - 对话框配置
+     * @returns {Promise} 对话框结果
+     */
+    showMessageBox: (options) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcSendSyncDialog('showMessageBox', options);
+            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+        });
+    }
+}
+
 const win = {
     /**
      * 
@@ -115,7 +171,8 @@ window.canbox = {
         // console.info('hello, appId: ', appId);
     },
     db,
-    win
+    win,
+    dialog
 };
 
 // 从 additionalArguments 读取 ID（主进程传递）

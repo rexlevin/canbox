@@ -1,6 +1,7 @@
 const { ipcMain } = require('electron');
 
 const winFactory = require('./core/win');
+const dialogFactory = require('./core/dialog');
 
 /**
  * 初始化数据库相关的 IPC 消息处理逻辑
@@ -45,12 +46,29 @@ function notificationHandlers() {
 }
 
 /**
+ * 初始化对话框相关的 IPC 消息处理逻辑
+ */
+function initDialogIpcHandlers() {
+    ipcMain.on('msg-dialog', (event, args) => {
+        console.info('args: ', args);
+        dialogFactory[args.type](args.options)
+            .then(result => {
+                event.returnValue = JSON.stringify({ code: '0000', data: result });
+            })
+            .catch(err => {
+                event.returnValue = JSON.stringify({ code: '9100', msg: err.message });
+            });
+    });
+}
+
+/**
  * 统一初始化所有 IPC 消息处理逻辑
  */
 function initIpcHandlers() {
     initDbIpcHandlers();
     createWindowIpcHandlers();
     notificationHandlers();
+    initDialogIpcHandlers();
 }
 
 module.exports = initIpcHandlers;
