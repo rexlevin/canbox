@@ -2,9 +2,9 @@ const { app } = require('electron');
 const path = require('path');
 const PouchDB = require('pouchdb');
 const { customAlphabet } = require('nanoid-cjs');
-const DateFormat = require('../utils/DateFormat');
+const DateFormat = require('../../utils/DateFormat');
 
-const { getAppDataPath } = require('./pathManager');
+const { getAppDataPath } = require('../pathManager');
 const userDataPath = getAppDataPath();
 const nanoid = customAlphabet('1234567890abcdef', 10);
 

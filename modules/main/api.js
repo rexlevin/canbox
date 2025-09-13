@@ -1,12 +1,12 @@
 const { ipcMain } = require('electron');
 
-const winFactory = require('./win');
+const winFactory = require('./core/win');
 
 /**
  * 初始化数据库相关的 IPC 消息处理逻辑
  */
 function initDbIpcHandlers() {
-    const DB = require('./db');
+    const DB = require('./core/db');
     ipcMain.on('msg-db', (event, args) => {
         console.info('args: ', args);
         DB[args.type](args.appId, args.param, (res, err) => {

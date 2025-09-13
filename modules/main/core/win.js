@@ -3,14 +3,14 @@ const path = require('path');
 const fs = require('fs');
 
 // 初始化 pathManager 模块
-const { getAppPath } = require('./pathManager');
+const { getAppPath } = require('../pathManager');
 const APP_PATH = getAppPath();
 
 // 初始化 storage 实例
-const { getAppsDevStore, getAppsStore } = require('./storageManager');
+const { getAppsDevStore, getAppsStore } = require('../storageManager');
 
 // 初始化 windowManager 实例
-const windowManager = require('./windowManager');
+const windowManager = require('../windowManager');
 
 /**
  * 窗口操作模块
