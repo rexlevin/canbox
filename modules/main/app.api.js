@@ -71,6 +71,15 @@ const ipcSendNotification = (options) => {
     });
 };
 
+/**
+ * 发送 IPC 消息到主进程，操作 electronStore
+ * @param {string} type - 操作类型，支持 'get'、'set'、'delete'、'clear'
+ * @param {object} param - 参数对象
+ * @param {string} param.key - 存储的键
+ * @param {any} [param.value] - 存储的值（仅 'set' 操作需要）
+ * @returns {object} - 返回操作结果，格式为 { code: string, data: any }
+ * @throws {Error} - 如果 appId 未设置或 IPC 通信失败
+ */
 const ipcSendElectronStore = (type, param) => {
     if(!window.appId) {
         throw new Error('appId is not set');

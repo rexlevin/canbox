@@ -27,6 +27,16 @@ function initDbIpcHandlers() {
 
 /**
  * 初始化 electronStore 相关的 IPC 消息处理逻辑
+ * @description 处理来自渲染进程的 IPC 消息，操作 electronStore
+ * @listens ipcMain.on('msg-electronStore')
+ * @param {object} args - IPC 消息参数
+ * @param {string} args.type - 操作类型，支持 'get'、'set'、'delete'、'clear'
+ * @param {object} args.param - 参数对象
+ * @param {string} args.param.key - 存储的键
+ * @param {any} [args.param.value] - 存储的值（仅 'set' 操作需要）
+ * @param {string} args.appId - 应用 ID，用于动态生成存储路径
+ * @returns {void}
+ * @emits event.returnValue - 返回操作结果，格式为 { code: string, data: any }
  */
 function initElectronStoreIpcHandlers() {
     ipcMain.on('msg-electronStore', (event, args) => {
@@ -44,6 +54,14 @@ function initElectronStoreIpcHandlers() {
 
 /**
  * 初始化窗口相关的 IPC 消息处理逻辑
+ * @description 处理来自渲染进程的 IPC 消息，创建新窗口
+ * @listens ipcMain.on('msg-createWindow')
+ * @param {object} args - IPC 消息参数
+ * @param {object} args.options - 窗口配置选项
+ * @param {object} args.params - 窗口参数
+ * @param {string} args.appId - 应用 ID
+ * @returns {void}
+ * @emits event.returnValue - 返回窗口创建结果，格式为 { code: string, data: any }
  */
 function createWindowIpcHandlers() {
     ipcMain.on('msg-createWindow', (event, args) => {
@@ -68,6 +86,13 @@ function notificationHandlers() {
 
 /**
  * 初始化对话框相关的 IPC 消息处理逻辑
+ * @description 处理来自渲染进程的 IPC 消息，操作对话框（如打开文件、保存文件等）
+ * @listens ipcMain.on('msg-dialog')
+ * @param {object} args - IPC 消息参数
+ * @param {string} args.type - 对话框操作类型，支持 'openFile'、'saveFile' 等
+ * @param {object} args.options - 对话框配置选项
+ * @returns {void}
+ * @emits event.returnValue - 返回对话框操作结果，格式为 { code: string, data: any }
  */
 function initDialogIpcHandlers() {
     ipcMain.on('msg-dialog', (event, args) => {
