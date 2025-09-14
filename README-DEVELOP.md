@@ -129,7 +129,11 @@ xxx
 
 # API
 
-## DB
+## store
+
+使用electron-store进行数据存储
+
+## db
 
 canbox 使用 [pouchdb](https://pouchdb.com/) 作为本地存储库
 

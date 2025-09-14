@@ -29,7 +29,7 @@ setInterval(() => {
 function getDB(appId) {
     if (!dbCache[appId]) {
         dbCache[appId] = {
-            db: new PouchDB(path.join(userDataPath, appId), { auto_compaction: true }),
+            db: new PouchDB(path.join(userDataPath, appId, 'db'), { auto_compaction: true }),
             lastUsed: Date.now()
         };
     } else {

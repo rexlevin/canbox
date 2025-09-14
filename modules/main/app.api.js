@@ -71,6 +71,20 @@ const ipcSendNotification = (options) => {
     });
 };
 
+const ipcSendElectronStore = (type, key, value) => {
+    if(!window.appId) {
+        throw new Error('appId is not set');
+    }
+    let returnValue = ipcRenderer.sendSync('msg-electronStore', {
+        type,
+        key,
+        value,
+        appId: window.appId 
+    });
+    if (returnValue instanceof Error) throw returnValue;
+    return JSON.parse(returnValue);
+};
+
 const db = {
     put: (param) => {
         return new Promise((resolve, reject) => {
@@ -158,6 +172,72 @@ const win = {
             resolve(); // 直接 resolve，表示通知已发送
         });
     }
+};
+
+const electronStore = {
+    /**
+     * 获取存储的值
+     * @param {string} key - 存储的键
+     * @returns {Promise<any>} - 返回存储的值
+     */
+    get: (key) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcRenderer.sendSync('msg-electronStore', {
+                type: 'get',
+                key,
+                appId: window.appId
+            });
+            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+        });
+    },
+
+    /**
+     * 设置存储的值
+     * @param {string} key - 存储的键
+     * @param {any} value - 存储的值
+     * @returns {Promise<void>}
+     */
+    set: (key, value) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcRenderer.sendSync('msg-electronStore', {
+                type: 'set',
+                key,
+                value,
+                appId: window.appId
+            });
+            "0000" === ret.code ? resolve() : reject(ret.msg);
+        });
+    },
+
+    /**
+     * 删除存储的值
+     * @param {string} key - 存储的键
+     * @returns {Promise<void>}
+     */
+    delete: (key) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcRenderer.sendSync('msg-electronStore', {
+                type: 'delete',
+                key,
+                appId: window.appId
+            });
+            "0000" === ret.code ? resolve() : reject(ret.msg);
+        });
+    },
+
+    /**
+     * 清空存储
+     * @returns {Promise<void>}
+     */
+    clear: () => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcRenderer.sendSync('msg-electronStore', {
+                type: 'clear',
+                appId: window.appId
+            });
+            "0000" === ret.code ? resolve() : reject(ret.msg);
+        });
+    }
 }
 
 /**
@@ -172,7 +252,8 @@ window.canbox = {
     },
     db,
     win,
-    dialog
+    dialog,
+    store: electronStore
 };
 
 // 从 additionalArguments 读取 ID（主进程传递）

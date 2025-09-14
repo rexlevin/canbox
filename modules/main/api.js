@@ -2,6 +2,7 @@ const { ipcMain } = require('electron');
 
 const winFactory = require('./core/win');
 const dialogFactory = require('./core/dialog');
+const electronStore = require('./core/electronStore');
 
 /**
  * 初始化数据库相关的 IPC 消息处理逻辑
@@ -18,6 +19,22 @@ function initDbIpcHandlers() {
             console.info('api.js: dbHandler res: ', res);
             event.returnValue = JSON.stringify({ code: '0000', data: res});
         });
+    });
+}
+
+/**
+ * 初始化 electronStore 相关的 IPC 消息处理逻辑
+ */
+function initElectronStoreIpcHandlers() {
+    ipcMain.on('msg-electronStore', (event, args) => {
+        console.info('args: ', args);
+        electronStore[args.type](args.key, args.value)
+            .then(result => {
+                event.returnValue = JSON.stringify({ code: '0000', data: result });
+            })
+            .catch(err => {
+                event.returnValue = JSON.stringify({ code: '9100', msg: err.message });
+            });
     });
 }
 
@@ -69,6 +86,7 @@ function initIpcHandlers() {
     createWindowIpcHandlers();
     notificationHandlers();
     initDialogIpcHandlers();
+    initElectronStoreIpcHandlers();
 }
 
 module.exports = initIpcHandlers;
