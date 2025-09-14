@@ -71,14 +71,13 @@ const ipcSendNotification = (options) => {
     });
 };
 
-const ipcSendElectronStore = (type, key, value) => {
+const ipcSendElectronStore = (type, param) => {
     if(!window.appId) {
         throw new Error('appId is not set');
     }
     let returnValue = ipcRenderer.sendSync('msg-electronStore', {
         type,
-        key,
-        value,
+        param,
         appId: window.appId 
     });
     if (returnValue instanceof Error) throw returnValue;
@@ -182,11 +181,12 @@ const electronStore = {
      */
     get: (key) => {
         return new Promise((resolve, reject) => {
-            const ret = ipcRenderer.sendSync('msg-electronStore', {
-                type: 'get',
-                key,
-                appId: window.appId
-            });
+            const ret = ipcSendElectronStore('get', { key });
+            // const ret = ipcRenderer.sendSync('msg-electronStore', {
+            //     type: 'get',
+            //     key,
+            //     appId: window.appId
+            // });
             "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
         });
     },
@@ -199,12 +199,13 @@ const electronStore = {
      */
     set: (key, value) => {
         return new Promise((resolve, reject) => {
-            const ret = ipcRenderer.sendSync('msg-electronStore', {
-                type: 'set',
-                key,
-                value,
-                appId: window.appId
-            });
+            const ret = ipcSendElectronStore('set', { key, value });
+            // const ret = ipcRenderer.sendSync('msg-electronStore', {
+            //     type: 'set',
+            //     key,
+            //     value,
+            //     appId: window.appId
+            // });
             "0000" === ret.code ? resolve() : reject(ret.msg);
         });
     },
@@ -216,11 +217,12 @@ const electronStore = {
      */
     delete: (key) => {
         return new Promise((resolve, reject) => {
-            const ret = ipcRenderer.sendSync('msg-electronStore', {
-                type: 'delete',
-                key,
-                appId: window.appId
-            });
+            const ret = ipcSendElectronStore('delete', { key });
+            // const ret = ipcRenderer.sendSync('msg-electronStore', {
+            //     type: 'delete',
+            //     key,
+            //     appId: window.appId
+            // });
             "0000" === ret.code ? resolve() : reject(ret.msg);
         });
     },

@@ -2,11 +2,10 @@ const { app } = require('electron');
 const path = require('path');
 const PouchDB = require('pouchdb');
 const { customAlphabet } = require('nanoid-cjs');
-const DateFormat = require('../../utils/DateFormat');
-
-const { getAppDataPath } = require('../pathManager');
-const userDataPath = getAppDataPath();
 const nanoid = customAlphabet('1234567890abcdef', 10);
+
+const DateFormat = require('../../utils/DateFormat');
+const { getAppDataPath } = require('../pathManager');
 
 // 数据库连接缓存，记录连接和最后使用时间
 const dbCache = {};
@@ -29,7 +28,7 @@ setInterval(() => {
 function getDB(appId) {
     if (!dbCache[appId]) {
         dbCache[appId] = {
-            db: new PouchDB(path.join(userDataPath, appId, 'db'), { auto_compaction: true }),
+            db: new PouchDB(path.join(getAppDataPath(), appId, 'db'), { auto_compaction: true }),
             lastUsed: Date.now()
         };
     } else {

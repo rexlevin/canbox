@@ -28,7 +28,7 @@ function initDbIpcHandlers() {
 function initElectronStoreIpcHandlers() {
     ipcMain.on('msg-electronStore', (event, args) => {
         console.info('args: ', args);
-        electronStore[args.type](args.key, args.value)
+        electronStore[args.type](args.appId, args.param)
             .then(result => {
                 event.returnValue = JSON.stringify({ code: '0000', data: result });
             })

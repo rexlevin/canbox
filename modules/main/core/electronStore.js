@@ -1,5 +1,7 @@
 const Store = require('electron-store');
 
+const { getAppDataPath } = require('../pathManager');
+
 class ElectronStore {
     constructor() {
         this.store = new Store();
