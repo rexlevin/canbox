@@ -8,7 +8,7 @@ const { ipcRenderer } = require("electron");
  * @returns {Object} api操作应答内容
  */
 const ipcSendSyncDB = (type, param) => {
-    if(!window.appId) {
+    if (!window.appId) {
         throw new Error('appId is not set');
     }
     let returnValue = ipcRenderer.sendSync('msg-db', {
@@ -29,7 +29,7 @@ const ipcSendSyncDB = (type, param) => {
  * @returns {Object} api操作应答内容
  */
 const ipcSendSyncCreateWindow = (options, params) => {
-    if(!window.appId) {
+    if (!window.appId) {
         throw new Error('appId is not set');
     }
     let returnValue = ipcRenderer.sendSync('msg-createWindow', {
@@ -49,7 +49,7 @@ const ipcSendSyncCreateWindow = (options, params) => {
  * @returns {Object} api操作应答内容
  */
 const ipcSendSyncDialog = (type, options) => {
-    if(!window.appId) {
+    if (!window.appId) {
         throw new Error('appId is not set');
     }
     let returnValue = ipcRenderer.sendSync('msg-dialog', {
@@ -62,7 +62,7 @@ const ipcSendSyncDialog = (type, options) => {
 };
 
 const ipcSendNotification = (options) => {
-    if(!window.appId) {
+    if (!window.appId) {
         throw new Error('appId is not set');
     }
     ipcRenderer.send('msg-notification', {
@@ -81,13 +81,13 @@ const ipcSendNotification = (options) => {
  * @throws {Error} - 如果 appId 未设置或 IPC 通信失败
  */
 const ipcSendElectronStore = (type, param) => {
-    if(!window.appId) {
+    if (!window.appId) {
         throw new Error('appId is not set');
     }
     let returnValue = ipcRenderer.sendSync('msg-electronStore', {
         type,
         param,
-        appId: window.appId 
+        appId: window.appId
     });
     if (returnValue instanceof Error) throw returnValue;
     return JSON.parse(returnValue);
@@ -109,7 +109,7 @@ const db = {
     get: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('get', param);
-            "0000" === ret.code? resolve(ret.data) : reject(ret.msg);
+            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
         })
     },
     getSync: (param) => {
@@ -119,7 +119,7 @@ const db = {
     remove: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('remove', param);
-            "0000" === ret.code? resolve(ret.data) : reject(ret.msg);
+            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
         })
     }
 }
