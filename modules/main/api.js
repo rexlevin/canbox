@@ -2,7 +2,10 @@ const { ipcMain } = require('electron');
 
 const winFactory = require('./core/win');
 const dialogFactory = require('./core/dialog');
-const electronStore = require('./core/electronStore');
+const ElectronStore = require('./core/electronStore');
+
+// 初始化 electronStore 实例
+const electronStore = new ElectronStore();
 
 /**
  * 初始化数据库相关的 IPC 消息处理逻辑
@@ -28,7 +31,8 @@ function initDbIpcHandlers() {
 function initElectronStoreIpcHandlers() {
     ipcMain.on('msg-electronStore', (event, args) => {
         console.info('args: ', args);
-        electronStore[args.type](args.appId, args.param)
+        const store = new ElectronStore(args.appId, args.param.key);
+        store[args.type](args.param.key, args.param.value)
             .then(result => {
                 event.returnValue = JSON.stringify({ code: '0000', data: result });
             })

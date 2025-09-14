@@ -1,10 +1,12 @@
 const Store = require('electron-store');
-
-const { getAppDataPath } = require('../pathManager');
+const path = require('path');
 
 class ElectronStore {
-    constructor() {
-        this.store = new Store();
+    constructor(appId, key) {
+        this.store = new Store({
+            name: key,
+            cwd: path.join('Users', 'data', appId, 'store')
+        });
     }
 
     /**
@@ -56,4 +58,4 @@ class ElectronStore {
     }
 }
 
-module.exports = new ElectronStore();
+module.exports = ElectronStore;
