@@ -1,4 +1,70 @@
-# 插件开发
+# CanBox API提示
+
+1. 安装 `typescript` ： `npm i -D typescript`
+2. 在项目根目录下创建目录  `types `，将 `canbox.d.ts `放到 `types` 目录中
+3. 在项目根目录下创建 `tsconfig.json` 或 `jsconfig.json` 文件
+
+tsconfig.json 文件内容示例如下：
+
+```json
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "typeRoots": ["./types", "./node_modules/@types"]
+    },
+    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    "exclude": ["node_modules"]
+}
+```
+
+如果你的项目使用 `javascript`，`tsconfig.json` 文件内容如下：
+
+```json
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": false,
+        "noEmit": true,   // 仅进行类型检查，不生成输出文件（JS项目无需编译）
+        "strict": false,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "maxNodeModuleJsDepth": 0,
+        "target": "es6",
+        "module": "commonjs",
+        "forceConsistentCasingInFileNames": true,
+        "typeRoots": ["./types", "./node_modules/@types"]
+    },
+    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    "exclude": ["node_modules"]
+}
+```
+
+或者是使用使用 `jsconfig.json` 文件示例内容如下：
+
+```json
+{
+    "compilerOptions": {
+        "checkJs": false,
+        "strict": false,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "maxNodeModuleJsDepth": 0,
+        "target": "es6",
+        "module": "commonjs",
+        "forceConsistentCasingInFileNames": true,
+        "typeRoots": ["./types", "./node_modules/@types"]
+    },
+    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    "exclude": ["node_modules"]
+}
+```
+
+# APP开发
 
 ## app.json
 
