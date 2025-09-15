@@ -218,6 +218,13 @@ const win = {
             null !== ret ? resolve(ret) : reject(null);
         });
     },
+    /**
+     * 发出通知
+     * @param {Object} options - 窗口配置
+     * @param {String} options.title - 窗口标题
+     * @param {String} options.body - 窗口内容
+     * @returns 
+     */
     notification: (options) => {
         return new Promise((resolve) => {
             ipcSendNotification(options);
@@ -308,7 +315,18 @@ window.canbox = {
     db,
     win,
     dialog,
-    store: electronStore
+    store: electronStore,
+    /**
+     * 注册窗口关闭时的回调函数
+     * @param {Function} callback - 窗口关闭时执行的回调函数
+     */
+    registerCloseCallback: (callback) => {
+        if (typeof callback === 'function') {
+            window.__closeCallback = callback;
+        } else {
+            console.error('Invalid callback function provided.');
+        }
+    },
 };
 
 // 从 additionalArguments 读取 ID（主进程传递）

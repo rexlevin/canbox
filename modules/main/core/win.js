@@ -129,6 +129,8 @@ const winFactory = {
     /**
      * 发出通知
      * @param {Object} options - 通知配置
+     * @param {string} options.title - 通知标题
+     * @param {string} options.body - 通知内容
      */
     showNotification: (options) => {
         new Notification(options).show();

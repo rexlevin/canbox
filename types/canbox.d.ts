@@ -124,6 +124,12 @@ declare global {
                  */
                 clear: () => Promise<void>;
             };
+
+            /**
+             * 注册窗口关闭时的回调函数
+             * @param callback - 窗口关闭时执行的回调函数
+             */
+            registerCloseCallback: (callback: () => void) => void;
         };
     }
 
