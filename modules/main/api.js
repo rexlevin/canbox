@@ -74,6 +74,14 @@ function createWindowIpcHandlers() {
 
 /**
  * 初始化通知相关的 IPC 消息处理逻辑
+ * @listens ipcMain.on('msg-notification')
+ * @param {object} args - IPC 消息参数
+ * @param {object} args.options - 通知配置选项
+ * @param {string} args.options.title - 通知标题
+ * @param {string} args.options.body - 通知内容
+ * @param {string} args.appId - 应用 ID
+ * @returns {void}
+ * @emits event.returnValue - 返回通知创建结果，格式为 { code: string, data: any }
  */
 function notificationHandlers() {
     ipcMain.on('msg-notification', (event, args) => {

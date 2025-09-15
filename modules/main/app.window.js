@@ -144,14 +144,9 @@ module.exports = {
 
             // 保存窗口状态
             appWin.on('close', () => {
-                // 检查是否存在关闭回调函数
-                if (window.__closeCallback) {
-                    try {
-                        // 执行回调函数
-                        window.__closeCallback();
-                    } catch (e) {
-                        console.error('Error executing close callback:', e);
-                    }
+                // 通过 IPC 通信通知渲染进程执行回调
+                if (appWin.webContents) {
+                    appWin.webContents.send('window-close-callback');
                 }
                 const bounds = appWin.getContentBounds();
                 const isMax = appWin.isMaximized();

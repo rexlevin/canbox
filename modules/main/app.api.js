@@ -1,5 +1,27 @@
 const { ipcRenderer } = require("electron");
 
+// 注册窗口关闭回调
+let __closeCallback = null;
+
+/**
+ * 注册窗口关闭时的回调函数
+ * @param {Function} callback - 窗口关闭时执行的回调函数
+ */
+const registerCloseCallback = (callback) => {
+    __closeCallback = callback;
+};
+
+// 监听窗口关闭事件
+ipcRenderer.on('window-close-callback', () => {
+    if (__closeCallback) {
+        try {
+            __closeCallback();
+        } catch (e) {
+            console.error('Error executing close callback:', e);
+        }
+    }
+});
+
 /**
  * 通过 ipc 请求主线程中的 db-api，ipc 消息名为：msg-db
  *
@@ -226,6 +248,7 @@ const win = {
      * @returns 
      */
     notification: (options) => {
+        console.info('options: ', options);
         return new Promise((resolve) => {
             ipcSendNotification(options);
             resolve(); // 直接 resolve，表示通知已发送
@@ -316,17 +339,7 @@ window.canbox = {
     win,
     dialog,
     store: electronStore,
-    /**
-     * 注册窗口关闭时的回调函数
-     * @param {Function} callback - 窗口关闭时执行的回调函数
-     */
-    registerCloseCallback: (callback) => {
-        if (typeof callback === 'function') {
-            window.__closeCallback = callback;
-        } else {
-            console.error('Invalid callback function provided.');
-        }
-    },
+    registerCloseCallback,
 };
 
 // 从 additionalArguments 读取 ID（主进程传递）

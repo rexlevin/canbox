@@ -414,6 +414,21 @@ canbox.win.notification(options)
 
 与 Electron `showMessageBox` 一致
 
+## registterCloseCallback
+
+注册窗口关闭时APP的回调函数
+
+- 参数： `Function`
+
+```javascript
+// 注册窗口关闭时的回调函数
+canbox.registerCloseCallback(() => {
+    console.log('窗口即将关闭，执行清理操作...');
+    // 在这里可以执行一些清理逻辑，例如保存数据或关闭资源
+});
+
+```
+
 ## 应答码
 
 | code | 释义                                                 |
