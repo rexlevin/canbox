@@ -18,39 +18,39 @@ declare global {
              */
             db: {
                 /**
-                 * 插入数据
-                 * @param param - 插入的数据
-                 * @returns Promise<any>
+                 * 新增或更新文档
+                 * @param param - 文档对象，必须包含 `_id` 字段
+                 * @returns Promise<any> - 返回操作结果，成功时返回文档数据，失败时返回错误信息
                  */
-                put: (param: any) => Promise<any>;
+                put: (param: { _id: string; [key: string]: any }) => Promise<any>;
 
                 /**
-                 * 批量插入数据
-                 * @param docs - 批量插入的数据
-                 * @returns Promise<any>
+                 * 批量新增或更新文档
+                 * @param docs - 文档数组，每个文档必须包含 `_id` 字段
+                 * @returns Promise<Array<any>> - 返回操作结果数组，成功时返回文档数据，失败时返回错误信息
                  */
-                bulkDocs: (docs: any[]) => Promise<any>;
+                bulkDocs: (docs: Array<{ _id: string; [key: string]: any }>) => Promise<Array<any>>;
 
                 /**
-                 * 查询数据
-                 * @param param - 查询条件
-                 * @returns Promise<any>
+                 * 获取文档
+                 * @param param - 查询参数，必须包含 `_id` 字段
+                 * @returns Promise<any> - 返回查询结果，成功时返回文档数据，失败时返回错误信息
                  */
-                get: (param: any) => Promise<any>;
+                get: (param: { _id: string }) => Promise<any>;
 
                 /**
-                 * 同步查询数据
-                 * @param param - 查询条件
-                 * @returns any
+                 * 同步获取文档
+                 * @param param - 查询参数，必须包含 `_id` 字段
+                 * @returns any|null - 返回查询结果，成功时返回文档数据，失败时返回 null
                  */
-                getSync: (param: any) => any;
+                getSync: (param: { _id: string }) => any | null;
 
                 /**
-                 * 删除数据
-                 * @param param - 删除条件
-                 * @returns Promise<any>
+                 * 删除文档
+                 * @param param - 删除参数，必须包含 `_id` 字段
+                 * @returns Promise<any> - 返回操作结果，成功时返回删除的文档数据，失败时返回错误信息
                  */
-                remove: (param: any) => Promise<any>;
+                remove: (param: { _id: string }) => Promise<any>;
             };
 
             /**

@@ -94,28 +94,72 @@ const ipcSendElectronStore = (type, param) => {
 };
 
 const db = {
+    /**
+     * 新增或更新文档
+     * @param {object} param - 文档对象，必须包含 `_id` 字段
+     * @returns {Promise<any>} - 返回操作结果，成功时返回文档数据，失败时返回错误信息
+     * @example
+     * canbox.db.put({ _id: 'doc1', name: 'test' })
+     *   .then(data => console.log(data))
+     *   .catch(err => console.error(err));
+     */
     put: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('put', param);
             "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
         });
     },
+    /**
+     * 批量新增或更新文档
+     * @param {Array<object>} docs - 文档数组，每个文档必须包含 `_id` 字段
+     * @returns {Promise<Array<any>>} - 返回操作结果数组，成功时返回文档数据，失败时返回错误信息
+     * @example
+     * canbox.db.bulkDocs([{ _id: 'doc1', name: 'test1' }, { _id: 'doc2', name: 'test2' }])
+     *   .then(data => console.log(data))
+     *   .catch(err => console.error(err));
+     */
     bulkDocs: (docs) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('bulkDocs', docs);
             "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
         });
     },
+    /**
+     * 获取文档
+     * @param {object} param - 查询参数，必须包含 `_id` 字段
+     * @returns {Promise<any>} - 返回查询结果，成功时返回文档数据，失败时返回错误信息
+     * @example
+     * canbox.db.get({ _id: 'doc1' })
+     *   .then(data => console.log(data))
+     *   .catch(err => console.error(err));
+     */
     get: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('get', param);
             "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
         })
     },
+    /**
+     * 同步获取文档
+     * @param {object} param - 查询参数，必须包含 `_id` 字段
+     * @returns {any|null} - 返回查询结果，成功时返回文档数据，失败时返回 null
+     * @example
+     * const doc = canbox.db.getSync({ _id: 'doc1' });
+     * console.log(doc);
+     */
     getSync: (param) => {
         const ret = ipcSendSyncDB('get', param);
         return "0000" === ret.code ? ret.data : null;
     },
+    /**
+     * 删除文档
+     * @param {object} param - 删除参数，必须包含 `_id` 字段
+     * @returns {Promise<any>} - 返回操作结果，成功时返回删除的文档数据，失败时返回错误信息
+     * @example
+     * canbox.db.remove({ _id: 'doc1' })
+     *   .then(data => console.log(data))
+     *   .catch(err => console.error(err));
+     */
     remove: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('remove', param);

@@ -2,10 +2,15 @@ const Store = require('electron-store');
 const path = require('path');
 
 class ElectronStore {
+    /**
+     * 
+     * @param {string} appId appId
+     * @param {string} key 存储的键
+     */
     constructor(appId, key) {
         this.store = new Store({
             name: key,
-            cwd: path.join('Users', 'data', appId, 'store')
+            cwd: path.join('Users', 'data', `${appId}`, 'store')
         });
     }
 
