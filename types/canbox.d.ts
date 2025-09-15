@@ -66,11 +66,13 @@ declare global {
                 createWindow: (options: any, params: any) => Promise<any>;
 
                 /**
-                 * 发送通知
-                 * @param options - 通知配置
-                 * @returns Promise<void>
+                 * 发出通知
+                 * @param {Object} options - 窗口配置
+                 * @param {String} options.title - 窗口标题
+                 * @param {String} options.body - 窗口内容
+                 * @returns Promise<void> - 表示通知已发送
                  */
-                notification: (options: any) => Promise<void>;
+                notification: (options: { title: string; body: string }) => Promise<void>;
             };
 
             /**
