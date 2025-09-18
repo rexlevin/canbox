@@ -1,5 +1,6 @@
 const { app } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const PouchDB = require('pouchdb');
 const { customAlphabet } = require('nanoid-cjs');
 const nanoid = customAlphabet('1234567890abcdef', 10);
@@ -27,8 +28,12 @@ setInterval(() => {
 // 获取或创建数据库连接
 function getDB(appId) {
     if (!dbCache[appId]) {
+        const dbDir = path.join(getAppDataPath(), appId);
+        if (!fs.existsSync(dbDir)) {
+            fs.mkdirSync(dbDir, { recursive: true });
+        }
         dbCache[appId] = {
-            db: new PouchDB(path.join(getAppDataPath(), appId, 'db'), { auto_compaction: true }),
+            db: new PouchDB(path.join(dbDir, 'db'), { auto_compaction: true }),
             lastUsed: Date.now()
         };
     } else {
