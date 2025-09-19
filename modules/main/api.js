@@ -4,9 +4,6 @@ const winFactory = require('./core/win');
 const dialogFactory = require('./core/dialog');
 const ElectronStore = require('./core/electronStore');
 
-// 初始化 electronStore 实例
-const electronStore = new ElectronStore();
-
 /**
  * 初始化数据库相关的 IPC 消息处理逻辑
  */
