@@ -13,11 +13,11 @@ function initDbIpcHandlers() {
         console.info('args: ', args);
         DB[args.type](args.appId, args.param, (res, err) => {
             if (err) {
-                event.returnValue = JSON.stringify({ code: '9100', msg: err.message });
+                event.returnValue = JSON.stringify({ success: false, msg: err.message });
                 return;
             }
             console.info('api.js: dbHandler res: ', res);
-            event.returnValue = JSON.stringify({ code: '0000', data: res});
+            event.returnValue = JSON.stringify({ success: true, data: res});
         });
     });
 }
@@ -33,7 +33,7 @@ function initDbIpcHandlers() {
  * @param {any} [args.param.value] - 存储的值（仅 'set' 操作需要）
  * @param {string} args.appId - 应用 ID，用于动态生成存储路径
  * @returns {void}
- * @emits event.returnValue - 返回操作结果，格式为 { code: string, data: any }
+ * @emits event.returnValue - 返回操作结果，格式为 { success: boolean, data: any }
  */
 function initElectronStoreIpcHandlers() {
     ipcMain.on('msg-electronStore', (event, args) => {
@@ -41,10 +41,10 @@ function initElectronStoreIpcHandlers() {
         const store = new ElectronStore(args.appId, args.param.key);
         store[args.type](args.param.key, args.param.value)
             .then(result => {
-                event.returnValue = JSON.stringify({ code: '0000', data: result });
+                event.returnValue = JSON.stringify({ success: true, data: result });
             })
             .catch(err => {
-                event.returnValue = JSON.stringify({ code: '9100', msg: err.message });
+                event.returnValue = JSON.stringify({ success: false, msg: err.message });
             });
     });
 }
@@ -58,7 +58,7 @@ function initElectronStoreIpcHandlers() {
  * @param {object} args.params - 窗口参数
  * @param {string} args.appId - 应用 ID
  * @returns {void}
- * @emits event.returnValue - 返回窗口创建结果，格式为 { code: string, data: any }
+ * @emits event.returnValue - 返回创建窗口的id，格式为 id: string
  */
 function createWindowIpcHandlers() {
     ipcMain.on('msg-createWindow', (event, args) => {
@@ -78,7 +78,7 @@ function createWindowIpcHandlers() {
  * @param {string} args.options.body - 通知内容
  * @param {string} args.appId - 应用 ID
  * @returns {void}
- * @emits event.returnValue - 返回通知创建结果，格式为 { code: string, data: any }
+ * @emits event.returnValue - 返回通知创建结果，格式为 { success: boolean, data: any }
  */
 function notificationHandlers() {
     ipcMain.on('msg-notification', (event, args) => {
@@ -97,17 +97,17 @@ function notificationHandlers() {
  * @param {string} args.type - 对话框操作类型，支持 'openFile'、'saveFile' 等
  * @param {object} args.options - 对话框配置选项
  * @returns {void}
- * @emits event.returnValue - 返回对话框操作结果，格式为 { code: string, data: any }
+ * @emits event.returnValue - 返回对话框操作结果，格式为 { success: boolean, data: any }
  */
 function initDialogIpcHandlers() {
     ipcMain.on('msg-dialog', (event, args) => {
         console.info('args: ', args);
         dialogFactory[args.type](args.options)
             .then(result => {
-                event.returnValue = JSON.stringify({ code: '0000', data: result });
+                event.returnValue = JSON.stringify({ success: true, data: result });
             })
             .catch(err => {
-                event.returnValue = JSON.stringify({ code: '9100', msg: err.message });
+                event.returnValue = JSON.stringify({ success: false, msg: err.message });
             });
     });
 }
@@ -115,7 +115,7 @@ function initDialogIpcHandlers() {
 /**
  * 统一初始化所有 IPC 消息处理逻辑
  */
-function initIpcHandlers() {
+function initApiIpcHandlers() {
     initDbIpcHandlers();
     createWindowIpcHandlers();
     notificationHandlers();
@@ -123,4 +123,4 @@ function initIpcHandlers() {
     initElectronStoreIpcHandlers();
 }
 
-module.exports = initIpcHandlers;
+module.exports = initApiIpcHandlers;

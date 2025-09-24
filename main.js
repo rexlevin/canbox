@@ -15,9 +15,9 @@ const windowManager = require('./modules/main/windowManager');
 const RepoMonitorService = require('./modules/main/services/repoMonitorService');
 
 // 引入 IPC 消息处理模块
-const initDbIpcHandlers = require('./modules/main/api');
+const initApiIpcHandlers = require('./modules/main/api');
 // 初始化 IPC 消息处理
-initDbIpcHandlers();
+initApiIpcHandlers();
 
 // 引入 IPC 消息处理模块
 const { initIpcHandlers, handleLoadAppById } = require('./ipcHandlers');

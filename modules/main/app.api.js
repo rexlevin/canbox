@@ -38,7 +38,7 @@ const ipcSendSyncDB = (type, param) => {
         param,
         appId: window.appId
     });
-    // console.info('returnValue in app.api==', returnValue);
+    console.info('returnValue in app.api==', returnValue);
     if (returnValue instanceof Error) throw returnValue;
     return JSON.parse(returnValue);
 };
@@ -99,7 +99,7 @@ const ipcSendNotification = (options) => {
  * @param {object} param - 参数对象
  * @param {string} param.key - 存储的键
  * @param {any} [param.value] - 存储的值（仅 'set' 操作需要）
- * @returns {object} - 返回操作结果，格式为 { code: string, data: any }
+ * @returns {object} - 返回操作结果，格式为 { success: boolean, data: any }
  * @throws {Error} - 如果 appId 未设置或 IPC 通信失败
  */
 const ipcSendElectronStore = (type, param) => {
@@ -128,7 +128,7 @@ const db = {
     put: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('put', param);
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
         });
     },
     /**
@@ -143,7 +143,7 @@ const db = {
     bulkDocs: (docs) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('bulkDocs', docs);
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
         });
     },
     /**
@@ -158,7 +158,7 @@ const db = {
     get: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('get', param);
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
         })
     },
     /**
@@ -171,7 +171,9 @@ const db = {
      */
     getSync: (param) => {
         const ret = ipcSendSyncDB('get', param);
-        return "0000" === ret.code ? ret.data : null;
+        console.log('ret in app.api.js==', ret);
+        console.log('ret in app.api.js==ret.success: ', ret.success);
+        return ret.success ? ret.data : null;
     },
     /**
      * 删除文档
@@ -185,7 +187,7 @@ const db = {
     remove: (param) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDB('remove', param);
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
         })
     }
 }
@@ -199,7 +201,7 @@ const dialog = {
     showOpenDialog: (options) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDialog('showOpenDialog', options);
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
         });
     },
     /**
@@ -210,7 +212,7 @@ const dialog = {
     showSaveDialog: (options) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDialog('showSaveDialog', options);
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
         });
     },
     /**
@@ -221,7 +223,7 @@ const dialog = {
     showMessageBox: (options) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncDialog('showMessageBox', options);
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
         });
     }
 }
@@ -270,7 +272,7 @@ const electronStore = {
             //     key,
             //     appId: window.appId
             // });
-            "0000" === ret.code ? resolve(ret.data) : reject(ret.msg);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
         });
     },
 
@@ -289,7 +291,7 @@ const electronStore = {
             //     value,
             //     appId: window.appId
             // });
-            "0000" === ret.code ? resolve() : reject(ret.msg);
+            ret.success ? resolve() : reject(ret.msg);
         });
     },
 
@@ -306,7 +308,7 @@ const electronStore = {
             //     key,
             //     appId: window.appId
             // });
-            "0000" === ret.code ? resolve() : reject(ret.msg);
+            ret.success ? resolve() : reject(ret.msg);
         });
     },
 
@@ -320,7 +322,7 @@ const electronStore = {
                 type: 'clear',
                 appId: window.appId
             });
-            "0000" === ret.code ? resolve() : reject(ret.msg);
+            ret.success ? resolve() : reject(ret.msg);
         });
     }
 }

@@ -51,7 +51,7 @@ const winFactory = {
         try {
             // 根据 parentWindowId 判断应用类型并拼接完整路径
             const appDevConfigArr = getAppsDevStore().get('default') || [];
-            const appConfigArr = getAppsStore().get('default') || [];
+            console.info('appDevConfigArr: ', appDevConfigArr)
             if (appDevConfigArr.find(item => item.id === parentWindowId)) {
                 const appDevItem = appDevConfigArr.find(item => item.id === parentWindowId).path;
                 const appJsonPath = path.join(appDevItem, 'app.json');
