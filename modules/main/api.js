@@ -29,6 +29,7 @@ function initDbIpcHandlers() {
  * @param {object} args - IPC 消息参数
  * @param {string} args.type - 操作类型，支持 'get'、'set'、'delete'、'clear'
  * @param {object} args.param - 参数对象
+ * @param {string} args.param.name - 存储的名称
  * @param {string} args.param.key - 存储的键
  * @param {any} [args.param.value] - 存储的值（仅 'set' 操作需要）
  * @param {string} args.appId - 应用 ID，用于动态生成存储路径
@@ -38,7 +39,7 @@ function initDbIpcHandlers() {
 function initElectronStoreIpcHandlers() {
     ipcMain.on('msg-electronStore', (event, args) => {
         console.info('args: ', args);
-        const store = new ElectronStore(args.appId, args.param.key);
+        const store = new ElectronStore(args.appId, args.param.name);
         store[args.type](args.param.key, args.param.value)
             .then(result => {
                 event.returnValue = JSON.stringify({ success: true, data: result });

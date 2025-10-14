@@ -33,6 +33,7 @@ class ElectronStore {
      * @returns {Promise<void>}
      */
     set(key, value) {
+        // console.info('electronStore.js: set: key: %s, value: %o', key, value);
         return new Promise((resolve) => {
             this.store.set(key, value);
             resolve();

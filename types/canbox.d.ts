@@ -67,10 +67,10 @@ declare global {
 
                 /**
                  * 发出通知
-                 * @param {Object} options - 窗口配置
-                 * @param {String} options.title - 窗口标题
-                 * @param {String} options.body - 窗口内容
-                 * @returns Promise<void> - 表示通知已发送
+                 * @param options - 通知配置
+                 * @param options.title - 通知标题
+                 * @param options.body - 通知内容
+                 * @returns Promise<void>
                  */
                 notification: (options: { title: string; body: string }) => Promise<void>;
             };
@@ -100,31 +100,35 @@ declare global {
             store: {
                 /**
                  * 获取存储的值
+                 * @param name - 存储的名称
                  * @param key - 存储的键
                  * @returns Promise<any>
                  */
-                get: (key: string) => Promise<any>;
+                get: (name: string, key: string) => Promise<any>;
 
                 /**
                  * 设置存储的值
+                 * @param name - 存储的名称
                  * @param key - 存储的键
                  * @param value - 存储的值
                  * @returns Promise<void>
                  */
-                set: (key: string, value: any) => Promise<void>;
+                set: (name: string, key: string, value: any) => Promise<void>;
 
                 /**
                  * 删除存储的值
+                 * @param name - 存储的名称
                  * @param key - 存储的键
                  * @returns Promise<void>
                  */
-                delete: (key: string) => Promise<void>;
+                delete: (name: string, key: string) => Promise<void>;
 
                 /**
                  * 清空存储
+                 * @param name - 存储的名称
                  * @returns Promise<void>
                  */
-                clear: () => Promise<void>;
+                clear: (name) => Promise<void>;
             };
 
             /**

@@ -261,12 +261,13 @@ const win = {
 const electronStore = {
     /**
      * 获取存储的值
+     * @param {string} name 存储的名称
      * @param {string} key - 存储的键
      * @returns {Promise<any>} - 返回存储的值
      */
-    get: (key) => {
+    get: (name, key) => {
         return new Promise((resolve, reject) => {
-            const ret = ipcSendElectronStore('get', { key });
+            const ret = ipcSendElectronStore('get', { name, key });
             // const ret = ipcRenderer.sendSync('msg-electronStore', {
             //     type: 'get',
             //     key,
@@ -278,13 +279,14 @@ const electronStore = {
 
     /**
      * 设置存储的值
+     * @param {string} name 存储的名称
      * @param {string} key - 存储的键
      * @param {any} value - 存储的值
      * @returns {Promise<void>}
      */
-    set: (key, value) => {
+    set: (name, key, value) => {
         return new Promise((resolve, reject) => {
-            const ret = ipcSendElectronStore('set', { key, value });
+            const ret = ipcSendElectronStore('set', { name, key, value });
             // const ret = ipcRenderer.sendSync('msg-electronStore', {
             //     type: 'set',
             //     key,
@@ -297,12 +299,13 @@ const electronStore = {
 
     /**
      * 删除存储的值
+     * @param {string} name 存储的名称
      * @param {string} key - 存储的键
      * @returns {Promise<void>}
      */
-    delete: (key) => {
+    delete: (name, key) => {
         return new Promise((resolve, reject) => {
-            const ret = ipcSendElectronStore('delete', { key });
+            const ret = ipcSendElectronStore('delete', { name, key });
             // const ret = ipcRenderer.sendSync('msg-electronStore', {
             //     type: 'delete',
             //     key,
@@ -314,14 +317,16 @@ const electronStore = {
 
     /**
      * 清空存储
+     * @param {string} name 存储的名称
      * @returns {Promise<void>}
      */
-    clear: () => {
+    clear: (name) => {
         return new Promise((resolve, reject) => {
-            const ret = ipcRenderer.sendSync('msg-electronStore', {
-                type: 'clear',
-                appId: window.appId
-            });
+            const ret = ipcSendElectronStore('clear', { name });
+            // const ret = ipcRenderer.sendSync('msg-electronStore', {
+            //     type: 'clear',
+            //     appId: window.appId
+            // });
             ret.success ? resolve() : reject(ret.msg);
         });
     }
