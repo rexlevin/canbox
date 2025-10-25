@@ -245,11 +245,13 @@ async function downloadAppsFromRepo(uid) {
             fs.mkdirSync(REPOS_TEMP_PATH, { recursive: true });
         } else {
             // 清空 REPOS_TEMP_PATH 目录
-            if (process.platform === 'win32') {
-                execSync(`rd /s /q ${REPOS_TEMP_PATH}\\*`);
-            } else {
-                execSync(`rm -rf ${REPOS_TEMP_PATH}/*`);
-            }
+            // if (process.platform === 'win32') {
+            //     execSync(`rd /s /q "${REPOS_TEMP_PATH}" && mkdir "${REPOS_TEMP_PATH}"`, { stdio: 'ignore' });
+            // } else {
+            //     execSync(`rm -rf ${REPOS_TEMP_PATH}/*`);
+            // }
+            const { clearDir } = require('../utils/fileUtils');
+            clearDir(REPOS_TEMP_PATH);
         }
 
         // 下载文件
@@ -294,6 +296,18 @@ async function downloadAppsFromRepo(uid) {
         return handleError(new Error('下载应用失败: ' + error.message), 'downloadAppsFromRepo');
     }
 }
+
+// function clearDir(dirPath) {
+//     for (const file of fs.readdirSync(dirPath)) {
+//         const fullPath = path.join(dirPath, file);
+//         if (fs.lstatSync(fullPath).isDirectory()) {
+//             clearDir(fullPath); // 递归删除子目录
+//             fs.rmdirSync(fullPath);
+//         } else {
+//             fs.unlinkSync(fullPath); // 删除文件
+//         }
+//     }
+// }
 
 /**
  * 初始化仓库管理相关的 IPC 处理逻辑

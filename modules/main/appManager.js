@@ -81,16 +81,18 @@ async function handleImportApp(event, zipPath, uid) {
     const importTag = !uid?.trim();
     try {
 
-        // 检查是否有 getAppTempPath() 目录，有则删除
-        if (fs.existsSync(getAppTempPath())) {
-            if (process.platform === 'win32') {
-                await execSync(`del /f /q "${getAppTempPath()}"`, { stdio: 'inherit' });
-            } else {
-                await execSync(`rm -rf "${getAppTempPath()}"`, { stdio: 'inherit' });
-            }
-        }
-        // 创建 getAppTempPath() 目录
-        fs.mkdirSync(getAppTempPath(), { recursive: true });
+        // // 检查是否有 getAppTempPath() 目录，有则删除
+        // if (fs.existsSync(getAppTempPath())) {
+        //     if (process.platform === 'win32') {
+        //         await execSync(`del /f /q "${getAppTempPath()}"`, { stdio: 'inherit' });
+        //     } else {
+        //         await execSync(`rm -rf "${getAppTempPath()}"`, { stdio: 'inherit' });
+        //     }
+        // }
+        // // 创建 getAppTempPath() 目录
+        // fs.mkdirSync(getAppTempPath(), { recursive: true });
+        const { clearDir } = require('./utils/fileUtils');
+        clearDir(getAppTempPath());
 
         // 将文件复制到 getAppTempPath() 目录下
         const uuid = uid || uuidv4().replace(/-/g, '');
