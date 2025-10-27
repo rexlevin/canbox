@@ -83,18 +83,22 @@ async function handleImportApp(event, zipPath, uid) {
     try {
         // 检查是否有 getAppTempPath() 目录，有则删除，asar有其特殊性，这里使用系统的命令来做删除
         if (fs.existsSync(getAppTempPath())) {
+            logger.info(`${getAppTempPath()} 目录开始删除`);
             if (process.platform === 'win32') {
                 await execSync(`del /f /q "${getAppTempPath()}"`, { stdio: 'inherit' });
             } else {
                 await execSync(`rm -rf "${getAppTempPath()}"`, { stdio: 'inherit' });
             }
         }
+        logger.info(`${getAppTempPath()} 目录已删除`);
         // 创建 getAppTempPath() 目录
         fs.mkdirSync(getAppTempPath(), { recursive: true });
+        logger.info('11111111111');
 
         // 将文件复制到 getAppTempPath() 目录下
         const uuid = uid || uuidv4().replace(/-/g, '');
         const targetPath = path.join(getAppTempPath(), `${uuid}.zip`);
+        logger.info('22222222222');
 
         if (!fs.existsSync(zipPath)) {
             return handleError(new Error(`源文件不存在: ${zipPath}`), 'handleImportApp');
@@ -117,6 +121,7 @@ async function handleImportApp(event, zipPath, uid) {
         } catch (err) {
             console.error('复制失败:', err);
         }
+        logger.info('333333333333333');
 
         // 将 getAppTempPath() 目录下的 zip 文件解压
         if (process.platform === 'win32') {
@@ -139,12 +144,16 @@ async function handleImportApp(event, zipPath, uid) {
         });
         // 将 getAppTempPath() 下的所有文件移动到 getAppPath() 下，由于asar文件的特殊性，这里使用系统命令来进行移动操作
         if (fs.existsSync(getAppTempPath())) {
+            if (!fs.existsSync(getAppPath())) {
+                fs.mkdirSync(getAppPath(), { recursive: true });
+            }
             if (process.platform === 'win32') {
-                await execSync(`move "${getAppTempPath()}\\*" "${getAppPath()}"`, { stdio: 'inherit' });
+                await execSync(`move "${getAppTempPath()}\\*" "${getAppPath()}\\"`, { stdio: 'inherit' });
             } else {
                 await execSync(`mv "${getAppTempPath()}"/* "${getAppPath()}"`, { stdio: 'inherit' });
             }
         }
+        logger.info('4444444444444444');
 
         console.info(DateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
         console.info(DateFormat.format(new Date()));

@@ -6,6 +6,7 @@ const asar = require('asar');
 const { execSync } = require('child_process');
 
 const { getAppsDevStore } = require('./storageManager');
+const logger = require('./utils/logger');
 
 /**
  * 打包应用为 asar 文件
@@ -26,12 +27,18 @@ const buildAsar = async (uid) => {
 
         // 创建输出目录和临时目录
         if (fs.existsSync(outputDir)) {
-            // 清理目录
-            const { clearDir } = require('./utils/fs-utils');
-            clearDir(outputDir);
-        } else {
-            fs.mkdirSync(outputDir, { recursive: true });
+            // app.asar 有其特殊性，它是文件，在linux使用fs.rmSync时代码会尝试以目录方式删除它，实际上它是个文件（fs.state(xxx.asar)）
+            // fs.rmSync(outputDir, { recursive: true });
+            if (process.platform === 'win32') {
+                // Windows
+                execSync(`del /s /q "${outputDir}"`, { stdio: 'inherit' });
+                execSync(`rmdir /s /q "${outputDir}"`, { stdio: 'inherit' });
+            } else {
+                // Linux/macOS
+                execSync(`rm -rf "${outputDir}"`, { stdio: 'inherit' });
+            }
         }
+        // fs.mkdirSync(outputDir, { recursive: true });
         fs.mkdirSync(tmpDir, { recursive: true });
         console.info('outputDir:', outputDir, '\ntmpDir:', tmpDir);
 
@@ -42,7 +49,7 @@ const buildAsar = async (uid) => {
             console.info('fullPartten: ', fullPattern);
             const matchedFiles = glob.sync(fullPattern, { nodir: true }); // 匹配所有文件（不包括目录）
             if (matchedFiles.length === 0) {
-                console.warn(`Warning: No files matched "${filePattern}", skipping.`);
+                console.warn(`Warning: No files matched "${fullPattern}", skipping.`);
                 return;
             }
 
@@ -71,22 +78,32 @@ const buildAsar = async (uid) => {
         // 删除临时目录
         fs.rmSync(tmpDir, { recursive: true, force: true });
 
+        logger.info(`开始打包应用: ${appJson.id} 版本: ${appJson.version}`);
         // 把目录 outputDir 下所有内容打包为一个zip文件，名字为：${appDevItem.appJson.id}-${appDevItem.appJson.version}
         const zipPath = path.join(outputDir, `${appJson.id}-${appJson.version}.zip`);
         if (process.platform === 'win32') {
-            execSync(`powershell -Command "Compress-Archive -Path '${outputDir}\\*' -DestinationPath '${zipPath}'"`, { stdio: 'inherit' });
+            execSync(`powershell -Command "Compress-Archive -Path '${outputDir}\\*' -DestinationPath '${zipPath}' -Force"`, { stdio: 'inherit' });
         } else {
             execSync(`cd "${outputDir}" && zip -r "${zipPath}" *`, { stdio: 'inherit' });
         }
         console.info('zipPath:', zipPath);
+        logger.info(`打包应用: ${appJson.id} 版本: ${appJson.version} 成功`);
+
+        // 调试：打印 outputDir 目录下的文件列表
+        if (process.platform === 'win32') {
+            execSync(`powershell -Command "Get-ChildItem -Path '${outputDir}' | Select-Object Name, FullName"`, { stdio: 'inherit' });
+        } else {
+            execSync(`ls -la "${outputDir}"`, { stdio: 'inherit' });
+        }
 
         // 删除 outputDir 目录下除了 ${appDevItem.appJson.id}-${appDevItem.appJson.version}.zip 之外的所有文件
-        const zipFileName = `${appJson.id}-${appJson.version}.zip`;
-        if (process.platform === 'win32') {
-            execSync(`powershell -Command "Get-ChildItem -Path '${outputDir}' | Where-Object { $_.Name -ne '${zipFileName}' } | Remove-Item -Force -Recurse"`, { stdio: 'inherit' });
-        } else {
-            execSync(`find "${outputDir}" -mindepth 1 -maxdepth 1 ! -name '${zipFileName}' -exec rm -rf {} +`, { stdio: 'inherit' });
-        }
+        // const zipFileName = `${appJson.id}-${appJson.version}.zip`;
+        // if (process.platform === 'win32') {
+        //     execSync(`powershell -Command "Get-ChildItem -Path '${outputDir}' | Where-Object { $_.Name -ne '${zipFileName}' } | Remove-Item -Force -Recurse"`, { stdio: 'inherit' });
+        //     // execSync(`powershell -Command "Get-ChildItem -Path '${outputDir}' | Where-Object { $_.Name -eq '${zipFileName}' } | ForEach-Object { Write-Host '保留文件:' $_.FullName }; Get-ChildItem -Path '${outputDir}' | Where-Object { $_.Name -ne '${zipFileName}' } | Remove-Item -Force -Recurse"`, { stdio: 'inherit' });
+        // } else {
+        //     execSync(`find "${outputDir}" -mindepth 1 -maxdepth 1 ! -name '${zipFileName}' -exec rm -rf {} +`, { stdio: 'inherit' });
+        // }
 
         return { success: true, msg: '打包成功', asarPath };
     } catch (err) {
