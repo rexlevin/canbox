@@ -7,6 +7,7 @@ const { getAppPath, getAppTempPath } = require('./pathManager');
 const { handleError } = require('./ipc/errorHandler')
 const DateFormat = require('../utils/DateFormat');
 const logger = require('./utils/logger');
+const fsUtils = require('./utils/fs-utils');
 
 /**
  * 获取所有应用数据
@@ -80,12 +81,16 @@ async function handleImportApp(event, zipPath, uid) {
     // 如果uid有值说明是从repos下载的，importTag为false，否则是导入的，importTag为true
     const importTag = !uid?.trim();
     try {
+        // 检查是否有 getAppTempPath() 目录，有则删除，asar有其特殊性，这里使用系统的命令来做删除
         if (fs.existsSync(getAppTempPath())) {
-            const { clearDir } = require('./utils/fs-utils');
-            clearDir(getAppTempPath());
-        } else {
-            fs.mkdirSync(getAppTempPath(), { recursive: true });
+            if (process.platform === 'win32') {
+                await execSync(`del /f /q "${getAppTempPath()}"`, { stdio: 'inherit' });
+            } else {
+                await execSync(`rm -rf "${getAppTempPath()}"`, { stdio: 'inherit' });
+            }
         }
+        // 创建 getAppTempPath() 目录
+        fs.mkdirSync(getAppTempPath(), { recursive: true });
 
         // 将文件复制到 getAppTempPath() 目录下
         const uuid = uid || uuidv4().replace(/-/g, '');
@@ -132,7 +137,7 @@ async function handleImportApp(event, zipPath, uid) {
                 fs.renameSync(path.join(getAppTempPath(), file), path.join(getAppTempPath(), `${uuid}.asar.unpacked`));
             }
         });
-        // 将 getAppTempPath() 下的所有文件移动到 getAppPath() 下
+        // 将 getAppTempPath() 下的所有文件移动到 getAppPath() 下，由于asar文件的特殊性，这里使用系统命令来进行移动操作
         if (fs.existsSync(getAppTempPath())) {
             if (process.platform === 'win32') {
                 await execSync(`move "${getAppTempPath()}\\*" "${getAppPath()}"`, { stdio: 'inherit' });
