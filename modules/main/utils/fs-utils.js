@@ -6,38 +6,42 @@ const { execSync } = require('child_process');
  * 递归创建目录
  * @param {string} dirPath - 目录路径
  */
-exports.ensureDirExists = function(dirPath) {
+function ensureDirExists(dirPath) {
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
     }
-};
+}
 
 /**
  * 删除目录及其内容
  * @param {string} dirPath - 目录路径
  */
-exports.removeDir = function(dirPath) {
+function removeDir(dirPath) {
     fs.rmSync(dirPath, { recursive: true, force: true });
-};
+}
 
 /**
  * 复制文件
  * @param {string} source - 源文件路径
  * @param {string} target - 目标文件路径
  */
-exports.copyFile = function(source, target) {
+function copyFile(source, target) {
     fs.copyFileSync(source, target);
-};
+}
 
 /**
  * 执行系统命令
  * @param {string} command - 命令字符串
  */
-exports.executeCommand = function(command) {
+function executeCommand(command) {
     execSync(command, { stdio: 'inherit' });
-};
+}
 
-exports.clearDir = (dirPath) => {
+/**
+ * 清空目录内容
+ * @param {string} dirPath - 目录路径
+ */
+function clearDir(dirPath) {
     for (const file of fs.readdirSync(dirPath)) {
         const fullPath = path.join(dirPath, file);
         if (fs.lstatSync(fullPath).isDirectory()) {
@@ -47,4 +51,12 @@ exports.clearDir = (dirPath) => {
             fs.unlinkSync(fullPath); // 删除文件
         }
     }
+}
+
+module.exports = {
+    ensureDirExists,
+    removeDir,
+    copyFile,
+    executeCommand,
+    clearDir
 };

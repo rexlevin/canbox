@@ -7,7 +7,7 @@ const logger = require('../utils/logger');
 
 const { handleError } = require('../ipc/errorHandler');
 const repoUtils = require('../utils/repoUtils');
-const fileUtils = require('../utils/fileUtils');
+const fsUtils = require('../utils/fs-utils');
 
 const DateFormat = require('../../utils/DateFormat');
 
@@ -114,7 +114,7 @@ class RepoMonitorService {
                                 logoPath = path.join(reposPath, `logo${logoExt}`);
                                 const logoDir = path.dirname(logoPath);
                                 
-                                fileUtils.ensureDirExists(logoDir);
+                                fsUtils.ensureDirExists(logoDir);
                                 
                                 repoUtils.downloadLogoFromRepo(logoUrl, logoPath).then((logoDownloadSuccess) => {
                                     if (!logoDownloadSuccess) {

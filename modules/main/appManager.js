@@ -80,19 +80,12 @@ async function handleImportApp(event, zipPath, uid) {
     // 如果uid有值说明是从repos下载的，importTag为false，否则是导入的，importTag为true
     const importTag = !uid?.trim();
     try {
-
-        // // 检查是否有 getAppTempPath() 目录，有则删除
-        // if (fs.existsSync(getAppTempPath())) {
-        //     if (process.platform === 'win32') {
-        //         await execSync(`del /f /q "${getAppTempPath()}"`, { stdio: 'inherit' });
-        //     } else {
-        //         await execSync(`rm -rf "${getAppTempPath()}"`, { stdio: 'inherit' });
-        //     }
-        // }
-        // // 创建 getAppTempPath() 目录
-        // fs.mkdirSync(getAppTempPath(), { recursive: true });
-        const { clearDir } = require('./utils/fileUtils');
-        clearDir(getAppTempPath());
+        if (fs.existsSync(getAppTempPath())) {
+            const { clearDir } = require('./utils/fs-utils');
+            clearDir(getAppTempPath());
+        } else {
+            fs.mkdirSync(getAppTempPath(), { recursive: true });
+        }
 
         // 将文件复制到 getAppTempPath() 目录下
         const uuid = uid || uuidv4().replace(/-/g, '');

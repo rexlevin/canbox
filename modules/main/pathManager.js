@@ -29,7 +29,7 @@ const PathManager = {
         return path.join(app.getPath('userData'), 'Users', 'appIcon');
     },
     getAppTempPath: () => {
-        return path.join(app.getPath('userData'), 'Users', 'temp', 'app');
+        return path.join(app.getPath('userData'), 'Users', 'temp', 'apps');
     },
     getReposPath: () => {
         return path.join(app.getPath('userData'), 'Users', 'repos');

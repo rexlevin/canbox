@@ -26,18 +26,12 @@ const buildAsar = async (uid) => {
 
         // 创建输出目录和临时目录
         if (fs.existsSync(outputDir)) {
-            // app.asar 有其特殊性，它是文件，在linux使用fs.rmSync时代码会尝试以目录方式删除它，实际上它是个文件（fs.state(xxx.asar)）
-            // fs.rmSync(outputDir, { recursive: true });
-            if (process.platform === 'win32') {
-                // Windows
-                execSync(`del /s /q "${outputDir}"`, { stdio: 'inherit' });
-                execSync(`rmdir /s /q "${outputDir}"`, { stdio: 'inherit' });
-            } else {
-                // Linux/macOS
-                execSync(`rm -rf "${outputDir}"`, { stdio: 'inherit' });
-            }
+            // 清理目录
+            const { clearDir } = require('./utils/fs-utils');
+            clearDir(outputDir);
+        } else {
+            fs.mkdirSync(outputDir, { recursive: true });
         }
-        // fs.mkdirSync(outputDir, { recursive: true });
         fs.mkdirSync(tmpDir, { recursive: true });
         console.info('outputDir:', outputDir, '\ntmpDir:', tmpDir);
 

@@ -1,5 +1,4 @@
 const { ipcMain } = require('electron');
-const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
@@ -10,7 +9,7 @@ const logger = require('../utils/logger');
 
 const { getReposStore } = require('../storageManager');
 const repoUtils = require('../utils/repoUtils');
-const fileUtils = require('../utils/fileUtils');
+const fsUtils = require('../utils/fs-utils');
 const DateFormat = require('../../utils/DateFormat');
 
 const { handleImportApp } = require('../appManager');
@@ -88,7 +87,7 @@ async function handleAddAppRepo(repoUrl, branch) {
                     logoPath = path.join(reposPath, `logo${logoExt}`);
                     const logoDir = path.dirname(logoPath);
 
-                    fileUtils.ensureDirExists(logoDir);
+                    fsUtils.ensureDirExists(logoDir);
 
                     // const logoDownloadSuccess = await repoUtils.downloadLogoFromRepo(logoUrl, logoPath);
                     // if (!logoDownloadSuccess) {
@@ -244,14 +243,7 @@ async function downloadAppsFromRepo(uid) {
         if (!fs.existsSync(REPOS_TEMP_PATH)) {
             fs.mkdirSync(REPOS_TEMP_PATH, { recursive: true });
         } else {
-            // 清空 REPOS_TEMP_PATH 目录
-            // if (process.platform === 'win32') {
-            //     execSync(`rd /s /q "${REPOS_TEMP_PATH}" && mkdir "${REPOS_TEMP_PATH}"`, { stdio: 'ignore' });
-            // } else {
-            //     execSync(`rm -rf ${REPOS_TEMP_PATH}/*`);
-            // }
-            const { clearDir } = require('../utils/fileUtils');
-            clearDir(REPOS_TEMP_PATH);
+            fsUtils.clearDir(REPOS_TEMP_PATH);
         }
 
         // 下载文件
