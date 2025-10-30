@@ -1,4 +1,35 @@
-# CanBox API提示
+# CanBox开发
+
+1. fork 代码
+2. 提交修改
+3. 提交pr
+4. 等待合并 😁
+
+## 项目结构
+
+```
+canbox/
+├── dist/                  # 构建输出目录
+├── modules/               # 核心模块
+├── public/                # 静态资源
+├── src/                   # 前端源码
+├── main.js                # 主进程入口
+├── ipcHandlers.js         # IPC 通信处理
+└── package.json           # 项目配置
+```
+
+## 调试
+
+- 启动开发服务器：
+  ```bash
+  npm run dev
+  ```
+- 调试主进程：
+  ```bash
+  npm run start
+  ```
+
+## CanBox API提示
 
 1. 安装 `typescript` ： `npm i -D typescript`
 2. 在项目根目录下创建目录  `types `，将 `canbox.d.ts `放到 `types` 目录中
@@ -64,7 +95,7 @@ tsconfig.json 文件内容示例如下：
 }
 ```
 
-# APP开发
+# App开发
 
 ## app.json
 
@@ -108,7 +139,7 @@ tsconfig.json 文件内容示例如下：
 | window     |        | object |  1  | 同 Electron 中 BrowserWindow 参数                                                                                                                       |
 | platform   |        | array |  *  | windows, darwin, linux<br />插件应用支持的平台，此为 `可选项`，默认为全平台支持                                                                       |
 | categories |        | array |  *  | app分类，最多只取前两个                                                                                                                                 |
-| tags       |        | array |  *  | app标签，用于app商城内搜索使用                                                                                                                          |
+| tags       |        | array |  *  | app标签，用于分类展示                                                                                                                                   |
 
 #### categories
 
