@@ -29,6 +29,23 @@ canbox/
   npm run start
   ```
 
+## 编译打包
+
+```bash
+# 1 克隆项目
+git clone https://github.com/lizl6/canbox.git
+
+# 2 安装依赖：
+npm install
+
+# 3 vite编译
+npm run build
+
+# 4 打包
+npm run build-dist:linux  # Linux包需要在linux环境下
+npm run build-dist:win    # Windows包需要在windows下，我是用的win11
+```
+
 ## CanBox API提示
 
 1. 安装 `typescript` ： `npm i -D typescript`
