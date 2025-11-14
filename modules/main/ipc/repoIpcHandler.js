@@ -40,12 +40,34 @@ async function updateReposStatus(uid) {
 /**
  * 处理添加单个仓库的逻辑
  */
-async function handleAddAppRepo(repoUrl, branch) {
+async function handleAddAppRepo(repoUrl) {
     try {
         if (!repoUrl) {
             return handleError(new Error('未输入仓库地址'), 'handleAddAppRepo');
         }
-        branch = branch || 'main';
+        
+        // 自动获取仓库的默认分支
+        let branch = '';
+        try {
+            // 尝试获取仓库信息来推断默认分支
+            const repoInfoUrl = repoUrl.replace(/\\.git$/, '') + '/info/refs?service=git-upload-pack';
+            const response = await fetch(repoInfoUrl);
+            if (response.ok) {
+                const text = await response.text();
+                // 从响应中提取默认分支信息
+                const match = text.match(/refs\/heads\/([^\s]+)/);
+                if (match) {
+                    branch = match[1];
+                } else {
+                    branch = 'main'; // 回退到 main
+                }
+            } else {
+                branch = 'main'; // 回退到 main
+            }
+        } catch (error) {
+            logger.info('无法自动获取默认分支，使用 main 作为默认分支: {}', error);
+            branch = repoUrl.includes('github.com') ? 'main' : 'master'; // 回退到 main
+        }
 
         // 校验仓库地址格式
         if (!repoUtils.validateRepoUrl(repoUrl)) {
@@ -306,8 +328,8 @@ async function downloadAppsFromRepo(uid) {
  */
 function initRepoHandlers() {
     // 添加app源
-    ipcMain.handle('add-app-repo', async (event, repoUrl, branch) => {
-        return handleAddAppRepo(repoUrl, branch);
+    ipcMain.handle('add-app-repo', async (event, repoUrl) => {
+        return handleAddAppRepo(repoUrl);
     });
 
     // 导入app源列表

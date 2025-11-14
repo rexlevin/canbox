@@ -12,7 +12,7 @@
             :before-close="handleClose">
             <el-form 
                 ref="formRef"
-                :model="{ repoUrl, branch }" 
+                :model="{ repoUrl }" 
                 label-width="120px" 
                 label-position="top"
                 @submit.prevent="addAppRepo">
@@ -32,12 +32,6 @@
                         placeholder="例如: https://github.com/username/repo"
                         clearable 
                         @input="formRef?.clearValidate('repoUrl')"/>
-                </el-form-item>
-                <el-form-item label="分支 (可选)" prop="branch">
-                    <el-input
-                        v-model="branch"
-                        placeholder="例如: main 或 master, 默认为 main"
-                        clearable />
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -102,7 +96,6 @@ const appStore = useAppStore();
 
 const dialogVisible = ref(false);
 const repoUrl = ref('');
-const branch = ref('');
 
 // 控制loading状态
 let loadingTag = ref({});
@@ -193,12 +186,11 @@ const addAppRepo = async () => {
     dialogVisible.value = false;
     
     // 调用IPC接口
-    window.api.addAppRepo(repoUrl.value, branch.value, result => {
+    window.api.addAppRepo(repoUrl.value, result => {
         if (result.success) {
             ElMessage.success('仓库添加成功');
             dialogVisible.value = false;
             repoUrl.value = '';
-            branch.value = '';
             fetchReposData();
         } else {
             ElMessage.error(result.msg || '仓库添加失败');

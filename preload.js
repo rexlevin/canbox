@@ -82,7 +82,7 @@ contextBridge.exposeInMainWorld(
                 fn(null);
             })
         },
-        addAppRepo: (repoUrl, branch, fn) => ipcRenderer.invoke('add-app-repo', repoUrl, branch).then(result => {
+        addAppRepo: (repoUrl, fn) => ipcRenderer.invoke('add-app-repo', repoUrl).then(result => {
             fn(result);
         }).catch(error => {
             console.error('addAppRepo: IPC call failed:', error);
