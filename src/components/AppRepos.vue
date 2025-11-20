@@ -201,7 +201,10 @@ const addAppRepo = async () => {
 
 importAppRepos = () => {
     window.api.importAppRepos(ret => {
-        if (!ret.success) {
+        console.log('importAppRepos ret: %o', ret);
+        if (!ret.success && 'NoFileSelected' === ret.msg) {
+            ElMessage('未选择任何文件');
+        } else if (!ret.success) {
             ElMessage({
                 type: 'error',
                 message: '导入失败：' + ret.msg

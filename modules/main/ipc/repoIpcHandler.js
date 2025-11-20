@@ -43,7 +43,7 @@ async function updateReposStatus(uid) {
 async function handleAddAppRepo(repoUrl) {
     try {
         if (!repoUrl) {
-            return handleError(new Error('未输入仓库地址'), 'handleAddAppRepo');
+            return handleError(new Error('NoGitRepo'), 'handleAddAppRepo');
         }
         
         // 自动获取仓库的默认分支
@@ -195,7 +195,7 @@ async function handleImportAppRepos() {
             filters: [{ name: 'Text Files', extensions: ['txt'] }]
         });
         if (result.canceled || result.filePaths.length === 0) {
-            return handleError(new Error('未选择文件'), 'handleImportAppRepos');
+            return handleError(new Error('NoFileSelected'), 'handleImportAppRepos');
         }
         const filePath = result.filePaths[0];
         const content = fs.readFileSync(filePath, 'utf-8');
