@@ -15,6 +15,7 @@ const DateFormat = require('../../utils/DateFormat');
 const { handleImportApp } = require('../appManager');
 
 const { getReposPath, getReposTempPath } = require('../pathManager');
+const { ca } = require('element-plus/es/locales.mjs');
 const REPOS_PATH = getReposPath();
 const REPOS_TEMP_PATH = getReposTempPath();
 
@@ -43,7 +44,7 @@ async function updateReposStatus(uid) {
 async function handleAddAppRepo(repoUrl) {
     try {
         if (!repoUrl) {
-            return handleError(new Error('NoGitRepo'), 'handleAddAppRepo');
+            throw new Error('NoGitRepo');
         }
         
         // 自动获取仓库的默认分支
@@ -71,7 +72,7 @@ async function handleAddAppRepo(repoUrl) {
 
         // 校验仓库地址格式
         if (!repoUtils.validateRepoUrl(repoUrl)) {
-            return handleError(new Error('仓库地址格式无效'), 'handleAddAppRepo');
+            throw new Error('InvalidGitRepo');
         }
 
         // 尝试访问仓库地址
@@ -79,10 +80,10 @@ async function handleAddAppRepo(repoUrl) {
             const url = repoUtils.getFileUrl(repoUrl, branch, 'app.json');
             const response = await fetch(url);
             if (!response.ok) {
-                return handleError(new Error('无法访问该仓库，请检查地址是否正确或是否有权限'), 'handleAddAppRepo');
+                throw new Error('UnableToAccessRepo');
             }
         } catch (error) {
-            return handleError(error, 'handleAddAppRepo');
+            throw error;
         }
 
         const uuid = uuidv4().replace(/-/g, '');
@@ -97,7 +98,7 @@ async function handleAddAppRepo(repoUrl) {
             const filePath = path.join(reposPath, file);
             const downloadSuccess = await repoUtils.downloadFileFromRepo(fileUrl, filePath);
             if (!downloadSuccess && file === 'app.json') {
-                return handleError(new Error('无法下载app.json, 请检查仓库地址是否正确或是否有权限'), 'handleAddAppRepo');
+                throw new Error('CannotDownloadAppJson');
             }
 
             // 如果是app.json，下载logo图片
@@ -180,7 +181,7 @@ async function handleAddAppRepo(repoUrl) {
         */
         return { success: true };
     } catch (error) {
-        return handleError(error, 'handleAddAppRepo');
+        throw error;
     }
 }
 
@@ -329,7 +330,11 @@ async function downloadAppsFromRepo(uid) {
 function initRepoHandlers() {
     // 添加app源
     ipcMain.handle('add-app-repo', async (event, repoUrl) => {
-        return handleAddAppRepo(repoUrl);
+        try {
+            return handleAddAppRepo(repoUrl);
+        } catch (error) {
+            return handleError(error, 'add-app-repo');
+        }
     });
 
     // 导入app源列表
