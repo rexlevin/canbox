@@ -15,7 +15,6 @@ const DateFormat = require('../../utils/DateFormat');
 const { handleImportApp } = require('../appManager');
 
 const { getReposPath, getReposTempPath } = require('../pathManager');
-const { ca } = require('element-plus/es/locales.mjs');
 const REPOS_PATH = getReposPath();
 const REPOS_TEMP_PATH = getReposTempPath();
 
