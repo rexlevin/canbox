@@ -45,7 +45,7 @@ async function handleAddAppRepo(repoUrl) {
         if (!repoUrl) {
             throw new Error('NoGitRepo');
         }
-        
+
         // 自动获取仓库的默认分支
         let branch = '';
         try {
@@ -148,7 +148,7 @@ async function handleAddAppRepo(repoUrl) {
                 const crypto = require('crypto');
                 const hash = crypto.createHash('sha256');
                 const stream = fs.createReadStream(filePath);
-                
+
                 await new Promise((resolve, reject) => {
                     stream.on('data', (chunk) => hash.update(chunk));
                     stream.on('end', () => {
@@ -188,27 +188,31 @@ async function handleAddAppRepo(repoUrl) {
  * 处理批量导入仓库列表的逻辑
  */
 async function handleImportAppRepos() {
-    try {
-        const result = await dialog.showOpenDialog({
-            title: '选择仓库列表文件',
-            properties: ['openFile'],
-            filters: [{ name: 'Text Files', extensions: ['txt'] }]
-        });
-        if (result.canceled || result.filePaths.length === 0) {
-            return handleError(new Error('NoFileSelected'), 'handleImportAppRepos');
-        }
-        const filePath = result.filePaths[0];
-        const content = fs.readFileSync(filePath, 'utf-8');
-        const repoUrls = content.split('\n').filter(url => url.trim() !== '');
-
-        for (const repoUrl of repoUrls) {
-            await handleAddAppRepo(repoUrl);
-        }
-
-        return { success: true };
-    } catch (error) {
-        return handleError(error, 'handleImportAppRepos');
+    const result = await dialog.showOpenDialog({
+        title: '选择仓库列表文件',
+        properties: ['openFile'],
+        filters: [{ name: 'Text Files', extensions: ['txt'] }]
+    });
+    if (result.canceled || result.filePaths.length === 0) {
+        throw new Error('NoFileSelected');
     }
+    const filePath = result.filePaths[0];
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const repoUrls = content.split('\n').filter(url => url.trim() !== '');
+
+    let successCount = 0, failedRepos = [];
+    for (const repoUrl of repoUrls) {
+        console.log(`正在处理仓库: ${repoUrl}`);
+        try {
+            await handleAddAppRepo(repoUrl);
+            successCount++;
+        } catch (error) {
+            console.error(`处理仓库 ${repoUrl} 失败: ${error}`);
+            failedRepos.push({ repoUrl, error });
+        }
+    }
+
+    return { success: true, data: { successCount, failedRepos} };
 }
 
 /**
@@ -338,7 +342,11 @@ function initRepoHandlers() {
 
     // 导入app源列表
     ipcMain.handle('import-app-repos', async () => {
-        return handleImportAppRepos();
+        try {
+            return handleImportAppRepos();
+        } catch (error) {
+            return handleError(error, 'import-app-repos');
+        }
     });
 
     // 获取仓库列表
