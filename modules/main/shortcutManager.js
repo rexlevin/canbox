@@ -70,6 +70,7 @@ Comment=${appItem.description || ''}
 Exec="${execPath}" --no-sandbox id:${uid}
 Icon=${iconPath}
 Type=Application
+StartupWMClass=${uid}
 `;
                 fs.writeFileSync(shortcutPath, desktopFile);
             }
