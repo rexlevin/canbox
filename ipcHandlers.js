@@ -2,6 +2,7 @@ const { ipcMain, dialog, shell } = require('electron');
 const appIpcHandler = require('./modules/main/ipc/appIpcHandler');
 const repoIpcHandler = require('./modules/main/ipc/repoIpcHandler');
 const shortcutIpcHandler = require('./modules/main/ipc/shortcutIpcHandler');
+const appManagerIpcHandler = require('./modules/main/ipc/appManagerIpcHandler');
 
 const appWindow = require('./modules/main/app.window');
 
@@ -21,6 +22,7 @@ function initIpcHandlers() {
     appIpcHandler.init(ipcMain);
     repoIpcHandler.init(ipcMain);
     shortcutIpcHandler.init(ipcMain);
+    appManagerIpcHandler.init(ipcMain);
 
     // 打开文件选择窗口
     ipcMain.on('openAppJson', (event, options) => {

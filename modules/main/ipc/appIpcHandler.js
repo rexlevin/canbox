@@ -1,231 +1,90 @@
-const { ipcMain, dialog } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
-const { getAppsStore, getAppsDevStore } = require('../storageManager');
-const shortcutManager = require('../shortcutManager');
-const { getAppPath, getAppDataPath, getReposTempPath } = require('../pathManager');
-const appWindow = require('../app.window');
-const { handleError } = require('./errorHandler')
-const ObjectUtils = require('../../utils/ObjectUtils');
-const { getAllApps, getAppInfo, handleImportApp } = require('../appManager');
+const appProcessManager = require('../appProcessManager');
+const logger = require('../utils/logger');
 
-/**
- * 删除应用
- * 
- * @param {Object} param id: uid, devTag: 是否为开发中的应用, true:是
- * @returns 
- */
-async function removeApp(param) {
-    try {
-        if (param.devTag) {
-            await removeAppDevById(param.id);
-        } else {
-            await removeAppById(param.id);
-        }
-    } catch (err) {
-        return handleError(err, 'removeApp');
-    }
-    return { success: true, msg: '删除成功' };
-}
-
-async function removeAppDevById(uid) {
-    let appDevConfig = getAppsDevStore().get('default') || {};
-    if (!appDevConfig || Object.keys(appDevConfig).length === 0) {
-        return;
-    }
-    delete appDevConfig[uid];
-    getAppsDevStore().set('default', appDevConfig);
-}
-
-async function removeAppById(uid) {
-    let appConfig = getAppsStore().get('default') || {};
-    if (!appConfig || Object.keys(appConfig).length === 0) {
-        return;
+class AppIpcHandler {
+    constructor() {
+        this.handlers = new Map();
+        this.registerHandlers();
     }
 
-    const logo = appConfig[uid].logo;
-    const logoExt = path.extname(logo);
-    const logoPath = path.join(getAppPath(), `${uid}${logoExt}`);
-    const targetApp = {};   // 要删除的app集合
-    targetApp[uid] = ObjectUtils.clone(appConfig[uid]);
-
-    try {
-        fs.unlinkSync(path.join(getAppPath(), uid + '.asar'));
-        delete appConfig[uid];
-        getAppsStore().set('default', appConfig);
-    } catch (err) {
-        if (err.message.includes('ENOENT: no such file or directory')) {
-            console.info(`跳过这个错误：找不到这个文件: ${path.join(getAppPath(), uid + '.asar')}`);
-            delete appConfig[uid];
-            getAppsStore().set('default', appConfig);
-        } else {
-            throw err;
-        }
-    }
-
-    // 删除图标
-    try {
-        fs.unlinkSync(logoPath);
-    } catch (err) {
-        console.error('跳过图片删除异常 remove app logo error: ', err.message);
-    }
-
-    // 删除快捷方式
-    if (targetApp) {
-        await shortcutManager.deleteShortcuts(targetApp);
-    }
-    console.info(`删除成功: ${uid}`);
-}
-
-/**
- * 获取当前开发中的app列表
- * @returns 获取一个json格式得app信息列表， 内容示例如下：
-{
-    "wrong": [
-        {
-            "id": "98e2dea8620745a0a49ea0dd205609da",
-            "path": "/depot/cargo/demo-app/",
-            "name": "test"
-        }
-    ],
-    "correct": [
-        {
-            "id": "691e211238c141dcb6c00de4c0416349",
-            "path": "C:\\Users\\brood\\depot\\cargo\\can-demo\\",
-            "name": "demo",
-            "appJson": {
-                "name": "demo",
-                "description": "这是一个插件demo",
-                "author": "dev001",
-                "homepage": "https://gitee.com/dev001/clipboard",
-                "main": "index.html",
-                "logo": "logo.png",
-                "version": "0.0.6",
-                "window": {
-                    "minWidth": 600,
-                    "minHeight": 400,
-                    "width": 700,
-                    "height": 500,
-                    "resizable": false
-                },
-                "platform": [ "win32", "darwin", "linux" ],
-                "categories": [ "utility" ],
-                "tags": [ "demo" ]
+    registerHandlers() {
+        // 启动App进程
+        this.handlers.set('start-app-process', async (event, { appId, devTag }) => {
+            try {
+                const result = await appProcessManager.startAppProcess(appId, devTag);
+                return result;
+            } catch (error) {
+                logger.error('IPC start-app-process error:', error);
+                return { success: false, msg: error.message };
             }
-        }
-    ]
-}
- */
-async function getAppDevData() {
-    let appDevInfoData = getAppsDevStore().get('default') || {};
-    if (!appDevInfoData || Object.keys(appDevInfoData).length === 0) {
-        return { correct: {}, wrong: {} };
-    }
-    
-    let appDevData = {} , appDevFalseData = {};
-    Object.keys(appDevInfoData).forEach((key) => {
-        try {
-            const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfoData[key].path, 'app.json'), 'utf8'));
-            appDevData[key] = ObjectUtils.clone(appDevInfoData[key]);
-            appDevData[key].appJson = ObjectUtils.clone(appJson);
-        } catch (error) {
-            appDevFalseData[key] = ObjectUtils.clone(appDevInfoData[key]);
-        }
-    });
+        });
 
-    // 删除有问题的应用
-    if (Object.keys(appDevFalseData).length > 0) {
-        for (const key in appDevFalseData) {
-            delete appDevInfoData[key];
-        }
-        getAppsDevStore().set('default', appDevInfoData);
-    }
-    // console.info('appDevInfoData: ', appDevInfoData);
-    // console.info('appDevData: ', appDevData);
-    return { correct: appDevData, wrong: appDevFalseData };
-}
-
-/**
- * 初始化应用管理相关的 IPC 处理逻辑
- */
-function initAppHandlers() {
-
-    // 获取所有应用数据
-    ipcMain.handle('get-all-apps', async (event) => {
-        return await getAllApps();
-    });
-
-    // 获取应用信息
-    ipcMain.handle('getAppInfo', async (event, uid) => {
-        return getAppInfo(uid);
-    });
-
-    // 获取应用开发列表
-    ipcMain.handle('get-apps-dev-data', async () => {
-        return await getAppDevData();
-    });
-
-    // 处理应用添加
-    ipcMain.handle('handle-app-dev-add', async () => {
-        try {
-            const result = await dialog.showOpenDialog({
-                title: '选择你的 app.json 文件',
-                filters: [
-                    { name: 'app.json', extensions: ['json'] }
-                ],
-                properties: ['openFile']
-            });
-            if (result.canceled || result.filePaths.length === 0) {
-                return null;
+        // 停止App进程
+        this.handlers.set('stop-app-process', async (event, { appId }) => {
+            try {
+                const result = await appProcessManager.stopAppProcess(appId);
+                return result;
+            } catch (error) {
+                logger.error('IPC stop-app-process error:', error);
+                return { success: false, msg: error.message };
             }
-            const filePath = result.filePaths[0];
-            console.info('filePath: ', filePath);
-            const appJson = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-            const uid = uuidv4().replace(/-/g, '');
-            let appDevConfig = getAppsDevStore().get('default') || {};
-            appDevConfig[uid] = {
-                id: appJson.id,
-                name: appJson.name,
-                path: filePath.substring(0, filePath.lastIndexOf('app.json'))
-            };
-            getAppsDevStore().set('default', appDevConfig);
-            return await getAppDevData();
-        } catch (err) {
-            console.error('Failed to handle app add:', err);
-            return null;
-        }
-    });
-    
-    // 导入应用
-    ipcMain.handle('import-app', handleImportApp);
+        });
 
-    // 删除应用
-    ipcMain.handle('remove-app', async (event, param) => {
-        return removeApp(param);
-    });
-    
-    // 加载应用
-    ipcMain.on('load-app', (event, uid, devTag) => {
-        appWindow.loadApp(uid, devTag);
-    });
-
-    // 清理应用数据
-    ipcMain.handle('clearAppData', async (event, uid) => {
-        const appData = path.join(getAppDataPath(), uid);
-        try {
-            await fs.promises.access(appData, fs.constants.F_OK);
-            await fs.promises.rm(appData, { recursive: true, force: true });
-            return { success: true, msg: 'clear data success' };
-        } catch (err) {
-            if (err.code === 'ENOENT') {
-                return { success: true, msg: 'no data to clear' };
+        // 重启App进程
+        this.handlers.set('restart-app-process', async (event, { appId, devTag }) => {
+            try {
+                const result = await appProcessManager.restartAppProcess(appId, devTag);
+                return result;
+            } catch (error) {
+                logger.error('IPC restart-app-process error:', error);
+                return { success: false, msg: error.message };
             }
-            return handleError(err, 'clearAppData');
+        });
+
+        // 检查App是否运行
+        this.handlers.set('is-app-running', async (event, { appId }) => {
+            try {
+                const isRunning = appProcessManager.isAppRunning(appId);
+                return { success: true, data: { isRunning } };
+            } catch (error) {
+                logger.error('IPC is-app-running error:', error);
+                return { success: false, msg: error.message };
+            }
+        });
+
+        // 获取所有运行中的App
+        this.handlers.set('get-running-apps', async () => {
+            try {
+                const runningApps = appProcessManager.getRunningApps();
+                return { success: true, data: { runningApps } };
+            } catch (error) {
+                logger.error('IPC get-running-apps error:', error);
+                return { success: false, msg: error.message };
+            }
+        });
+
+        // 停止所有App
+        this.handlers.set('stop-all-apps', async () => {
+            try {
+                await appProcessManager.stopAllApps();
+                return { success: true };
+            } catch (error) {
+                logger.error('IPC stop-all-apps error:', error);
+                return { success: false, msg: error.message };
+            }
+        });
+    }
+
+    /**
+     * 初始化 IPC 处理器
+     * @param {Electron.IpcMain} ipcMain 
+     */
+    init(ipcMain) {
+        for (const [channel, handler] of this.handlers) {
+            ipcMain.handle(channel, handler);
+            logger.info(`Registered IPC handler: ${channel}`);
         }
-    });
+    }
 }
 
-module.exports = {
-    init: initAppHandlers
-};
+module.exports = new AppIpcHandler();

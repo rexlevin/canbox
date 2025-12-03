@@ -9,6 +9,8 @@ const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' 
 const windowManager = require('./windowManager');
 const { getAppsStore, getAppsDevStore } = require('./storageManager');
 const { getAppPath } = require('./pathManager');
+const appProcessManager = require('./appProcessManager');
+const { shouldUseSeparateProcess } = require('./appConfig');
 
 const { handleError } = require('./ipc/errorHandler')
 
@@ -17,10 +19,16 @@ module.exports = {
      *
      * @param {String} appItemStr app应用uid
      * @param {boolean} devTag app开发tag，true：当前是开发app
+     * @param {boolean} useSeparateProcess 是否使用独立进程模式（可选，默认从配置读取）
      * @returns void
      */
-    loadApp: (uid, devTag) => {
-        console.info('loadApp uid: ', uid);
+    loadApp: async (uid, devTag, useSeparateProcess = null) => {
+        // 如果没有指定 useSeparateProcess，从配置读取
+        if (useSeparateProcess === null) {
+            useSeparateProcess = shouldUseSeparateProcess(devTag);
+        }
+
+        console.info('loadApp uid: ', uid, 'useSeparateProcess:', useSeparateProcess);
         if (!uid) {
             return handleError(new Error('uid is required'), 'loadApp');
         }
@@ -31,6 +39,27 @@ module.exports = {
         if (!appItem) {
             return handleError(new Error('appItem is not exists'), 'loadApp');
         }
+
+        // 如果使用独立进程模式
+        if (useSeparateProcess) {
+            // 检查App进程是否已运行
+            if (appProcessManager.isAppRunning(uid)) {
+                console.info(`App ${uid} is already running in separate process`);
+                return;
+            }
+
+            // 启动App进程
+            const result = await appProcessManager.startAppProcess(uid, devTag);
+            if (result.success) {
+                console.info(`App ${uid} started in separate process`);
+                return; // 成功启动独立进程，直接返回
+            } else {
+                console.error(`Failed to start app ${uid}:`, result.msg);
+                // 回退到传统模式
+                console.info('Falling back to traditional window mode');
+            }
+        }
+
         const appJson = devTag
                 ? JSON.parse(fs.readFileSync(path.join(appItem.path, 'app.json'), 'utf8'))
                 : JSON.parse(fs.readFileSync(path.join(getAppPath(), uid + '.asar/app.json'), 'utf8'));
