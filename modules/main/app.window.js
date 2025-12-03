@@ -100,8 +100,8 @@ module.exports = {
             options.webPreferences.preload = path.resolve(appPath, appJson.window.webPreferences.preload);
         }
         if (os === 'linux') {
-            // 与shortcutManager中生成快捷方式中的name保持一致
-            options.windowClass = `canbox-${appJson.name}`;
+            // 使用应用的UID作为唯一的windowClass，与快捷方式中的StartupWMClass保持一致
+            options.windowClass = uid;
         }
         // console.info('load app options:', options);
 
