@@ -105,9 +105,8 @@
 </style>
 
 <script setup>
-import { onBeforeMount, ref, reactive } from 'vue';
+import { onBeforeMount, onUpdated, ref } from 'vue';
 import { ElMessage } from 'element-plus';
-import AppDevItem from '@/components/AppDevItem.vue';
 
 let appDevData = ref({});
 const centerDialogVisible = ref(false);
@@ -151,7 +150,7 @@ async function packApp(uid) {
 
 // 运行app
 function loadApp(uid) {
-    window.api.app.load(uid, 'dev');
+    window.api.app.load(uid, true);
 }
 
 // 清除app运行数据
@@ -199,5 +198,17 @@ function load() {
 
 onBeforeMount(() => {
     load();
+});
+
+onUpdated(() => {
+    // 拦截app介绍中的a标签链接跳转，使其使用外部浏览器打开
+    const links = document.querySelectorAll('#divAppInfo a[href]');
+    links.forEach(link => {
+        link.addEventListener('click', e => {
+            const url = link.getAttribute('href');
+            e.preventDefault();
+            window.api.openUrl(url);
+        });
+    });
 });
 </script>

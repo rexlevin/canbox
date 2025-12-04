@@ -3,6 +3,7 @@ const { getAppsDevStore } = require('../storageManager');
 const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
+const ObjectUtils = require('../../utils/ObjectUtils');
 
 class AppManagerIpcHandler {
     constructor() {
@@ -25,29 +26,32 @@ class AppManagerIpcHandler {
 
         // 获取开发应用数据
         this.handlers.set('get-apps-dev-data', async () => {
-            try {
-                const devAppsData = getAppsDevStore().get('default') || {};
-                
-                // 为每个开发应用添加 appJson 信息
-                Object.entries(devAppsData).forEach(([uid, appDevItem]) => {
-                    try {
-                        const appJsonPath = path.join(appDevItem.path, 'app.json');
-                        if (fs.existsSync(appJsonPath)) {
-                            const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
-                            appDevItem.appJson = appJson;
-                        }
-                    } catch (error) {
-                        logger.error(`Failed to read app.json for ${uid}:`, error);
-                        appDevItem.appJson = {};
-                    }
-                });
-                
-                logger.info('IPC get-apps-dev-data success');
-                return { success: true, data: devAppsData };
-            } catch (error) {
-                logger.error('IPC get-apps-dev-data error:', error);
-                return { success: false, msg: error.message };
+            let appDevInfoData = getAppsDevStore().get('default') || {};
+            if (!appDevInfoData || Object.keys(appDevInfoData).length === 0) {
+                return { correct: {}, wrong: {} };
             }
+            
+            let appDevData = {} , appDevFalseData = {};
+            Object.keys(appDevInfoData).forEach((key) => {
+                try {
+                    const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfoData[key].path, 'app.json'), 'utf8'));
+                    appDevData[key] = ObjectUtils.clone(appDevInfoData[key]);
+                    appDevData[key].appJson = ObjectUtils.clone(appJson);
+                } catch (error) {
+                    appDevFalseData[key] = ObjectUtils.clone(appDevInfoData[key]);
+                }
+            });
+
+            // 删除有问题的应用
+            if (Object.keys(appDevFalseData).length > 0) {
+                for (const key in appDevFalseData) {
+                    delete appDevInfoData[key];
+                }
+                getAppsDevStore().set('default', appDevInfoData);
+            }
+            // console.info('appDevInfoData: ', appDevInfoData);
+            // console.info('appDevData: ', appDevData);
+            return { correct: appDevData, wrong: appDevFalseData };
         });
     }
 
