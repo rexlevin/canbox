@@ -156,7 +156,7 @@ const createWindow = () => {
     win = new BrowserWindow(config);
 
     if (isDev && uatDev?.main) {
-        console.info('now load uatDev==%s', uatDev.main);
+        logger.info('[main.js] now load canbox in uatDev: {}', uatDev.main);
         win.loadURL(uatDev.main);
     } else {
         console.info('now load app==%s', path.join('file://', __dirname, './build/index.html'));

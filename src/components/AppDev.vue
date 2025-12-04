@@ -188,9 +188,19 @@ function removeApp(uid) {
 
 function load() {
     window.api.appDev.all((result) => {
-        appDevData.value = result.correct;
-        if(result.wrong && Object.keys(result.wrong).length > 0) {
-            warningContent.value = `以下 app.json 存在问题，已经移除： \n ${Object.entris(result.wrong).map(item => item.name).join('\n')}`;
+        // 支持新格式 { success: true, data: appDevData, wrong: appDevFalseData }
+        // 兼容旧格式 { correct: appDevData, wrong: appDevFalseData }
+        if (result && result.success) {
+            appDevData.value = result.data || {};
+        } else if (result && result.correct) {
+            appDevData.value = result.correct || {};
+        } else {
+            appDevData.value = {};
+        }
+        
+        const wrongApps = result?.wrong || {};
+        if(wrongApps && Object.keys(wrongApps).length > 0) {
+            warningContent.value = `以下 app.json 存在问题，已经移除： \n ${Object.entries(wrongApps).map(([key, item]) => item.name || key).join('\n')}`;
             centerDialogVisible.value = true;
         }
     });

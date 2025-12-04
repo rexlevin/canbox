@@ -1,9 +1,9 @@
-const { getAllApps } = require('../appManager');
+const { getAppsStore } = require('../storageManager');
 const { getAppsDevStore } = require('../storageManager');
+const { getAppPath } = require('../pathManager');
 const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
-const ObjectUtils = require('../../utils/ObjectUtils');
 
 class AppManagerIpcHandler {
     constructor() {
@@ -12,46 +12,112 @@ class AppManagerIpcHandler {
     }
 
     registerHandlers() {
-        // 获取所有应用
+        // 获取所有应用（异步版本，避免阻塞主线程）
         this.handlers.set('get-all-apps', async () => {
+            const startTime = Date.now();
             try {
-                const result = getAllApps();
-                logger.info('IPC get-all-apps success');
-                return result;
+                const appsData = getAppsStore().get('default') || {};
+                const appCount = Object.keys(appsData).length;
+                logger.info(`IPC get-all-apps: Starting to process ${appCount} apps`);
+                
+                if (appCount === 0) {
+                    logger.info('当前没有应用数据');
+                    return { success: true, data: {}};
+                }
+
+                // 使用异步并发读取所有应用的 app.json 文件
+                const readStartTime = Date.now();
+                const appPromises = Object.entries(appsData).map(async ([uid, appItem]) => {
+                    try {
+                        const appJsonPath = path.join(getAppPath(), uid + '.asar/app.json');
+                        const appJsonContent = await fs.promises.readFile(appJsonPath, 'utf8');
+                        const appJson = JSON.parse(appJsonContent);
+                        const iconPath = path.join(getAppPath(), uid + '.asar', appJson.logo);
+                        const appJsonData = { ...appJson, logo: iconPath };
+                        return [uid, { ...appItem, appJson: appJsonData }];
+                    } catch (error) {
+                        logger.error(`Failed to read app.json for ${uid}:`, error);
+                        return [uid, appItem]; // 保持原始 appItem
+                    }
+                });
+
+                // 等待所有应用数据读取完成
+                const resolvedApps = await Promise.all(appPromises);
+                const readTime = Date.now() - readStartTime;
+                
+                // 重新构建 appsData 对象
+                const buildStartTime = Date.now();
+                const updatedAppsData = {};
+                resolvedApps.forEach(([uid, appItem]) => {
+                    updatedAppsData[uid] = appItem;
+                });
+                const buildTime = Date.now() - buildStartTime;
+
+                const totalTime = Date.now() - startTime;
+                logger.info(`IPC get-all-apps success: ${appCount} apps processed, read: ${readTime}ms, build: ${buildTime}ms, total: ${totalTime}ms`);
+                return { success: true, data: updatedAppsData };
             } catch (error) {
                 logger.error('IPC get-all-apps error:', error);
                 return { success: false, msg: error.message };
             }
         });
 
-        // 获取开发应用数据
+        // 获取开发应用数据（异步版本，避免阻塞主线程）
         this.handlers.set('get-apps-dev-data', async () => {
-            let appDevInfoData = getAppsDevStore().get('default') || {};
-            if (!appDevInfoData || Object.keys(appDevInfoData).length === 0) {
-                return { correct: {}, wrong: {} };
-            }
-            
-            let appDevData = {} , appDevFalseData = {};
-            Object.keys(appDevInfoData).forEach((key) => {
-                try {
-                    const appJson = JSON.parse(fs.readFileSync(path.join(appDevInfoData[key].path, 'app.json'), 'utf8'));
-                    appDevData[key] = ObjectUtils.clone(appDevInfoData[key]);
-                    appDevData[key].appJson = ObjectUtils.clone(appJson);
-                } catch (error) {
-                    appDevFalseData[key] = ObjectUtils.clone(appDevInfoData[key]);
+            const startTime = Date.now();
+            try {
+                let appDevInfoData = getAppsDevStore().get('default') || {};
+                const appCount = Object.keys(appDevInfoData).length;
+                logger.info(`IPC get-apps-dev-data: Starting to process ${appCount} dev apps`);
+                
+                if (appCount === 0) {
+                    return { success: true, data: {}, wrong: {} };
                 }
-            });
+                
+                let appDevData = {};
+                let appDevFalseData = {};
+                
+                // 使用异步并发读取，避免阻塞主线程
+                const appPromises = Object.entries(appDevInfoData).map(async ([key, appInfo]) => {
+                    try {
+                        const appJsonPath = path.join(appInfo.path, 'app.json');
+                        const appJsonContent = await fs.promises.readFile(appJsonPath, 'utf8');
+                        const appJson = JSON.parse(appJsonContent);
+                        
+                        // 使用浅拷贝替代深拷贝，性能更好
+                        appDevData[key] = { ...appInfo, appJson: { ...appJson } };
+                        return { key, success: true };
+                    } catch (error) {
+                        appDevFalseData[key] = { ...appInfo };
+                        return { key, success: false, error };
+                    }
+                });
 
-            // 删除有问题的应用
-            if (Object.keys(appDevFalseData).length > 0) {
-                for (const key in appDevFalseData) {
-                    delete appDevInfoData[key];
+                // 等待所有应用数据读取完成
+                await Promise.all(appPromises);
+
+                // 异步删除有问题的应用（不阻塞返回）
+                if (Object.keys(appDevFalseData).length > 0) {
+                    setImmediate(() => {
+                        try {
+                            for (const key in appDevFalseData) {
+                                delete appDevInfoData[key];
+                            }
+                            getAppsDevStore().set('default', appDevInfoData);
+                            logger.info('Cleaned up invalid dev apps:', Object.keys(appDevFalseData));
+                        } catch (error) {
+                            logger.error('Failed to cleanup invalid dev apps:', error);
+                        }
+                    });
                 }
-                getAppsDevStore().set('default', appDevInfoData);
+                
+                const totalTime = Date.now() - startTime;
+                logger.info(`IPC get-apps-dev-data success: ${appCount} dev apps processed, valid: ${Object.keys(appDevData).length}, invalid: ${Object.keys(appDevFalseData).length}, total: ${totalTime}ms`);
+                return { success: true, data: appDevData, wrong: appDevFalseData };
+            } catch (error) {
+                logger.error('IPC get-apps-dev-data error:', error);
+                return { success: false, msg: error.message, data: {}, wrong: {} };
             }
-            // console.info('appDevInfoData: ', appDevInfoData);
-            // console.info('appDevData: ', appDevData);
-            return { correct: appDevData, wrong: appDevFalseData };
         });
     }
 
