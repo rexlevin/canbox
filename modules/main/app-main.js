@@ -1,9 +1,9 @@
 const { app, BrowserWindow, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const logger = require('./utils/logger');
-const { generateWmClass } = require('./appConfig');
-const initApiIpcHandlers = require('./api');
+const logger = require(path.join(__dirname, 'utils/logger'));
+const { generateWmClass } = require(path.join(__dirname, 'appConfig'));
+const initApiIpcHandlers = require(path.join(__dirname, 'api'));
 
 // 从环境变量中获取App信息
 const appId = process.env.APP_ID || process.argv.find(arg => arg.startsWith('--app-id='))?.split('=')[1];
@@ -25,6 +25,15 @@ try {
 } catch (error) {
     logger.error('Failed to parse app config from environment:', error);
 }
+
+// 检查是否通过 --app-main-path 参数被调用
+const appMainPathArg = process.argv.find(arg => arg.startsWith('--app-main-path='));
+if (appMainPathArg) {
+    console.log('app-main.js called via --app-main-path, but this should not happen in Electron');
+    process.exit(0);
+}
+
+
 
 if (!appId || !appPath) {
     console.error('App ID or path not specified');

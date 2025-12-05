@@ -87,8 +87,10 @@ class AppProcessManager {
             };
 
             // 构建启动参数
+            const appMainPath = path.join(__dirname, 'app-main.js');
+            
             const appArgs = [
-                path.join(__dirname, 'app-main.js'),
+                appMainPath,
                 `--app-id=${appId}`,
                 `--app-name=${appJson.name || appId}`,
                 `--wm-class=canbox-${appId}`,
@@ -99,12 +101,79 @@ class AppProcessManager {
                 appArgs.push('--dev-mode');
             }
 
-            // 启动App进程
-            const appProcess = spawn(process.execPath, appArgs, {
-                env,
-                stdio: ['ignore', 'pipe', 'pipe'],
-                detached: false
-            });
+            // 启动App进程 - 回到 spawn 但确保使用正确的 Electron 环境
+            
+            // 创建一个临时文件来启动 app-main.js
+            const os = require('os');
+            const tempDir = os.tmpdir();
+            const tempScriptPath = path.join(tempDir, `canbox-app-${appId}-${Date.now()}.js`);
+            let appProcess;
+            
+            // 创建临时启动脚本
+            const tempScript = `
+// 临时启动脚本
+const { app } = require('electron');
+
+// 设置环境变量
+process.env.APP_ID = '${appId}';
+process.env.APP_NAME = '${appJson.name || appId}';
+process.env.ELECTRON_WM_CLASS = 'canbox-${appId}';
+process.env.APP_PATH = '${appPath}';
+process.env.IS_DEV_MODE = '${devTag}';
+process.env.CANBOX_MAIN_PID = '${process.pid}';
+process.env.APP_WINDOW_CONFIG = '${JSON.stringify(windowConfig).replace(/'/g, "\\'")}';
+process.env.APP_JSON = '${JSON.stringify(appJson).replace(/'/g, "\\'")}';
+
+// 在 app ready 之前加载 app-main.js，以便 app.disableHardwareAcceleration() 能正常执行
+try {
+    require('${appMainPath}');
+} catch (error) {
+    // 如果是因为 app 已经 ready 导致的错误，继续执行
+    if (error.message.includes('app is ready') || error.message.includes('before app is ready')) {
+        // App is already ready, continue...
+    } else {
+        // 其他错误则退出
+        app.whenReady().then(() => {
+            app.quit();
+        });
+    }
+}
+
+// 处理窗口关闭
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') {
+        app.quit();
+    }
+});
+`;
+            
+            try {
+                const fs = require('fs');
+                fs.writeFileSync(tempScriptPath, tempScript);
+                
+                // 直接用 Electron 运行临时脚本
+                const electronPath = process.execPath;
+                
+                // 使用 Electron 直接运行临时脚本，添加 --no-sandbox 参数
+                appProcess = spawn(electronPath, [tempScriptPath, '--no-sandbox'], {
+                    env,
+                    stdio: ['ignore', 'pipe', 'pipe'],
+                    detached: false
+                });
+                
+                // 清理临时文件的逻辑
+                appProcess.on('close', () => {
+                    try {
+                        fs.unlinkSync(tempScriptPath);
+                        console.log('Cleaned up temporary script:', tempScriptPath);
+                    } catch (error) {
+                        console.error('Failed to clean up temporary script:', error);
+                    }
+                });
+            } catch (error) {
+                console.error('Failed to create temporary script:', error);
+                throw error;
+            }
 
             // 处理进程输出
             appProcess.stdout?.on('data', (data) => {
