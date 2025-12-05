@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('./utils/logger');
 const { generateWmClass } = require('./appConfig');
+const initApiIpcHandlers = require('./api');
 
 // 从环境变量中获取App信息
 const appId = process.env.APP_ID || process.argv.find(arg => arg.startsWith('--app-id='))?.split('=')[1];
@@ -10,6 +11,20 @@ const appName = process.env.APP_NAME || process.argv.find(arg => arg.startsWith(
 const wmClass = process.env.ELECTRON_WM_CLASS || process.argv.find(arg => arg.startsWith('--wm-class='))?.split('=')[1];
 const appPath = process.env.APP_PATH;
 const isDevMode = process.env.IS_DEV_MODE === 'true' || process.argv.includes('--dev-mode');
+
+// 从环境变量中获取窗口配置和app.json
+let windowConfig = {};
+let appJson = {};
+try {
+    if (process.env.APP_WINDOW_CONFIG) {
+        windowConfig = JSON.parse(process.env.APP_WINDOW_CONFIG);
+    }
+    if (process.env.APP_JSON) {
+        appJson = JSON.parse(process.env.APP_JSON);
+    }
+} catch (error) {
+    logger.error('Failed to parse app config from environment:', error);
+}
 
 if (!appId || !appPath) {
     console.error('App ID or path not specified');
@@ -38,14 +53,15 @@ const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' 
 
 let appWin = null;
 
-// 读取App配置
-let appJson;
-try {
-    const appJsonPath = path.join(appPath, 'app.json');
-    appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
-} catch (error) {
-    logger.error(`Failed to read app.json for app ${appId}:`, error);
-    process.exit(1);
+// 如果环境变量中没有 app.json，尝试从文件读取
+if (!appJson || Object.keys(appJson).length === 0) {
+    try {
+        const appJsonPath = path.join(appPath, 'app.json');
+        appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+    } catch (error) {
+        logger.error(`Failed to read app.json for app ${appId}:`, error);
+        process.exit(1);
+    }
 }
 
 // 设置应用名称为 canbox-{appId}
@@ -84,12 +100,30 @@ function createAppWindow() {
     };
 
     // 合并App自定义窗口选项
-    if (appJson.window) {
-        Object.assign(options, appJson.window);
-        
-        if (appJson.window.webPreferences?.preload) {
-            options.webPreferences.preload = path.resolve(appPath, appJson.window.webPreferences.preload);
+    const windowOptions = windowConfig && Object.keys(windowConfig).length > 0 ? windowConfig : appJson.window;
+    
+    if (windowOptions) {
+        // 深度合并 webPreferences，确保不会覆盖基础配置
+        if (windowOptions.webPreferences) {
+            options.webPreferences = { 
+                ...options.webPreferences, 
+                ...windowOptions.webPreferences 
+            };
         }
+        
+        // 合并其他窗口配置
+        Object.keys(windowOptions).forEach(key => {
+            if (key !== 'webPreferences') {
+                options[key] = windowOptions[key];
+            }
+        });
+        
+        // 处理 preload 路径
+        if (options.webPreferences.preload) {
+            options.webPreferences.preload = path.resolve(appPath, options.webPreferences.preload);
+        }
+        
+        logger.info(`Applied window config for app ${appId}:`, Object.keys(windowOptions));
     }
 
     // Linux 特殊处理
@@ -145,6 +179,10 @@ function createAppWindow() {
 
 // 应用就绪时创建窗口
 app.whenReady().then(() => {
+    // 初始化 API 相关的 IPC handlers
+    initApiIpcHandlers();
+    logger.info('API IPC handlers initialized in app process');
+
     createAppWindow();
 
     app.on('activate', () => {

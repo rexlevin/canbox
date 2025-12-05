@@ -100,18 +100,20 @@ if (!getTheLock) {
         }
 
         // 初始化快捷方式（异步）
-        const shortcutManager = require('./modules/main/shortcutManager');
-        const { getAllApps } = require('./modules/main/appManager');
-        const package = require('./package.json');
-        shortcutManager.initShortcuts(package.version, getAllApps().data || {}).then((result) => {
-            if (result.success) {
-                logger.info('快捷方式初始化完成' + result.msg || '');
-            } else {
-                logger.error('快捷方式初始化失败:', result.msg);
-            }
-        }).catch((error) => {
-            logger.error('快捷方式初始化失败:', error); 
-        });
+        if (!isDev) {
+            const shortcutManager = require('./modules/main/shortcutManager');
+            const { getAllApps } = require('./modules/main/appManager');
+            const package = require('./package.json');
+            shortcutManager.initShortcuts(package.version, getAllApps().data || {}).then((result) => {
+                if (result.success) {
+                    logger.info('快捷方式初始化完成' + result.msg || '');
+                } else {
+                    logger.error('快捷方式初始化失败:', result.msg);
+                }
+            }).catch((error) => {
+                logger.error('快捷方式初始化失败:', error); 
+            });
+        }
     })
 }
 

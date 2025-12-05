@@ -51,6 +51,28 @@ class AppProcessManager {
                 ? JSON.parse(fs.readFileSync(path.join(appItem.path, 'app.json'), 'utf8'))
                 : JSON.parse(fs.readFileSync(path.join(getAppPath(), appId + '.asar/app.json'), 'utf8'));
 
+            // 构建窗口配置字符串并传递给子进程
+            let windowConfig = {};
+            if (appJson.window) {
+                windowConfig = { ...appJson.window };
+                
+                // 处理图标路径
+                if (windowConfig.icon) {
+                    windowConfig.icon = path.resolve(appPath, windowConfig.icon);
+                } else {
+                    windowConfig.icon = path.resolve(appPath, appJson.logo);
+                }
+                if (!devTag) {
+                    const logoExt = path.extname(appJson.logo);
+                    windowConfig.icon = path.resolve(getAppPath(), `${appId}${logoExt}`);
+                }
+                
+                // 处理 preload 路径
+                if (windowConfig.webPreferences?.preload) {
+                    windowConfig.webPreferences.preload = path.resolve(appPath, windowConfig.webPreferences.preload);
+                }
+            }
+
             // 设置环境变量
             const env = {
                 ...process.env,
@@ -59,7 +81,9 @@ class AppProcessManager {
                 ELECTRON_WM_CLASS: `canbox-${appId}`, // 设置唯一的WM_CLASS
                 APP_PATH: appPath,
                 IS_DEV_MODE: devTag.toString(),
-                CANBOX_MAIN_PID: process.pid.toString()
+                CANBOX_MAIN_PID: process.pid.toString(),
+                APP_WINDOW_CONFIG: JSON.stringify(windowConfig), // 传递窗口配置
+                APP_JSON: JSON.stringify(appJson) // 传递完整的 app.json
             };
 
             // 构建启动参数

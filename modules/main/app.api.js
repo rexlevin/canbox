@@ -340,7 +340,7 @@ window.canbox = {
     hooks: {},
     hello: () => {
         console.info('hello, hope you have a nice day');
-        // console.info('hello, appId: ', appId);
+        console.info('hello, appId: ', appId);
     },
     db,
     win,
