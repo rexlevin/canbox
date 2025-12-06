@@ -5,7 +5,19 @@ const path = require('path')
 const logger = require('./modules/main/utils/logger');
 
 const tray = require('./tray');
-const uatDev = fs.existsSync('./uat.dev.json') ? require('./uat.dev') : {};
+const uatDev = (() => {
+  try {
+    // 在 asar 包中使用绝对路径
+    const uatDevPath = path.join(__dirname, 'uat.dev.json');
+    if (fs.existsSync(uatDevPath)) {
+      return require(uatDevPath);
+    }
+    return {};
+  } catch (error) {
+    console.warn('Failed to load uat.dev configuration:', error.message);
+    return {};
+  }
+})();
 console.info('uatDev: ', uatDev);
 
 // 导入窗口管理模块

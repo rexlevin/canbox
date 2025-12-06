@@ -32,6 +32,7 @@ class AppProcessManager {
                 // 清理已结束的进程
                 this.appProcesses.delete(appId);
             }
+            logger.info(`App ${appId} will start in separate process...`);
 
             // 获取App信息
             const { getAppsStore, getAppsDevStore } = require('./storageManager');
@@ -42,6 +43,7 @@ class AppProcessManager {
             if (!appItem) {
                 return { success: false, msg: 'App not found' };
             }
+            logger.info(`App ${appId} found, appItem: {}`, JSON.stringify(appItem));
 
             const appPath = devTag 
                 ? appItem.path 
