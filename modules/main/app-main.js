@@ -146,7 +146,7 @@ function createAppWindow() {
         options.appUserModelId = `canbox.${appId}`;
     }
 
-    logger.info(`Creating app window with options:`, options);
+    logger.info('Creating app window with options: {}', JSON.stringify(options));
 
     appWin = new BrowserWindow(options);
 
@@ -155,6 +155,8 @@ function createAppWindow() {
         ? JSON.parse(fs.readFileSync(path.resolve(appPath, 'uat.dev.json'), 'utf-8'))
         : null;
 
+    logger.info('isDevMode: {}', isDevMode);
+    logger.info('[app-main.js] uatDevJson: {}', uatDevJson);
     const appMain = isDevMode && uatDevJson?.main ? uatDevJson.main : appJson.main;
     const loadUrl = appMain.startsWith('http')
         ? appMain

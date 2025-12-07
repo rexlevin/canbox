@@ -18,7 +18,7 @@ const uatDev = (() => {
     return {};
   }
 })();
-console.info('uatDev: ', uatDev);
+console.info('[main.js] uatDev: ', uatDev);
 
 // 导入窗口管理模块
 const windowManager = require('./modules/main/windowManager');

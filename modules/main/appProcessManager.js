@@ -75,107 +75,210 @@ class AppProcessManager {
                 }
             }
 
-            // 设置环境变量
-            const env = {
-                ...process.env,
-                APP_ID: appId,
-                APP_NAME: appJson.name || appId,
-                ELECTRON_WM_CLASS: `canbox-${appId}`, // 设置唯一的WM_CLASS
-                APP_PATH: appPath,
-                IS_DEV_MODE: devTag.toString(),
-                CANBOX_MAIN_PID: process.pid.toString(),
-                APP_WINDOW_CONFIG: JSON.stringify(windowConfig), // 传递窗口配置
-                APP_JSON: JSON.stringify(appJson) // 传递完整的 app.json
-            };
+
 
             // 构建启动参数
-            const appMainPath = path.join(__dirname, 'app-main.js');
+            // 在生产环境中，需要从 app.getAppPath() 获取正确的资源路径
+            const { app } = require('electron');
+            const appResourcePath = app.getAppPath();
+            const appMainPath = path.join(appResourcePath, 'modules', 'main', 'app-main.js');
             
+            // 启动App进程 - 回到 spawn 但确保使用正确的 Electron 环境
+            let appProcess;
+            
+            // 直接使用 spawn 运行 app-main.js，不创建临时脚本
+            const electronPath = process.execPath;
+            
+            // 使用 Electron 直接运行 app-main.js，传递所有必要的参数
             const appArgs = [
                 appMainPath,
-                `--app-id=${appId}`,
-                `--app-name=${appJson.name || appId}`,
-                `--wm-class=canbox-${appId}`,
-                '--no-sandbox'  // 添加 --no-sandbox 参数以避免权限问题
+                '--app-id=' + appId,
+                '--app-name=' + (appJson.name || appId),
+                '--wm-class=canbox-' + appId,
+                '--app-path=' + appPath,
+                '--is-dev-mode=' + devTag,
+                '--canbox-main-pid=' + process.pid,
+                '--app-window-config=' + encodeURIComponent(JSON.stringify(windowConfig)),
+                '--app-json=' + encodeURIComponent(JSON.stringify(appJson)),
+                '--no-sandbox'
             ];
 
             if (devTag) {
                 appArgs.push('--dev-mode');
             }
 
-            // 启动App进程 - 回到 spawn 但确保使用正确的 Electron 环境
+            logger.info('App {} appArgs: {}', appId, appArgs);
+
+            // 最简单的解决方案：创建一个包含 app-main.js 内容的临时文件
+            // 最简单的解决方案：创建一个包含 app-main.js 内容的临时文件
             
-            // 创建一个临时文件来启动 app-main.js
+            // 需要复制整个 modules/main 目录到临时目录，以解决相对路径依赖问题
+            // const fs = require('fs');
             const os = require('os');
             const tempDir = os.tmpdir();
-            const tempScriptPath = path.join(tempDir, `canbox-app-${appId}-${Date.now()}.js`);
-            let appProcess;
+            const tempAppDir = path.join(tempDir, `canbox-app-${appId}-${Date.now()}`);
             
-            // 创建临时启动脚本
-            const tempScript = `
-// 临时启动脚本
-const { app } = require('electron');
-
-// 设置环境变量
-process.env.APP_ID = '${appId}';
-process.env.APP_NAME = '${appJson.name || appId}';
-process.env.ELECTRON_WM_CLASS = 'canbox-${appId}';
-process.env.APP_PATH = '${appPath}';
-process.env.IS_DEV_MODE = '${devTag}';
-process.env.CANBOX_MAIN_PID = '${process.pid}';
-process.env.APP_WINDOW_CONFIG = '${JSON.stringify(windowConfig).replace(/'/g, "\\'")}';
-process.env.APP_JSON = '${JSON.stringify(appJson).replace(/'/g, "\\'")}';
-
-// 在 app ready 之前加载 app-main.js，以便 app.disableHardwareAcceleration() 能正常执行
-try {
-    require('${appMainPath}');
-} catch (error) {
-    // 如果是因为 app 已经 ready 导致的错误，继续执行
-    if (error.message.includes('app is ready') || error.message.includes('before app is ready')) {
-        // App is already ready, continue...
-    } else {
-        // 其他错误则退出
-        app.whenReady().then(() => {
-            app.quit();
-        });
-    }
-}
-
-// 处理窗口关闭
-app.on('window-all-closed', () => {
-    if (process.platform !== 'darwin') {
-        app.quit();
-    }
-});
-`;
+            // 创建临时目录
+            fs.mkdirSync(tempAppDir, { recursive: true });
             
-            try {
-                const fs = require('fs');
-                fs.writeFileSync(tempScriptPath, tempScript);
+            // 复制整个 modules/main 目录到临时目录
+            const modulesMainDir = path.join(path.dirname(appMainPath), '..');
+            const tempModulesDir = path.join(tempAppDir, 'modules');
+            
+            function copyDir(src, dest) {
+                if (!fs.existsSync(dest)) {
+                    fs.mkdirSync(dest, { recursive: true });
+                }
                 
-                // 直接用 Electron 运行临时脚本
-                const electronPath = process.execPath;
+                const entries = fs.readdirSync(src, { withFileTypes: true });
                 
-                // 使用 Electron 直接运行临时脚本，添加 --no-sandbox 参数
-                appProcess = spawn(electronPath, [tempScriptPath, '--no-sandbox'], {
-                    env,
-                    stdio: ['ignore', 'pipe', 'pipe'],
-                    detached: false
-                });
-                
-                // 清理临时文件的逻辑
-                appProcess.on('close', () => {
-                    try {
-                        fs.unlinkSync(tempScriptPath);
-                        console.log('Cleaned up temporary script:', tempScriptPath);
-                    } catch (error) {
-                        console.error('Failed to clean up temporary script:', error);
+                for (const entry of entries) {
+                    const srcPath = path.join(src, entry.name);
+                    const destPath = path.join(dest, entry.name);
+                    
+                    if (entry.isDirectory()) {
+                        copyDir(srcPath, destPath);
+                    } else {
+                        fs.copyFileSync(srcPath, destPath);
                     }
-                });
-            } catch (error) {
-                console.error('Failed to create temporary script:', error);
-                throw error;
+                }
             }
+            
+            copyDir(modulesMainDir, tempModulesDir);
+            
+            // 修复临时目录中所有文件的模块路径
+            function fixModulePaths(dir) {
+                const entries = fs.readdirSync(dir, { withFileTypes: true });
+                const originalPath = path.dirname(appMainPath); // modules/main
+                const modulesPath = path.dirname(originalPath); // modules
+                const projectRoot = path.dirname(modulesPath); // project root
+                const nodeModulesPath = path.join(projectRoot, 'node_modules');
+                
+                for (const entry of entries) {
+                    const fullPath = path.join(dir, entry.name);
+                    
+                    if (entry.isDirectory()) {
+                        fixModulePaths(fullPath);
+                    } else if (entry.name.endsWith('.js')) {
+                        try {
+                            let content = fs.readFileSync(fullPath, 'utf8');
+                            
+                            // 只修复真正的第三方模块路径，不包括 Node.js 内置模块
+                            const modulePatterns = [
+                                'log4js',
+                                'electron-store',
+                                'axios',
+                                'fs-extra',
+                                'uuid',
+                                'nanoid-cjs',
+                                'marked',
+                                'rimraf',
+                                'glob',
+                                'node-cron',
+                                'pouchdb'
+                            ];
+                            
+                            // Node.js 内置模块，不需要替换
+                            const nodeBuiltInModules = [
+                                'path',
+                                'fs',
+                                'os',
+                                'crypto',
+                                'util',
+                                'events',
+                                'stream',
+                                'buffer',
+                                'child_process',
+                                'http',
+                                'https',
+                                'url',
+                                'querystring',
+                                'net',
+                                'dns',
+                                'dgram',
+                                'cluster',
+                                'worker_threads',
+                                'process',
+                                'console',
+                                'timers',
+                                'module',
+                                'vm',
+                                'repl',
+                                'assert',
+                                'readline',
+                                'string_decoder',
+                                'zlib',
+                                'tls'
+                            ];
+                            
+                            let modified = false;
+                            for (const module of modulePatterns) {
+                                // 匹配 require('module') 格式，但不匹配相对路径
+                                const regex = new RegExp(`require\\(\\'${module}\\'\\)`, 'g');
+                                if (regex.test(content)) {
+                                    const absolutePath = path.join(nodeModulesPath, module);
+                                    content = content.replace(regex, `require('${absolutePath}')`);
+                                    modified = true;
+                                }
+                            }
+                            
+                            if (modified) {
+                                fs.writeFileSync(fullPath, content);
+                                logger.info(`Fixed module paths in ${fullPath}`);
+                            }
+                        } catch (error) {
+                            logger.error(`Failed to fix module paths in ${fullPath}: ${error.message}`);
+                        }
+                    }
+                }
+            }
+            
+            fixModulePaths(tempModulesDir);
+            
+            // 临时主文件的路径
+            const tempMainPath = path.join(tempModulesDir, 'main', 'app-main.js');
+            
+            // 使用 Electron 运行临时文件
+            const finalArgs = [tempMainPath, ...appArgs.slice(1)]; // 跳过第一个参数（原来的 appMainPath）
+            
+            appProcess = spawn(process.execPath, finalArgs, {
+                env: {
+                    ...process.env,
+                    APP_ID: appId,
+                    APP_NAME: appJson.name || appId,
+                    ELECTRON_WM_CLASS: `canbox-${appId}`,
+                    APP_PATH: appPath,
+                    IS_DEV_MODE: devTag.toString(),
+                    CANBOX_MAIN_PID: process.pid.toString(),
+                    APP_WINDOW_CONFIG: JSON.stringify(windowConfig),
+                    APP_JSON: JSON.stringify(appJson),
+                    // 在生产环境中，需要明确设置 NODE_PATH 以便子进程能找到 node_modules
+                    NODE_PATH: (() => {
+                        const appResourcePath = app.getAppPath();
+                        const parentDir = path.dirname(appResourcePath);
+                        const currentDir = process.cwd();
+                        const nodePath = `${parentDir}/node_modules:${appResourcePath}/node_modules:${currentDir}/node_modules:${process.env.NODE_PATH || ''}`;
+                        logger.info(`Setting NODE_PATH for app ${appId}: ${nodePath}`);
+                        logger.info(`App resource path: ${appResourcePath}`);
+                        logger.info(`Current working directory: ${currentDir}`);
+                        return nodePath;
+                    })()
+                },
+                stdio: ['ignore', 'pipe', 'pipe'],
+                detached: false
+            });
+            
+            // 清理临时目录
+            appProcess.on('close', () => {
+                try {
+                    const rimraf = require('rimraf');
+                    rimraf.sync(tempAppDir);
+                    logger.info(`Cleaned up temporary app directory: ${tempAppDir}`);
+                } catch (error) {
+                    logger.error(`Failed to clean up temporary app directory: ${error.message}`);
+                }
+            });
+    
 
             // 处理进程输出
             appProcess.stdout?.on('data', (data) => {
