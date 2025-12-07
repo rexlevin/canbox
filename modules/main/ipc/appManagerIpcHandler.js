@@ -136,9 +136,9 @@ class AppManagerIpcHandler {
             try {
                 const appWindow = require('../app.window');
                 await appWindow.loadApp(uid, devTag);
-                logger.info(`App ${uid} loaded successfully`);
+                logger.info('App {} loaded successfully', uid);
             } catch (error) {
-                logger.error(`Failed to load app ${uid}:`, error);
+                logger.error('Failed to load app {}, error: {}', uid, error);
                 event.reply('load-app-error', { uid, error: error.message });
             }
         });

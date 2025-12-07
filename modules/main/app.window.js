@@ -28,7 +28,7 @@ module.exports = {
             useSeparateProcess = shouldUseSeparateProcess(devTag);
         }
 
-        console.info('loadApp uid: ', uid, 'useSeparateProcess:', useSeparateProcess);
+        console.info('[app.window] loadApp uid: ', uid, 'useSeparateProcess:', useSeparateProcess);
         if (!uid) {
             return handleError(new Error('uid is required'), 'loadApp');
         }
