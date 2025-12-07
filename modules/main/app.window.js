@@ -51,12 +51,12 @@ module.exports = {
             // 启动App进程
             const result = await appProcessManager.startAppProcess(uid, devTag);
             if (result.success) {
-                console.info(`App ${uid} started in separate process`);
+                logger.info('App {} started in separate process', uid);
                 return; // 成功启动独立进程，直接返回
             } else {
-                console.error(`Failed to start app ${uid}:`, result.msg);
+                logger.error('Failed to start app {}: {}', uid, result.msg);
                 // 回退到传统模式
-                console.info('Falling back to traditional window mode');
+                logger.info('Falling back to traditional window mode');
             }
         }
 
