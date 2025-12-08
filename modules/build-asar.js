@@ -5,8 +5,8 @@ const glob = require('glob');
 const asar = require('asar');
 const { execSync } = require('child_process');
 
-const { getAppsDevStore } = require('./storageManager');
-const logger = require('./utils/logger');
+const { getAppsDevStore } = require('@modules/main/storageManager');
+const logger = require('@modules/utils/logger');
 
 /**
  * 打包应用为 asar 文件

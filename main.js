@@ -2,7 +2,9 @@ const { app, BrowserWindow } = require('electron')
 const fs = require('fs');
 const path = require('path')
 
-const logger = require('./modules/main/utils/logger');
+require('module-alias/register');
+
+const logger = require('./modules/utils/logger');
 
 const tray = require('./tray');
 const uatDev = (() => {
@@ -24,10 +26,10 @@ console.info('[main.js] uatDev: ', uatDev);
 const windowManager = require('./modules/main/windowManager');
 
 // 引入 RepoMonitorService
-const RepoMonitorService = require('./modules/main/services/repoMonitorService');
+const RepoMonitorService = require('./modules/services/repoMonitorService');
 
 // 引入App进程管理器
-const appProcessManager = require('./modules/main/appProcessManager');
+const appProcessManager = require('./modules/isolated/appProcessManager');
 
 // 引入 IPC 消息处理模块
 const initApiIpcHandlers = require('./modules/main/api');

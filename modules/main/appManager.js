@@ -2,12 +2,12 @@ const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
-const { getAppsStore, getAppsDevStore } = require('./storageManager');
-const { getAppPath, getAppTempPath } = require('./pathManager');
-const { handleError } = require('./ipc/errorHandler')
-const DateFormat = require('../utils/DateFormat');
-const logger = require('./utils/logger');
-const fsUtils = require('./utils/fs-utils');
+const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
+const { getAppPath, getAppTempPath } = require('@modules/main/pathManager');
+const { handleError } = require('@modules/ipc/errorHandler')
+const DateFormat = require('@modules/utils/DateFormat');
+const logger = require('@modules/utils/logger');
+const fsUtils = require('@modules/utils/fs-utils');
 
 /**
  * 获取所有应用数据

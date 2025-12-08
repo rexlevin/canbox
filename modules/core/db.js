@@ -5,8 +5,8 @@ const PouchDB = require('pouchdb');
 const { customAlphabet } = require('nanoid-cjs');
 const nanoid = customAlphabet('1234567890abcdef', 10);
 
-const DateFormat = require('../../utils/DateFormat');
-const { getAppDataPath } = require('../pathManager');
+const DateFormat = require('@modules/utils/DateFormat');
+const { getAppDataPath } = require('@modules/main/pathManager');
 
 // 数据库连接缓存，记录连接和最后使用时间
 const dbCache = {};

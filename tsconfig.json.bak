@@ -1,4 +1,9 @@
 {
+    "baseUrl": ".",
+    "paths": {
+        "@/*": ["./src/*"],
+        "@/modules/*": ["./modules/*"]
+    },
     "compilerOptions": {
         "target": "es6",
         "module": "commonjs",

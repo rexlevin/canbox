@@ -1,4 +1,4 @@
-const { getWinStateStore } = require('./storageManager');
+const { getWinStateStore } = require('@modules/main/storageManager');
 
 class WinState {
     constructor() {

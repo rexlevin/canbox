@@ -1,18 +1,20 @@
 const { BrowserWindow, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const ObjectUtils = require('../utils/ObjectUtils');
+
+const logger = require('@modules/utils/logger');
+const ObjectUtils = require('@modules/utils/ObjectUtils');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
 // 导入窗口管理模块
-const windowManager = require('./windowManager');
-const { getAppsStore, getAppsDevStore } = require('./storageManager');
-const { getAppPath } = require('./pathManager');
-const appProcessManager = require('./appProcessManager');
-const { shouldUseSeparateProcess } = require('./appConfig');
+const windowManager = require('@modules/main/windowManager')
+const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
+const { getAppPath } = require('@modules/main/pathManager');
+const appProcessManager = require('@modules/isolated/appProcessManager');
+const { shouldUseSeparateProcess } = require('@modules/main/appConfig');
 
-const { handleError } = require('./ipc/errorHandler')
+const { handleError } = require('@modules/ipc/errorHandler')
 
 module.exports = {
     /**
@@ -23,22 +25,24 @@ module.exports = {
      * @returns void
      */
     loadApp: async (uid, devTag, useSeparateProcess = null) => {
-        // 如果没有指定 useSeparateProcess，从配置读取
-        if (useSeparateProcess === null) {
-            useSeparateProcess = shouldUseSeparateProcess(devTag);
-        }
 
-        console.info('[app.window] loadApp uid: ', uid, 'useSeparateProcess:', useSeparateProcess);
         if (!uid) {
             return handleError(new Error('uid is required'), 'loadApp');
         }
 
         const appItem = devTag
-                ? getAppsDevStore().get('default')[uid]
-                : getAppsStore().get('default')[uid];
+            ? getAppsDevStore().get('default')[uid]
+            : getAppsStore().get('default')[uid];
         if (!appItem) {
             return handleError(new Error('appItem is not exists'), 'loadApp');
         }
+
+        // 如果没有指定 useSeparateProcess，从配置读取
+        if (useSeparateProcess === null) {
+            useSeparateProcess = shouldUseSeparateProcess(devTag);
+        }
+
+        logger.info('App {}, useSeparateProcess:', uid, useSeparateProcess);
 
         // 如果使用独立进程模式
         if (useSeparateProcess) {
@@ -61,8 +65,8 @@ module.exports = {
         }
 
         const appJson = devTag
-                ? JSON.parse(fs.readFileSync(path.join(appItem.path, 'app.json'), 'utf8'))
-                : JSON.parse(fs.readFileSync(path.join(getAppPath(), uid + '.asar/app.json'), 'utf8'));
+            ? JSON.parse(fs.readFileSync(path.join(appItem.path, 'app.json'), 'utf8'))
+            : JSON.parse(fs.readFileSync(path.join(getAppPath(), uid + '.asar/app.json'), 'utf8'));
         const appPath = devTag ? appItem.path : path.join(getAppPath(), uid + '.asar');
 
         // 如果app已存在并且未被销毁，则显示app窗口
@@ -164,8 +168,8 @@ module.exports = {
             }
             const appMain = devTag && uatDevJson?.main ? uatDevJson.main : appJson.main;
             const loadUrl = appMain.startsWith('http')
-                    ? appMain
-                    : `file://${path.resolve(appPath, appMain)}`;
+                ? appMain
+                : `file://${path.resolve(appPath, appMain)}`;
             console.info(`load app window url===%o`, loadUrl);
             appWin.loadURL(loadUrl).catch(err => {
                 console.error('Failed to load URL:', err);

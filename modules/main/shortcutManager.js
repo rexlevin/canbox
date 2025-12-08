@@ -3,9 +3,9 @@ const fs = require('fs');
 const { execSync, exec } = require('child_process');
 const os = require('os');
 
-const { getCanboxStore } = require('./storageManager');
-const { getAppPath, getAppIconPath } = require('./pathManager');
-const { handleError } = require('./ipc/errorHandler');
+const { getCanboxStore } = require('@modules/main/storageManager');
+const { getAppPath, getAppIconPath } = require('@modules/main/pathManager');
+const { handleError } = require('@modules/ipc/errorHandler');
 
 /**
  * 生成应用快捷方式

@@ -1,9 +1,8 @@
-const { getAppsStore } = require('../storageManager');
-const { getAppsDevStore } = require('../storageManager');
-const { getAppPath } = require('../pathManager');
-const fs = require('fs');
 const path = require('path');
-const logger = require('../utils/logger');
+const fs = require('fs');
+const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
+const { getAppPath } = require('@modules/main/pathManager');
+const logger = require('@modules/utils/logger');
 
 class AppManagerIpcHandler {
     constructor() {
@@ -134,7 +133,7 @@ class AppManagerIpcHandler {
         // 注册 load-app 处理器（使用 ipcMain.on 因为前端使用 ipcRenderer.send）
         ipcMain.on('load-app', async (event, uid, devTag = false) => {
             try {
-                const appWindow = require('../app.window');
+                const appWindow = require('@modules/main/app.window');
                 await appWindow.loadApp(uid, devTag);
                 logger.info('App {} loaded successfully', uid);
             } catch (error) {

@@ -1,5 +1,5 @@
-const appProcessManager = require('../appProcessManager');
-const logger = require('../utils/logger');
+const appProcessManager = require('@modules/isolated/appProcessManager');
+const logger = require('@modules/utils/logger');
 
 class AppIpcHandler {
     constructor() {

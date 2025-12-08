@@ -5,18 +5,18 @@ const cron = require('node-cron');
 const { app } = require('electron');
 const logger = require('../utils/logger');
 
-const { handleError } = require('../ipc/errorHandler');
-const repoUtils = require('../utils/repoUtils');
-const fsUtils = require('../utils/fs-utils');
+const { handleError } = require('@modules/ipc/errorHandler');
+const repoUtils = require('@modules/utils/repoUtils');
+const fsUtils = require('@modules/utils/fs-utils');
 
-const DateFormat = require('../../utils/DateFormat');
+const DateFormat = require('@modules/utils/DateFormat');
 
 // 导入窗口管理模块
-const windowManager = require('../windowManager');
+const windowManager = require('@modules/main/windowManager');
 // 导入electron-store管理器
-const { getReposStore } =require('../storageManager');
+const { getReposStore } =require('@modules/main/storageManager');
 // 导入路径管理器
-const { getReposPath } = require('../pathManager');
+const { getReposPath } = require('@modules/main/pathManager');
 
 class RepoMonitorService {
     constructor() {
@@ -71,7 +71,7 @@ class RepoMonitorService {
                             remoteHash = await repoUtils.getFileHash(repoUrl, branch, file);
                         } catch (error) {
                             logger.monitor.warn(`无法获取 ${file} 的哈希值，将尝试下载文件...${error}`);
-                            const { getReposTempPath } = require('../pathManager');
+                            const { getReposTempPath } = require('../main/pathManager');
                             const REPOS_TEMP_PATH = getReposTempPath();
                             tempFilePath = path.join(REPOS_TEMP_PATH, file);
                             downloadSuccess = await repoUtils.downloadFileFromRepo(fileUrl, tempFilePath);

@@ -1,13 +1,17 @@
 {
     "name": "canbox",
     "private": true,
-    "version": "0.0.6",
+    "version": "0.0.7",
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
     "author": "lizl6",
     "license": "Apache-2.0",
     "engines": {
         "node": ">=22.0.0"
+    },
+    "_moduleAliases": {
+        "@": "./src",
+        "@modules": "./modules"
     },
     "scripts": {
         "dev": "vite --host 0.0.0.0 --port 12333",

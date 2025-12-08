@@ -1,8 +1,8 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const logger = require('./utils/logger');
-const { getAppPath } = require('./pathManager');
+const logger = require('@modules/utils/logger');
+const { getAppPath } = require('@modules/main/pathManager');
 
 /**
  * App进程管理器
@@ -35,7 +35,7 @@ class AppProcessManager {
             logger.info(`App ${appId} will start in separate process...`);
 
             // 获取App信息
-            const { getAppsStore, getAppsDevStore } = require('./storageManager');
+            const { getAppsStore, getAppsDevStore } = require('../main/storageManager');
             const appItem = devTag
                 ? getAppsDevStore().get('default')[appId]
                 : getAppsStore().get('default')[appId];

@@ -4,17 +4,17 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const { dialog } = require('electron');
-const { handleError } = require('./errorHandler');
-const logger = require('../utils/logger');
+const { handleError } = require('@modules/ipc/errorHandler');
+const logger = require('@modules/utils/logger');
 
-const { getReposStore } = require('../storageManager');
-const repoUtils = require('../utils/repoUtils');
-const fsUtils = require('../utils/fs-utils');
-const DateFormat = require('../../utils/DateFormat');
+const { getReposStore } = require('@modules/main/storageManager');
+const repoUtils = require('@modules/utils/repoUtils');
+const fsUtils = require('@modules/utils/fs-utils');
+const DateFormat = require('@modules/utils/DateFormat');
 
-const { handleImportApp } = require('../appManager');
+const { handleImportApp } = require('@modules/main/appManager');
 
-const { getReposPath, getReposTempPath } = require('../pathManager');
+const { getReposPath, getReposTempPath } = require('@modules/main/pathManager');
 const REPOS_PATH = getReposPath();
 const REPOS_TEMP_PATH = getReposTempPath();
 
