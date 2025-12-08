@@ -5,16 +5,6 @@ const shortcutIpcHandler = require('./modules/ipc/shortcutIpcHandler');
 const appManagerIpcHandler = require('./modules/ipc/appManagerIpcHandler');
 const initApiIpcHandlers = require('./modules/main/api');
 
-const appWindow = require('@modules/main/app.window');
-
-/**
- * 根据appId直接打开app
- * @param {string} appId 
- */
-function handleLoadAppById(appId) {
-    appWindow.loadApp(appId, false); // 注意：这里需要根据实际逻辑调整参数
-}
-
 /**
  * 初始化所有 IPC 消息处理逻辑
  */
@@ -66,6 +56,5 @@ function initIpcHandlers() {
 }
 
 module.exports = {
-    initIpcHandlers,
-    handleLoadAppById
+    initIpcHandlers
 };

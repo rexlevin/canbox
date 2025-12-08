@@ -133,8 +133,8 @@ class AppManagerIpcHandler {
         // 注册 load-app 处理器（使用 ipcMain.on 因为前端使用 ipcRenderer.send）
         ipcMain.on('load-app', async (event, uid, devTag = false) => {
             try {
-                const appWindow = require('@modules/main/app.window');
-                await appWindow.loadApp(uid, devTag);
+                const appLoader = require('@modules/main/appLoader');
+                await appLoader.loadApp(uid, devTag);
                 logger.info('App {} loaded successfully', uid);
             } catch (error) {
                 logger.error('Failed to load app {}, error: {}', uid, error);

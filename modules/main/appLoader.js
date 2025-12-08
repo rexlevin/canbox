@@ -18,7 +18,8 @@ const { handleError } = require('@modules/ipc/errorHandler')
 
 module.exports = {
     /**
-     *
+     * 根据appId直接打开app
+     * 
      * @param {String} appItemStr app应用uid
      * @param {boolean} devTag app开发tag，true：当前是开发app
      * @param {boolean} useSeparateProcess 是否使用独立进程模式（可选，默认从配置读取）

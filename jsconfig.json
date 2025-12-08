@@ -1,10 +1,10 @@
 {
-    "baseUrl": ".",
-    "paths": {
-        "@/*": ["./src/*"],
-        "@modules/*": ["./modules/*"]
-    },
     "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["./src/*"],
+            "@modules/*": ["./modules/*"]
+        },
         "checkJs": false,
         "strict": false,
         "esModuleInterop": true,

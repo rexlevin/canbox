@@ -4,40 +4,42 @@ const path = require('path')
 
 require('module-alias/register');
 
-const logger = require('./modules/utils/logger');
+const logger = require('@modules/utils/logger');
 
 const tray = require('./tray');
 const uatDev = (() => {
-  try {
-    // 在 asar 包中使用绝对路径
-    const uatDevPath = path.join(__dirname, 'uat.dev.json');
-    if (fs.existsSync(uatDevPath)) {
-      return require(uatDevPath);
+    try {
+        // 在 asar 包中使用绝对路径
+        const uatDevPath = path.join(__dirname, 'uat.dev.json');
+        if (fs.existsSync(uatDevPath)) {
+            return require(uatDevPath);
+        }
+        return {};
+    } catch (error) {
+        logger.warn('Failed to load uat.dev configuration: {}', error.message);
+        return {};
     }
-    return {};
-  } catch (error) {
-    console.warn('Failed to load uat.dev configuration:', error.message);
-    return {};
-  }
 })();
-console.info('[main.js] uatDev: ', uatDev);
+logger.info('[main.js] uatDev: {}', uatDev);
 
 // 导入窗口管理模块
-const windowManager = require('./modules/main/windowManager');
+// const windowManager = require('./modules/main/windowManager');
 
 // 引入 RepoMonitorService
-const RepoMonitorService = require('./modules/services/repoMonitorService');
+const RepoMonitorService = require('@modules/services/repoMonitorService');
 
 // 引入App进程管理器
-const appProcessManager = require('./modules/isolated/appProcessManager');
+// const appProcessManager = require('@modules/isolated/appProcessManager');
+
+// // 引入 IPC 消息处理模块
+// const initApiIpcHandlers = require('@modules/main/api');
+// // 初始化 IPC 消息处理
+// initApiIpcHandlers();
+
+const appLoader = require('@modules/main/appLoader');
 
 // 引入 IPC 消息处理模块
-const initApiIpcHandlers = require('./modules/main/api');
-// 初始化 IPC 消息处理
-initApiIpcHandlers();
-
-// 引入 IPC 消息处理模块
-const { initIpcHandlers, handleLoadAppById } = require('./ipcHandlers');
+const { initIpcHandlers } = require('./ipcHandlers');
 
 // 清除启动时控制台的“Electron Security Warning (Insecure Content-Security-Policy)”报错信息
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
@@ -64,21 +66,21 @@ if (!getTheLock) {
         // console.info('workingDirectory===%o', workingDirectory);
         // 如果app已经启动，那么参数再次启动app或者 app 的参数只能从commandLine里面获得
         let appId = '';
-        for(let command of commandLine) {
-            if(command.indexOf('id:') === -1) continue;
+        for (let command of commandLine) {
+            if (command.indexOf('id:') === -1) continue;
             appId = command.substring(command.indexOf(':') + 1);
         }
         if (win && '' === appId) {
-            if(win.isMinimized()) win.restore();
-            if(!win.isVisible()) win.show();
+            if (win.isMinimized()) win.restore();
+            if (!win.isVisible()) win.show();
             win.focus();
         }
-        if(win && '' !== appId) {
+        if (win && '' !== appId) {
             // console.info('now loadAppDirect==%s', appId);
-            handleLoadAppById(appId);
+            appLoader.loadApp(appId, false);
         }
     })
- 
+
     app.whenReady().then(() => {
         // 创建窗口
         createWindow();
@@ -103,12 +105,12 @@ if (!getTheLock) {
 
         // app第一次启动的时候，启动参数可以从process.argv里面获取到
         let appId = '';
-        for(let arg of process.argv) {
-            if(arg.indexOf('id:') === -1) continue;
+        for (let arg of process.argv) {
+            if (arg.indexOf('id:') === -1) continue;
             appId = arg.substring(arg.indexOf(':') + 1);
         }
         console.info(appId);
-        if('' !== appId) {
+        if ('' !== appId) {
             win.hide();
             handleLoadAppById(appId);
         }
@@ -125,7 +127,7 @@ if (!getTheLock) {
                     logger.error('快捷方式初始化失败:', result.msg);
                 }
             }).catch((error) => {
-                logger.error('快捷方式初始化失败:', error); 
+                logger.error('快捷方式初始化失败:', error);
             });
         }
     })
@@ -136,7 +138,7 @@ app.on('window-all-closed', async () => {
     if (process.platform !== 'darwin') {
         console.info('now will quit app');
         // 停止所有App进程
-        await appProcessManager.stopAllApps();
+        // await appProcessManager.stopAllApps();
         app.quit();
         console.info('now after quit app');
     }
@@ -182,7 +184,7 @@ const createWindow = () => {
     // win.setMenu(Menu.buildFromTemplate(menuTemplate));
     win.setMenu(null);
 
-    if(os === 'win') {
+    if (os === 'win') {
         win.setAppDetails({
             appId: 'canbox'
         });
@@ -212,7 +214,7 @@ const createWindow = () => {
     });
 
     // 将app窗口添加到appMap中
-    windowManager.addWindow('canbox', win);
+    // windowManager.addWindow('canbox', win);
 
     // 关闭主窗口事件，最小化到托盘
     win.on('close', (e) => {
@@ -225,7 +227,7 @@ const createWindow = () => {
     win.on('closed', async () => {
         console.info('now win closed, and app will quit');
         // 停止所有App进程
-        await appProcessManager.stopAllApps();
+        // await appProcessManager.stopAllApps();
         app.quit();
     });
 }
