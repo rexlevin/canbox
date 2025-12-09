@@ -112,7 +112,7 @@ if (!getTheLock) {
         console.info(appId);
         if ('' !== appId) {
             win.hide();
-            handleLoadAppById(appId);
+            appLoader.loadApp(appId, false);
         }
 
         // 初始化快捷方式（异步）
