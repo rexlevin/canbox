@@ -11,6 +11,8 @@ const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' 
 const windowManager = require('@modules/main/windowManager')
 const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
 const { getAppPath } = require('@modules/main/pathManager');
+const appProcessLoader = require('@modules/isolated/appProcessLoader');
+const appWindowLoader = require('@modules/integrated/appWindowLoader');
 const appProcessManager = require('@modules/isolated/appProcessManager');
 const { shouldUseSeparateProcess } = require('@modules/main/appConfig');
 
@@ -43,7 +45,18 @@ module.exports = {
             useSeparateProcess = shouldUseSeparateProcess(devTag);
         }
 
-        logger.info('App {}, useSeparateProcess:', uid, useSeparateProcess);
+        logger.info('App {}, useSeparateProcess: {}', uid, useSeparateProcess);
+
+        if (useSeparateProcess) {
+            // 子进程模式
+            const result = await appProcessLoader.loadApp(uid, devTag);
+            if (result) {
+                return;
+            }
+        }
+        // 窗口模式
+        appWindowLoader.loadApp(uid, devTag);
+        return;
 
         // 如果使用独立进程模式
         if (useSeparateProcess) {
