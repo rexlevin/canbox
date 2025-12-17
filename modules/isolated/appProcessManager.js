@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const logger = require('@modules/utils/logger');
 const { getAppPath } = require('@modules/main/pathManager');
+const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
 
 /**
  * App进程管理器
@@ -10,48 +11,45 @@ const { getAppPath } = require('@modules/main/pathManager');
  */
 class AppProcessManager {
     constructor() {
-        this.appProcesses = new Map(); // 存储App进程 {appId: childProcess}
+        this.processMap = new Map(); // 存储App进程 {appId: childProcess}
     }
 
     /**
      * 启动App进程
-     * @param {string} appId - App ID
+     * @param {string} uid - App ID
      * @param {boolean} devTag - 是否为开发模式
      * @param {Object} options - 额外选项
      * @returns {Promise<{success: boolean, msg?: string}>}
      */
-    async startAppProcess(appId, devTag = false, options = {}) {
+    async startApp(uid, devTag = false, options = {}) {
         try {
             // 检查App是否已经运行
-            if (this.appProcesses.has(appId)) {
-                const existingProcess = this.appProcesses.get(appId);
+            if (this.processMap.has(uid)) {
+                const existingProcess = this.processMap.get(uid);
                 if (!existingProcess.killed) {
-                    logger.info(`App ${appId} is already running`);
+                    logger.info(`App ${uid} is already running`);
                     return { success: false, msg: 'App is already running' };
                 }
                 // 清理已结束的进程
-                this.appProcesses.delete(appId);
+                this.processMap.delete(uid);
             }
-            logger.info(`App ${appId} will start in separate process...`);
+            logger.info(`App ${uid} will start in separate process...`);
 
             // 获取App信息
-            const { getAppsStore, getAppsDevStore } = require('../main/storageManager');
             const appItem = devTag
-                ? getAppsDevStore().get('default')[appId]
-                : getAppsStore().get('default')[appId];
+                ? getAppsDevStore().get('default')[uid]
+                : getAppsStore().get('default')[uid];
 
             if (!appItem) {
                 return { success: false, msg: 'App not found' };
             }
-            logger.info(`App ${appId} found, appItem: {}`, JSON.stringify(appItem));
+            logger.info(`App ${uid} found, appItem: {}`, JSON.stringify(appItem));
 
             const appPath = devTag 
                 ? appItem.path 
-                : path.join(getAppPath(), appId + '.asar');
+                : path.join(getAppPath(), uid + '.asar');
 
-            const appJson = devTag
-                ? JSON.parse(fs.readFileSync(path.join(appItem.path, 'app.json'), 'utf8'))
-                : JSON.parse(fs.readFileSync(path.join(getAppPath(), appId + '.asar/app.json'), 'utf8'));
+            const appJson = JSON.parse(fs.readFileSync(path.join(appPath, 'app.json'), 'utf8'));
 
             // 构建窗口配置字符串并传递给子进程
             let windowConfig = {};
@@ -66,7 +64,7 @@ class AppProcessManager {
                 }
                 if (!devTag) {
                     const logoExt = path.extname(appJson.logo);
-                    windowConfig.icon = path.resolve(getAppPath(), `${appId}${logoExt}`);
+                    windowConfig.icon = path.resolve(getAppPath(), `${uid}${logoExt}`);
                 }
                 
                 // 处理 preload 路径
@@ -92,9 +90,9 @@ class AppProcessManager {
             // 使用 Electron 直接运行 app-main.js，传递所有必要的参数
             const appArgs = [
                 appMainPath,
-                '--app-id=' + appId,
-                '--app-name=' + (appJson.name || appId),
-                '--wm-class=canbox-' + appId,
+                '--app-id=' + uid,
+                '--app-name=' + (appJson.name || uid),
+                '--wm-class=canbox-' + uid,
                 '--app-path=' + appPath,
                 '--is-dev-mode=' + devTag,
                 '--canbox-main-pid=' + process.pid,
@@ -107,7 +105,7 @@ class AppProcessManager {
                 appArgs.push('--dev-mode');
             }
 
-            logger.info('App {} appArgs: {}', appId, appArgs);
+            logger.info('App {} appArgs: {}', uid, appArgs);
 
             // 最简单的解决方案：创建一个包含 app-main.js 内容的临时文件
             // 最简单的解决方案：创建一个包含 app-main.js 内容的临时文件
@@ -116,7 +114,7 @@ class AppProcessManager {
             // const fs = require('fs');
             const os = require('os');
             const tempDir = os.tmpdir();
-            const tempAppDir = path.join(tempDir, `canbox-app-${appId}-${Date.now()}`);
+            const tempAppDir = path.join(tempDir, `canbox-app-${uid}-${Date.now()}`);
             
             // 创建临时目录
             fs.mkdirSync(tempAppDir, { recursive: true });
@@ -244,9 +242,9 @@ class AppProcessManager {
             appProcess = spawn(process.execPath, finalArgs, {
                 env: {
                     ...process.env,
-                    APP_ID: appId,
-                    APP_NAME: appJson.name || appId,
-                    ELECTRON_WM_CLASS: `canbox-${appId}`,
+                    APP_ID: uid,
+                    APP_NAME: appJson.name || uid,
+                    ELECTRON_WM_CLASS: `canbox-${uid}`,
                     APP_PATH: appPath,
                     IS_DEV_MODE: devTag.toString(),
                     CANBOX_MAIN_PID: process.pid.toString(),
@@ -258,7 +256,7 @@ class AppProcessManager {
                         const parentDir = path.dirname(appResourcePath);
                         const currentDir = process.cwd();
                         const nodePath = `${parentDir}/node_modules:${appResourcePath}/node_modules:${currentDir}/node_modules:${process.env.NODE_PATH || ''}`;
-                        logger.info(`Setting NODE_PATH for app ${appId}: ${nodePath}`);
+                        logger.info(`Setting NODE_PATH for app ${uid}: ${nodePath}`);
                         logger.info(`App resource path: ${appResourcePath}`);
                         logger.info(`Current working directory: ${currentDir}`);
                         return nodePath;
@@ -282,32 +280,32 @@ class AppProcessManager {
 
             // 处理进程输出
             appProcess.stdout?.on('data', (data) => {
-                logger.info(`App ${appId} stdout: ${data.toString().trim()}`);
+                logger.info(`App ${uid} stdout: ${data.toString().trim()}`);
             });
 
             appProcess.stderr?.on('data', (data) => {
-                logger.error(`App ${appId} stderr: ${data.toString().trim()}`);
+                logger.error(`App ${uid} stderr: ${data.toString().trim()}`);
             });
 
             // 处理进程退出
             appProcess.on('close', (code, signal) => {
-                logger.info(`App ${appId} process closed with code ${code}, signal ${signal}`);
-                this.appProcesses.delete(appId);
+                logger.info(`App ${uid} process closed with code ${code}, signal ${signal}`);
+                this.processMap.delete(uid);
             });
 
             appProcess.on('error', (error) => {
-                logger.error(`App ${appId} process error: ${error.message}`);
-                this.appProcesses.delete(appId);
+                logger.error(`App ${uid} process error: ${error.message}`);
+                this.processMap.delete(uid);
             });
 
             // 存储进程引用
-            this.appProcesses.set(appId, appProcess);
+            this.processMap.set(uid, appProcess);
 
-            logger.info(`App ${appId} started successfully with PID: ${appProcess.pid}`);
+            logger.info(`App ${uid} started successfully with PID: ${appProcess.pid}`);
             return { success: true };
 
         } catch (error) {
-            logger.error(`Failed to start app ${appId}:`, error);
+            logger.error(`Failed to start app ${uid}:`, error);
             return { success: false, msg: error.message };
         }
     }
@@ -317,13 +315,13 @@ class AppProcessManager {
      * @param {string} appId - App ID
      * @returns {Promise<{success: boolean, msg?: string}>}
      */
-    async stopAppProcess(appId) {
+    async stopApp(appId) {
         try {
-            if (!this.appProcesses.has(appId)) {
+            if (!this.processMap.has(appId)) {
                 return { success: false, msg: 'App process not found' };
             }
 
-            const appProcess = this.appProcesses.get(appId);
+            const appProcess = this.processMap.get(appId);
 
             // 尝试优雅关闭
             appProcess.kill('SIGTERM');
@@ -335,7 +333,7 @@ class AppProcessManager {
                 }
             }, 5000);
 
-            this.appProcesses.delete(appId);
+            this.processMap.delete(appId);
             logger.info(`App ${appId} stopped`);
             return { success: true };
 
@@ -347,12 +345,26 @@ class AppProcessManager {
 
     /**
      * 检查App是否正在运行
-     * @param {string} appId - App ID
+     * @param {string} uid - App ID
      * @returns {boolean}
      */
-    isAppRunning(appId) {
-        const process = this.appProcesses.get(appId);
+    isAppRunning(uid) {
+        const process = this.processMap.get(uid);
         return process && !process.killed;
+    }
+
+    /**
+     * 聚焦App
+     * @param {string} uid App ID
+     * @returns {boolean}
+     */
+    focusApp(uid) {
+        const process = this.processMap.get(uid);
+        if (!process || process.killed) {
+            this.processMap.delete(uid);
+            return;
+        }
+        process.focus();
     }
 
     /**
@@ -360,7 +372,7 @@ class AppProcessManager {
      * @returns {string[]}
      */
     getRunningApps() {
-        return Array.from(this.appProcesses.keys()).filter(id => this.isAppRunning(id));
+        return Array.from(this.processMap.keys()).filter(id => this.isAppRunning(id));
     }
 
     /**
@@ -368,7 +380,7 @@ class AppProcessManager {
      */
     async stopAllApps() {
         const runningApps = this.getRunningApps();
-        const stopPromises = runningApps.map(id => this.stopAppProcess(id));
+        const stopPromises = runningApps.map(id => this.stopApp(id));
         await Promise.allSettled(stopPromises);
         logger.info('All app processes stopped');
     }
@@ -380,10 +392,10 @@ class AppProcessManager {
      * @returns {Promise<{success: boolean, msg?: string}>}
      */
     async restartAppProcess(appId, devTag = false) {
-        await this.stopAppProcess(appId);
+        await this.stopApp(appId);
         // 等待一段时间确保进程完全退出
         await new Promise(resolve => setTimeout(resolve, 1000));
-        return this.startAppProcess(appId, devTag);
+        return this.startApp(appId, devTag);
     }
 }
 

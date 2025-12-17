@@ -22,7 +22,7 @@ class AppIpcHandler {
         // 停止App进程
         this.handlers.set('stop-app-process', async (event, { appId }) => {
             try {
-                const result = await appProcessManager.stopAppProcess(appId);
+                const result = await appProcessManager.stopApp(appId);
                 return result;
             } catch (error) {
                 logger.error('IPC stop-app-process error:', error);
