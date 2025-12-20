@@ -10,10 +10,11 @@ class AppWindowManager {
      * 启动 App
      * @param {string} uid - App ID
      * @param {BrowserWindow} appWin - 应用窗口
-     * @returns 
+     * @returns {boolean} - 是否成功
      */
     startApp(uid, appWin) {
         appWin.show();
+        return true;
         // if (this.winMap.has(uid)) {
         //     const existingWindow = this.winMap.get(uid);
         //     if (existingWindow.isMinimized()) {
