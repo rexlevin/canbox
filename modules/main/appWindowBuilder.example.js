@@ -13,8 +13,7 @@ const AppWindowBuilder = require('./appWindowBuilder');
 async function createProductionAppWindow(appId) {
     const window = await AppWindowBuilder.createWindow(
         appId,    // uid
-        false,    // devTag - 生产模式
-        null      // useSeparateProcess - 使用配置默认值
+        false     // devTag - 生产模式
     );
     
     if (window) {
@@ -33,8 +32,7 @@ async function createProductionAppWindow(appId) {
 async function createDevelopmentAppWindow(appId) {
     const window = await AppWindowBuilder.createWindow(
         appId,    // uid
-        true,     // devTag - 开发模式
-        true      // useSeparateProcess - 强制使用独立进程
+        true      // devTag - 开发模式
     );
     
     if (window) {

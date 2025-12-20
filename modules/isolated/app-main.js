@@ -2,7 +2,6 @@ const { app, BrowserWindow, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const logger = require(path.join(__dirname, 'utils/logger'));
-const { generateWmClass } = require(path.join(__dirname, 'appConfig'));
 const initApiIpcHandlers = require(path.join(__dirname, 'api'));
 
 // 从环境变量中获取App信息

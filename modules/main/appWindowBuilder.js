@@ -6,7 +6,6 @@ const os = require('os');
 const logger = require('@modules/utils/logger');
 const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
 const { getAppPath } = require('@modules/main/pathManager');
-const { shouldUseSeparateProcess } = require('@modules/main/appConfig');
 const windowManager = require('@modules/main/windowManager');
 const winState = require('@modules/main/winState');
 const { handleError } = require('@modules/ipc/errorHandler');
@@ -20,10 +19,9 @@ class AppWindowBuilder {
      * 创建应用窗口
      * @param {string} uid - 应用唯一标识
      * @param {boolean} devTag - 是否为开发模式
-     * @param {boolean} useSeparateProcess - 是否使用独立进程
      * @returns {Promise<BrowserWindow|null>}
      */
-    static async createWindow(uid, devTag = false, useSeparateProcess = null) {
+    static async createWindow(uid, devTag = false) {
         try {
             // 验证必要参数
             if (!uid) {
@@ -37,13 +35,6 @@ class AppWindowBuilder {
                 return null;
             }
 
-            // 确定进程模式
-            if (useSeparateProcess === null) {
-                useSeparateProcess = shouldUseSeparateProcess(devTag);
-            }
-            
-            logger.info('App {}, useSeparateProcess: {}', uid, useSeparateProcess);
-
             // 加载应用配置
             const { appPath, appJson, uatDevJson } = this.loadAppConfig(uid, appItem, devTag);
             
@@ -54,7 +45,7 @@ class AppWindowBuilder {
             const options = this.buildWindowOptions(uid, appPath, appJson, sess, devTag);
             
             // 恢复窗口状态并创建窗口
-            return await this.createWindowWithState(uid, options, appPath, appJson, uatDevJson, devTag);
+            return this.createWindowWithState(uid, options, appPath, appJson, uatDevJson, devTag);
             
         } catch (error) {
             handleError(error, 'createWindow');
@@ -137,11 +128,15 @@ class AppWindowBuilder {
             show: false
         };
 
-        // 合并应用自定义窗口选项
+        // 合并应用自定义窗口选项：如果app.json中配置了窗口选项，则合并到options中
         if (appJson.window) {
             Object.assign(options, this.cloneObject(appJson.window));
             this.setIconPath(options, appPath, appJson, devTag, uid);
             this.setWebPreferences(options, sess, uid);
+        }
+
+        if (appJson.window?.webPreferences?.preload) {
+            options.webPreferences.preload = path.resolve(appPath, appJson.window.webPreferences.preload);
         }
 
         // Linux 系统特殊处理
@@ -202,46 +197,40 @@ class AppWindowBuilder {
      * @param {Object} appJson 
      * @param {Object} uatDevJson 
      * @param {boolean} devTag 
-     * @returns {Promise<BrowserWindow|null>}
      */
-    static async createWindowWithState(uid, options, appPath, appJson, uatDevJson, devTag) {
-        return new Promise((resolve) => {
-            winState.load(uid, (res) => {
-                const state = res.data;
-                
-                // 恢复窗口位置和大小
-                if (!state || state.restore !== 0) {
-                    if (state?.position) {
-                        options.x = state.position.x;
-                        options.y = state.position.y;
-                        options.width = state.position.width;
-                        options.height = state.position.height;
-                    }
-                }
-                
-                console.info('load app window options===%o', options);
-                
-                // 创建窗口
-                const appWin = new BrowserWindow(options);
-                
-                // 最大化处理
-                if (state?.isMax) {
-                    appWin.maximize();
-                }
-                
-                // 加载应用
-                this.loadAppContent(appWin, appPath, appJson, uatDevJson, devTag);
-                
-                // 设置窗口事件
-                this.setupWindowEvents(appWin, uid, devTag, uatDevJson);
-                
-                // 注册窗口
-                windowManager.addWindow(uid, appWin);
-                console.info('appMap length: %o', windowManager.appMap.size);
-                
-                resolve(appWin);
-            });
-        });
+    static createWindowWithState(uid, options, appPath, appJson, uatDevJson, devTag) {
+        const state = winState.loadSync(uid);
+        // 恢复窗口位置和大小
+        if (!state || state.restore !== 0) {
+            if (state?.position) {
+                options.x = state.position.x;
+                options.y = state.position.y;
+                options.width = state.position.width;
+                options.height = state.position.height;
+            }
+        }
+        
+        console.info('load app window options===%o', options);
+        
+        // 创建窗口
+        const appWin = new BrowserWindow(options);
+        
+        // 最大化处理
+        if (state?.isMax) {
+            appWin.maximize();
+        }
+        
+        // 加载应用
+        this.loadAppContent(appWin, appPath, appJson, uatDevJson, devTag);
+        
+        // 设置窗口事件
+        this.setupWindowEvents(appWin, uid, devTag, uatDevJson);
+        
+        // 注册窗口
+        windowManager.addWindow(uid, appWin);
+        console.info('appMap length: %o', windowManager.appMap.size);
+
+        return appWin;
     }
 
     /**

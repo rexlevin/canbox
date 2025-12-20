@@ -30,7 +30,6 @@
             "build/**/*",
             "modules/**/*",
             "public/**/*",
-            "app-config.json",
             "ipcHandlers.js",
             "LICENSE",
             "logo.png",
