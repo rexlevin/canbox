@@ -39,7 +39,6 @@ const appLoader = {
             useSeparateProcess = process.platform === 'linux' ? true : false;
         }
         // useSeparateProcess = false;
-        // useSeparateProcess = false;
         logger.info('App {}, useSeparateProcess: {}', uid, useSeparateProcess);
         const appManager = useSeparateProcess ? appProcessManager : appWindowManager;
         // 检查 App 是否已运行
