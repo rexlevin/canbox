@@ -82,14 +82,12 @@ class AppWindowBuilder {
     static loadAppConfig(uid, appItem, devTag) {
         const appPath = devTag ? appItem.path : path.join(getAppPath(), uid + '.asar');
         const appJson = JSON.parse(fs.readFileSync(path.join(appPath, 'app.json'), 'utf8'));
-        
+
         // 加载开发配置
         const uatDevJson = fs.existsSync(path.resolve(appPath, 'uat.dev.json'))
             ? JSON.parse(fs.readFileSync(path.resolve(appPath, 'uat.dev.json'), 'utf-8'))
             : null;
-            
-        console.info('uatDevJson: ', uatDevJson);
-        
+
         return { appPath, appJson, uatDevJson };
     }
 
@@ -100,6 +98,7 @@ class AppWindowBuilder {
      */
     static createSession(uid) {
         const sess = session.fromPartition(uid);
+        console.info('__dirname: ', __dirname);
         sess.registerPreloadScript({
             type: 'frame',
             filePath: path.join(__dirname, 'app.api.js')
@@ -135,6 +134,7 @@ class AppWindowBuilder {
             this.setWebPreferences(options, sess, uid);
         }
 
+        // 处理 preload 路径
         if (appJson.window?.webPreferences?.preload) {
             options.webPreferences.preload = path.resolve(appPath, appJson.window.webPreferences.preload);
         }
@@ -267,7 +267,7 @@ class AppWindowBuilder {
         
         // 准备显示事件
         appWin.on('ready-to-show', () => {
-            appWin.show();
+            // appWin.show();
             if (devTag && uatDevJson?.devTools) {
                 appWin.webContents.openDevTools({ mode: uatDevJson?.devTools });
             }

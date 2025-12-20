@@ -53,7 +53,7 @@ const appLoader = {
         let win = await AppWindowBuilder.createWindow(uid, devTag);
 
         // 启动 App
-        const result = appManager.startApp(win);
+        const result = appManager.startApp(uid, win);
 
     }
 

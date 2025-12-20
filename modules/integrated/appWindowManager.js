@@ -8,27 +8,27 @@ class AppWindowManager {
 
     /**
      * 启动 App
-     * @param {BrowserWindow} appWin 
+     * @param {string} uid - App ID
+     * @param {BrowserWindow} appWin - 应用窗口
      * @returns 
      */
     startApp(uid, appWin) {
-        const { appId, width, height, title, preload, url } = appConfig;
+        appWin.show();
+        // if (this.winMap.has(uid)) {
+        //     const existingWindow = this.winMap.get(uid);
+        //     if (existingWindow.isMinimized()) {
+        //         existingWindow.restore();
+        //     }
+        //     existingWindow.focus();
+        //     return existingWindow;
+        // }
 
-        if (this.winMap.has(uid)) {
-            const existingWindow = this.winMap.get(uid);
-            if (existingWindow.isMinimized()) {
-                existingWindow.restore();
-            }
-            existingWindow.focus();
-            return existingWindow;
-        }
+        // appWin.on('closed', () => {
+        //     this.winMap.delete(uid);
+        // });
 
-        win.on('closed', () => {
-            this.winMap.delete(appId);
-        });
-
-        this.winMap.set(appId, win);
-        return win;
+        // this.winMap.set(uid, appWin);
+        // return win;
     }
 
     closeAllWindows() {
@@ -47,7 +47,7 @@ class AppWindowManager {
      */
     isAppRunning(uid) {
         const win = this.winMap.get(uid);
-        return win && !process.isDestroyed;
+        return win && !win.isDestroyed();
     }
 
     /**
@@ -59,13 +59,17 @@ class AppWindowManager {
         if (!this.winMap.has(uid)) {
             return;
         }
-        const win = windowManager.getWindow(uid);
-        if (win.isDestroyed) {
+        const win = this.winMap.get(uid);
+        if (win.isDestroyed()) {
             this.winMap.delete(uid);
             return;
         }
         win.show();
+        win.focus();
     }
 }
 
-module.exports = AppWindowManager;
+// 创建单例实例
+const appWindowManager = new AppWindowManager();
+
+module.exports = appWindowManager;
