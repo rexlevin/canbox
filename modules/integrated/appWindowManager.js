@@ -1,5 +1,15 @@
-const { BrowserWindow } = require('electron');
+const { BrowserWindow, session } = require('electron');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
+
+const logger = require('@modules/utils/logger');
+const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
+const { getAppPath } = require('@modules/main/pathManager');
+const windowManager = require('@modules/main/windowManager');
+const winState = require('@modules/main/winState');
+
+const { handleError } = require('@modules/ipc/errorHandler')
 
 class AppWindowManager {
     constructor() {
@@ -9,10 +19,10 @@ class AppWindowManager {
     /**
      * 启动 App
      * @param {string} uid - App ID
-     * @param {BrowserWindow} appWin - 应用窗口
+     * @param {boolean} devTag app开发tag，true：当前是开发app
      * @returns {boolean} - 是否成功
      */
-    startApp(uid, appWin) {
+    startApp(uid, devTag) {
         try {
             // 验证必要参数
             if (!uid) {
@@ -202,7 +212,7 @@ class AppWindowManager {
             windowManager.addWindow(uid, appWin);
             console.info('appMap length: %o', windowManager.appMap.size);
 
-            return appWin;
+            return true;
             
         } catch (error) {
             handleError(error, 'createWindow');

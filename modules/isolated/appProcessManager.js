@@ -17,10 +17,108 @@ class AppProcessManager {
     /**
      * 启动App进程
      * @param {string} uid - App ID
-     * @param {BrowserWindow} appWin - 应用窗口
+     * @param {boolean} devTag app开发tag，true：当前是开发app
      * @returns {boolean} - 是否成功
      */
-    startApp(uid, appWin) {
+    startApp(uid, devTag) {
+        try {
+            // 验证必要参数
+            if (!uid) {
+                logger.error('uid is required');
+                return false;
+            }
+
+            // 检查App是否已运行
+            if (this.isAppRunning(uid)) {
+                logger.info(`App ${uid} is already running`);
+                return true;
+            }
+
+            // 获取应用信息
+            const appItem = devTag
+                ? getAppsDevStore().get('default')[uid]
+                : getAppsStore().get('default')[uid];
+                
+            if (!appItem) {
+                logger.error(`App ${uid} not found`);
+                return false;
+            }
+
+            // 加载应用配置
+            const appPath = devTag ? appItem.path : path.join(getAppPath(), uid + '.asar');
+            const appJson = JSON.parse(fs.readFileSync(path.join(appPath, 'app.json'), 'utf8'));
+
+            // 加载开发配置
+            const uatDevJson = fs.existsSync(path.resolve(appPath, 'uat.dev.json'))
+                ? JSON.parse(fs.readFileSync(path.resolve(appPath, 'uat.dev.json'), 'utf-8'))
+                : null;
+
+            // 确定主入口文件
+            const appMain = devTag && uatDevJson?.main ? uatDevJson.main : appJson.main;
+            
+            // 构建启动参数
+            const args = [
+                '--app-id=' + uid,
+                '--app-path=' + appPath,
+                '--app-main=' + appMain
+            ];
+
+            // 开发模式添加额外参数
+            if (devTag) {
+                args.push('--dev-mode');
+                if (uatDevJson?.devTools) {
+                    args.push('--dev-tools=' + uatDevJson.devTools);
+                }
+            }
+
+            // 创建子进程
+            const appProcess = spawn(process.execPath, [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-gpu-sandbox',
+                path.join(__dirname, 'app-main.js'),
+                ...args
+            ], {
+                stdio: ['ignore', 'pipe', 'pipe'],
+                detached: false,
+                env: {
+                    ...process.env,
+                    CANBOX_APP_ID: uid,
+                    CANBOX_APP_PATH: appPath,
+                    CANBOX_DEV_MODE: devTag ? 'true' : 'false'
+                }
+            });
+
+            // 处理进程输出
+            appProcess.stdout?.on('data', (data) => {
+                logger.info(`[${uid}] ${data.toString().trim()}`);
+            });
+
+            appProcess.stderr?.on('data', (data) => {
+                logger.error(`[${uid}] ${data.toString().trim()}`);
+            });
+
+            // 处理进程退出
+            appProcess.on('exit', (code, signal) => {
+                logger.info(`App ${uid} exited with code ${code}, signal ${signal}`);
+                this.processMap.delete(uid);
+            });
+
+            appProcess.on('error', (error) => {
+                logger.error(`Failed to start app ${uid}:`, error);
+                this.processMap.delete(uid);
+            });
+
+            // 存储进程引用
+            this.processMap.set(uid, appProcess);
+            logger.info(`App ${uid} started successfully`);
+
+            return true;
+
+        } catch (error) {
+            logger.error(`Failed to start app ${uid}:`, error);
+            return false;
+        }
     }
 
     /**

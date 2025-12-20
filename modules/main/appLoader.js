@@ -13,8 +13,6 @@ const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager'
 const { getAppPath } = require('@modules/main/pathManager');
 const appWindowManager = require('@modules/integrated/appWindowManager');
 const appProcessManager = require('@modules/isolated/appProcessManager');
-// 导入 App 窗口构建器
-const AppWindowBuilder = require('@modules/main/appWindowBuilder');
 
 const { handleError } = require('@modules/ipc/errorHandler')
 
@@ -48,11 +46,8 @@ const appLoader = {
             return;
         }
 
-        // 创建 App 应用窗口
-        let win = await AppWindowBuilder.createWindow(uid, devTag);
-
         // 启动 App
-        const result = appManager.startApp(uid, win);
+        const result = appManager.startApp(uid, devTag);
 
     }
 
