@@ -101,7 +101,7 @@ class AppWindowBuilder {
         console.info('__dirname: ', __dirname);
         sess.registerPreloadScript({
             type: 'frame',
-            filePath: path.join(__dirname, 'app.api.js')
+            filePath: path.join(__dirname, '../app.api.js')
         });
         return sess;
     }
