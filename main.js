@@ -22,19 +22,8 @@ const uatDev = (() => {
 })();
 logger.info('[main.js] uatDev: {}', uatDev);
 
-// 导入窗口管理模块
-// const windowManager = require('./modules/main/windowManager');
-
 // 引入 RepoMonitorService
 const RepoMonitorService = require('@modules/services/repoMonitorService');
-
-// 引入App进程管理器
-// const appProcessManager = require('@modules/isolated/appProcessManager');
-
-// // 引入 IPC 消息处理模块
-// const initApiIpcHandlers = require('@modules/main/api');
-// // 初始化 IPC 消息处理
-// initApiIpcHandlers();
 
 const appLoader = require('@modules/main/appLoader');
 
@@ -97,8 +86,12 @@ if (!getTheLock) {
         // repoMonitorService.startScheduler('*/1 * * * *'); // 每分钟执行一次
 
         // 启动时立即执行一次仓库检查
-        repoMonitorService.scanRepo().then(() => {
+        repoMonitorService.scanRepo().then((ret) => {
             logger.info('启动时仓库检查完成');
+            // 通知前端数据已更新
+            if (ret.success) {
+                win.webContents.send('repo-data-updated');
+            }
         }).catch(error => {
             logger.error('启动时仓库检查失败:', error);
         });
@@ -137,8 +130,6 @@ app.on('window-all-closed', async () => {
     // if (process.platform !== 'darwin') app.quit();
     if (process.platform !== 'darwin') {
         console.info('now will quit app');
-        // 停止所有App进程
-        // await appProcessManager.stopAllApps();
         app.quit();
         console.info('now after quit app');
     }
@@ -226,8 +217,6 @@ const createWindow = () => {
     // 在 win 的closed事件里退出整个app
     win.on('closed', async () => {
         console.info('now win closed, and app will quit');
-        // 停止所有App进程
-        // await appProcessManager.stopAllApps();
         app.quit();
     });
 }

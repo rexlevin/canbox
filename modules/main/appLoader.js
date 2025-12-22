@@ -7,8 +7,6 @@ const ObjectUtils = require('@modules/utils/ObjectUtils');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
-// 导入窗口管理模块
-const windowManager = require('@modules/main/windowManager')
 const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
 const { getAppPath } = require('@modules/main/pathManager');
 const appWindowManager = require('@modules/integrated/appWindowManager');

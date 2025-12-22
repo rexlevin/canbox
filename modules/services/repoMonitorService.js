@@ -11,8 +11,6 @@ const fsUtils = require('@modules/utils/fs-utils');
 
 const DateFormat = require('@modules/utils/DateFormat');
 
-// 导入窗口管理模块
-const windowManager = require('@modules/main/windowManager');
 // 导入electron-store管理器
 const { getReposStore } =require('@modules/main/storageManager');
 // 导入路径管理器
@@ -154,11 +152,10 @@ class RepoMonitorService {
                 }
             }
             logger.monitor.info('仓库扫描完成');
-            // 通知前端数据已更新
-            const win = windowManager.getWindow('canbox');
-            win.webContents.send('repo-data-updated');
+            return { success: true };
         } catch (error) {
-            logger.monitor.error(`扫描失败: ${error.message}`);
+            logger.monitor.error('扫描失败: {}', error.message);
+            return handleError(error, 'scanRepo');
         }
     }
 
