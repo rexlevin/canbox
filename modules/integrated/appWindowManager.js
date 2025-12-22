@@ -6,14 +6,20 @@ const os = require('os');
 const logger = require('@modules/utils/logger');
 const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
 const { getAppPath } = require('@modules/main/pathManager');
-const windowManager = require('@modules/main/windowManager');
 const winState = require('@modules/main/winState');
 
 const { handleError } = require('@modules/ipc/errorHandler')
 
 class AppWindowManager {
     constructor() {
+        // 存储应用主窗口 {appId: BrowserWindow}
         this.winMap = new Map();
+        
+        // 存储所有窗口（包括子窗口）{windowId: BrowserWindow}
+        this.appMap = new Map();
+        
+        // 维护窗口父子关系 {parentId: [childId1, childId2, ...]}
+        this.windowRelations = new Map();
     }
 
     /**
@@ -162,23 +168,23 @@ class AppWindowManager {
                 console.info(`now will close app: ${uid}`);
                 
                 // 关闭子窗口
-                const childWindows = windowManager.getChildWindows(uid);
+                const childWindows = this.getChildWindows(uid);
                 childWindows.forEach(childId => {
-                    if (windowManager.hasWindow(childId)) {
-                        const childWin = windowManager.getWindow(childId);
+                    if (this.hasWindow(childId)) {
+                        const childWin = this.getWindow(childId);
                         if (!childWin.isDestroyed()) {
                             try {
                                 childWin.webContents.closeDevTools();
                                 childWin.removeAllListeners('close');
                                 childWin.close();
-                                windowManager.removeWindow(childId);
+                                this.removeWindow(childId);
                             } catch (e) {
                                 console.error(`Failed to close child window ${childId}:`, e);
                             }
                         }
                     }
                 });
-                windowManager.removeRelation(uid);
+                this.removeRelation(uid);
                 
                 // 关闭主窗口
                 if (!appWin.isDestroyed()) {
@@ -190,7 +196,7 @@ class AppWindowManager {
                         console.error(`Failed to close window ${uid}:`, e);
                     }
                 }
-                windowManager.removeWindow(uid);
+                this.removeWindow(uid);
                 console.info('All related windows closed');
             });
             
@@ -208,9 +214,10 @@ class AppWindowManager {
                 appWin.setAppDetails({ appId: uid });
             }
             
-            // 注册窗口
-            windowManager.addWindow(uid, appWin);
-            console.info('appMap length: %o', windowManager.appMap.size);
+            // 注册窗口到两个映射
+            this.winMap.set(uid, appWin);  // 应用主窗口映射
+            this.addWindow(uid, appWin);   // 全局窗口映射
+            console.info('appMap length: %o', this.appMap.size);
 
             return true;
             
@@ -227,6 +234,90 @@ class AppWindowManager {
             }
         });
         this.winMap.clear();
+    }
+
+    // ========== 窗口管理方法（原 windowManager 功能） ==========
+    
+    /**
+     * 添加窗口到 appMap
+     * @param {string} id - 窗口 ID
+     * @param {BrowserWindow} win - 窗口实例
+     */
+    addWindow(id, win) {
+        this.appMap.set(id, win);
+    }
+
+    /**
+     * 从 appMap 中移除窗口
+     * @param {string} id - 窗口 ID
+     */
+    removeWindow(id) {
+        this.appMap.delete(id);
+    }
+
+    /**
+     * 检查窗口是否存在
+     * @param {string} id - 窗口 ID
+     * @returns {boolean} - 是否存在
+     */
+    hasWindow(id) {
+        return this.appMap.has(id);
+    }
+
+    /**
+     * 获取窗口实例
+     * @param {string} id - 窗口 ID
+     * @returns {BrowserWindow} - 窗口实例
+     */
+    getWindow(id) {
+        return this.appMap.get(id);
+    }
+
+    /**
+     * 添加窗口父子关系
+     * @param {string} parentId - 父窗口 ID
+     * @param {string} childId - 子窗口 ID
+     */
+    addRelation(parentId, childId) {
+        if (!this.windowRelations.has(parentId)) {
+            this.windowRelations.set(parentId, []);
+        }
+        this.windowRelations.get(parentId).push(childId);
+    }
+
+    /**
+     * 移除窗口父子关系
+     * @param {string} parentId - 父窗口 ID
+     */
+    removeRelation(parentId) {
+        this.windowRelations.delete(parentId);
+    }
+
+    /**
+     * 移除特定子窗口的父子关系
+     * @param {string} parentId - 父窗口 ID
+     * @param {string} childId - 子窗口 ID
+     */
+    removeChildRelation(parentId, childId) {
+        if (this.windowRelations.has(parentId)) {
+            const children = this.windowRelations.get(parentId);
+            const index = children.indexOf(childId);
+            if (index !== -1) {
+                children.splice(index, 1);
+                if (children.length === 0) {
+                    this.windowRelations.delete(parentId);
+                }
+            }
+        }
+    }
+
+    /**
+     * 获取子窗口列表
+     * @param {string} parentId - 父窗口 ID
+     * @returns {Array} - 子窗口 ID 数组
+     */
+    getChildWindows(parentId) {
+        return this.windowRelations.get(parentId) || [];
     }
 
     /**

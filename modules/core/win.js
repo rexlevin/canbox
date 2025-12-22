@@ -9,8 +9,8 @@ const APP_PATH = getAppPath();
 // 初始化 storage 实例
 const { getAppsDevStore, getAppsStore } = require('@modules/main/storageManager');
 
-// 初始化 windowManager 实例
-const windowManager = require('@modules/main/windowManager');
+// 初始化 windowManager 实例（现在集成到 appWindowManager）
+const windowManager = require('@modules/integrated/appWindowManager');
 
 /**
  * 窗口操作模块
@@ -50,10 +50,10 @@ const winFactory = {
 
         try {
             // 根据 parentWindowId 判断应用类型并拼接完整路径
-            const appDevConfigArr = getAppsDevStore().get('default') || [];
-            console.info('appDevConfigArr: ', appDevConfigArr)
-            if (appDevConfigArr.find(item => item.id === parentWindowId)) {
-                const appDevItem = appDevConfigArr.find(item => item.id === parentWindowId).path;
+            const appDevConfigObj = getAppsDevStore().get('default') || {};
+            console.info('appDevConfigObj: ', appDevConfigObj)
+            if (appDevConfigObj[parentWindowId]) {
+                const appDevItem = appDevConfigObj[parentWindowId].path;
                 const appJsonPath = path.join(appDevItem, 'app.json');
                 const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf-8'));
                 const uatDevJson = fs.existsSync(path.resolve(appDevItem, 'uat.dev.json'))

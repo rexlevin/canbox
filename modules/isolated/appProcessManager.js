@@ -169,7 +169,6 @@ class AppProcessManager {
     /**
      * 聚焦App
      * @param {string} uid App ID
-     * @returns {boolean}
      */
     focusApp(uid) {
         const process = this.processMap.get(uid);
