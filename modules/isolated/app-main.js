@@ -1,10 +1,100 @@
-const { BrowserWindow, session, app } = require('electron');
+const { BrowserWindow, session, app, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
-const logger = require('@modules/utils/logger');
-const winState = require('@modules/main/winState');
+// 简化的日志系统，避免 electron app 依赖问题
+const logger = {
+    info: (message, ...args) => {
+        let formatted = message;
+        args.forEach(arg => {
+            formatted = formatted.replace(/{}/, arg);
+        });
+        console.info(`[${path.basename(__filename)}] [INFO] ${formatted}`);
+    },
+    error: (message, ...args) => {
+        let formatted = message;
+        args.forEach(arg => {
+            formatted = formatted.replace(/{}/, arg);
+        });
+        console.error(`[${path.basename(__filename)}] [ERROR] ${formatted}`);
+    },
+    warn: (message, ...args) => {
+        let formatted = message;
+        args.forEach(arg => {
+            formatted = formatted.replace(/{}/, arg);
+        });
+        console.warn(`[${path.basename(__filename)}] [WARN] ${formatted}`);
+    },
+    debug: (message, ...args) => {
+        let formatted = message;
+        args.forEach(arg => {
+            formatted = formatted.replace(/{}/, arg);
+        });
+        console.debug(`[${path.basename(__filename)}] [DEBUG] ${formatted}`);
+    }
+};
+
+// 使用绝对路径加载模块
+const modulesPath = process.env.CANBOX_MODULES_PATH || path.resolve(__dirname, '..');
+logger.info('modulesPath: {}', modulesPath);
+// 简化的窗口状态管理，避免模块别名问题
+const winState = {
+    save: (appId, state, callback) => {
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const { app } = require('electron');
+            
+            const dataDir = path.join(app.getPath('userData'), 'Users', 'data');
+            const stateFile = path.join(dataDir, 'winState.json');
+            
+            // 确保目录存在
+            if (!fs.existsSync(dataDir)) {
+                fs.mkdirSync(dataDir, { recursive: true });
+            }
+            
+            // 读取现有状态
+            let allStates = {};
+            if (fs.existsSync(stateFile)) {
+                allStates = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+            }
+            
+            // 更新状态
+            allStates[appId] = state;
+            
+            // 保存状态
+            fs.writeFileSync(stateFile, JSON.stringify(allStates, null, 2));
+            
+            if (callback) callback({ success: true, data: null, msg: '保存成功' });
+        } catch (error) {
+            logger.error(`Failed to save window state for ${appId}:`, error);
+            if (callback) callback({ success: false, data: null, msg: error.message });
+        }
+    },
+    
+    loadSync: (appId) => {
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const { app } = require('electron');
+            
+            const stateFile = path.join(app.getPath('userData'), 'Users', 'data', 'winState.json');
+            
+            if (!fs.existsSync(stateFile)) {
+                return null;
+            }
+            
+            const allStates = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
+            return allStates[appId] || null;
+        } catch (error) {
+            logger.error(`Failed to load window state for ${appId}:`, error);
+            return null;
+        }
+    }
+};
+
+const getWinState = () => winState;
 
 // 解析命令行参数
 const args = process.argv.slice(2);
@@ -122,11 +212,11 @@ function createAppWindow() {
             ? mainFile
             : `file://${path.resolve(appPath, mainFile)}`;
             
-        logger.info(`[${appId}] Loading URL: ${loadUrl}`);
+        logger.info('[{}] Loading URL: {}', appId, loadUrl);
         
         // 加载应用内容
         appWin.loadURL(loadUrl).catch(err => {
-            logger.error(`[${appId}] Failed to load URL:`, err);
+            logger.error('[{}] Failed to load URL: {}', appId, err);
         });
         
         // 设置窗口事件
@@ -145,7 +235,7 @@ function createAppWindow() {
                 position: isMax ? null : bounds
             }, () => {});
             
-            logger.info(`[${appId}] Window closing`);
+            logger.info('[{}] Window closing', appId);
         });
         
         // 准备显示事件
@@ -165,7 +255,7 @@ function createAppWindow() {
         return appWin;
 
     } catch (error) {
-        logger.error(`[${appId}] Failed to create window:`, error);
+        logger.error('[{}] Failed to create window: {}', appId, error);
         process.exit(1);
     }
 }
@@ -175,8 +265,75 @@ app.commandLine.appendSwitch('no-sandbox');
 app.commandLine.appendSwitch('disable-setuid-sandbox');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
 
+// 初始化简化的数据库处理逻辑
+function initDbIpcHandlers() {
+    ipcMain.on('msg-db', (event, args) => {
+        logger.info('[{}] Received db request: type={}, appId={}', appId, args.type, args.appId);
+        
+        // 简化的数据库响应，实际项目中需要实现真实的数据库操作
+        let result;
+        try {
+            switch (args.type) {
+                case 'get':
+                case 'put':
+                case 'remove':
+                case 'bulkDocs':
+                    // 返回模拟数据或错误信息
+                    result = { success: false, msg: `Database operation ${args.type} not implemented in isolated process` };
+                    break;
+                default:
+                    result = { success: false, msg: `Unknown database operation: ${args.type}` };
+            }
+        } catch (error) {
+            result = { success: false, msg: error.message };
+        }
+        
+        event.returnValue = JSON.stringify(result);
+    });
+}
+
+// 初始化其他 IPC 消息处理逻辑
+function initOtherIpcHandlers() {
+    // 处理对话框消息
+    ipcMain.on('msg-dialog', (event, args) => {
+        logger.info('[{}] Received dialog request: type={}', appId, args.type);
+        event.returnValue = JSON.stringify({ 
+            success: false, 
+            msg: `Dialog operation ${args.type} not implemented in isolated process` 
+        });
+    });
+    
+    // 处理窗口创建消息
+    ipcMain.on('msg-createWindow', (event, args) => {
+        logger.info('[{}] Received createWindow request', appId);
+        event.returnValue = JSON.stringify({ 
+            success: false, 
+            msg: `Create window not implemented in isolated process` 
+        });
+    });
+    
+    // 处理通知消息
+    ipcMain.on('msg-notification', (event, args) => {
+        logger.info('[{}] Received notification request: title={}', appId, args.options?.title);
+        // 通知是异步的，不需要返回值
+    });
+    
+    // 处理 electronStore 消息
+    ipcMain.on('msg-electronStore', (event, args) => {
+        logger.info('[{}] Received electronStore request: type={}, name={}', appId, args.type, args.param?.name);
+        event.returnValue = JSON.stringify({ 
+            success: false, 
+            msg: `ElectronStore operation ${args.type} not implemented in isolated process` 
+        });
+    });
+}
+
 // 应用就绪后创建窗口
 app.whenReady().then(() => {
+    // 初始化 IPC 处理器
+    initDbIpcHandlers();
+    initOtherIpcHandlers();
+    
     createAppWindow();
     
     // 当所有窗口关闭时退出应用

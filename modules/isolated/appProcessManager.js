@@ -85,7 +85,9 @@ class AppProcessManager {
                     ...process.env,
                     CANBOX_APP_ID: uid,
                     CANBOX_APP_PATH: appPath,
-                    CANBOX_DEV_MODE: devTag ? 'true' : 'false'
+                    CANBOX_DEV_MODE: devTag ? 'true' : 'false',
+                    CANBOX_ROOT_PATH: path.resolve(__dirname, '../..'),
+                    CANBOX_MODULES_PATH: path.resolve(__dirname, '..')
                 }
             });
 
