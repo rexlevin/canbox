@@ -88,7 +88,7 @@ const winState = {
             const allStates = JSON.parse(fs.readFileSync(stateFile, 'utf8'));
             return allStates[appId] || null;
         } catch (error) {
-            logger.error(`Failed to load window state for ${appId}:`, error);
+            logger.error('Failed to load window state for {}: {}', appId, error);
             return null;
         }
     }
@@ -196,7 +196,7 @@ function createAppWindow() {
             }
         }
         
-        logger.info(`[${appId}] Creating window with options: %o`, options);
+        logger.info('[{}] Creating window with options: {}', appId, options);
         
         // 创建窗口
         const appWin = new BrowserWindow(options);

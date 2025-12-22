@@ -93,32 +93,32 @@ class AppProcessManager {
 
             // 处理进程输出
             appProcess.stdout?.on('data', (data) => {
-                logger.info(`[${uid}] ${data.toString().trim()}`);
+                logger.info('[{}] {}', uid, data.toString().trim());
             });
 
             appProcess.stderr?.on('data', (data) => {
-                logger.error(`[${uid}] ${data.toString().trim()}`);
+                logger.error('[{}] {}', uid, data.toString().trim());
             });
 
             // 处理进程退出
             appProcess.on('exit', (code, signal) => {
-                logger.info(`App ${uid} exited with code ${code}, signal ${signal}`);
+                logger.info('App {} exited whith code {}, signal {}', uid, code, signal);
                 this.processMap.delete(uid);
             });
 
             appProcess.on('error', (error) => {
-                logger.error(`Failed to start app ${uid}:`, error);
+                logger.error('Failed to start app {}: {}', uid, error);
                 this.processMap.delete(uid);
             });
 
             // 存储进程引用
             this.processMap.set(uid, appProcess);
-            logger.info(`App ${uid} started successfully`);
+            logger.info('App {} started successfully', uid);
 
             return true;
 
         } catch (error) {
-            logger.error(`Failed to start app ${uid}:`, error);
+            logger.error('Failed to start app {}: {}', uid, error);
             return false;
         }
     }
@@ -147,11 +147,11 @@ class AppProcessManager {
             }, 5000);
 
             this.processMap.delete(appId);
-            logger.info(`App ${appId} stopped`);
+            logger.info('App {} stopped', appId);
             return { success: true };
 
         } catch (error) {
-            logger.error(`Failed to stop app ${appId}:`, error);
+            logger.error('Failed to stop app {}: {}', appId, error);
             return { success: false, msg: error.message };
         }
     }
