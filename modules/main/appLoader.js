@@ -7,7 +7,7 @@ const ObjectUtils = require('@modules/utils/ObjectUtils');
 
 const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'darwin' : 'linux';
 
-const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
+const { getAppsStore, getAppsDevStore, getCanboxStore } = require('@modules/main/storageManager');
 const { getAppPath } = require('@modules/main/pathManager');
 const appWindowManager = require('@modules/integrated/appWindowManager');
 const appProcessManager = require('@modules/isolated/appProcessManager');
@@ -32,9 +32,32 @@ const appLoader = {
     
         // 如果没有指定 useSeparateProcess，从配置读取
         if (useSeparateProcess === null) {
-            useSeparateProcess = process.platform === 'linux' ? true : false;
+            try {
+                const canboxStore = getCanboxStore();
+                const launchMode = canboxStore.get('appLaunchMode', 'window');
+                
+                // 根据启动模式决定是否使用独立进程
+                switch (launchMode) {
+                    case 'process':
+                        useSeparateProcess = true;
+                        break;
+                    case 'window':
+                        useSeparateProcess = false;
+                        break;
+                    case 'follow':
+                        // 跟随APP：根据APP自身的配置决定
+                        // 这里需要读取APP的配置，暂时使用平台默认值
+                        useSeparateProcess = process.platform === 'linux' ? true : false;
+                        break;
+                    default:
+                        useSeparateProcess = process.platform === 'linux' ? true : false;
+                }
+            } catch (error) {
+                logger.error('Failed to read app launch mode, using default: {}', error);
+                useSeparateProcess = process.platform === 'linux' ? true : false;
+            }
         }
-        useSeparateProcess = false;
+        // useSeparateProcess = false;
         logger.info('App {}, useSeparateProcess: {}', uid, useSeparateProcess);
         const appManager = useSeparateProcess ? appProcessManager : appWindowManager;
         // 检查 App 是否已运行

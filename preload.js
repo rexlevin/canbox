@@ -119,6 +119,22 @@ contextBridge.exposeInMainWorld(
                 console.error('downloadAppsFromRepo: IPC call failed:', error);
                 fn({ success: false, msg: error.message });
             });
+        },
+        getAppLaunchMode: (fn) => {
+            ipcRenderer.invoke('get-app-launch-mode').then(result => {
+                fn(result);
+            }).catch(error => {
+                console.error('getAppLaunchMode: IPC call failed:', error);
+                fn({ success: false, msg: error.message });
+            });
+        },
+        setAppLaunchMode: (mode, fn) => {
+            ipcRenderer.invoke('set-app-launch-mode', mode).then(result => {
+                fn(result);
+            }).catch(error => {
+                console.error('setAppLaunchMode: IPC call failed:', error);
+                fn({ success: false, msg: error.message });
+            });
         }
     }
 );

@@ -1,5 +1,6 @@
 const appProcessManager = require('@modules/isolated/appProcessManager');
 const logger = require('@modules/utils/logger');
+const { getCanboxStore } = require('@modules/main/storageManager');
 
 class AppIpcHandler {
     constructor() {
@@ -70,6 +71,35 @@ class AppIpcHandler {
                 return { success: true };
             } catch (error) {
                 logger.error('IPC stop-all-apps error:', error);
+                return { success: false, msg: error.message };
+            }
+        });
+
+        // 获取APP启动模式
+        this.handlers.set('get-app-launch-mode', async () => {
+            try {
+                const canboxStore = getCanboxStore();
+                const launchMode = canboxStore.get('appLaunchMode', 'window');
+                return { success: true, data: launchMode };
+            } catch (error) {
+                logger.error('IPC get-app-launch-mode error:', error);
+                return { success: false, msg: error.message };
+            }
+        });
+
+        // 设置APP启动模式
+        this.handlers.set('set-app-launch-mode', async (event, mode) => {
+            try {
+                if (!['window', 'process', 'follow'].includes(mode)) {
+                    return { success: false, msg: '无效的启动模式' };
+                }
+                
+                const canboxStore = getCanboxStore();
+                canboxStore.set('appLaunchMode', mode);
+                logger.info('App launch mode updated to: {}', mode);
+                return { success: true };
+            } catch (error) {
+                logger.error('IPC set-app-launch-mode error:', error);
                 return { success: false, msg: error.message };
             }
         });
