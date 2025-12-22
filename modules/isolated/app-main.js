@@ -265,66 +265,267 @@ app.commandLine.appendSwitch('no-sandbox');
 app.commandLine.appendSwitch('disable-setuid-sandbox');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
 
-// 初始化简化的数据库处理逻辑
+// 初始化数据库处理逻辑
 function initDbIpcHandlers() {
-    ipcMain.on('msg-db', (event, args) => {
-        logger.info('[{}] Received db request: type={}, appId={}', appId, args.type, args.appId);
+    // 动态导入数据库依赖
+    try {
+        const PouchDB = require('pouchdb');
+        const { customAlphabet } = require('nanoid-cjs');
+        const DateFormat = require('../utils/DateFormat');
         
-        // 简化的数据库响应，实际项目中需要实现真实的数据库操作
-        let result;
-        try {
-            switch (args.type) {
-                case 'get':
-                case 'put':
-                case 'remove':
-                case 'bulkDocs':
-                    // 返回模拟数据或错误信息
-                    result = { success: false, msg: `Database operation ${args.type} not implemented in isolated process` };
-                    break;
-                default:
-                    result = { success: false, msg: `Unknown database operation: ${args.type}` };
+        const nanoid = customAlphabet('1234567890abcdef', 10);
+        
+        // 数据库连接缓存
+        const dbCache = {};
+        
+        // 获取或创建数据库连接
+        function getDB(appId) {
+            if (!dbCache[appId]) {
+                const dbDir = path.join(app.getPath('userData'), 'Users', 'data', appId);
+                if (!fs.existsSync(dbDir)) {
+                    fs.mkdirSync(dbDir, { recursive: true });
+                }
+                dbCache[appId] = new PouchDB(path.join(dbDir, 'db'), { auto_compaction: true });
             }
-        } catch (error) {
-            result = { success: false, msg: error.message };
+            return dbCache[appId];
         }
         
-        event.returnValue = JSON.stringify(result);
-    });
+        // 生成文档 ID 和时间戳
+        function prepareDoc(doc) {
+            doc._id = doc._id || nanoid();
+            const now = new Date();
+            if (doc._rev) {
+                doc.updateTime = doc.updateTime || now.toISOString();
+            } else {
+                doc.createTime = doc.createTime || now.toISOString();
+            }
+            return doc;
+        }
+        
+        ipcMain.on('msg-db', (event, args) => {
+            logger.info('[{}] Received db request: type={}, appId={}', appId, args.type, args.appId);
+            
+            const db = getDB(args.appId);
+            
+            try {
+                switch (args.type) {
+                    case 'put':
+                        const doc = prepareDoc(args.param);
+                        db.put(doc)
+                            .then(res => {
+                                event.returnValue = JSON.stringify({ success: true, data: res });
+                            })
+                            .catch(err => {
+                                event.returnValue = JSON.stringify({ success: false, msg: err.message });
+                            });
+                        break;
+                        
+                    case 'get':
+                        db.get(args.param._id)
+                            .then(res => {
+                                event.returnValue = JSON.stringify({ success: true, data: res });
+                            })
+                            .catch(err => {
+                                event.returnValue = JSON.stringify({ success: false, msg: err.message });
+                            });
+                        break;
+                        
+                    case 'bulkDocs':
+                        const preparedDocs = args.param.map(prepareDoc);
+                        db.bulkDocs(preparedDocs)
+                            .then(res => {
+                                event.returnValue = JSON.stringify({ success: true, data: res });
+                            })
+                            .catch(err => {
+                                event.returnValue = JSON.stringify({ success: false, msg: err.message });
+                            });
+                        break;
+                        
+                    case 'remove':
+                        db.remove(args.param)
+                            .then(res => {
+                                event.returnValue = JSON.stringify({ success: true, data: res });
+                            })
+                            .catch(err => {
+                                event.returnValue = JSON.stringify({ success: false, msg: err.message });
+                            });
+                        break;
+                        
+                    default:
+                        event.returnValue = JSON.stringify({ success: false, msg: `Unknown database operation: ${args.type}` });
+                }
+            } catch (error) {
+                logger.error('[{}] Database operation error: {}', appId, error);
+                event.returnValue = JSON.stringify({ success: false, msg: error.message });
+            }
+        });
+        
+    } catch (error) {
+        logger.error('[{}] Failed to initialize database: {}', appId, error);
+        // 如果无法加载依赖，则提供错误处理
+        ipcMain.on('msg-db', (event, args) => {
+            logger.info('[{}] Received db request: type={}, appId={}', appId, args.type, args.appId);
+            event.returnValue = JSON.stringify({ 
+                success: false, 
+                msg: `Database not available: ${error.message}. Dependencies may be missing.` 
+            });
+        });
+    }
 }
 
 // 初始化其他 IPC 消息处理逻辑
 function initOtherIpcHandlers() {
+    const { dialog } = require('electron');
+    
     // 处理对话框消息
     ipcMain.on('msg-dialog', (event, args) => {
         logger.info('[{}] Received dialog request: type={}', appId, args.type);
-        event.returnValue = JSON.stringify({ 
-            success: false, 
-            msg: `Dialog operation ${args.type} not implemented in isolated process` 
-        });
+        
+        try {
+            let result;
+            switch (args.type) {
+                case 'openFile':
+                    result = dialog.showOpenDialogSync(args.options);
+                    event.returnValue = JSON.stringify({ 
+                        success: true, 
+                        data: result || [] 
+                    });
+                    break;
+                    
+                case 'saveFile':
+                    result = dialog.showSaveDialogSync(args.options);
+                    event.returnValue = JSON.stringify({ 
+                        success: true, 
+                        data: result 
+                    });
+                    break;
+                    
+                case 'showMessageBox':
+                    result = dialog.showMessageBoxSync(args.options);
+                    event.returnValue = JSON.stringify({ 
+                        success: true, 
+                        data: result 
+                    });
+                    break;
+                    
+                case 'showErrorBox':
+                    dialog.showErrorBox(args.options.title, args.options.content);
+                    event.returnValue = JSON.stringify({ 
+                        success: true, 
+                        data: null 
+                    });
+                    break;
+                    
+                default:
+                    event.returnValue = JSON.stringify({ 
+                        success: false, 
+                        msg: `Unknown dialog operation: ${args.type}` 
+                    });
+            }
+        } catch (error) {
+            logger.error('[{}] Dialog operation error: {}', appId, error);
+            event.returnValue = JSON.stringify({ 
+                success: false, 
+                msg: error.message 
+            });
+        }
     });
     
-    // 处理窗口创建消息
+    // 处理窗口创建消息 - 在独立进程中暂时不支持
     ipcMain.on('msg-createWindow', (event, args) => {
         logger.info('[{}] Received createWindow request', appId);
         event.returnValue = JSON.stringify({ 
             success: false, 
-            msg: `Create window not implemented in isolated process` 
+            msg: `Create window not supported in isolated process` 
         });
     });
     
     // 处理通知消息
     ipcMain.on('msg-notification', (event, args) => {
         logger.info('[{}] Received notification request: title={}', appId, args.options?.title);
+        
+        try {
+            if (args.options) {
+                const { Notification } = require('electron');
+                if (Notification.isSupported()) {
+                    new Notification(args.options).show();
+                }
+            }
+        } catch (error) {
+            logger.error('[{}] Notification error: {}', appId, error);
+        }
         // 通知是异步的，不需要返回值
     });
     
     // 处理 electronStore 消息
     ipcMain.on('msg-electronStore', (event, args) => {
         logger.info('[{}] Received electronStore request: type={}, name={}', appId, args.type, args.param?.name);
-        event.returnValue = JSON.stringify({ 
-            success: false, 
-            msg: `ElectronStore operation ${args.type} not implemented in isolated process` 
-        });
+        
+        try {
+            const path = require('path');
+            const fs = require('fs');
+            
+            // 构建存储文件路径
+            const storeDir = path.join(app.getPath('userData'), 'Users', 'data', args.appId);
+            const storeFile = path.join(storeDir, `${args.param.name}.json`);
+            
+            // 确保目录存在
+            if (!fs.existsSync(storeDir)) {
+                fs.mkdirSync(storeDir, { recursive: true });
+            }
+            
+            let storeData = {};
+            if (fs.existsSync(storeFile)) {
+                storeData = JSON.parse(fs.readFileSync(storeFile, 'utf8'));
+            }
+            
+            let result;
+            switch (args.type) {
+                case 'get':
+                    result = storeData[args.param.key];
+                    break;
+                    
+                case 'set':
+                    storeData[args.param.key] = args.param.value;
+                    fs.writeFileSync(storeFile, JSON.stringify(storeData, null, 2));
+                    result = true;
+                    break;
+                    
+                case 'delete':
+                    if (args.param.key in storeData) {
+                        delete storeData[args.param.key];
+                        fs.writeFileSync(storeFile, JSON.stringify(storeData, null, 2));
+                        result = true;
+                    } else {
+                        result = false;
+                    }
+                    break;
+                    
+                case 'clear':
+                    storeData = {};
+                    fs.writeFileSync(storeFile, JSON.stringify(storeData, null, 2));
+                    result = true;
+                    break;
+                    
+                default:
+                    event.returnValue = JSON.stringify({ 
+                        success: false, 
+                        msg: `Unknown electronStore operation: ${args.type}` 
+                    });
+                    return;
+            }
+            
+            event.returnValue = JSON.stringify({ 
+                success: true, 
+                data: result 
+            });
+        } catch (error) {
+            logger.error('[{}] ElectronStore operation error: {}', appId, error);
+            event.returnValue = JSON.stringify({ 
+                success: false, 
+                msg: error.message 
+            });
+        }
     });
 }
 
