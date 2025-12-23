@@ -16,12 +16,13 @@
                                     </el-button>
                                 </div>
                             </el-form-item>
-                            
+
                             <el-form-item label="APP启动模式" style="margin-bottom: 0px;">
                                 <el-radio-group v-model="appLaunchMode" @change="onLaunchModeChange">
                                     <el-radio label="window">窗口模式</el-radio>
                                     <el-radio label="process">子进程模式</el-radio>
-                                    <el-radio label="follow">跟随APP</el-radio>
+                                    <!-- todo 留待之后实现吧，暂时顾不上这个 -->
+                                    <!-- <el-radio label="follow">跟随APP</el-radio> -->
                                 </el-radio-group>
                             </el-form-item>
                         </el-form>

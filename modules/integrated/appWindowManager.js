@@ -14,10 +14,10 @@ class AppWindowManager {
     constructor() {
         // 存储应用主窗口 {appId: BrowserWindow}
         this.winMap = new Map();
-        
+
         // 存储所有窗口（包括子窗口）{windowId: BrowserWindow}
         this.appMap = new Map();
-        
+
         // 维护窗口父子关系 {parentId: [childId1, childId2, ...]}
         this.windowRelations = new Map();
     }
@@ -40,7 +40,7 @@ class AppWindowManager {
             const appItem = devTag
                 ? getAppsDevStore().get('default')[uid]
                 : getAppsStore().get('default')[uid];
-                
+
             if (!appItem) {
                 handleError(new Error('appItem is not exists'), 'createWindow');
                 return null;
@@ -54,7 +54,7 @@ class AppWindowManager {
             const uatDevJson = fs.existsSync(path.resolve(appPath, 'uat.dev.json'))
                 ? JSON.parse(fs.readFileSync(path.resolve(appPath, 'uat.dev.json'), 'utf-8'))
                 : null;
-            
+
             // 创建会话
             const sess = session.fromPartition(uid);
             console.info('__dirname: ', __dirname);
@@ -62,7 +62,7 @@ class AppWindowManager {
                 type: 'frame',
                 filePath: path.join(__dirname, '../app.api.js')
             });
-            
+
             // 默认窗口选项
             let options = {
                 minWidth: 0,
@@ -77,20 +77,20 @@ class AppWindowManager {
             // 合并应用自定义窗口选项：如果app.json中配置了窗口选项，则合并到options中
             if (appJson.window) {
                 Object.assign(options, JSON.parse(JSON.stringify(appJson.window)));
-                
+
                 // 设置图标路径
                 if (options.icon) {
                     options.icon = path.resolve(appPath, options.icon);
                 } else {
                     options.icon = path.resolve(appPath, appJson.logo);
                 }
-                
+
                 if (!devTag) {
                     const logoExt = path.extname(appJson.logo);
                     options.icon = path.resolve(getAppPath(), `${uid}${logoExt}`);
                     console.info('当前是正式模式， 使用 app 目录下的logo: ', options.icon);
                 }
-                
+
                 // 设置 Web 偏好选项
                 options.webPreferences = {
                     sandbox: false,
@@ -114,7 +114,7 @@ class AppWindowManager {
             if (os.platform() === 'linux') {
                 options.windowClass = uid;
             }
-            
+
             // 恢复窗口状态并创建窗口
             const state = winState.loadSync(uid);
             // 恢复窗口位置和大小
@@ -126,29 +126,30 @@ class AppWindowManager {
                     options.height = state.position.height;
                 }
             }
-            
+
             console.info('load app window options===%o', options);
-            
+
             // 创建窗口
             const appWin = new BrowserWindow(options);
-            
+
             // 最大化处理
             if (state?.isMax) {
                 appWin.maximize();
             }
-            
+
+            // 确定加载URL
+            const mainFile = devTag && uatDevJson?.main ? uatDevJson.main : appJson.main;
+            const loadUrl = mainFile.startsWith('http')
+                ? mainFile
+                : `file://${path.resolve(appPath, mainFile)}`;
+
+            logger.info('[{}] Loading URL: {}', appId, loadUrl);
+
             // 加载应用内容
-            const appMain = devTag && uatDevJson?.main ? uatDevJson.main : appJson.main;
-            const loadUrl = appMain.startsWith('http')
-                ? appMain
-                : `file://${path.resolve(appPath, appMain)}`;
-                
-            console.info(`load app window url===%o`, loadUrl);
-            
             appWin.loadURL(loadUrl).catch(err => {
-                console.error('Failed to load URL:', err);
+                logger.error('[{}] Failed to load URL: {}', appId, err);
             });
-            
+
             // 设置窗口事件
             appWin.on('close', () => {
                 // 通知渲染进程
@@ -164,9 +165,9 @@ class AppWindowManager {
                     isMax,
                     position: isMax ? null : bounds
                 }, () => {});
-                
-                console.info(`now will close app: ${uid}`);
-                
+
+                logger.info('[{}] Window closing', appId);
+
                 // 关闭子窗口
                 const childWindows = this.getChildWindows(uid);
                 childWindows.forEach(childId => {
@@ -185,7 +186,7 @@ class AppWindowManager {
                     }
                 });
                 this.removeRelation(uid);
-                
+
                 // 关闭主窗口
                 if (!appWin.isDestroyed()) {
                     try {
@@ -199,7 +200,7 @@ class AppWindowManager {
                 this.removeWindow(uid);
                 console.info('All related windows closed');
             });
-            
+
             // 准备显示事件
             appWin.on('ready-to-show', () => {
                 appWin.show();
@@ -207,20 +208,20 @@ class AppWindowManager {
                     appWin.webContents.openDevTools({ mode: uatDevJson?.devTools });
                 }
             });
-            
+
             // 设置菜单和应用详情
             appWin.setMenu(null);
             if (process.platform === 'win') {
                 appWin.setAppDetails({ appId: uid });
             }
-            
+
             // 注册窗口到两个映射
             this.winMap.set(uid, appWin);  // 应用主窗口映射
             this.addWindow(uid, appWin);   // 全局窗口映射
             console.info('appMap length: %o', this.appMap.size);
 
             return true;
-            
+
         } catch (error) {
             handleError(error, 'createWindow');
             return null;
@@ -237,7 +238,7 @@ class AppWindowManager {
     }
 
     // ========== 窗口管理方法（原 windowManager 功能） ==========
-    
+
     /**
      * 添加窗口到 appMap
      * @param {string} id - 窗口 ID
@@ -332,7 +333,7 @@ class AppWindowManager {
 
     /**
      * 聚焦App窗口
-     * @param {string} uid 
+     * @param {string} uid
      * @returns {boolean}
      */
     focusApp(uid) {

@@ -1,0 +1,134 @@
+# 文件说明
+
+- `app.json`: APP描述文件，包含 APP 启动的窗口参数
+- `uat.dev.json`: 开发环境配置，开发时的启动URL、打开开发工具
+- `READMEmd`: APP 说明，这个文件内容会作为 APP 信息在 canbox 展示
+- `HISTROY.md`: APP 版本历史，这个文件内容会作为 APP 信息在 canbox 展示
+- `cb.build.json`: APP 打包配置，指名打包包含的目录、文件，已经打包结果输出目录
+
+# app.json
+
+```json
+{
+    "name": "剪贴板",
+    "id": "com.github.dev001.clipboard",
+    "description": "一个好用的剪贴板",
+    "author": "dev001",
+    "repo": "https://github.com/dev001/clipboard",
+    "homepage": "https://dev001.github.io",
+    "main": "index.html",
+    "logo": "logo.png",
+    "version": "0.0.6",
+    "window": {
+        "minWidth": 800,
+        "minHeight": 400,
+        "width": 900,
+        "height": 500,
+        "icon": "logo.png",
+        "resizable": false,
+        "webPreferences": {
+            "preload": "preload.js"
+        }
+    },
+    "platform": ["windows", "darwin", "linux"],
+    "categories": ["development", "utility"],
+    "tags": ["json", "jsonformatter"],
+    "development": {
+        "main": "index.html",
+        "devTools": "detach"
+    }
+}
+```
+
+### 字段说明
+
+| 字段       | 父节点 |  类型  | 约束 | 说明                                                                                                                                                    |
+| ---------- | ------ | :----: | :--: | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id         |        | string |  1  | app应用标识<br />1. 多段组成，如：`com.gitee.dev001.clipboard` <br />2. 每段都由小写字母和数字组成，且小写字母开头<br />3. 仅最后一段可以使用 - 符号 |
+| window     |        | object |  1  | 同 Electron 中 BrowserWindow 参数                                                                                                                       |
+| platform   |        | array |  *  | windows, darwin, linux<br />插件应用支持的平台，此为 `可选项`，**当前是默认为全平台支持**                                                       |
+| categories |        | array |  *  | app分类，最多只取前两个                                                                                                                                 |
+| tags       |        | array |  *  | app标签，用于分类展示                                                                                                                                   |
+
+#### categories
+
+| key         | 说明          |
+| ----------- | ------------- |
+| education   | 教育app       |
+| office      | 办公          |
+| audio       | 音频app       |
+| video       | 视频app       |
+| game        | 游戏app       |
+| utility     | 工具          |
+| development | 开发者工具app |
+| graphics    | 图形应用app   |
+| network     | 网络应用程序  |
+
+# uat.dev.json
+
+开发配置
+
+```json
+{
+    "main": "http://localhost:5173/",
+    "devTools": "detach"
+}
+```
+
+字段说明：
+
+| 字段     | 父节点      |  类型  | 约束 | 说明                                                  |
+| -------- | ----------- | :----: | :--: | ----------------------------------------------------- |
+| main     | development | string |  ?  | 开发环境下 `development.main` 配置会覆盖 `main`   |
+| devTools | development | string |  ?  | 打开开发者工具，left, right, bottom, undocked, detach |
+
+# preload.js
+
+canbox开启了上下文隔离，想要使用canbox提供的api，需要在 app.json 中配置预加载脚本：
+
+```json
+"window": {
+    "webPreferences": {
+        "preload": "preload.js"
+    }
+}
+```
+
+在预加载脚本中使用canbox的api：
+
+```javascript
+# preload.js
+canbox.hello();  # hello, hope you have a nice day
+```
+
+preload遵循 `CommonJS` 规范，可以使用 `require` 来引入 nodejs 模块：
+
+# cb.build.json
+
+canbox使用asar进行打包，打包依据 `cb.build.json` 内容进行：
+
+```json
+{
+    "files": [
+        "build/**/*",
+        "preload.js",
+        "logo.png",
+        "app.json",
+        "README.md"
+    ],
+    "outputDir": "./dist"
+}
+```
+
+字段说明：
+
+| 字段      | 类型   | 说明                                                                                      |
+| --------- | ------ | ----------------------------------------------------------------------------------------- |
+| files     | array  | 相对 cb.build.json 的所有文件列表                                                         |
+| outputDir | string | 相对 cb.build.json 的一个目录，打包过程中这个目录会有清空操作，所以不要放置其他需要的文件 |
+
+# README.md
+
+和 app.json 同级的 README.md 文件将会被解析为 app 信息在 canbox 展示
+
+**图片地址使用网络url才能正确展示**

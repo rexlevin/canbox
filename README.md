@@ -38,7 +38,11 @@
 
 # 开发文档
 
-[Development Documentation](./README-DEVELOP.md)
+[Canbox 开发文档](./docs/CANBOX_DEV_CN.md)
+
+[APP 开发文档](./docs/APP_DEV_CN.md)
+
+[API 文档](./docs/API.md)
 
 # 许可证
 
