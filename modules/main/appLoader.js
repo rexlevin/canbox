@@ -45,8 +45,7 @@ const appLoader = {
                         useSeparateProcess = false;
                         break;
                     case 'follow':
-                        // 跟随APP：根据APP自身的配置决定
-                        // 这里需要读取APP的配置，暂时使用平台默认值
+                        // 跟随系统
                         useSeparateProcess = process.platform === 'linux' ? true : false;
                         break;
                     default:
