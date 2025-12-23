@@ -2,7 +2,15 @@ const { app, BrowserWindow } = require('electron')
 const fs = require('fs');
 const path = require('path')
 
-require('module-alias/register');
+const moduleAlias = require('module-alias');
+
+// 手动添加映射（基于打包后的路径）
+moduleAlias.addAliases({
+    '@': path.join(__dirname, './src'),
+    '@modules': path.join(__dirname, './modules')
+});
+// 注册别名（必须在 require 其他模块前执行）
+moduleAlias();
 
 const logger = require('@modules/utils/logger');
 

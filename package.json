@@ -9,10 +9,6 @@
     "engines": {
         "node": ">=22.0.0"
     },
-    "_moduleAliases": {
-        "@": "./src",
-        "@modules": "./modules"
-    },
     "scripts": {
         "dev": "vite --host 0.0.0.0 --port 12333",
         "build": "vite build",
