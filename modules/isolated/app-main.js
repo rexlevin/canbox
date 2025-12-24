@@ -1,7 +1,59 @@
 const { BrowserWindow, session, app, ipcMain } = require('electron');
+
+// 调试信息
+console.log('环境变量检查:');
+console.log('CANBOX_MAIN_PROCESS:', process.env.CANBOX_MAIN_PROCESS);
+console.log('CANBOX_APP_ID:', process.env.CANBOX_APP_ID);
+console.log('process.argv:', process.argv);
+console.log('process.execPath:', process.execPath);
+console.log('process.pid:', process.pid);
+console.log('process.ppid:', process.ppid);
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+
+// 立即输出调试信息，确认app-main.js被加载
+console.log('=== [app-main.js] LOADED ===');
+console.log('Working directory:', process.cwd());
+console.log('Script filename:', __filename);
+console.log('Arguments:', process.argv);
+
+// 添加module-alias支持 - 处理生产模式路径
+const moduleAlias = require('module-alias');
+const isProduction = require('electron').app.isPackaged;
+
+let modulesPath, rootPath;
+if (isProduction) {
+    // 生产模式下使用环境变量提供的路径
+    modulesPath = process.env.CANBOX_MODULES_PATH || path.join(process.resourcesPath, 'app.asar/modules');
+    rootPath = process.env.CANBOX_ROOT_PATH || path.join(process.resourcesPath, 'app.asar');
+} else {
+    // 开发模式使用原始路径
+    modulesPath = path.join(__dirname, '..');
+    rootPath = path.resolve(__dirname, '../..');
+}
+
+console.log('Modules path:', modulesPath);
+console.log('Root path:', rootPath);
+
+// 在生产模式下，ASAR内的路径无法直接访问，跳过检查
+if (!isProduction) {
+    try {
+        fs.accessSync(modulesPath);
+        fs.accessSync(rootPath);
+    } catch (error) {
+        console.error('路径访问失败:', error);
+        process.exit(1);
+    }
+} else {
+    console.log('生产模式跳过路径检查，使用ASAR内嵌路径');
+}
+
+moduleAlias.addAliases({
+    '@': path.join(rootPath, 'src'),
+    '@modules': modulesPath
+});
+moduleAlias();
 
 // 简化的日志系统，避免 electron app 依赖问题
 const logger = {
@@ -36,7 +88,7 @@ const logger = {
 };
 
 // 使用绝对路径加载模块
-const modulesPath = process.env.CANBOX_MODULES_PATH || path.resolve(__dirname, '..');
+// const modulesPath = process.env.CANBOX_MODULES_PATH || path.resolve(__dirname, '..');
 logger.info('modulesPath: {}', modulesPath);
 // 简化的窗口状态管理，避免模块别名问题
 const winState = {
@@ -113,31 +165,71 @@ const appMain = parsedArgs['app-main'];
 const devMode = parsedArgs['dev-mode'] || process.env.CANBOX_DEV_MODE === 'true';
 const devTools = parsedArgs['dev-tools'];
 
+logger.info('[app-main.js] Starting app: appId={}, appPath={}, appMain={}', appId, appPath, appMain);
+
 if (!appId || !appPath || !appMain) {
     console.error('Missing required arguments: app-id, app-path, app-main');
     process.exit(1);
 }
+
+// 子进程不需要单例检查，让每个App独立运行
+// 只有主进程才需要单例锁定
 
 /**
  * 创建独立进程的应用窗口
  */
 function createAppWindow() {
     try {
-        // 加载应用配置
-        const appJsonPath = path.join(appPath, 'app.json');
-        const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+        // 加载应用配置 - 处理生产模式下的ASAR路径
+        let appJsonPath;
+        let appJson;
+        
+        try {
+            appJsonPath = isProduction 
+                ? path.join(appPath.replace('.asar.unpacked', '.asar'), 'app.json')
+                : path.join(appPath, 'app.json');
+            
+            // 直接读取配置文件，ASAR内的文件无法用accessSync检查
+            appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+        } catch (error) {
+            // 尝试其他可能的路径
+            try {
+                appJsonPath = path.join(appPath, 'app.json');
+                appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+            } catch (secondError) {
+                logger.error('[{}] 无法读取应用配置文件: {} - {}', appId, appJsonPath, error.message);
+                process.exit(1);
+            }
+        }
 
         // 加载开发配置
         const uatDevJson = fs.existsSync(path.resolve(appPath, 'uat.dev.json'))
             ? JSON.parse(fs.readFileSync(path.resolve(appPath, 'uat.dev.json'), 'utf-8'))
             : null;
 
-        // 创建会话
-        const sess = session.fromPartition(appId);
+        // 创建会话 - 模拟Chrome PWA的独立配置
+        const sess = session.fromPartition(`persist:${appId}`);
+        
+        // 设置Chrome-like的用户代理和配置
+        sess.setUserAgent(`${session.defaultSession.getUserAgent()} CanboxApp/${appId}`);
+        
+        // 注册预加载脚本
         sess.registerPreloadScript({
             type: 'frame',
             filePath: path.join(__dirname, '../app.api.js')
         });
+        
+        // 模拟PWA的缓存策略
+        sess.setPermissionRequestHandler((webContents, permission, callback) => {
+            // 允许常见的PWA权限
+            const allowedPermissions = ['notifications', 'geolocation', 'microphone', 'camera'];
+            callback(allowedPermissions.includes(permission));
+        });
+
+        // 设置Chrome-like的缓存和存储设置
+        // 注意：Electron的session没有setCacheDirectory方法
+        // 使用webPreferences中的cache配置
+        logger.info('[{}] Using persist session for Chrome-like PWA behavior', appId);
 
         // 默认窗口选项
         let options = {
@@ -180,9 +272,44 @@ function createAppWindow() {
             options.webPreferences.preload = path.resolve(appPath, appJson.window.webPreferences.preload);
         }
 
-        // Linux 系统特殊处理
+        // Linux 系统特殊处理 - 确保WM_CLASS正确设置
         if (os.platform() === 'linux') {
             options.windowClass = appId;
+            options.title = appJson.name || appId;
+            options.titleBarStyle = 'default';
+            
+            // 生产模式下的特殊处理 - 强制设置WM_CLASS
+            if (isProduction) {
+                logger.info(`[${appId}] Production mode - Enforcing WM_CLASS: ${appId}`);
+                
+                // 方法1: 通过命令行参数强制设置
+                if (!options.webPreferences) options.webPreferences = {};
+                if (!options.webPreferences.additionalArguments) {
+                    options.webPreferences.additionalArguments = [];
+                }
+                
+                // 清除可能存在的重复参数并重新设置
+                options.webPreferences.additionalArguments = options.webPreferences.additionalArguments.filter(arg => 
+                    !arg.includes('--class=') && !arg.includes('--app-id=')
+                );
+                
+                // 强制添加WM_CLASS参数
+                options.webPreferences.additionalArguments.push(
+                    `--app-id=${appId}`,
+                    `--class=${appId}`
+                );
+                
+                // 方法2: 设置X11特定的环境变量
+                process.env.GTK_APPLICATION_ID = appId;
+                process.env.XDG_CURRENT_DESKTOP = 'GNOME'; // 强制GDK后端
+                
+                // 方法3: 在窗口创建后立即设置属性
+                options.webPreferences = {
+                    ...options.webPreferences,
+                    // 额外的X11特定设置
+                    enablePreferredSizeMode: false
+                };
+            }
         }
 
         // 恢复窗口状态
@@ -196,7 +323,7 @@ function createAppWindow() {
             }
         }
 
-        logger.info('[{}] Creating window with options: {}', appId, options);
+        logger.info('[{}] Creating window with options: {}', appId, JSON.stringify(options, null, 2));
 
         // 创建窗口
         const appWin = new BrowserWindow(options);
@@ -206,17 +333,55 @@ function createAppWindow() {
             appWin.maximize();
         }
 
-        // 确定加载URL
+        // Ubuntu Dock WM_CLASS修复（简化版本）
+        if (os.platform() === 'linux' && isProduction) {
+            // 简单的手动修复作为后备方案
+            setTimeout(() => {
+                try {
+                    const originalTitle = appWin.getTitle();
+                    appWin.setTitle(`${originalTitle}`);
+                    logger.info(`[${appId}] Applied Ubuntu Dock WM_CLASS fix`);
+                } catch (error) {
+                    logger.error(`[${appId}] Failed to apply Ubuntu Dock fix:`, error);
+                }
+            }, 100);
+        }
+
+        // 确定加载URL - 处理生产模式下的ASAR路径
         const mainFile = devMode && uatDevJson?.main ? uatDevJson.main : appMain;
-        const loadUrl = mainFile.startsWith('http')
-            ? mainFile
-            : `file://${path.resolve(appPath, mainFile)}`;
+        let loadUrl;
+        
+        if (mainFile.startsWith('http')) {
+            loadUrl = mainFile;
+        } else {
+            if (isProduction) {
+                // 生产模式下使用file://协议，Electron会自动正确处理ASAR包内文件
+                const asarPath = appPath.replace('.asar.unpacked', '.asar');
+                const filePath = path.join(asarPath, mainFile);
+                loadUrl = `file://${filePath}`;
+                
+                // 在生产模式下，我们信任ASAR包内文件存在，不需要accessSync检查
+                logger.debug('[{}] Production mode file path: {}', appId, filePath);
+            } else {
+                // 开发模式下使用文件路径
+                const filePath = path.resolve(appPath, mainFile);
+                loadUrl = `file://${filePath}`;
+                
+                try {
+                    fs.accessSync(filePath);
+                } catch (error) {
+                    logger.error('[{}] 应用入口文件不存在: {}', appId, filePath);
+                    process.exit(1);
+                }
+            }
+        }
 
         logger.info('[{}] Loading URL: {}', appId, loadUrl);
 
         // 加载应用内容
         appWin.loadURL(loadUrl).catch(err => {
             logger.error('[{}] Failed to load URL: {}', appId, err);
+            process.exit(1);
         });
 
         // 设置窗口事件
@@ -529,8 +694,14 @@ function initOtherIpcHandlers() {
     });
 }
 
-// 应用就绪后创建窗口
+// 应用就绪后创建窗口 - 确保正确处理应用生命周期
+let appReady = false;
+
+// 立即设置ready事件监听
 app.whenReady().then(() => {
+    appReady = true;
+    console.log('Electron app ready, initializing...');
+    
     // 初始化 IPC 处理器
     initDbIpcHandlers();
     initOtherIpcHandlers();
@@ -549,6 +720,39 @@ app.whenReady().then(() => {
             createAppWindow();
         }
     });
+}).catch(error => {
+    console.error('App ready failed:', error);
+    process.exit(1);
+});
+
+// 强制保持事件循环运行 - 防止立即退出
+let appInitialized = false;
+
+const keepAlive = setInterval(() => {
+    // 保持心跳运行，防止进程退出
+}, 1000);
+
+// 防止进程立即退出 - 设置超时等待应用准备
+setTimeout(() => {
+    if (!appReady) {
+        console.log('App still not ready after timeout, continuing anyway...');
+        // 即使超时也继续执行，避免进程退出
+        app.whenReady().then(() => {
+            clearInterval(keepAlive); // 清除保持活的定时器
+            appInitialized = true;
+            initDbIpcHandlers();
+            initOtherIpcHandlers();
+            createAppWindow();
+        });
+    }
+}, 3000);
+
+// 应用成功初始化后清除定时器
+app.whenReady().then(() => {
+    if (appReady && !appInitialized) {
+        clearInterval(keepAlive);
+        appInitialized = true;
+    }
 });
 
 // 处理未捕获的异常

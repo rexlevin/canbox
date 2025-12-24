@@ -1,4 +1,4 @@
-const { spawn } = require('child_process');
+const { spawn, fork } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const logger = require('@modules/utils/logger');
@@ -56,11 +56,17 @@ class AppProcessManager {
             // 确定主入口文件
             const appMain = devTag && uatDevJson?.main ? uatDevJson.main : appJson.main;
             
-            // 构建启动参数
+            // 构建启动参数 - 确保包含WM_CLASS相关参数
             const args = [
+                '--no-sandbox',
+                '--disable-setuid-sandbox', 
+                '--disable-gpu-sandbox',
                 '--app-id=' + uid,
                 '--app-path=' + appPath,
-                '--app-main=' + appMain
+                '--app-main=' + appMain,
+                // 强制设置WM_CLASS相关的X11属性
+                '--enable-features=UseOzonePlatform',
+                '--ozone-platform-hint=auto'
             ];
 
             // 开发模式添加额外参数
@@ -71,25 +77,115 @@ class AppProcessManager {
                 }
             }
 
-            // 创建子进程
-            const appProcess = spawn(process.execPath, [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-gpu-sandbox',
-                path.join(__dirname, 'app-main.js'),
-                ...args
-            ], {
-                stdio: ['ignore', 'pipe', 'pipe'],
-                detached: false,
-                env: {
-                    ...process.env,
-                    CANBOX_APP_ID: uid,
-                    CANBOX_APP_PATH: appPath,
-                    CANBOX_DEV_MODE: devTag ? 'true' : 'false',
-                    CANBOX_ROOT_PATH: path.resolve(__dirname, '../..'),
-                    CANBOX_MODULES_PATH: path.resolve(__dirname, '..')
-                }
-            });
+            // 在生产模式下，使用环境变量强制指定入口文件
+            const isProduction = require('electron').app.isPackaged;
+            const appMainPath = path.join(__dirname, 'app-main.js');
+            
+            let envVars = {
+                ...process.env,
+                CANBOX_APP_ID: uid,
+                CANBOX_APP_PATH: appPath,
+                CANBOX_DEV_MODE: devTag ? 'true' : 'false',
+                CANBOX_ROOT_PATH: path.resolve(__dirname, '../..'),
+                CANBOX_MODULES_PATH: path.resolve(__dirname, '..'),
+                // 明确传递主进程标识，防止子进程被错误识别
+                CANBOX_MAIN_PROCESS: 'false',
+                // 添加更多调试信息
+                CANBOX_DEBUG_MODE: 'true'
+            };
+            
+            // 清理旧的CANBOX_MAIN_PROCESS环境变量，确保不冲突
+            delete envVars.CANBOX_MAIN_PROCESS;
+            envVars.CANBOX_MAIN_PROCESS = 'false';
+            
+            // 使用不同的方法启动Electron进程
+            let appProcess;
+            
+            if (isProduction) {
+                // 生产模式：使用修改后的main.js，通过环境变量控制流程
+                logger.info('[{}] Production mode - using main.js with app process detection', uid);
+                
+                // 不设置CANBOX_MAIN_PROCESS环境变量，让检测逻辑正确工作
+                
+                // 在打包环境中，使用app.getPath获取正确的可执行文件路径
+                const electronPath = isProduction ? 
+                    require('electron').app.getPath('exe') :
+                    process.execPath;
+                const spawnArgs = [
+                    // 生产模式下强制添加WM_CLASS相关参数
+                    ...args,
+                    // 确保X11窗口属性设置
+                    '--class=' + uid,
+                    '--enable-features=UseOzonePlatform',
+                    '--ozone-platform-hint=x11',
+                    // 强制设置X11窗口属性
+                    '--wm-class=' + uid,
+                    '--x11-wm-class=' + uid,
+                    // 添加额外的X11识别属性
+                    '--app-name=' + uid,
+                    // 强制设置X11窗口组
+                    '--x11-wm-group=' + uid
+                ];
+                
+                // 生产模式下强制设置X11相关环境变量
+                envVars.GTK_APPLICATION_ID = uid;
+                envVars.XDG_CURRENT_DESKTOP = 'GNOME';
+                envVars.GDK_BACKEND = 'x11';
+                // 添加更多X11特定设置
+                envVars.XDG_SESSION_TYPE = 'x11';
+                envVars.DISPLAY = process.env.DISPLAY || ':0';
+                envVars.XAUTHORITY = process.env.XAUTHORITY || path.join(process.env.HOME, '.Xauthority');
+                // 强制设置窗口管理器识别属性
+                envVars._NET_WM_PID = process.pid;
+                envVars._NET_WM_NAME = uid;
+                
+                // 生产模式下强制设置X11相关环境变量
+                envVars.GTK_APPLICATION_ID = uid;
+                envVars.XDG_CURRENT_DESKTOP = 'GNOME';
+                envVars.GDK_BACKEND = 'x11';
+                // 添加更多X11特定设置
+                envVars.XDG_SESSION_TYPE = 'x11';
+                envVars.DISPLAY = process.env.DISPLAY || ':0';
+                envVars.XAUTHORITY = process.env.XAUTHORITY || path.join(process.env.HOME, '.Xauthority');
+                
+                // 生产模式下强制设置X11相关环境变量
+                envVars.GTK_APPLICATION_ID = uid;
+                envVars.XDG_CURRENT_DESKTOP = 'GNOME';
+                envVars.GDK_BACKEND = 'x11';
+                
+                logger.info('[{}] Electron execPath: {}', uid, electronPath);
+                logger.info('[{}] Spawn args: {}', uid, JSON.stringify(spawnArgs));
+                
+                appProcess = spawn(electronPath, spawnArgs, {
+                    stdio: ['ignore', 'pipe', 'pipe'],
+                    detached: false,
+                    env: envVars
+                });
+                
+            } else {
+                // 开发模式：直接启动
+                logger.info('[{}] Development mode - direct spawn', uid);
+                
+                // 开发模式下去除重复的基本参数
+                const devArgs = args.filter(arg => 
+                    !arg.includes('--no-sandbox') && 
+                    !arg.includes('--disable-setuid-sandbox') && 
+                    !arg.includes('--disable-gpu-sandbox')
+                );
+                
+                appProcess = spawn(process.execPath, [
+                    appMainPath,
+                    // 保留必要的核心参数
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-gpu-sandbox',
+                    ...devArgs
+                ], {
+                    stdio: ['ignore', 'pipe', 'pipe'],
+                    detached: false,
+                    env: envVars
+                });
+            }
 
             // 处理进程输出
             appProcess.stdout?.on('data', (data) => {

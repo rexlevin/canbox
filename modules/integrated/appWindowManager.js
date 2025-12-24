@@ -12,7 +12,7 @@ const { handleError } = require('@modules/ipc/errorHandler')
 
 class AppWindowManager {
     constructor() {
-        // 存储应用主窗口 {appId: BrowserWindow}
+        // 存储应用主窗口 {uid: BrowserWindow}
         this.winMap = new Map();
 
         // 存储所有窗口（包括子窗口）{windowId: BrowserWindow}
@@ -110,9 +110,14 @@ class AppWindowManager {
                 options.webPreferences.preload = path.resolve(appPath, appJson.window.webPreferences.preload);
             }
 
-            // Linux 系统特殊处理
+            // Linux 系统特殊处理 - 确保WM_CLASS正确设置
             if (os.platform() === 'linux') {
                 options.windowClass = uid;
+                options.title = appJson.name || uid;
+                options.titleBarStyle = 'default';
+                // 添加应用名称属性，帮助桌面环境识别
+                if (!options.webPreferences) options.webPreferences = {};
+                options.webPreferences.additionalArguments = [`--app-id=${uid}`, `--app-name=${appJson.name || uid}`];
             }
 
             // 恢复窗口状态并创建窗口
@@ -143,11 +148,11 @@ class AppWindowManager {
                 ? mainFile
                 : `file://${path.resolve(appPath, mainFile)}`;
 
-            logger.info('[{}] Loading URL: {}', appId, loadUrl);
+            logger.info('[{}] Loading URL: {}', uid, loadUrl);
 
             // 加载应用内容
             appWin.loadURL(loadUrl).catch(err => {
-                logger.error('[{}] Failed to load URL: {}', appId, err);
+                logger.error('[{}] Failed to load URL: {}', uid, err);
             });
 
             // 设置窗口事件
@@ -166,7 +171,7 @@ class AppWindowManager {
                     position: isMax ? null : bounds
                 }, () => {});
 
-                logger.info('[{}] Window closing', appId);
+                logger.info('[{}] Window closing', uid);
 
                 // 关闭子窗口
                 const childWindows = this.getChildWindows(uid);

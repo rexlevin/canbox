@@ -4,6 +4,36 @@ const path = require('path')
 
 const moduleAlias = require('module-alias');
 
+// 检查是否是子进程（用于启动App）
+// 更严格的检测逻辑，确保只有真正的子进程才会被重定向
+const hasAppIdArg = process.argv.some(arg => arg.startsWith('--app-id='));
+const hasAppPathArg = process.argv.some(arg => arg.startsWith('--app-path='));
+const hasAppMainArg = process.argv.some(arg => arg.startsWith('--app-main='));
+const isMainProcess = process.env.CANBOX_MAIN_PROCESS === 'true';
+
+// 如果是子进程（有应用参数且不是主进程）
+const isAppProcess = hasAppIdArg && hasAppPathArg && hasAppMainArg && !isMainProcess;
+
+if (isAppProcess) {
+    console.log('[main.js] Detected app process, redirecting to app-main.js');
+    console.log('[main.js] App process args:', process.argv.filter(arg => arg.startsWith('--app-')));
+    console.log('[main.js] CANBOX_MAIN_PROCESS:', process.env.CANBOX_MAIN_PROCESS);
+    
+    // 设置模块别名（必须在require之前）
+    moduleAlias.addAliases({
+        '@': path.join(__dirname, './src'),
+        '@modules': path.join(__dirname, './modules')
+    });
+    moduleAlias();
+    
+    // 直接执行app-main.js，不退出进程，让它自己管理生命周期
+    const appMainPath = path.join(__dirname, 'modules/isolated/app-main.js');
+    require(appMainPath);
+    
+    // 返回，不继续执行main.js的其他部分
+    return;
+}
+
 // 手动添加映射（基于打包后的路径）
 moduleAlias.addAliases({
     '@': path.join(__dirname, './src'),
@@ -28,7 +58,7 @@ const uatDev = (() => {
         return {};
     }
 })();
-logger.info('[main.js] uatDev: {}', uatDev);
+logger.info('[main.js] uatDev: {}', JSON.stringify(uatDev));
 
 // 引入 RepoMonitorService
 const RepoMonitorService = require('@modules/services/repoMonitorService');
@@ -38,8 +68,11 @@ const appLoader = require('@modules/main/appLoader');
 // 引入 IPC 消息处理模块
 const { initIpcHandlers } = require('./ipcHandlers');
 
-// 清除启动时控制台的“Electron Security Warning (Insecure Content-Security-Policy)”报错信息
+// 清除启动时控制台的"Electron Security Warning (Insecure Content-Security-Policy)"报错信息
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
+
+// 标识主进程
+process.env['CANBOX_MAIN_PROCESS'] = 'true'
 
 // 禁用当前应用程序的硬件加速
 app.disableHardwareAcceleration();
@@ -169,6 +202,11 @@ const createWindow = () => {
     };
     if (os === 'linux') {
         config.windowClass = 'canbox';
+        config.title = 'Canbox';
+        config.titleBarStyle = 'default';
+        // 确保主进程WM_CLASS正确设置
+        if (!config.webPreferences) config.webPreferences = {};
+        config.webPreferences.additionalArguments = [`--app-name=Canbox`];
     }
     win = new BrowserWindow(config);
 

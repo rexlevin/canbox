@@ -36,6 +36,9 @@
             "node_modules/module-alias",
             "!node_modules/electron"
         ],
+        "asarUnpack": [
+            "modules/isolated/**/*"
+        ],
         "directories": {
             "output": "./dist"
         },
