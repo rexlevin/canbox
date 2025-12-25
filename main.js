@@ -92,13 +92,13 @@ if (!getTheLock) {
     app.quit()
 } else {
     app.on('second-instance', (event, commandLine, workingDirectory) => {
-        // console.info('commandLine===%o', commandLine);
+        logger.info('commandLine size {}: {}', commandLine.length, JSON.stringify(commandLine));
         // console.info('workingDirectory===%o', workingDirectory);
         // 如果app已经启动，那么参数再次启动app或者 app 的参数只能从commandLine里面获得
         let appId = '';
         for (let command of commandLine) {
-            if (command.indexOf('id:') === -1) continue;
-            appId = command.substring(command.indexOf(':') + 1);
+            if (command.indexOf('--app-id=') === -1) continue;
+            appId = command.substring(command.indexOf('=') + 1);
         }
         if (win && '' === appId) {
             if (win.isMinimized()) win.restore();

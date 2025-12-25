@@ -67,7 +67,7 @@ function generateShortcuts(appsData) {
                 const desktopFile = `[Desktop Entry]
 Name=${appName}
 Comment=${appItem.description || ''}
-Exec="${execPath}" --no-sandbox id:${uid}
+Exec="${execPath}" --no-sandbox --app-id=${uid}
 Icon=${iconPath}
 Type=Application
 StartupWMClass=${uid}
