@@ -110,14 +110,20 @@ class AppWindowManager {
                 options.webPreferences.preload = path.resolve(appPath, appJson.window.webPreferences.preload);
             }
 
-            // Linux 系统特殊处理 - 确保WM_CLASS正确设置
+            // Linux 系统特殊处理 - 确保WM_CLASS正确设置，支持Wayland环境
             if (os.platform() === 'linux') {
-                options.windowClass = uid;
+                // 为应用窗口设置唯一的WM_CLASS，避免在Wayland dock中堆叠
+                options.windowClass = `canbox-app-${uid}`;
                 options.title = appJson.name || uid;
                 options.titleBarStyle = 'default';
-                // 添加应用名称属性，帮助桌面环境识别
+                // 为Wayland环境提供完整的窗口识别参数
                 if (!options.webPreferences) options.webPreferences = {};
-                options.webPreferences.additionalArguments = [`--app-id=${uid}`, `--app-name=${appJson.name || uid}`];
+                options.webPreferences.additionalArguments = [
+                    `--app-id=${uid}`,
+                    `--app-name=${appJson.name || uid}`,
+                    `--class=canbox-app-${uid}`,
+                    `--wm-class=canbox-app-${uid}`
+                ];
             }
 
             // 恢复窗口状态并创建窗口

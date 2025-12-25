@@ -202,12 +202,17 @@ const createWindow = () => {
         autoHideMenuBar: true
     };
     if (os === 'linux') {
-        config.windowClass = 'canbox';
+        // 为Wayland环境提供更好的窗口识别支持
+        config.windowClass = 'canbox-main';
         config.title = 'Canbox';
         config.titleBarStyle = 'default';
         // 确保主进程WM_CLASS正确设置
         if (!config.webPreferences) config.webPreferences = {};
-        config.webPreferences.additionalArguments = [`--app-name=Canbox`];
+        config.webPreferences.additionalArguments = [
+            `--app-name=Canbox`,
+            `--class=canbox-main`,
+            `--wm-class=canbox-main`
+        ];
     }
     win = new BrowserWindow(config);
 

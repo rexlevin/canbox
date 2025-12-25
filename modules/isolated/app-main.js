@@ -263,8 +263,12 @@ function createAppWindow() {
                 nodeIntegrationInSubFrames: true,
                 contextIsolation: true,
                 session: sess,
-                additionalArguments: [`--app-id=${appId}`,
-                     `--class=${appId}`, `--wm-class=${appId}`, `--wm_class=${appId}`
+                additionalArguments: [
+                    `--app-id=${appId}`,
+                    `--class=canbox-app-${appId}`, 
+                    `--wm-class=canbox-app-${appId}`,
+                    `--wm_class=canbox-app-${appId}`,
+                    `--app-name=${appJson.name || appId}`
                 ],
                 enablePreferredSizeMode: false
             };
