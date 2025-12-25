@@ -263,53 +263,16 @@ function createAppWindow() {
                 nodeIntegrationInSubFrames: true,
                 contextIsolation: true,
                 session: sess,
-                additionalArguments: [`--app-id=${appId}`],
+                additionalArguments: [`--app-id=${appId}`,
+                     `--class=${appId}`, `--wm-class=${appId}`, `--wm_class=${appId}`
+                ],
+                enablePreferredSizeMode: false
             };
         }
 
         // 处理 preload 路径
         if (appJson.window?.webPreferences?.preload) {
             options.webPreferences.preload = path.resolve(appPath, appJson.window.webPreferences.preload);
-        }
-
-        // Linux 系统特殊处理 - 确保WM_CLASS正确设置
-        if (os.platform() === 'linux') {
-            options.windowClass = appId;
-            options.title = appJson.name || appId;
-            options.titleBarStyle = 'default';
-            
-            // 生产模式下的特殊处理 - 强制设置WM_CLASS
-            if (isProduction) {
-                logger.info(`[${appId}] Production mode - Enforcing WM_CLASS: ${appId}`);
-                
-                // 方法1: 通过命令行参数强制设置
-                if (!options.webPreferences) options.webPreferences = {};
-                if (!options.webPreferences.additionalArguments) {
-                    options.webPreferences.additionalArguments = [];
-                }
-                
-                // 清除可能存在的重复参数并重新设置
-                options.webPreferences.additionalArguments = options.webPreferences.additionalArguments.filter(arg => 
-                    !arg.includes('--class=') && !arg.includes('--app-id=')
-                );
-                
-                // 强制添加WM_CLASS参数
-                options.webPreferences.additionalArguments.push(
-                    `--app-id=${appId}`,
-                    `--class=${appId}`
-                );
-                
-                // 方法2: 设置X11特定的环境变量
-                process.env.GTK_APPLICATION_ID = appId;
-                process.env.XDG_CURRENT_DESKTOP = 'GNOME'; // 强制GDK后端
-                
-                // 方法3: 在窗口创建后立即设置属性
-                options.webPreferences = {
-                    ...options.webPreferences,
-                    // 额外的X11特定设置
-                    enablePreferredSizeMode: false
-                };
-            }
         }
 
         // 恢复窗口状态
@@ -331,20 +294,6 @@ function createAppWindow() {
         // 最大化处理
         if (state?.isMax) {
             appWin.maximize();
-        }
-
-        // Ubuntu Dock WM_CLASS修复（简化版本）
-        if (os.platform() === 'linux' && isProduction) {
-            // 简单的手动修复作为后备方案
-            setTimeout(() => {
-                try {
-                    const originalTitle = appWin.getTitle();
-                    appWin.setTitle(`${originalTitle}`);
-                    logger.info(`[${appId}] Applied Ubuntu Dock WM_CLASS fix`);
-                } catch (error) {
-                    logger.error(`[${appId}] Failed to apply Ubuntu Dock fix:`, error);
-                }
-            }, 100);
         }
 
         // 确定加载URL - 处理生产模式下的ASAR路径

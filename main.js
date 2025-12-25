@@ -140,11 +140,12 @@ if (!getTheLock) {
         // app第一次启动的时候，启动参数可以从process.argv里面获取到
         let appId = '';
         for (let arg of process.argv) {
-            if (arg.indexOf('id:') === -1) continue;
-            appId = arg.substring(arg.indexOf(':') + 1);
+            if (arg.indexOf('--app-id=') === -1) continue;
+            appId = arg.substring(arg.indexOf('=') + 1);
+            break;
         }
-        console.info(appId);
         if ('' !== appId) {
+            console.info('First-time startup with appId:', appId);
             win.hide();
             appLoader.loadApp(appId, false);
         }

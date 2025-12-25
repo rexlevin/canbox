@@ -97,29 +97,23 @@ class AppProcessManager {
             // 清理旧的CANBOX_MAIN_PROCESS环境变量，确保不冲突
             delete envVars.CANBOX_MAIN_PROCESS;
             envVars.CANBOX_MAIN_PROCESS = 'false';
+            console.info('envVars: ', envVars);
             
             // 使用不同的方法启动Electron进程
             let appProcess;
-            
+
             logger.info('[{}] Development mode - direct spawn', uid);
-            
-            // 开发模式下去除重复的基本参数
-            const devArgs = args.filter(arg => 
-                !arg.includes('--no-sandbox') && 
-                !arg.includes('--disable-setuid-sandbox') && 
-                !arg.includes('--disable-gpu-sandbox')
-            );
-            
+
             appProcess = spawn(process.execPath, [
                 appMainPath,
                 // 保留必要的核心参数
-                ' --no-sandbox',
-                ' --disable-setuid-sandbox',
-                ' --disable-gpu-sandbox',
-                ' --wm-class=' + uid,
-                ' --wm_class=' + uid,
-                ' --x11-wm-class=' + uid,
-                ...devArgs
+                // ' --no-sandbox',
+                // ' --disable-setuid-sandbox',
+                // ' --disable-gpu-sandbox',
+                // ' --wm-class=' + uid,
+                // ' --wm_class=' + uid,
+                // ' --x11-wm-class=' + uid,
+                ...args
             ], {
                 stdio: ['ignore', 'pipe', 'pipe'],
                 detached: false,
