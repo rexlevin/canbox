@@ -12,27 +12,37 @@
                 <el-col :span="24">
                     <div class="card" v-loading="exportAppFlag[uid]">
                         <div class="img-block">
-                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appDevItem.path + '/' + appDevItem.appJson.logo" alt="" />
+                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true"
+                                :src="'file://' + appDevItem.path + '/' + appDevItem.appJson.logo" alt="" />
                         </div>
                         <div class="info-block vertical-block">
                             <div class="app-name" @click="drawerInfo = true">
                                 <span style="font-weight: bold; font-size: 20px;">{{ appDevItem.appJson.name }}</span>
                                 <span style="padding-left: 20px; color: gray;">{{ appDevItem.appJson.version }}</span>
                             </div>
-                            <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appDevItem.appJson.description }}</div>
+                            <div style="height: 30px; line-height: 13px; font-size: 12px;">{{
+                                appDevItem.appJson.description }}</div>
                         </div>
                         <div class="operate-block">
                             <span class="operate-icon-span" @click="packApp(uid)" title="打包app">
-                                <el-icon :size="35" color="#6a8759"><Expand /></el-icon>
+                                <el-icon :size="35" color="#6a8759">
+                                    <Expand />
+                                </el-icon>
                             </span>
                             <span class="operate-icon-span" @click="loadApp(uid)" title="运行这个开发中的app">
-                                <el-icon :size="35" color="#228b22"><VideoPlay /></el-icon>
+                                <el-icon :size="35" color="#228b22">
+                                    <VideoPlay />
+                                </el-icon>
                             </span>
                             <span class="operate-icon-span" @click="clearData(uid)" title="清除用户数据">
-                                <el-icon :size="35" color=""><Delete /></el-icon>
+                                <el-icon :size="35" color="">
+                                    <Delete />
+                                </el-icon>
                             </span>
                             <span class="operate-icon-span" @click="removeApp(uid)" title="移除这个开发中的app">
-                                <el-icon :size="35" color="#ab4e52"><Remove /></el-icon>
+                                <el-icon :size="35" color="#ab4e52">
+                                    <Remove />
+                                </el-icon>
                             </span>
                         </div>
                     </div>
@@ -45,14 +55,19 @@
             <p>暂无开发中的应用</p>
         </div>
 
+        <div class="doc-links">
+            <el-link type="primary" @click="openAppDevDoc">查看 APP 开发文档</el-link>
+            <el-link type="primary" @click="openApiDoc">查看 API 文档</el-link>
+        </div>
+
     </div>
 
     <el-dialog v-model="centerDialogVisible" title="Warning" width="300" center>
         <span style="white-space:pre-line">{{ warningContent }}</span>
         <template #footer>
-        <div class="dialog-footer">
-            <el-button type="primary" @click="centerDialogVisible = false"> 确&nbsp;&nbsp;&nbsp;&nbsp;定 </el-button>
-        </div>
+            <div class="dialog-footer">
+                <el-button type="primary" @click="centerDialogVisible = false"> 确&nbsp;&nbsp;&nbsp;&nbsp;定 </el-button>
+            </div>
         </template>
     </el-dialog>
 </template>
@@ -73,28 +88,87 @@
 .app-list-section {
     height: calc(100vh - 60px);
     overflow-y: auto;
-    margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);
+    margin: 5px 0 0 0;
+    padding: 0;
+    box-shadow: var(--el-box-shadow-lighter);
 }
 
-.card {width: 100%; height: 60px; display: flex; justify-content: flex-start;}
-.img-block {width: 60px; height: 100%; margin: 0; padding: 0;}
-.info-block {line-height: 60px; text-align: left; margin-left: 10px;}
-.info-block div{width: 300px;}
-.info-block .app-name {height: 30px; line-height: 30px; cursor: pointer;}
-.info-block .app-name:hover{color: #409eff; font-weight: bold;}
-.vertical-block {display: table;}
+.card {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    justify-content: flex-start;
+}
 
-.operate-block {width: 100%; margin-right: 20px;
-    display: flex; flex: 1;
+.img-block {
+    width: 60px;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.info-block {
+    line-height: 60px;
+    text-align: left;
+    margin-left: 10px;
+}
+
+.info-block div {
+    width: 300px;
+}
+
+.info-block .app-name {
+    height: 30px;
+    line-height: 30px;
+    cursor: pointer;
+}
+
+.info-block .app-name:hover {
+    color: #409eff;
+    font-weight: bold;
+}
+
+.vertical-block {
+    display: table;
+}
+
+.operate-block {
+    width: 100%;
+    margin-right: 20px;
+    display: flex;
+    flex: 1;
     align-items: center;
     justify-content: right;
 }
-.operate-block div {display: table-cell;}
-.operate-block div:first-child {text-align: left; padding-left: 10px;}
-.operate-block div:first-child span {color: gray;}
-.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 10px;}
-.operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
-.operate-icon-span:active {background-color: hsl(0, 0%, 70%); }
+
+.operate-block div {
+    display: table-cell;
+}
+
+.operate-block div:first-child {
+    text-align: left;
+    padding-left: 10px;
+}
+
+.operate-block div:first-child span {
+    color: gray;
+}
+
+.operate-icon-span {
+    display: inline-block;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 20px;
+    margin-right: 10px;
+}
+
+.operate-icon-span:hover {
+    background-color: hsl(0, 0%, 80%);
+}
+
+.operate-icon-span:active {
+    background-color: hsl(0, 0%, 70%);
+}
 
 .empty-section {
     height: calc(100vh - 60px);
@@ -102,11 +176,29 @@
     justify-content: center;
     align-items: center;
 }
+
+.doc-links {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+}
+
+.doc-links .el-link {
+    margin-right: 20px;
+}
+
+.doc-links .el-link:last-child {
+    margin-right: 0;
+}
 </style>
 
 <script setup>
 import { onBeforeMount, onUpdated, ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { marked } from 'marked';
 
 let appDevData = ref({});
 const centerDialogVisible = ref(false);
@@ -155,32 +247,32 @@ function loadApp(uid) {
 
 // 清除app运行数据
 function clearData(uid) {
-    window.api.app.clearData(uid, (result)=>{
+    window.api.app.clearData(uid, (result) => {
         console.info('clearData result=', result);
-        if(!result.success) {
+        if (!result.success) {
             ElMessage.error(result.msg);
             return;
         }
         ElMessage({
             message: '清除数据成功',
-            type:'success'
+            type: 'success'
         });
     });
 }
 
 function removeApp(uid) {
     window.api.app.remove({
-            id: uid,
-            devTag: true
-        }, (result) => {
+        id: uid,
+        devTag: true
+    }, (result) => {
         console.info('remove result=', result);
-        if(!result.success) {
+        if (!result.success) {
             ElMessage.error(result.msg);
             return;
         }
         ElMessage({
             message: 'APP 删除成功',
-            type:'success'
+            type: 'success'
         });
         load();
     });
@@ -197,11 +289,106 @@ function load() {
         } else {
             appDevData.value = {};
         }
-        
+
         const wrongApps = result?.wrong || {};
-        if(wrongApps && Object.keys(wrongApps).length > 0) {
+        if (wrongApps && Object.keys(wrongApps).length > 0) {
             warningContent.value = `以下 app.json 存在问题，已经移除： \n ${Object.entries(wrongApps).map(([key, item]) => item.name || key).join('\n')}`;
             centerDialogVisible.value = true;
+        }
+    });
+}
+
+// 打开APP开发文档
+function openAppDevDoc() {
+    window.api.readFile('docs/APP_DEV_CN.md', (result) => {
+        console.info('[AppDev.vue] result: ', result);
+        if (result && result.success) {
+            const htmlContent = marked(result.data);
+            const tempHtml = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APP 开发文档 - Canbox</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 20px; }
+        h1, h2, h3 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h1 { font-size: 2.5em; }
+        h2 { font-size: 2em; }
+        h3 { font-size: 1.5em; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Consolas', 'Monaco', monospace; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f5f5f5; font-weight: bold; }
+        blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 20px; color: #666; }
+    </style>
+</head>
+<body>
+    ${htmlContent}
+</body>
+</html>`;
+            
+            // 创建临时文件并在浏览器中打开
+            const blob = new Blob([tempHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            window.api.openUrl(url);
+            
+            // 清理URL对象
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+            }, 1000);
+        } else {
+            ElMessage.error('无法读取APP开发文档');
+        }
+    });
+}
+
+// 打开API文档
+function openApiDoc() {
+    window.api.readFile('docs/API_CN.md', (result) => {
+        if (result && result.success) {
+            const htmlContent = marked(result.data);
+            const tempHtml = `
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 文档 - Canbox</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 20px; }
+        h1, h2, h3 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h1 { font-size: 2.5em; }
+        h2 { font-size: 2em; }
+        h3 { font-size: 1.5em; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Consolas', 'Monaco', monospace; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        pre code { background: none; padding: 0; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f5f5f5; font-weight: bold; }
+        blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 20px; color: #666; }
+    </style>
+</head>
+<body>
+    ${htmlContent}
+</body>
+</html>`;
+            
+            // 创建临时文件并在浏览器中打开
+            const blob = new Blob([tempHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            window.api.openUrl(url);
+            
+            // 清理URL对象
+            setTimeout(() => {
+                URL.revokeObjectURL(url);
+            }, 1000);
+        } else {
+            ElMessage.error('无法读取API文档');
         }
     });
 }
