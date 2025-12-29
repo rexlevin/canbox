@@ -67,7 +67,7 @@ function generateShortcuts(appsData) {
                 const desktopFile = `[Desktop Entry]
 Name=${appName}
 Comment=${appItem.description || ''}
-Exec="${execPath}" --no-sandbox --app-id=${uid} --class=canbox-app-${uid} --wm-class=canbox-app-${uid} --wm_class=canbox-app-${uid} --app-name=${appItem.name || uid}"
+Exec="${execPath}" --no-sandbox --app-id=${uid} --class=canbox-app-${uid} --wm-class=canbox-app-${uid} --wm_class=canbox-app-${uid} --app-name=${appItem.name || uid}
 Icon=${iconPath}
 Type=Application
 StartupWMClass=${uid}
