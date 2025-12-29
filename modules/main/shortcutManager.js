@@ -50,12 +50,12 @@ function generateShortcuts(appsData) {
             if (process.platform === 'win32') {
                 const programsPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'Start Menu', 'Programs');
                 shortcutPath = path.join(programsPath, `${appName}.lnk`);
-                const targetPath = `"${execPath}" --no-sandbox id:${uid}`;
+                const targetPath = `"${execPath}" --no-sandbox --app-id=${uid}`;
                 command = `powershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('${shortcutPath}'); $Shortcut.TargetPath = '${targetPath}'; $Shortcut.IconLocation = '${iconPath}'; $Shortcut.Save()"`;
                 execSync(command);
             } else if (process.platform === 'darwin') {
                 shortcutPath = path.join('/Applications', `${appName}.app`);
-                const targetPath = `"${execPath}" --no-sandbox id:${appItem.id}`;
+                const targetPath = `"${execPath}" --no-sandbox --app-id=${uid}`;
                 command = `osascript -e 'tell application "Finder" to make alias file to POSIX file "${targetPath}" at POSIX file "/Applications"'`;
                 execSync(command);
             } else if (process.platform === 'linux') {
@@ -67,7 +67,7 @@ function generateShortcuts(appsData) {
                 const desktopFile = `[Desktop Entry]
 Name=${appName}
 Comment=${appItem.description || ''}
-Exec="${execPath}" --no-sandbox --app-id=${uid}
+Exec="${execPath}" --no-sandbox --app-id=${uid} --class=canbox-app-${uid} --wm-class=canbox-app-${uid} --wm_class=canbox-app-${uid} --app-name=${appItem.name || uid}"
 Icon=${iconPath}
 Type=Application
 StartupWMClass=${uid}

@@ -1,7 +1,7 @@
 {
     "name": "canbox",
     "private": true,
-    "version": "0.0.9",
+    "version": "0.0.5",
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
     "author": "lizl6",
@@ -35,9 +35,6 @@
             "README.md",
             "node_modules/module-alias",
             "!node_modules/electron"
-        ],
-        "asarUnpack": [
-            "modules/isolated/**/*"
         ],
         "directories": {
             "output": "./dist"

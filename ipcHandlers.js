@@ -1,5 +1,4 @@
 const { ipcMain, dialog, shell } = require('electron');
-const appIpcHandler = require('@modules/ipc/appIpcHandler');
 const repoIpcHandler = require('./modules/ipc/repoIpcHandler');
 const shortcutIpcHandler = require('./modules/ipc/shortcutIpcHandler');
 const appManagerIpcHandler = require('./modules/ipc/appManagerIpcHandler');
@@ -10,7 +9,6 @@ const initApiIpcHandlers = require('./modules/main/api');
  */
 function initIpcHandlers() {
     // 初始化拆分后的 IPC 处理逻辑
-    appIpcHandler.init(ipcMain);
     repoIpcHandler.init(ipcMain);
     shortcutIpcHandler.init(ipcMain);
     appManagerIpcHandler.init(ipcMain);
