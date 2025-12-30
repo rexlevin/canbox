@@ -30,6 +30,9 @@ contextBridge.exposeInMainWorld(
             console.info('url====', url);
             ipcRenderer.send('open-url', url);
         },
+        openHtml: async (htmlContent) => {
+            return ipcRenderer.invoke('open-html', htmlContent);
+        },
         selectFile: (options) => {
             return ipcRenderer.invoke('select-file', options);
         },
@@ -120,14 +123,8 @@ contextBridge.exposeInMainWorld(
                 fn({ success: false, msg: error.message });
             });
         },
-        readFile: (filePath, fn) => {
-            ipcRenderer.invoke('msg-readFile', { filePath }).then(result => {
-                console.info('[preload.js] 文件 %s 读取成功: %s', filePath, result);
-                fn(result);
-            }).catch(error => {
-                console.error('read file: IPC call failed:', error);
-                fn({ success: false, msg: error.message });
-            });
+        readFile: (filePath) => {
+            return ipcRenderer.invoke('msg-readFile', { filePath });
         }
     }
 );

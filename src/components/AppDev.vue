@@ -299,12 +299,11 @@ function load() {
 }
 
 // 打开APP开发文档
-function openAppDevDoc() {
-    window.api.readFile('docs/APP_DEV_CN.md', (result) => {
-        console.info('[AppDev.vue] result: ', result);
-        if (result && result.success) {
-            const htmlContent = marked(result.data);
-            const tempHtml = `
+async function openAppDevDoc() {
+    const result = await window.api.readFile('docs/APP_DEV_CN.md');
+    if (result && result.success) {
+        const htmlContent = marked(result.data);
+        const tempHtml = `
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -330,28 +329,22 @@ function openAppDevDoc() {
     ${htmlContent}
 </body>
 </html>`;
-            
-            // 创建临时文件并在浏览器中打开
-            const blob = new Blob([tempHtml], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            window.api.openUrl(url);
-            
-            // 清理URL对象
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-            }, 1000);
-        } else {
-            ElMessage.error('无法读取APP开发文档');
+
+        const openResult = await window.api.openHtml(tempHtml);
+        if (!openResult.success) {
+            ElMessage.error('无法打开文档: ' + openResult.msg);
         }
-    });
+    } else {
+        ElMessage.error('无法读取APP开发文档');
+    }
 }
 
 // 打开API文档
-function openApiDoc() {
-    window.api.readFile('docs/API_CN.md', (result) => {
-        if (result && result.success) {
-            const htmlContent = marked(result.data);
-            const tempHtml = `
+async function openApiDoc() {
+    const result = await window.api.readFile('docs/API_CN.md');
+    if (result && result.success) {
+        const htmlContent = marked(result.data);
+        const tempHtml = `
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -377,20 +370,14 @@ function openApiDoc() {
     ${htmlContent}
 </body>
 </html>`;
-            
-            // 创建临时文件并在浏览器中打开
-            const blob = new Blob([tempHtml], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            window.api.openUrl(url);
-            
-            // 清理URL对象
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-            }, 1000);
-        } else {
-            ElMessage.error('无法读取API文档');
+
+        const openResult = await window.api.openHtml(tempHtml);
+        if (!openResult.success) {
+            ElMessage.error('无法打开文档: ' + openResult.msg);
         }
-    });
+    } else {
+        ElMessage.error('无法读取API文档');
+    }
 }
 
 onBeforeMount(() => {
