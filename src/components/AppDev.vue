@@ -382,16 +382,16 @@ async function openAppDevDoc() {
         .container { display: flex; max-width: 1400px; margin: 0 auto; }
         .content { flex: 1; padding: 40px 60px; max-width: 1100px; }
         .toc-container { width: 280px; padding: 40px 20px 40px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-        .toc-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; }
+        .toc-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 15px; color: #333; }
         .toc { padding: 0; margin: 0; }
-        .toc ul { padding-left: 20px; margin: 5px 0; list-style: none; }
+        .toc ul { padding-left: 12px; margin: 5px 0; list-style: none; }
         .toc li { margin: 5px 0; }
-        .toc a { color: #555; text-decoration: none; display: block; padding: 4px 8px; border-radius: 4px; transition: all 0.2s; }
+        .toc a { color: #555; text-decoration: none; display: block; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }
         .toc a:hover { background-color: #e6f7ff; color: #1890ff; }
         .toc a.active { background-color: #1890ff; color: white; }
-        .toc-level-1 { font-weight: bold; font-size: 15px; }
-        .toc-level-2 { font-size: 14px; }
-        .toc-level-3 { font-size: 13px; }
+        .toc-level-1 { font-weight: bold; font-size: 20px; }
+        .toc-level-2 { font-size: 18px; }
+        .toc-level-3 { font-size: 16px; }
         h1, h2, h3, h4, h5, h6 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px; scroll-margin-top: 20px; }
         h1 { font-size: 2.5em; border-bottom-width: 3px; }
         h2 { font-size: 2em; }
@@ -475,16 +475,16 @@ async function openApiDoc() {
         .container { display: flex; max-width: 1400px; margin: 0 auto; }
         .content { flex: 1; padding: 40px 60px; max-width: 900px; }
         .toc-container { width: 280px; padding: 40px 20px 40px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-        .toc-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; }
+        .toc-title { font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #333; }
         .toc { padding: 0; margin: 0; }
-        .toc ul { padding-left: 20px; margin: 5px 0; list-style: none; }
+        .toc ul { padding-left: 12px; margin: 5px 0; list-style: none; }
         .toc li { margin: 5px 0; }
-        .toc a { color: #555; text-decoration: none; display: block; padding: 4px 8px; border-radius: 4px; transition: all 0.2s; }
+        .toc a { color: #555; text-decoration: none; display: block; padding: 6px 10px; border-radius: 4px; transition: all 0.2s; }
         .toc a:hover { background-color: #e6f7ff; color: #1890ff; }
         .toc a.active { background-color: #1890ff; color: white; }
-        .toc-level-1 { font-weight: bold; font-size: 15px; }
-        .toc-level-2 { font-size: 14px; }
-        .toc-level-3 { font-size: 13px; }
+        .toc-level-1 { font-weight: bold; font-size: 16px; }
+        .toc-level-2 { font-size: 15px; }
+        .toc-level-3 { font-size: 14px; }
         h1, h2, h3, h4, h5, h6 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 30px; scroll-margin-top: 20px; }
         h1 { font-size: 2.5em; border-bottom-width: 3px; }
         h2 { font-size: 2em; }
