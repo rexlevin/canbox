@@ -122,17 +122,12 @@ contextBridge.exposeInMainWorld(
         },
         readFile: (filePath, fn) => {
             ipcRenderer.invoke('msg-readFile', { filePath }).then(result => {
-                console.info('[preload.js] 文件读取成功: , result ', content);
+                console.info('[preload.js] 文件 %s 读取成功: %s', filePath, result);
                 fn(result);
             }).catch(error => {
                 console.error('read file: IPC call failed:', error);
                 fn({ success: false, msg: error.message });
             });
-            // ipcRenderer.send('msg-readFile', { filePath });
-            // ipcRenderer.once('msg-readFile', (event, result) => {
-            //     const parsedResult = JSON.parse(result);
-            //     fn(parsedResult);
-            // });
         }
     }
 );

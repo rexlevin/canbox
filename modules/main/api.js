@@ -116,14 +116,13 @@ function initDialogIpcHandlers() {
 /**
  * 初始化文件读取相关的 IPC 消息处理逻辑
  * @description 处理来自渲染进程的 IPC 消息，读取文件内容
- * @listens ipcMain.on('msg-readFile')
+ * @listens ipcMain.handle('msg-readFile')
  * @param {object} args - IPC 消息参数
  * @param {string} args.filePath - 文件路径
- * @returns {void}
- * @emits event.returnValue - 返回文件内容，格式为 { success: boolean, data: string }
+ * @returns {Promise} 返回文件内容，格式为 { success: boolean, data: string }
  */
 function initReadFileIpcHandlers() {
-    ipcMain.on('msg-readFile', (event, args) => {
+    ipcMain.handle('msg-readFile', async (event, args) => {
         try {
             const fs = require('fs');
             const path = require('path');
@@ -133,26 +132,25 @@ function initReadFileIpcHandlers() {
             
             // 检查文件是否存在
             if (!fs.existsSync(filePath)) {
-                event.returnValue = JSON.stringify({ 
+                return { 
                     success: false, 
                     msg: `文件不存在: ${args.filePath}` 
-                });
-                return;
+                };
             }
             
             // 读取文件内容
             const content = fs.readFileSync(filePath, 'utf8');
-            // console.info('[api.js] 文件读取成功: ', content);
-            event.returnValue = JSON.stringify({ 
+            console.info('[api.js] 文件读取成功: ', args.filePath);
+            return { 
                 success: true, 
                 data: content 
-            });
+            };
         } catch (error) {
             console.error('读取文件失败:', error);
-            event.returnValue = JSON.stringify({ 
+            return { 
                 success: false, 
                 msg: `读取文件失败: ${error.message}` 
-            });
+            };
         }
     });
 }
