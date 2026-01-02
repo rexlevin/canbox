@@ -228,6 +228,46 @@ async function getReposData() {
 }
 
 /**
+ * 导出仓库列表为 JSON 文件
+ */
+async function exportReposData() {
+    try {
+        const reposData = getReposStore().get('default') || {};
+        const exportData = [];
+
+        // 提取需要的字段：id, name, repo, branch
+        Object.entries(reposData).forEach(([uid, repo]) => {
+            exportData.push({
+                id: repo.id,
+                name: repo.name,
+                repo: repo.repo
+            });
+        });
+
+        // 选择保存路径
+        const result = await dialog.showSaveDialog({
+            title: '导出 APP 源列表',
+            defaultPath: 'app-repos.json',
+            filters: [
+                { name: 'JSON Files', extensions: ['json'] }
+            ]
+        });
+
+        if (result.canceled || !result.filePath) {
+            return { success: true, msg: '已取消导出' };
+        }
+
+        // 写入文件
+        fs.writeFileSync(result.filePath, JSON.stringify(exportData, null, 2), 'utf8');
+        logger.info('导出仓库列表成功，文件路径: %s', result.filePath);
+
+        return { success: true, data: { filePath: result.filePath } };
+    } catch (error) {
+        return handleError(error, 'exportReposData');
+    }
+}
+
+/**
  * 删除仓库
  */
 async function removeRepo(uid) {
@@ -366,6 +406,11 @@ function initRepoHandlers() {
 
     ipcMain.handle('update-repos-status', async (event, uid) => {
         return updateReposStatus(uid);
+    });
+
+    // 导出仓库列表
+    ipcMain.handle('export-repos-data', async () => {
+        return exportReposData();
     });
 }
 

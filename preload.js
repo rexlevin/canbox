@@ -107,6 +107,14 @@ contextBridge.exposeInMainWorld(
                 fn({success: false, msg: error.message});
             });
         },
+        exportReposData: (fn) => {
+            ipcRenderer.invoke('export-repos-data').then(result => {
+                fn(result);
+            }).catch(error => {
+                console.error('exportReposData: IPC call failed:', error);
+                fn({success: false, msg: error.message});
+            });
+        },
         removeRepo: (uid, fn) => {
             ipcRenderer.invoke('remove-repo', uid).then(result => {
                 fn(result);

@@ -3,6 +3,7 @@
         <div class="button-section">
             <el-button type="primary" @click="showDialog">添加 APP 源</el-button>
             <el-button type="primary" @click="importAppRepos">导入 APP 源列表</el-button>
+            <el-button type="primary" @click="exportAppRepos">导出 APP 源列表</el-button>
         </div>
 
         <el-dialog
@@ -197,9 +198,9 @@ const addAppRepo = async () => {
         }
         loading.value = false;
     });
-},
+};
 
-importAppRepos = () => {
+const importAppRepos = () => {
     window.api.importAppRepos(ret => {
         console.log('importAppRepos ret: %o', ret);
         if (!ret.success && 'NoFileSelected' === ret.msg) {
@@ -213,6 +214,23 @@ importAppRepos = () => {
             ElMessage({
                 type: 'success',
                 message: '导入成功'
+            });
+        }
+    });
+};
+
+const exportAppRepos = () => {
+    window.api.exportReposData(ret => {
+        console.log('exportAppRepos ret: %o', ret);
+        if (!ret.success) {
+            ElMessage({
+                type: 'error',
+                message: '导出失败：' + ret.msg
+            });
+        } else {
+            ElMessage({
+                type: 'success',
+                message: '导出成功'
             });
         }
     });
