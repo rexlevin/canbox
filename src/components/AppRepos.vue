@@ -62,16 +62,19 @@
                         </div>
                         <div class="operate-block">
                             <div>
-                                <span class="operate-icon-span" v-show="!repo.downloaded" @click="downloadAppsFromRepo(uid)" title="下载这个APP">
+                                <span class="operate-icon-span" @click="copyRepoURL(uid)" title="复制这个 APP 源">
+                                    <el-icon :size="33"><CopyDocument /></el-icon>
+                                </span>
+                                <span class="operate-icon-span" v-show="!repo.downloaded" @click="downloadAppsFromRepo(uid)" title="下载这个 APP">
                                     <el-icon :size="33" color="#228b22"><Download /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" v-show="repo.downloaded && !repo.toUpdate" style="cursor: not-allowed;" title="这个app已下载">
+                                <span class="operate-icon-span" v-show="repo.downloaded && !repo.toUpdate" style="cursor: not-allowed;" title="这个 APP 已下载">
                                     <el-icon :size="33" color="#228b22"><CircleCheck /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" v-show="repo.downloaded && repo.toUpdate" @click="downloadAppsFromRepo(uid)" title="更新这个app">
+                                <span class="operate-icon-span" v-show="repo.downloaded && repo.toUpdate" @click="downloadAppsFromRepo(uid)" title="更新这个 APP">
                                     <el-icon :size="33" color="#228b22"><Refresh /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" @click="removeRepo(uid)" title="移除这个app源">
+                                <span class="operate-icon-span" @click="removeRepo(uid)" title="移除这个 APP 源">
                                     <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
                                 </span>
                             </div>
@@ -260,6 +263,18 @@ const exportAppRepos = () => {
             });
         }
     });
+}
+
+// 复制仓库 URL 到剪贴板
+const copyRepoURL = (uid) => {
+    const repo = reposData.value[uid];
+    if (repo && repo.repo) {
+        navigator.clipboard.writeText(repo.repo).then(() => {
+            ElMessage.success('复制成功');
+        }).catch(() => {
+            ElMessage.error('复制失败');
+        });
+    }
 }
 </script>
 
