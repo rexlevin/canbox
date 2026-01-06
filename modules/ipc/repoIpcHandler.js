@@ -1,4 +1,4 @@
-const { ipcMain } = require('electron');
+const { ipcMain, BrowserWindow } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
@@ -224,6 +224,16 @@ async function handleImportAppRepos() {
         } catch (error) {
             console.error(`处理仓库 ${repoUrl} 失败: ${error}`);
             failedRepos.push({ repoUrl, error });
+        }
+    }
+
+    if (successCount > 0) {
+        // 通知前端仓库数据已更新
+        const windows = BrowserWindow.getAllWindows();
+        logger.info('windows: {}', windows.length);
+        if (windows.length > 0) {
+            logger.info("windows[0]: {}", windows[0]);
+            windows[0].webContents.send('repo-data-updated');
         }
     }
 
