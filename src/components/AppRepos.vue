@@ -221,11 +221,19 @@ const importAppRepos = () => {
                 message: '导入失败：' + ret.msg
             });
         } else {
-            const { successCount, failedRepos } = ret.data || {};
-            if (failedRepos && failedRepos.length > 0) {
+            const { successCount, failedRepos, skippedCount } = ret.data || {};
+            const failedCount = failedRepos ? failedRepos.length : 0;
+            if (failedCount > 0 || skippedCount > 0) {
+                let message = `成功导入 ${successCount} 个仓库`;
+                if (skippedCount > 0) {
+                    message += `，跳过 ${skippedCount} 个已存在的仓库`;
+                }
+                if (failedCount > 0) {
+                    message += `，失败 ${failedCount} 个`;
+                }
                 ElMessage({
-                    type: 'warning',
-                    message: `成功导入 ${successCount} 个仓库，失败 ${failedRepos.length} 个`
+                    type: failedCount > 0 ? 'warning' : 'success',
+                    message
                 });
             } else {
                 ElMessage({

@@ -209,7 +209,12 @@ async function handleImportAppRepos() {
         throw new Error('Invalid format: expected an array of repos');
     }
 
-    let successCount = 0, failedRepos = [];
+    // 获取已有的仓库列表，用于去重
+    const reposStore = getReposStore();
+    const existingRepos = reposStore.get('default') || {};
+    const existingRepoUrls = Object.values(existingRepos).map(repo => repo.repo.toLowerCase());
+
+    let successCount = 0, failedRepos = [], skippedCount = 0;
     for (const repo of reposData) {
         const repoUrl = repo.repo;
         if (!repoUrl || typeof repoUrl !== 'string') {
@@ -217,10 +222,21 @@ async function handleImportAppRepos() {
             failedRepos.push({ repo: repo, error: 'Missing or invalid repo field' });
             continue;
         }
+
+        // 检查是否已存在相同的仓库 URL
+        if (existingRepoUrls.includes(repoUrl.toLowerCase())) {
+            console.log(`跳过已存在的仓库: ${repoUrl}`);
+            skippedCount++;
+            continue;
+        }
+
         console.log(`正在处理仓库: ${repoUrl}`);
         try {
             await handleAddAppRepo(repoUrl);
             successCount++;
+            // 更新已存在仓库列表
+            const updatedRepos = reposStore.get('default') || {};
+            existingRepoUrls.push(...Object.values(updatedRepos).map(r => r.repo.toLowerCase()));
         } catch (error) {
             console.error(`处理仓库 ${repoUrl} 失败: ${error}`);
             failedRepos.push({ repoUrl, error });
@@ -237,7 +253,7 @@ async function handleImportAppRepos() {
         }
     }
 
-    return { success: true, data: { successCount, failedRepos} };
+    return { success: true, data: { successCount, failedRepos, skippedCount} };
 }
 
 /**
