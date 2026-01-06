@@ -7,7 +7,7 @@ const { dialog } = require('electron');
 const { handleError } = require('@modules/ipc/errorHandler');
 const logger = require('@modules/utils/logger');
 
-const { getReposStore } = require('@modules/main/storageManager');
+const { getReposStore, getAppsStore } = require('@modules/main/storageManager');
 const repoUtils = require('@modules/utils/repoUtils');
 const fsUtils = require('@modules/utils/fs-utils');
 const DateFormat = require('@modules/utils/DateFormat');
@@ -162,7 +162,7 @@ async function handleAddAppRepo(repoUrl) {
         }));
 
         reposStore.set('default', reposData);
-        /*
+/*
 {
     "default": {
         "3a6f487d7f9f4fae86dcfbc3dde401a2": {
@@ -178,6 +178,20 @@ async function handleAddAppRepo(repoUrl) {
     }
 }
         */
+
+        // 对比"我的app"中已有的app，如果有相同id，则设置downloaded为true
+        const appsStore = getAppsStore();
+        const appsData = appsStore.get('default') || {};
+        const isAppDownloaded = Object.values(appsData).some(app => app.id === appJson.id);
+
+        if (isAppDownloaded) {
+            const updatedReposData = reposStore.get('default') || {};
+            updatedReposData[uuid].downloaded = true;
+            updatedReposData[uuid].downloadTime = Date.now();
+            reposStore.set('default', updatedReposData);
+            logger.info(`仓库 ${uuid} (id: ${appJson.id}) 已下载，更新状态`);
+        }
+
         return { success: true };
     } catch (error) {
         throw error;
@@ -243,8 +257,8 @@ async function handleImportAppRepos() {
         }
     }
 
+    // 通知前端仓库数据已更新
     if (successCount > 0) {
-        // 通知前端仓库数据已更新
         const windows = BrowserWindow.getAllWindows();
         logger.info('windows: {}', windows.length);
         if (windows.length > 0) {
