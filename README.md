@@ -8,12 +8,9 @@
 
 **Canbox** 没有服务器，可以：
 
-1. 通过github、gitee等进行app分享
-
-   ![warehouse-00](./public/screenshot/warehouse-00.png)![warehouse-source](./public/screenshot/warehouse-source.png)
-2. 导入app开发者打包好的程序包
-
-   ![myapp-00](./public/screenshot/myapp-00.png)
+1. 通过 github、gitee 等进行 APP 分享
+2. 导入 APP 开发者打包好的程序包
+3. 开发自己的 APP，打包分享给别人
 
 # 功能特性
 
@@ -21,14 +18,58 @@
 - **快捷方式**：为常用应用创建快捷方式。
 - **多系统支持**：基于Electron，支持linux、windows（未测试完全）、mac（我没有mac😢，这个等有mac的人来干😆）
 
-# APP
+# Canbox 使用
+
+## 添加 APP 源
 
 在“APP仓库”-“添加APP源”里填入下面的Repo URL，即可添加APP源。
 
-| App     | Repo URL                               | Description              |
-| ------- | -------------------------------------- | ------------------------ |
-| JsonBox | https://gitee.com/lizl6/cb-jsonbox     | JSON格式、转换           |
-| passgen | https://github.com/rexlevin/cb-passgen | 生成密码、随机串、时间戳 |
+| App     | Repo URL                               | Description                                   |
+| ------- | -------------------------------------- | --------------------------------------------- |
+| JsonBox | https://gitee.com/lizl6/cb-jsonbox     | JSON 格式化、JSON 转换其他格式， 如 xml、yaml |
+| PassGen | https://github.com/rexlevin/cb-passgen | 生成密码、随机串、时间戳                      |
+
+## 导入/导出 APP 源列表
+
+### 导出 APP 源列表
+
+1. 在"APP仓库"页面点击"导出 APP 源列表"按钮
+2. 选择保存位置和文件名（JSON 格式）
+3. 导出的文件包含当前所有仓库的完整信息
+
+### 导入 APP 源列表
+
+1. 在"APP仓库"页面点击"导入 APP 源列表"按钮
+2. 选择之前导出的 JSON 文件
+3. 系统会自动解析并添加仓库
+
+**导入文件格式要求**：
+
+- 文件类型：JSON（.json）
+- 格式：仓库数组
+- 必需字段：`repo`（仓库 URL）
+- 其他字段会被忽略
+
+**示例文件内容**：
+
+```json
+[
+    {
+        "repo": "https://github.com/user/repo1"
+    },
+    {
+        "repo": "https://github.com/user/repo2"
+    }
+]
+```
+
+# Canbox ScreenShot
+
+![warehouse-00](./public/screenshot/warehouse-00.png)
+
+![warehouse-source](./public/screenshot/warehouse-source.png)
+
+![myapp-00](./public/screenshot/myapp-00.png)
 
 # 下载
 

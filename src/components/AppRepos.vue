@@ -205,16 +205,34 @@ const importAppRepos = () => {
         console.log('importAppRepos ret: %o', ret);
         if (!ret.success && 'NoFileSelected' === ret.msg) {
             ElMessage('未选择任何文件');
+        } else if (!ret.success && 'Invalid JSON format' === ret.msg) {
+            ElMessage({
+                type: 'error',
+                message: '导入失败：JSON 格式无效'
+            });
+        } else if (!ret.success && 'Invalid format: expected an array of repos' === ret.msg) {
+            ElMessage({
+                type: 'error',
+                message: '导入失败：JSON 格式应为仓库数组'
+            });
         } else if (!ret.success) {
             ElMessage({
                 type: 'error',
                 message: '导入失败：' + ret.msg
             });
         } else {
-            ElMessage({
-                type: 'success',
-                message: '导入成功'
-            });
+            const { successCount, failedRepos } = ret.data || {};
+            if (failedRepos && failedRepos.length > 0) {
+                ElMessage({
+                    type: 'warning',
+                    message: `成功导入 ${successCount} 个仓库，失败 ${failedRepos.length} 个`
+                });
+            } else {
+                ElMessage({
+                    type: 'success',
+                    message: `成功导入 ${successCount} 个仓库`
+                });
+            }
         }
     });
 };

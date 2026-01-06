@@ -191,17 +191,32 @@ async function handleImportAppRepos() {
     const result = await dialog.showOpenDialog({
         title: '选择仓库列表文件',
         properties: ['openFile'],
-        filters: [{ name: 'Text Files', extensions: ['txt'] }]
+        filters: [{ name: 'JSON Files', extensions: ['json'] }]
     });
     if (result.canceled || result.filePaths.length === 0) {
         throw new Error('NoFileSelected');
     }
     const filePath = result.filePaths[0];
     const content = fs.readFileSync(filePath, 'utf-8');
-    const repoUrls = content.split('\n').filter(url => url.trim() !== '');
+    let reposData;
+    try {
+        reposData = JSON.parse(content);
+    } catch (error) {
+        throw new Error('Invalid JSON format');
+    }
+
+    if (!Array.isArray(reposData)) {
+        throw new Error('Invalid format: expected an array of repos');
+    }
 
     let successCount = 0, failedRepos = [];
-    for (const repoUrl of repoUrls) {
+    for (const repo of reposData) {
+        const repoUrl = repo.repo;
+        if (!repoUrl || typeof repoUrl !== 'string') {
+            console.warn(`跳过无效的仓库数据: %o`, repo);
+            failedRepos.push({ repo: repo, error: 'Missing or invalid repo field' });
+            continue;
+        }
         console.log(`正在处理仓库: ${repoUrl}`);
         try {
             await handleAddAppRepo(repoUrl);
