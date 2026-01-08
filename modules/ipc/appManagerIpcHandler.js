@@ -1,8 +1,12 @@
 const path = require('path');
 const fs = require('fs');
+const originalFs = require('original-fs');
 const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
-const { getAppPath } = require('@modules/main/pathManager');
+const { getAppPath, getAppDataPath } = require('@modules/main/pathManager');
+const { handleError } = require('@modules/ipc/errorHandler');
 const logger = require('@modules/utils/logger');
+const { handleImportApp } = require('@modules/main/appManager');
+const { deleteShortcuts } = require('@modules/main/shortcutManager');
 
 class AppManagerIpcHandler {
     constructor() {
@@ -116,6 +120,127 @@ class AppManagerIpcHandler {
             } catch (error) {
                 logger.error('IPC get-apps-dev-data error:', error);
                 return { success: false, msg: error.message, data: {}, wrong: {} };
+            }
+        });
+
+        // 导入应用（从 zip 文件）
+        this.handlers.set('import-app', async (event, zipPath) => {
+            try {
+                const ret = await handleImportApp(null, zipPath, null);
+                return ret;
+            } catch (error) {
+                return handleError(error, 'import-app');
+            }
+        });
+
+        // 删除应用
+        this.handlers.set('remove-app', async (event, param) => {
+            try {
+                const { id, devTag } = param;
+                if (!id) {
+                    return handleError(new Error('应用 ID 不能为空'), 'remove-app');
+                }
+
+                const store = devTag ? getAppsDevStore() : getAppsStore();
+                const appsData = store.get('default') || {};
+                const appItem = appsData[id];
+
+                if (!appItem) {
+                    return handleError(new Error('应用不存在'), 'remove-app');
+                }
+
+                // 删除应用文件
+                let appPath;
+                if (devTag) {
+                    appPath = appItem.path;
+                } else {
+                    appPath = path.join(getAppPath(), `${id}.asar`);
+                }
+
+                // 使用 original-fs 删除 asar 文件
+                try {
+                    originalFs.rmSync(appPath, { recursive: true, force: true });
+                    logger.info(`应用文件已删除: ${appPath}`);
+                } catch (error) {
+                    logger.warn(`删除应用文件失败: ${error}`);
+                }
+
+                // 删除 logo 文件（生产环境）
+                if (!devTag) {
+                    try {
+                        // 删除 .asar.unpacked 目录
+                        const unpackedPath = path.join(getAppPath(), `${id}.asar.unpacked`);
+                        originalFs.rmSync(unpackedPath, { recursive: true, force: true });
+                        logger.info(`asar.unpacked 目录已删除: ${unpackedPath}`);
+                    } catch (error) {
+                        logger.warn(`删除 asar.unpacked 目录失败: ${error}`);
+                    }
+
+                    // 删除 logo 文件（文件名可能是 uuid.png, uuid.jpg 等）
+                    try {
+                        const appsData = store.get('default') || {};
+                        const appItem = appsData[id];
+                        if (appItem && appItem.logo) {
+                            // 尝试删除常见的 logo 文件扩展名
+                            const logoExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico'];
+                            for (const ext of logoExtensions) {
+                                const logoPath = path.join(getAppPath(), `${id}${ext}`);
+                                if (fs.existsSync(logoPath)) {
+                                    originalFs.unlinkSync(logoPath);
+                                    logger.info(`Logo 文件已删除: ${logoPath}`);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        logger.warn(`删除 logo 文件失败: ${error}`);
+                    }
+                }
+
+                // 从存储中删除
+                delete appsData[id];
+                store.set('default', appsData);
+
+                // 删除快捷方式（仅生产环境应用）
+                if (!devTag) {
+                    try {
+                        const result = deleteShortcuts({ [id]: appItem });
+                        if (result.success) {
+                            logger.info(`应用快捷方式已删除: ${id}`);
+                        } else {
+                            logger.warn(`删除应用快捷方式失败: ${id}, ${result.error}`);
+                        }
+                    } catch (error) {
+                        logger.warn(`删除应用快捷方式异常: ${id}, ${error}`);
+                    }
+                }
+
+                logger.info(`应用已删除: ${id}, devTag: ${devTag}`);
+                return { success: true };
+            } catch (error) {
+                return handleError(error, 'remove-app');
+            }
+        });
+
+        // 清除应用数据
+        this.handlers.set('clearAppData', async (event, id) => {
+            try {
+                if (!id) {
+                    return handleError(new Error('应用 ID 不能为空'), 'clearAppData');
+                }
+
+                const appDataPath = getAppDataPath(id);
+
+                // 使用 original-fs 删除应用数据目录
+                if (fs.existsSync(appDataPath)) {
+                    originalFs.rmSync(appDataPath, { recursive: true, force: true });
+                    logger.info(`应用数据已清除: ${appDataPath}`);
+                } else {
+                    logger.info(`应用数据目录不存在: ${appDataPath}`);
+                }
+
+                return { success: true };
+            } catch (error) {
+                return handleError(error, 'clearAppData');
             }
         });
     }
