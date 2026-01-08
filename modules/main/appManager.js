@@ -85,19 +85,8 @@ async function handleImportApp(event, zipPath, uid) {
         // 检查是否有 getAppTempPath() 目录，有则删除，使用 original-fs 来操作 asar 文件
         if (fs.existsSync(getAppTempPath())) {
             logger.info(`${getAppTempPath()} 目录开始删除`);
-            try {
-                originalFs.rmSync(getAppTempPath(), { recursive: true, force: true });
-                logger.info(`${getAppTempPath()} 目录已删除（使用 original-fs）`);
-            } catch (error) {
-                // 如果 original-fs 删除失败，回退到系统命令
-                logger.warn(`original-fs 删除失败，回退到系统命令: ${error}`);
-                if (process.platform === 'win32') {
-                    await execSync(`del /f /q "${getAppTempPath()}"`, { stdio: 'inherit' });
-                } else {
-                    await execSync(`rm -rf "${getAppTempPath()}"`, { stdio: 'inherit' });
-                }
-                logger.info(`${getAppTempPath()} 目录已删除（使用系统命令）`);
-            }
+            originalFs.rmSync(getAppTempPath(), { recursive: true, force: true });
+            logger.info(`${getAppTempPath()} 目录已删除（使用 original-fs）`);
         } else {
             logger.info(`${getAppTempPath()} 目录不存在，跳过删除`);
         }
@@ -122,15 +111,9 @@ async function handleImportApp(event, zipPath, uid) {
         if (!fs.existsSync(targetDir)) {
             fs.mkdirSync(targetDir, { recursive: true });
         }
-        try {
-            const command = process.platform === 'win32'
-                ? `copy "${absoluteAsarPath}" "${targetPath}"`
-                : `cp "${absoluteAsarPath}" "${targetPath}"`;
-            execSync(command, { stdio: 'inherit' });
-            console.log('ZIP 文件复制成功！');
-        } catch (err) {
-            console.error('复制失败:', err);
-        }
+        // 使用 fs.copyFileSync 替代命令行复制
+        fs.copyFileSync(absoluteAsarPath, targetPath);
+        console.log('ZIP 文件复制成功！');
         logger.info('333333333333333');
 
         // 将 getAppTempPath() 目录下的 zip 文件解压
@@ -152,16 +135,20 @@ async function handleImportApp(event, zipPath, uid) {
                 fs.renameSync(path.join(getAppTempPath(), file), path.join(getAppTempPath(), `${uuid}.asar.unpacked`));
             }
         });
-        // 将 getAppTempPath() 下的所有文件移动到 getAppPath() 下，由于asar文件的特殊性，这里使用系统命令来进行移动操作
+        // 将 getAppTempPath() 下的所有文件移动到 getAppPath() 下，使用 original-fs 来操作 asar 文件
         if (fs.existsSync(getAppTempPath())) {
             if (!fs.existsSync(getAppPath())) {
                 fs.mkdirSync(getAppPath(), { recursive: true });
             }
-            if (process.platform === 'win32') {
-                await execSync(`move "${getAppTempPath()}\\*" "${getAppPath()}\\"`, { stdio: 'inherit' });
-            } else {
-                await execSync(`mv "${getAppTempPath()}"/* "${getAppPath()}"`, { stdio: 'inherit' });
-            }
+            // 使用 original-fs 移动文件
+            const filesToMove = originalFs.readdirSync(getAppTempPath());
+            filesToMove.forEach(file => {
+                const srcPath = path.join(getAppTempPath(), file);
+                const destPath = path.join(getAppPath(), file);
+                originalFs.renameSync(srcPath, destPath);
+            });
+            // 删除临时目录
+            originalFs.rmSync(getAppTempPath(), { recursive: true, force: true });
         }
         logger.info('4444444444444444');
 
