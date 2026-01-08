@@ -75,6 +75,7 @@ const buildAsar = async (uid) => {
         logger.info(`开始打包应用: ${appJson.id} 版本: ${appJson.version}`);
         // 把目录 outputDir 下所有内容打包为一个zip文件，名字为：${appDevItem.appJson.id}-${appDevItem.appJson.version}
         const zipPath = path.join(outputDir, `${appJson.id}-${appJson.version}.zip`);
+        // 使用命令行打包
         if (process.platform === 'win32') {
             execSync(`powershell -Command "Compress-Archive -Path '${outputDir}\\*' -DestinationPath '${zipPath}' -Force"`, { stdio: 'inherit' });
         } else {
@@ -83,21 +84,16 @@ const buildAsar = async (uid) => {
         console.info('zipPath:', zipPath);
         logger.info(`打包应用: ${appJson.id} 版本: ${appJson.version} 成功`);
 
-        // 调试：打印 outputDir 目录下的文件列表
-        if (process.platform === 'win32') {
-            execSync(`powershell -Command "Get-ChildItem -Path '${outputDir}' | Select-Object Name, FullName"`, { stdio: 'inherit' });
-        } else {
-            execSync(`ls -la "${outputDir}"`, { stdio: 'inherit' });
-        }
-
-        // 删除 outputDir 目录下除了 ${appDevItem.appJson.id}-${appDevItem.appJson.version}.zip 之外的所有文件
-        // const zipFileName = `${appJson.id}-${appJson.version}.zip`;
-        // if (process.platform === 'win32') {
-        //     execSync(`powershell -Command "Get-ChildItem -Path '${outputDir}' | Where-Object { $_.Name -ne '${zipFileName}' } | Remove-Item -Force -Recurse"`, { stdio: 'inherit' });
-        //     // execSync(`powershell -Command "Get-ChildItem -Path '${outputDir}' | Where-Object { $_.Name -eq '${zipFileName}' } | ForEach-Object { Write-Host '保留文件:' $_.FullName }; Get-ChildItem -Path '${outputDir}' | Where-Object { $_.Name -ne '${zipFileName}' } | Remove-Item -Force -Recurse"`, { stdio: 'inherit' });
-        // } else {
-        //     execSync(`find "${outputDir}" -mindepth 1 -maxdepth 1 ! -name '${zipFileName}' -exec rm -rf {} +`, { stdio: 'inherit' });
-        // }
+        // 删除 outputDir 目录下除了 ${appJson.id}-${appJson.version}.zip 之外的所有文件
+        const zipFileName = `${appJson.id}-${appJson.version}.zip`;
+        const filesInOutputDir = originalFs.readdirSync(outputDir);
+        filesInOutputDir.forEach(file => {
+            if (file !== zipFileName) {
+                const filePath = path.join(outputDir, file);
+                originalFs.rmSync(filePath, { recursive: true, force: true });
+                console.info(`删除文件: ${filePath}`);
+            }
+        });
 
         return { success: true, msg: '打包成功', asarPath };
     } catch (err) {
