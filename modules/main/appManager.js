@@ -92,12 +92,10 @@ async function handleImportApp(event, zipPath, uid) {
         }
         // 创建 getAppTempPath() 目录
         fs.mkdirSync(getAppTempPath(), { recursive: true });
-        logger.info('11111111111');
 
         // 将文件复制到 getAppTempPath() 目录下
         const uuid = uid || uuidv4().replace(/-/g, '');
         const targetPath = path.join(getAppTempPath(), `${uuid}.zip`);
-        logger.info('22222222222');
 
         if (!fs.existsSync(zipPath)) {
             return handleError(new Error(`源文件不存在: ${zipPath}`), 'handleImportApp');
@@ -114,7 +112,6 @@ async function handleImportApp(event, zipPath, uid) {
         // 使用 fs.copyFileSync 替代命令行复制
         fs.copyFileSync(absoluteAsarPath, targetPath);
         console.log('ZIP 文件复制成功！');
-        logger.info('333333333333333');
 
         // 将 getAppTempPath() 目录下的 zip 文件解压
         if (process.platform === 'win32') {
@@ -150,7 +147,6 @@ async function handleImportApp(event, zipPath, uid) {
             // 删除临时目录
             originalFs.rmSync(getAppTempPath(), { recursive: true, force: true });
         }
-        logger.info('4444444444444444');
 
         console.info(DateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
         console.info(DateFormat.format(new Date()));

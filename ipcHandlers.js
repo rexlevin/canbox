@@ -87,7 +87,7 @@ function initIpcHandlers() {
     // 打包 ASAR
     ipcMain.handle('pack-asar', async (event, uid) => {
         console.info('main.js==pack-asar uid: ', uid);
-        return require('./modules/main/build-asar').buildAsar(uid);
+        return require('@modules/build-asar').buildAsar(uid);
     });
 
     // 选择文件

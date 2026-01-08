@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const originalFs = require('original-fs'); // 使用 original-fs 来操作 asar 文件
 const fse = require('fs-extra');
 const glob = require('glob'); 
 const asar = require('asar');
@@ -26,17 +27,10 @@ const buildAsar = async (uid) => {
         const asarPath = path.join(outputDir, `${appJson.id}-${appJson.version}.asar`);
 
         // 创建输出目录和临时目录
-        if (fs.existsSync(outputDir)) {
-            // app.asar 有其特殊性，它是文件，在linux使用fs.rmSync时代码会尝试以目录方式删除它，实际上它是个文件（fs.state(xxx.asar)）
-            // fs.rmSync(outputDir, { recursive: true });
-            if (process.platform === 'win32') {
-                // Windows
-                execSync(`del /s /q "${outputDir}"`, { stdio: 'inherit' });
-                execSync(`rmdir /s /q "${outputDir}"`, { stdio: 'inherit' });
-            } else {
-                // Linux/macOS
-                execSync(`rm -rf "${outputDir}"`, { stdio: 'inherit' });
-            }
+        // app.asar 有其特殊性，它是文件，在linux使用fs.rmSync时代码会尝试以目录方式删除它，实际上它是个文件（fs.state(xxx.asar)）
+        // 使用 original-fs 来正确删除包含 asar 文件的目录
+        if (originalFs.existsSync(outputDir)) {
+            originalFs.rmSync(outputDir, { recursive: true, force: true });
         }
         // fs.mkdirSync(outputDir, { recursive: true });
         fs.mkdirSync(tmpDir, { recursive: true });
