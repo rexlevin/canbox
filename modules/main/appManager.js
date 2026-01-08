@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const originalFs = require('original-fs'); // 使用 original-fs 来操作 asar 文件
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
@@ -81,16 +82,25 @@ async function handleImportApp(event, zipPath, uid) {
     // 如果uid有值说明是从repos下载的，importTag为false，否则是导入的，importTag为true
     const importTag = !uid?.trim();
     try {
-        // 检查是否有 getAppTempPath() 目录，有则删除，asar有其特殊性，这里使用系统的命令来做删除
+        // 检查是否有 getAppTempPath() 目录，有则删除，使用 original-fs 来操作 asar 文件
         if (fs.existsSync(getAppTempPath())) {
             logger.info(`${getAppTempPath()} 目录开始删除`);
-            if (process.platform === 'win32') {
-                await execSync(`del /f /q "${getAppTempPath()}"`, { stdio: 'inherit' });
-            } else {
-                await execSync(`rm -rf "${getAppTempPath()}"`, { stdio: 'inherit' });
+            try {
+                originalFs.rmSync(getAppTempPath(), { recursive: true, force: true });
+                logger.info(`${getAppTempPath()} 目录已删除（使用 original-fs）`);
+            } catch (error) {
+                // 如果 original-fs 删除失败，回退到系统命令
+                logger.warn(`original-fs 删除失败，回退到系统命令: ${error}`);
+                if (process.platform === 'win32') {
+                    await execSync(`del /f /q "${getAppTempPath()}"`, { stdio: 'inherit' });
+                } else {
+                    await execSync(`rm -rf "${getAppTempPath()}"`, { stdio: 'inherit' });
+                }
+                logger.info(`${getAppTempPath()} 目录已删除（使用系统命令）`);
             }
+        } else {
+            logger.info(`${getAppTempPath()} 目录不存在，跳过删除`);
         }
-        logger.info(`${getAppTempPath()} 目录已删除`);
         // 创建 getAppTempPath() 目录
         fs.mkdirSync(getAppTempPath(), { recursive: true });
         logger.info('11111111111');
