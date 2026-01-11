@@ -6,10 +6,94 @@ const os = require('os');
 const { getCanboxStore } = require('@modules/main/storageManager');
 const { getAppPath, getAppIconPath } = require('@modules/main/pathManager');
 const { handleError } = require('@modules/ipc/errorHandler');
+const sharp = require('sharp');
+
+/**
+ * 将 PNG/JPEG 图片转换为 ICO 格式
+ * @param {string} inputPath - 输入图片路径
+ * @param {string} outputPath - 输出 ICO 路径
+ */
+async function convertToIco(inputPath, outputPath) {
+    try {
+        // 先转换为 256x256 的 PNG
+        const tempPngPath = outputPath.replace('.ico', '.temp.png');
+        await sharp(inputPath)
+            .resize(256, 256, {
+                fit: 'contain',
+                background: { r: 0, g: 0, b: 0, alpha: 0 }
+            })
+            .png()
+            .toFile(tempPngPath);
+
+        // 创建简单的 ICO 文件
+        await createSimpleIco(tempPngPath, outputPath);
+
+        // 删除临时文件
+        if (fs.existsSync(tempPngPath)) {
+            fs.unlinkSync(tempPngPath);
+        }
+
+        console.log(`成功转换图标: ${inputPath} -> ${outputPath}`);
+    } catch (error) {
+        console.error('转换图标失败:', error);
+        // 清理临时文件
+        const tempPngPath = outputPath.replace('.ico', '.temp.png');
+        if (fs.existsSync(tempPngPath)) {
+            try {
+                fs.unlinkSync(tempPngPath);
+            } catch (cleanupError) {
+                console.error('清理临时文件失败:', cleanupError);
+            }
+        }
+        throw error;
+    }
+}
+
+/**
+ * 使用 PNG 文件创建简单的 ICO 文件
+ * @param {string} pngPath - 输入 PNG 路径
+ * @param {string} outputPath - 输出 ICO 路径
+ */
+async function createSimpleIco(pngPath, outputPath) {
+    return new Promise((resolve, reject) => {
+        try {
+            // 读取 PNG 文件
+            const pngData = fs.readFileSync(pngPath);
+
+            // ICO 文件头 (6 bytes)
+            const header = Buffer.alloc(6);
+            header.writeUInt16LE(0, 0);     // 保留字段
+            header.writeUInt16LE(1, 2);     // 图像类型 (1 = ICO)
+            header.writeUInt16LE(1, 4);     // 图像数量 (1)
+
+            // ICO 目录条目 (16 bytes)
+            const dirEntry = Buffer.alloc(16);
+            const width = 256;
+            const height = 256;
+            dirEntry.writeUInt8(width >= 256 ? 0 : width, 0);   // 宽度 (0 表示 256)
+            dirEntry.writeUInt8(height >= 256 ? 0 : height, 1);  // 高度 (0 表示 256)
+            dirEntry.writeUInt8(0, 2);                          // 颜色数 (0 = >=8bpp)
+            dirEntry.writeUInt8(0, 3);                          // 保留字段
+            dirEntry.writeUInt16LE(1, 4);                       // 颜色平面
+            dirEntry.writeUInt16LE(32, 6);                      // 每像素位数 (32 = RGBA)
+            dirEntry.writeUInt32LE(pngData.length, 8);          // 图像数据大小
+            dirEntry.writeUInt32LE(22, 12);                     // 图像数据偏移量 (6 + 16)
+
+            // 组合所有数据
+            const icoData = Buffer.concat([header, dirEntry, pngData]);
+            fs.writeFileSync(outputPath, icoData);
+
+            console.log(`ICO文件创建成功: ${outputPath} (${pngData.length} bytes)`);
+            resolve();
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
 
 /**
  * 生成应用快捷方式
- * 
+ *
  * 不同系统的快捷方式存储路径：
  * Windows: %APPDATA%/Microsoft/Windows/Start Menu/Programs
  * Linux: ~/.local/share/applications
@@ -18,7 +102,7 @@ const { handleError } = require('@modules/ipc/errorHandler');
  * @param {Object} appsData - 所有应用
  * @returns {Object} - 操作结果
  */
-function generateShortcuts(appsData) {
+async function generateShortcuts(appsData) {
     if (!appsData || Object.keys(appsData).length === 0) {
         return handleError('应用信息为空', 'generateShortcuts');
     }
@@ -26,7 +110,7 @@ function generateShortcuts(appsData) {
     const execPath = process.env.APPIMAGE || process.execPath;
 
     try {
-        Object.entries(appsData).forEach(([uid, appItem]) => {
+        for (const [uid, appItem] of Object.entries(appsData)) {
             const appName = 'canbox-' + appItem.name;
             let shortcutPath, command;
 
@@ -35,16 +119,25 @@ function generateShortcuts(appsData) {
                 fs.mkdirSync(getAppIconPath(), { recursive: true });
             }
 
-            // 原始图标路径（asar包内）
-            const originalIconPath = path.join(getAppPath(), `${uid}.asar`, appItem.logo);
-            const iconExt = path.extname(originalIconPath);
-            // 缓存图标路径
-            const iconPath = path.join(getAppIconPath(), `${uid}${iconExt}`);
+            // 图标路径（和 asar 包同级）
+            // 文件名格式：${uid}.${ext}，ext 来自 appItem.logo
+            const iconExt = path.extname(appItem.logo).toLowerCase();
+            const sourceIconPath = path.join(getAppPath(), `${uid}${iconExt}`);
+            const cacheIconExt = process.platform === 'win32' ? '.ico' : iconExt;
+            const iconPath = path.join(getAppIconPath(), `${uid}${cacheIconExt}`);
 
             // 复制图标到缓存目录（如果不存在或需要更新）
-            if (!fs.existsSync(iconPath) || 
-                (fs.existsSync(originalIconPath) && fs.statSync(originalIconPath).mtimeMs > fs.statSync(iconPath).mtimeMs)) {
-                fs.copyFileSync(originalIconPath, iconPath);
+            const needUpdate = !fs.existsSync(iconPath) ||
+                (fs.existsSync(sourceIconPath) && fs.statSync(sourceIconPath).mtimeMs > fs.statSync(iconPath).mtimeMs);
+
+            if (needUpdate) {
+                if (process.platform === 'win32' && (iconExt === '.png' || iconExt === '.jpg' || iconExt === '.jpeg')) {
+                    // Windows 下需要将 PNG/JPEG 转换为 ICO 格式
+                    await convertToIco(sourceIconPath, iconPath);
+                } else {
+                    // 直接复制原文件
+                    fs.copyFileSync(sourceIconPath, iconPath);
+                }
             }
 
             if (process.platform === 'win32') {
@@ -52,7 +145,20 @@ function generateShortcuts(appsData) {
                 shortcutPath = path.join(programsPath, `${appName}.lnk`);
                 const targetPath = execPath;
                 const arguments = '--no-sandbox --app-id=' + uid;
-                command = `powershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('${shortcutPath}'); $Shortcut.TargetPath = '${targetPath}'; $Shortcut.Arguments = '${arguments}'; $Shortcut.IconLocation = '${iconPath}'; $Shortcut.Save()"`;
+
+                // 确保目录存在
+                if (!fs.existsSync(programsPath)) {
+                    fs.mkdirSync(programsPath, { recursive: true });
+                }
+
+                // 使用转义后的路径创建快捷方式，确保图标路径正确
+                command = `powershell -Command `
+                    + `"$ws = New-Object -ComObject WScript.Shell; `
+                    + `$s = $ws.CreateShortcut('${shortcutPath.replace(/\\/g, '\\\\')}'); `
+                    + `$s.TargetPath = '${targetPath.replace(/\\/g, '\\\\')}'; `
+                    + `$s.Arguments = '${arguments}'; `
+                    + `$s.IconLocation = '${iconPath.replace(/\\/g, '\\\\')},0'; `
+                    + `$s.Save()"`;
                 execSync(command);
             } else if (process.platform === 'darwin') {
                 shortcutPath = path.join('/Applications', `${appName}.app`);
@@ -75,7 +181,7 @@ StartupWMClass=${uid}
 `;
                 fs.writeFileSync(shortcutPath, desktopFile);
             }
-        });
+        }
         return { success: true };
     } catch (error) {
         console.error('生成快捷方式失败:', error);
@@ -112,11 +218,22 @@ function deleteShortcuts(appsData) {
             }
             
             // 删除缓存的图标文件
-            const originalIconPath = path.join(getAppPath(), `${uid}.asar`, appItem.logo);
-            const iconExt = path.extname(originalIconPath);
-            const iconPath = path.join(getAppIconPath(), `${uid}${iconExt}`);
-            if (fs.existsSync(iconPath)) {
-                fs.unlinkSync(iconPath);
+            const iconExt = path.extname(appItem.logo).toLowerCase();
+            // 删除可能的图标文件格式（ICO 或原始格式）
+            const possibleIconExts = process.platform === 'win32'
+                ? ['.ico', iconExt]
+                : [iconExt];
+
+            for (const ext of possibleIconExts) {
+                const iconPath = path.join(getAppIconPath(), `${uid}${ext}`);
+                if (fs.existsSync(iconPath)) {
+                    try {
+                        fs.unlinkSync(iconPath);
+                        console.log(`删除图标文件: ${iconPath}`);
+                    } catch (error) {
+                        console.error(`删除图标文件失败: ${iconPath}`, error);
+                    }
+                }
             }
         });
         return { success: true };
@@ -167,7 +284,7 @@ const markVersion = (currentVersion) => {
 async function initShortcuts(currentVersion, appsData) {
     try {
         if (needRegenerateShortcuts(currentVersion) && appsData) {
-            const result = generateShortcuts(appsData);
+            const result = await generateShortcuts(appsData);
             if (result.success) {
                 markVersion(currentVersion);
             }
