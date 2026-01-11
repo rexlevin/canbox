@@ -191,12 +191,31 @@ const createWindow = () => {
         logger.info('[main.js] now load canbox in uatDev: {}', uatDev.main);
         win.loadURL(uatDev.main);
     } else {
-        console.info('now load app==%s', path.join('file://', __dirname, './build/index.html'));
-        win.loadURL(path.join('file://', __dirname, './build/index.html'));
+        const indexPath = path.join(__dirname, './build/index.html');
+        console.info('now load app==%s', indexPath);
+        // 使用 file 协议加载本地文件
+        win.loadFile(indexPath);
     }
 
     // win.setMenu(Menu.buildFromTemplate(menuTemplate));
     win.setMenu(null);
+
+    // 添加错误处理，监控加载失败的情况
+    win.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+        console.error('Failed to load:', errorCode, errorDescription);
+        logger.error('Failed to load: {} - {}', errorCode, errorDescription);
+    });
+
+    // 添加页面加载完成后的日志
+    win.webContents.on('did-finish-load', () => {
+        console.log('Page loaded successfully');
+        logger.info('Page loaded successfully');
+    });
+
+    // 添加 console 日志输出到主进程
+    win.webContents.on('console-message', (event, level, message, line, sourceId) => {
+        console.log(`[Renderer Console] ${message}`);
+    });
 
     if (os === 'win') {
         win.setAppDetails({

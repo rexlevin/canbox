@@ -33,8 +33,8 @@
             "preload.js",
             "tray.js",
             "README.md",
-            "node_modules/module-alias",
-            "!node_modules/electron"
+            "package.json",
+            "!node_modules/electron/**/*"
         ],
         "directories": {
             "output": "./dist"
