@@ -78,6 +78,12 @@ const winFactory = {
             console.info('win.js, loadURL: ', loadURL);
 
             const win = new BrowserWindow(options);
+
+            // Windows 下需要修复 file 协议路径，确保使用正斜杠
+            if (loadURL.startsWith('file://')) {
+                loadURL = loadURL.replace(/\\/g, '/');
+            }
+
             win.loadURL(loadURL);
             win.setMenu(null);
             
