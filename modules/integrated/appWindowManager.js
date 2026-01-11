@@ -87,8 +87,10 @@ class AppWindowManager {
 
                 if (!devTag) {
                     const logoExt = path.extname(appJson.logo);
-                    options.icon = path.resolve(getAppPath(), `${uid}${logoExt}`);
-                    console.info('当前是正式模式， 使用 app 目录下的logo: ', options.icon);
+                    // Windows 下优先使用 ICO 格式，其他系统使用原始格式
+                    const iconExt = os.platform() === 'win32' ? '.ico' : logoExt;
+                    options.icon = path.resolve(getAppPath(), `${uid}${iconExt}`);
+                    console.info('当前是正式模式，使用 app 目录下的logo: ', options.icon);
                 }
 
                 // 设置 Web 偏好选项
@@ -142,6 +144,14 @@ class AppWindowManager {
 
             // 创建窗口
             const appWin = new BrowserWindow(options);
+
+            // Windows 下设置 AppUserModelID 以区分任务栏图标
+            if (os.platform() === 'win32') {
+                appWin.setAppDetails({
+                    appId: `com.canbox.app.${uid}`,
+                    appIconPath: options.icon
+                });
+            }
 
             // 最大化处理
             if (state?.isMax) {

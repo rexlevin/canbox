@@ -119,25 +119,23 @@ async function generateShortcuts(appsData) {
                 fs.mkdirSync(getAppIconPath(), { recursive: true });
             }
 
-            // 图标路径（和 asar 包同级）
-            // 文件名格式：${uid}.${ext}，ext 来自 appItem.logo
-            const iconExt = path.extname(appItem.logo).toLowerCase();
-            const sourceIconPath = path.join(getAppPath(), `${uid}${iconExt}`);
-            const cacheIconExt = process.platform === 'win32' ? '.ico' : iconExt;
-            const iconPath = path.join(getAppIconPath(), `${uid}${cacheIconExt}`);
+            // 图标路径
+            // Windows 下使用已生成的 ICO 文件，其他系统使用原始格式
+            const logoExt = path.extname(appItem.logo).toLowerCase();
+            const sourceIconPath = process.platform === 'win32'
+                ? path.join(getAppPath(), `${uid}.ico`)
+                : path.join(getAppPath(), `${uid}${logoExt}`);
+
+            // 缓存图标路径（所有系统都缓存到同一个位置）
+            const iconPath = path.join(getAppIconPath(), `${uid}${path.extname(sourceIconPath)}`);
 
             // 复制图标到缓存目录（如果不存在或需要更新）
             const needUpdate = !fs.existsSync(iconPath) ||
                 (fs.existsSync(sourceIconPath) && fs.statSync(sourceIconPath).mtimeMs > fs.statSync(iconPath).mtimeMs);
 
             if (needUpdate) {
-                if (process.platform === 'win32' && (iconExt === '.png' || iconExt === '.jpg' || iconExt === '.jpeg')) {
-                    // Windows 下需要将 PNG/JPEG 转换为 ICO 格式
-                    await convertToIco(sourceIconPath, iconPath);
-                } else {
-                    // 直接复制原文件
-                    fs.copyFileSync(sourceIconPath, iconPath);
-                }
+                // 直接复制图标文件（Windows 下已经转换过 ICO）
+                fs.copyFileSync(sourceIconPath, iconPath);
             }
 
             if (process.platform === 'win32') {

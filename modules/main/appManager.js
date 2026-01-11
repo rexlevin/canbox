@@ -3,12 +3,97 @@ const fs = require('fs');
 const originalFs = require('original-fs'); // 使用 original-fs 来操作 asar 文件
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
+const sharp = require('sharp');
 const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
-const { getAppPath, getAppTempPath } = require('@modules/main/pathManager');
+const { getAppPath, getAppTempPath, getAppIconPath } = require('@modules/main/pathManager');
 const { handleError } = require('@modules/ipc/errorHandler')
 const DateFormat = require('@modules/utils/DateFormat');
 const logger = require('@modules/utils/logger');
 const fsUtils = require('@modules/utils/fs-utils');
+
+/**
+ * 将 PNG/JPEG 图片转换为 ICO 格式
+ * @param {string} inputPath - 输入图片路径
+ * @param {string} outputPath - 输出 ICO 路径
+ */
+async function convertToIco(inputPath, outputPath) {
+    try {
+        // 先转换为 256x256 的 PNG
+        const tempPngPath = outputPath.replace('.ico', '.temp.png');
+        await sharp(inputPath)
+            .resize(256, 256, {
+                fit: 'contain',
+                background: { r: 0, g: 0, b: 0, alpha: 0 }
+            })
+            .png()
+            .toFile(tempPngPath);
+
+        // 创建简单的 ICO 文件
+        await createSimpleIco(tempPngPath, outputPath);
+
+        // 删除临时文件
+        if (fs.existsSync(tempPngPath)) {
+            fs.unlinkSync(tempPngPath);
+        }
+
+        console.log(`成功转换图标: ${inputPath} -> ${outputPath}`);
+        return true;
+    } catch (error) {
+        console.error('转换图标失败:', error);
+        // 清理临时文件
+        const tempPngPath = outputPath.replace('.ico', '.temp.png');
+        if (fs.existsSync(tempPngPath)) {
+            try {
+                fs.unlinkSync(tempPngPath);
+            } catch (cleanupError) {
+                console.error('清理临时文件失败:', cleanupError);
+            }
+        }
+        return false;
+    }
+}
+
+/**
+ * 使用 PNG 文件创建简单的 ICO 文件
+ * @param {string} pngPath - 输入 PNG 路径
+ * @param {string} outputPath - 输出 ICO 路径
+ */
+async function createSimpleIco(pngPath, outputPath) {
+    return new Promise((resolve, reject) => {
+        try {
+            // 读取 PNG 文件
+            const pngData = fs.readFileSync(pngPath);
+
+            // ICO 文件头 (6 bytes)
+            const header = Buffer.alloc(6);
+            header.writeUInt16LE(0, 0);     // 保留字段
+            header.writeUInt16LE(1, 2);     // 图像类型 (1 = ICO)
+            header.writeUInt16LE(1, 4);     // 图像数量 (1)
+
+            // ICO 目录条目 (16 bytes)
+            const dirEntry = Buffer.alloc(16);
+            const width = 256;
+            const height = 256;
+            dirEntry.writeUInt8(width >= 256 ? 0 : width, 0);   // 宽度 (0 表示 256)
+            dirEntry.writeUInt8(height >= 256 ? 0 : height, 1);  // 高度 (0 表示 256)
+            dirEntry.writeUInt8(0, 2);                          // 颜色数 (0 = >=8bpp)
+            dirEntry.writeUInt8(0, 3);                          // 保留字段
+            dirEntry.writeUInt16LE(1, 4);                       // 颜色平面
+            dirEntry.writeUInt16LE(32, 6);                      // 每像素位数 (32 = RGBA)
+            dirEntry.writeUInt32LE(pngData.length, 8);          // 图像数据大小
+            dirEntry.writeUInt32LE(22, 12);                     // 图像数据偏移量 (6 + 16)
+
+            // 组合所有数据
+            const icoData = Buffer.concat([header, dirEntry, pngData]);
+            fs.writeFileSync(outputPath, icoData);
+
+            console.log(`ICO文件创建成功: ${outputPath} (${pngData.length} bytes)`);
+            resolve();
+        } catch (error) {
+            reject(error);
+        }
+    });
+}
 
 /**
  * 获取所有应用数据
@@ -171,11 +256,19 @@ async function handleImportApp(event, zipPath, uid) {
 
         // 复制logo文件到目标目录
         const logoPathInAsar = path.join(asarTargetPath, appJson.logo);
-        const logoExt = path.extname(appJson.logo);
+        const logoExt = path.extname(appJson.logo).toLowerCase();
         const logoPathInTarget = path.join(getAppPath(), `${uuid}${logoExt}`);
+
         try {
             fs.copyFileSync(logoPathInAsar, logoPathInTarget);
             console.log('Logo 文件复制成功！');
+
+            // Windows 下生成 ICO 格式的图标
+            if (process.platform === 'win32' && (logoExt === '.png' || logoExt === '.jpg' || logoExt === '.jpeg')) {
+                const icoPath = path.join(getAppPath(), `${uuid}.ico`);
+                console.log('开始生成 ICO 文件...');
+                await convertToIco(logoPathInTarget, icoPath);
+            }
         } catch (err) {
             console.error('复制logo文件失败:', err);
         }
