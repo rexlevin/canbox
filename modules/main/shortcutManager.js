@@ -50,8 +50,9 @@ function generateShortcuts(appsData) {
             if (process.platform === 'win32') {
                 const programsPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Microsoft', 'Windows', 'Start Menu', 'Programs');
                 shortcutPath = path.join(programsPath, `${appName}.lnk`);
-                const targetPath = `"${execPath}" --no-sandbox --app-id=${uid}`;
-                command = `powershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('${shortcutPath}'); $Shortcut.TargetPath = '${targetPath}'; $Shortcut.IconLocation = '${iconPath}'; $Shortcut.Save()"`;
+                const targetPath = execPath;
+                const arguments = '--no-sandbox --app-id=' + uid;
+                command = `powershell -Command "$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('${shortcutPath}'); $Shortcut.TargetPath = '${targetPath}'; $Shortcut.Arguments = '${arguments}'; $Shortcut.IconLocation = '${iconPath}'; $Shortcut.Save()"`;
                 execSync(command);
             } else if (process.platform === 'darwin') {
                 shortcutPath = path.join('/Applications', `${appName}.app`);
