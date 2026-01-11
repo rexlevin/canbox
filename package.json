@@ -24,6 +24,7 @@
         "asar": true,
         "files": [
             "build/**/*",
+            "docs/**/*",
             "modules/**/*",
             "public/**/*",
             "ipcHandlers.js",

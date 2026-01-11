@@ -126,12 +126,19 @@ function initReadFileIpcHandlers() {
         try {
             const fs = require('fs');
             const path = require('path');
+            const { app } = require('electron');
+            
+            // 获取应用路径：开发环境使用项目根目录，打包后使用 app.getAppPath()
+            const appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');
             
             // 构建完整的文件路径
-            const filePath = path.join(__dirname, '../../', args.filePath);
+            const filePath = path.join(appPath, args.filePath);
+            
+            console.info('[api.js] 尝试读取文件: ', filePath);
             
             // 检查文件是否存在
             if (!fs.existsSync(filePath)) {
+                console.error('[api.js] 文件不存在: ', filePath);
                 return { 
                     success: false, 
                     msg: `文件不存在: ${args.filePath}` 
@@ -146,7 +153,7 @@ function initReadFileIpcHandlers() {
                 data: content 
             };
         } catch (error) {
-            console.error('读取文件失败:', error);
+            console.error('[api.js] 读取文件失败:', error);
             return { 
                 success: false, 
                 msg: `读取文件失败: ${error.message}` 
