@@ -8,6 +8,21 @@ const { getAppPath, getAppIconPath } = require('@modules/main/pathManager');
 const { handleError } = require('@modules/ipc/errorHandler');
 
 /**
+ * 获取 Canbox 版本号
+ * @returns {string}
+ */
+function getCanboxVersion() {
+    const packagePath = path.join(__dirname, '..', '..', 'package.json');
+    try {
+        const packageJson = require(packagePath);
+        return packageJson.version;
+    } catch (error) {
+        console.error('读取 package.json 失败:', error);
+        return '0.0.0';
+    }
+}
+
+/**
  * 生成应用快捷方式
  *
  * 不同系统的快捷方式存储路径：
@@ -160,14 +175,9 @@ function deleteShortcuts(appsData) {
 /**
  * 是否需要重新生成快捷方式
  * 
- * @param {string} currentVersion 
  * @returns {boolean} - true：需要，false：不需要
  */
-const needRegenerateShortcuts = (currentVersion) => {
-    const savedVersion = getCanboxStore().get('version');
-    if (savedVersion === currentVersion) {
-        return false;
-    }
+const needRegenerateShortcuts = () => {
 
     // 检查是否存在 canbox-*.desktop 文件
     if (process.platform === 'linux') {
@@ -185,25 +195,35 @@ const needRegenerateShortcuts = (currentVersion) => {
 };
 
 const markVersion = (currentVersion) => {
-    const canboxStore = getCanboxStore();
-    canboxStore.set('version', currentVersion);
+    getCanboxStore().set('version', currentVersion);
 };
 
 /**
- * 初始化快捷方式（异步）
- * @param {string} currentVersion - 当前版本号
+ * 初始化快捷方式和 desktop 文件（异步）
  * @param {Object} appsData - 应用数据
  * @returns {Promise<Object>} - 操作结果
  */
-async function initShortcuts(currentVersion, appsData) {
+async function initShortcuts(appsData) {
+    const currentVersion = getCanboxVersion();
+    const savedVersion = getCanboxStore().get('version');
+    if (savedVersion === currentVersion) {
+        return { success: true, msg: '不需要更新shortcuts' };
+    }
     try {
+
+        // 初始化应用快捷方式
         if (needRegenerateShortcuts(currentVersion) && appsData) {
             const result = await generateShortcuts(appsData);
-            if (result.success) {
-                markVersion(currentVersion);
-            }
-            return result;
         }
+        
+        // 初始化 Canbox desktop 文件（Linux AppImage）
+        if (process.platform === 'linux' && process.env.APPIMAGE) {
+            createCanboxDesktop();
+        }
+
+        // 更新版本号标记
+        markVersion(currentVersion);
+
         return { success: true, msg: '不需要更新shortcuts' };
     } catch (error) {
         return handleError(new Error('初始化快捷方式失败' + error.message), 'initShortcuts');
@@ -211,16 +231,41 @@ async function initShortcuts(currentVersion, appsData) {
 }
 
 /**
+ * 检查是否需要重新生成 Canbox desktop 文件
+ * @param {string} currentVersion - 当前版本号
+ * @returns {boolean}
+ */
+function needRegenerateCanboxDesktop(currentVersion) {
+    const savedVersion = getCanboxStore().get('desktopVersion');
+    if (savedVersion === currentVersion) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * 标记已生成 Canbox desktop 文件的版本
+ * @param {string} currentVersion
+ */
+function markCanboxDesktopVersion(currentVersion) {
+    getCanboxStore().set('desktopVersion', currentVersion);
+}
+
+/**
  * 创建 Canbox 主程序的 desktop 文件（Linux AppImage）
  * 该文件会出现在系统应用菜单中，方便启动 Canbox
+ * @param {boolean} force - 是否强制重新创建（忽略版本检查）
  */
-function createCanboxDesktop() {
+function createCanboxDesktop(force = false) {
     const applicationsPath = path.join(os.homedir(), '.local', 'share', 'applications');
     const desktopFilePath = path.join(applicationsPath, 'canbox.desktop');
 
-    // 检查是否已存在
-    if (fs.existsSync(desktopFilePath)) {
-        console.log('Canbox desktop 文件已存在，跳过创建');
+    // 获取当前版本
+    const currentVersion = getCanboxVersion();
+
+    // 检查是否需要重新创建
+    if (!force && !needRegenerateCanboxDesktop(currentVersion)) {
+        console.log('Canbox desktop 文件版本一致，跳过创建');
         return;
     }
 
@@ -239,7 +284,7 @@ function createCanboxDesktop() {
     // 获取 AppImage 所在目录和文件名
     const appImageDir = path.dirname(appImagePath);
     const appImageBaseName = path.basename(appImagePath, '.AppImage');
-    const iconFileName = 'canbox.png';//`${appImageBaseName}.png`;
+    const iconFileName = 'canbox.png';
     const externalIconPath = path.join(appImageDir, iconFileName);
 
     // 尝试从 AppImage 包内复制图标到外部
@@ -283,6 +328,9 @@ StartupWMClass=canbox
     } catch (error) {
         console.warn('设置 desktop 文件权限失败:', error);
     }
+
+    // 标记已创建的版本
+    markCanboxDesktopVersion(currentVersion);
 }
 
 module.exports = {
