@@ -125,7 +125,8 @@ if (!getTheLock) {
         if (!isDev) {
             const shortcutManager = require('./modules/main/shortcutManager');
             const { getAllApps } = require('./modules/main/appManager');
-            shortcutManager.initShortcuts(getAllApps().data || {}).then((result) => {
+            const package = require('./package.json');
+            shortcutManager.initShortcuts(package.version, getAllApps().data || {}).then((result) => {
                 if (result.success) {
                     logger.info('快捷方式初始化完成' + result.msg || '');
                 } else {
