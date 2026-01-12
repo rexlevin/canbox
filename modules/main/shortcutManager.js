@@ -192,19 +192,23 @@ const markVersion = (currentVersion) => {
 async function initShortcuts(currentVersion, appsData) {
     // 存储的版本
     const savedVersion = getCanboxStore().get('version');
-    if (savedVersion === currentVersion) {
-        return { success: true, msg: '不需要更新shortcuts' };
-    }
+    // if (savedVersion === currentVersion) {
+    //     return { success: true, msg: '不需要更新shortcuts' };
+    // }
+    // 版本差异标识，true-版本有差异，false-版本无差异
+    let versionDiffFlag = savedVersion !== currentVersion;
     try {
 
         // 初始化应用快捷方式
-        if (needRegenerateShortcuts(currentVersion) && appsData) {
+        if (versionDiffFlag && needRegenerateShortcuts(currentVersion) && appsData) {
             const result = await generateShortcuts(appsData);
         }
-        
+
         // 初始化 Canbox desktop 文件（Linux AppImage）
         if (process.platform === 'linux' && process.env.APPIMAGE) {
-            createCanboxDesktop();
+            if (versionDiffFlag || needGenerateCanboxDesktop()) {
+                createCanboxDesktop();
+            }
         }
 
         // 更新存储的版本号标记
@@ -283,6 +287,15 @@ StartupWMClass=canbox
     } catch (error) {
         console.warn('设置 desktop 文件权限失败:', error);
     }
+}
+
+/**
+ * 检查是否需要生成Canbox桌面文件
+ * @returns {boolean} 是否需要生成桌面文件
+ */
+function needGenerateCanboxDesktop() {
+    const desktopPath = path.join(os.homedir(), '.local', 'share', 'applications', 'canbox.desktop');
+    return !fs.existsSync(desktopPath);
 }
 
 module.exports = {
