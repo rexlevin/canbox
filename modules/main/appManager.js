@@ -3,7 +3,6 @@ const fs = require('fs');
 const originalFs = require('original-fs'); // 使用 original-fs 来操作 asar 文件
 const { execSync } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
-const sharp = require('sharp');
 const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
 const { getAppPath, getAppTempPath, getAppIconPath } = require('@modules/main/pathManager');
 const { handleError } = require('@modules/ipc/errorHandler')
@@ -11,12 +10,44 @@ const DateFormat = require('@modules/utils/DateFormat');
 const logger = require('@modules/utils/logger');
 const fsUtils = require('@modules/utils/fs-utils');
 
+// 延迟加载 sharp 的缓存，只在需要时动态加载（仅 Windows）
+let sharpCache = null;
+
+/**
+ * 动态加载 sharp 模块
+ * @returns {sharp|null} sharp 实例或 null
+ */
+function getSharp() {
+    if (process.platform !== 'win32') {
+        return null;
+    }
+
+    if (sharpCache === null) {
+        try {
+            // 使用动态 require，避免在非 Windows 平台加载
+            const sharpModule = require('sharp');
+            sharpCache = sharpModule;
+        } catch (error) {
+            console.warn('sharp 模块加载失败，图标转换功能将不可用:', error.message);
+            sharpCache = false; // 标记为已尝试加载但失败
+        }
+    }
+
+    return sharpCache || null;
+}
+
 /**
  * 将 PNG/JPEG 图片转换为 ICO 格式
  * @param {string} inputPath - 输入图片路径
  * @param {string} outputPath - 输出 ICO 路径
  */
 async function convertToIco(inputPath, outputPath) {
+    const sharp = getSharp();
+    if (!sharp) {
+        console.warn('sharp 模块未加载，跳过图标转换');
+        return false;
+    }
+
     try {
         // 先转换为 256x256 的 PNG
         const tempPngPath = outputPath.replace('.ico', '.temp.png');

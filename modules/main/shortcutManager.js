@@ -6,90 +6,6 @@ const os = require('os');
 const { getCanboxStore } = require('@modules/main/storageManager');
 const { getAppPath, getAppIconPath } = require('@modules/main/pathManager');
 const { handleError } = require('@modules/ipc/errorHandler');
-const sharp = require('sharp');
-
-/**
- * 将 PNG/JPEG 图片转换为 ICO 格式
- * @param {string} inputPath - 输入图片路径
- * @param {string} outputPath - 输出 ICO 路径
- */
-async function convertToIco(inputPath, outputPath) {
-    try {
-        // 先转换为 256x256 的 PNG
-        const tempPngPath = outputPath.replace('.ico', '.temp.png');
-        await sharp(inputPath)
-            .resize(256, 256, {
-                fit: 'contain',
-                background: { r: 0, g: 0, b: 0, alpha: 0 }
-            })
-            .png()
-            .toFile(tempPngPath);
-
-        // 创建简单的 ICO 文件
-        await createSimpleIco(tempPngPath, outputPath);
-
-        // 删除临时文件
-        if (fs.existsSync(tempPngPath)) {
-            fs.unlinkSync(tempPngPath);
-        }
-
-        console.log(`成功转换图标: ${inputPath} -> ${outputPath}`);
-    } catch (error) {
-        console.error('转换图标失败:', error);
-        // 清理临时文件
-        const tempPngPath = outputPath.replace('.ico', '.temp.png');
-        if (fs.existsSync(tempPngPath)) {
-            try {
-                fs.unlinkSync(tempPngPath);
-            } catch (cleanupError) {
-                console.error('清理临时文件失败:', cleanupError);
-            }
-        }
-        throw error;
-    }
-}
-
-/**
- * 使用 PNG 文件创建简单的 ICO 文件
- * @param {string} pngPath - 输入 PNG 路径
- * @param {string} outputPath - 输出 ICO 路径
- */
-async function createSimpleIco(pngPath, outputPath) {
-    return new Promise((resolve, reject) => {
-        try {
-            // 读取 PNG 文件
-            const pngData = fs.readFileSync(pngPath);
-
-            // ICO 文件头 (6 bytes)
-            const header = Buffer.alloc(6);
-            header.writeUInt16LE(0, 0);     // 保留字段
-            header.writeUInt16LE(1, 2);     // 图像类型 (1 = ICO)
-            header.writeUInt16LE(1, 4);     // 图像数量 (1)
-
-            // ICO 目录条目 (16 bytes)
-            const dirEntry = Buffer.alloc(16);
-            const width = 256;
-            const height = 256;
-            dirEntry.writeUInt8(width >= 256 ? 0 : width, 0);   // 宽度 (0 表示 256)
-            dirEntry.writeUInt8(height >= 256 ? 0 : height, 1);  // 高度 (0 表示 256)
-            dirEntry.writeUInt8(0, 2);                          // 颜色数 (0 = >=8bpp)
-            dirEntry.writeUInt8(0, 3);                          // 保留字段
-            dirEntry.writeUInt16LE(1, 4);                       // 颜色平面
-            dirEntry.writeUInt16LE(32, 6);                      // 每像素位数 (32 = RGBA)
-            dirEntry.writeUInt32LE(pngData.length, 8);          // 图像数据大小
-            dirEntry.writeUInt32LE(22, 12);                     // 图像数据偏移量 (6 + 16)
-
-            // 组合所有数据
-            const icoData = Buffer.concat([header, dirEntry, pngData]);
-            fs.writeFileSync(outputPath, icoData);
-
-            console.log(`ICO文件创建成功: ${outputPath} (${pngData.length} bytes)`);
-            resolve();
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
 
 /**
  * 生成应用快捷方式
@@ -294,8 +210,84 @@ async function initShortcuts(currentVersion, appsData) {
     }
 }
 
+/**
+ * 创建 Canbox 主程序的 desktop 文件（Linux AppImage）
+ * 该文件会出现在系统应用菜单中，方便启动 Canbox
+ */
+function createCanboxDesktop() {
+    const applicationsPath = path.join(os.homedir(), '.local', 'share', 'applications');
+    const desktopFilePath = path.join(applicationsPath, 'canbox.desktop');
+
+    // 检查是否已存在
+    if (fs.existsSync(desktopFilePath)) {
+        console.log('Canbox desktop 文件已存在，跳过创建');
+        return;
+    }
+
+    // 获取 AppImage 路径
+    const appImagePath = process.env.APPIMAGE;
+    console.info('[shortcutManager.js] appImagePath: ', appImagePath);
+    if (!appImagePath) {
+        throw new Error('未检测到 APPIMAGE 环境变量，无法创建 desktop 文件');
+    }
+
+    // 确保 applications 目录存在
+    if (!fs.existsSync(applicationsPath)) {
+        fs.mkdirSync(applicationsPath, { recursive: true });
+    }
+
+    // 获取 AppImage 所在目录和文件名
+    const appImageDir = path.dirname(appImagePath);
+    const appImageBaseName = path.basename(appImagePath, '.AppImage');
+    const iconFileName = 'canbox.png';//`${appImageBaseName}.png`;
+    const externalIconPath = path.join(appImageDir, iconFileName);
+
+    // 尝试从 AppImage 包内复制图标到外部
+    const internalIconPath1 = path.join(__dirname, '..', '..', 'logo_256x256.png');
+    const internalIconPath2 = path.join(__dirname, '..', '..', 'logo.png');
+    const internalIconPath = fs.existsSync(internalIconPath1) ? internalIconPath1 : internalIconPath2;
+
+    if (fs.existsSync(internalIconPath)) {
+        try {
+            // 将图标复制到 AppImage 文件旁边
+            fs.copyFileSync(internalIconPath, externalIconPath);
+            console.log(`图标复制成功: ${internalIconPath} -> ${externalIconPath}`);
+        } catch (error) {
+            console.warn('图标复制失败，使用原始路径:', error);
+        }
+    }
+
+    // 确定最终使用的图标路径
+    const finalIconPath = fs.existsSync(externalIconPath) ? externalIconPath : internalIconPath;
+
+    // 创建 desktop 文件内容
+    const desktopContent = `[Desktop Entry]
+Name=Canbox
+Comment=Canbox - 应用集合平台
+Exec="${appImagePath}" --no-sandbox %U
+Icon=${finalIconPath}
+Type=Application
+Categories=Utility;Development;
+Terminal=false
+StartupNotify=true
+StartupWMClass=canbox
+`;
+
+    // 写入 desktop 文件
+    fs.writeFileSync(desktopFilePath, desktopContent);
+    console.log(`Canbox desktop 文件创建成功: ${desktopFilePath}`);
+
+    // 设置执行权限
+    try {
+        fs.chmodSync(desktopFilePath, 0o755);
+    } catch (error) {
+        console.warn('设置 desktop 文件权限失败:', error);
+    }
+}
+
 module.exports = {
     generateShortcuts,
     deleteShortcuts,
-    initShortcuts
+    initShortcuts,
+    createCanboxDesktop
 };

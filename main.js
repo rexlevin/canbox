@@ -135,6 +135,16 @@ if (!getTheLock) {
             }).catch((error) => {
                 logger.error('快捷方式初始化失败:', error);
             });
+
+            // Linux AppImage 启动时检查并创建 canbox desktop 文件
+            if (process.platform === 'linux' && process.env.APPIMAGE) {
+                try {
+                    shortcutManager.createCanboxDesktop();
+                    logger.info('Canbox desktop 文件创建成功');
+                } catch (error) {
+                    logger.error('创建 Canbox desktop 文件失败:', error);
+                }
+            }
         }
     })
 }
