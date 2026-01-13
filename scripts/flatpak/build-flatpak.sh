@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# Flatpak构建脚本 for Canbox
+
+set -e
+
+echo "开始构建Canbox Flatpak包..."
+
+# 检查flatpak是否安装
+if ! command -v flatpak &> /dev/null; then
+    echo "错误: flatpak未安装。请先安装flatpak。"
+    echo "在Ubuntu/Debian上: sudo apt install flatpak flatpak-builder"
+    echo "在Fedora上: sudo dnf install flatpak flatpak-builder"
+    exit 1
+fi
+
+# 检查是否在Flatpak工作目录中
+if [ ! -f "com.github.lizl6.canbox.yaml" ]; then
+    echo "错误: 请在flatpak目录中运行此脚本"
+    exit 1
+fi
+
+# 检查AppImage是否存在
+if [ ! -f "../../dist/canbox-0.0.8-linux-x86_64.AppImage" ]; then
+    echo "错误: 请先构建Linux AppImage包 (npm run build-dist:linux)"
+    exit 1
+fi
+
+# 添加Flathub仓库
+echo "添加Flathub仓库..."
+flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+# 安装必要的运行时和SDK
+echo "安装运行时和SDK..."
+flatpak install -y flathub org.freedesktop.Platform//24.08
+flatpak install -y flathub org.freedesktop.Sdk//24.08
+
+# 构建Flatpak包
+echo "构建Flatpak包..."
+flatpak-builder --force-clean build-dir com.github.lizl6.canbox.yaml
+
+# 导出Flatpak包
+echo "导出Flatpak包..."
+flatpak-builder --repo=repo --force-clean build-dir com.github.lizl6.canbox.yaml
+
+# 构建单文件包到目标目录
+echo "创建单文件Flatpak包..."
+flatpak build-bundle repo ../../dist-flatpak/canbox.flatpak com.github.lizl6.canbox
+
+echo "Flatpak构建完成!"
+echo "生成的包: ../../dist-flatpak/canbox.flatpak"
+echo "安装命令: flatpak install --user ../../dist-flatpak/canbox.flatpak"

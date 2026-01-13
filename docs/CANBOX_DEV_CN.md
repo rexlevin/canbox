@@ -44,6 +44,13 @@ npm run build
 # 4 打包
 npm run build-dist:linux  # Linux包需要在linux环境下
 npm run build-dist:win    # Windows包需要在windows下，我是用的win11
+npm run build-flatpak     # Flatpak包（Linux沙盒应用）
+
+# Flatpak 包说明
+1. Flatpak 是 Linux 上的沙盒应用打包格式
+2. 需要先安装 flatpak 和 flatpak-builder
+3. 构建前会自动添加 Flathub 仓库并安装必要的运行时
+4. 详细说明见 flatpak/README.md
 ```
 
 ## CanBox API提示

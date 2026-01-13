@@ -1,0 +1,77 @@
+app-id: com.github.lizl6.canbox
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: canbox
+finish-args:
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --share=network
+  - --device=dri
+  - --filesystem=home
+  - --filesystem=xdg-documents
+  - --filesystem=xdg-download
+  - --talk-name=org.freedesktop.Notifications
+  - --own-name=com.github.lizl6.canbox
+
+modules:
+  - name: canbox
+    buildsystem: simple
+    sources:
+      - type: file
+        path: ../dist/canbox-0.0.8-linux-x86_64.AppImage
+        dest: .
+    build-commands:
+      # 提取AppImage内容
+      - chmod +x canbox-0.0.8-linux-x86_64.AppImage
+      - ./canbox-0.0.8-linux-x86_64.AppImage --appimage-extract
+      
+      # 安装应用文件
+      - install -Dm755 squashfs-root/canbox /app/bin/canbox
+      - install -Dm755 squashfs-root/chrome_crashpad_handler /app/bin/
+      - install -Dm755 squashfs-root/chrome-sandbox /app/bin/
+      
+      # 复制资源文件
+      - cp -r squashfs-root/resources /app/bin/
+      - cp -r squashfs-root/locales /app/bin/
+      - cp squashfs-root/*.pak /app/bin/ 2>/dev/null || true
+      - cp squashfs-root/*.dat /app/bin/ 2>/dev/null || true
+      - cp squashfs-root/*.bin /app/bin/ 2>/dev/null || true
+      - cp squashfs-root/*.so* /app/bin/ 2>/dev/null || true
+      - cp squashfs-root/*.json /app/bin/ 2>/dev/null || true
+      - cp squashfs-root/*.html /app/bin/ 2>/dev/null || true
+      
+      # 创建桌面文件和图标（从AppImage中提取）
+      - install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/512x512/apps/com.github.lizl6.canbox.png
+      # 如果没有找到特定大小的图标，使用默认的256x256图标
+      - install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/256x256/apps/com.github.lizl6.canbox.png 2>/dev/null || install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/256x256/apps/com.github.lizl6.canbox.png
+      - install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/128x128/apps/com.github.lizl6.canbox.png 2>/dev/null || install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/128x128/apps/com.github.lizl6.canbox.png
+      
+      # 创建桌面文件
+      - mkdir -p /app/share/applications
+      - |
+        cat > com.github.lizl6.canbox.desktop << 'EOF'
+        [Desktop Entry]
+        Version=1.0
+        Type=Application
+        Name=Canbox
+        GenericName=Application Management Tool
+        Comment=Some useful apps you need for your life
+        Exec=canbox
+        Icon=com.github.lizl6.canbox
+        Categories=Utility;System
+        Terminal=false
+        StartupWMClass=canbox
+        MimeType=
+        EOF
+      - install -Dm644 com.github.lizl6.canbox.desktop /app/share/applications/com.github.lizl6.canbox.desktop
+      - rm -f com.github.lizl6.canbox.desktop
+      
+      # 清理临时文件
+      - rm -rf squashfs-root
+
+cleanup:
+  - '/include'
+  - '/share/man'
+  - '/share/doc'
