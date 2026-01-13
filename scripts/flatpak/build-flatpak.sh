@@ -53,8 +53,8 @@ flatpak-builder --repo=repo --force-clean build-dir com.github.lizl6.canbox.yaml
 
 # 构建单文件包到目标目录
 echo "创建单文件Flatpak包..."
-flatpak build-bundle repo ../com.github.lizl6.canbox.flatpak com.github.lizl6.canbox
+flatpak build-bundle repo ../../dist/com.github.lizl6.canbox.flatpak com.github.lizl6.canbox
 
 echo "Flatpak构建完成!"
-echo "生成的包: ../com.github.lizl6.canbox.flatpak"
-echo "安装命令: flatpak install --user ../com.github.lizl6.canbox.flatpak"
+echo "生成的包: dist/com.github.lizl6.canbox.flatpak"
+echo "安装命令: flatpak install --user dist/com.github.lizl6.canbox.flatpak"

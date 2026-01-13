@@ -15,6 +15,7 @@ lerna-debug.log*
 
 scripts/flatpak/.flatpak-builder
 scripts/flatpak/build-dir
+scripts/flatpak/repo
 
 # Editor directories and files
 .vscode/*

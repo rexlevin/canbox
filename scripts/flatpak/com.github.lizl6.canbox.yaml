@@ -58,7 +58,7 @@ modules:
         Name=Canbox
         GenericName=Application Management Tool
         Comment=Some useful apps you need for your life
-        Exec=canbox
+        Exec=canbox --no-sandbox %U
         Icon=com.github.lizl6.canbox
         Categories=Utility;System
         Terminal=false
