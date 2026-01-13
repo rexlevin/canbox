@@ -20,7 +20,7 @@ modules:
     buildsystem: simple
     sources:
       - type: file
-        path: ../dist/canbox-0.0.8-linux-x86_64.AppImage
+        path: ../../dist/canbox-0.0.8-linux-x86_64.AppImage
         dest: .
     build-commands:
       # 提取AppImage内容

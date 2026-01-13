@@ -17,7 +17,8 @@
         "startExt": "electron . --no-sandbox --app-id=118a8df9bf0f4ea9b98c7733dbc70f7e",
         "build-dist:win": "electron-builder -w",
         "build-dist:linux": "electron-builder -l",
-        "build-flatpak": "npm run build && npm run build-dist:linux && cd scripts/flatpak && ./build-flatpak.sh && cd ../.."
+        "build-flatpak": "cd scripts/flatpak && ./build-flatpak.sh && cd ../..",
+        "build-flatpak2": "npm run build && npm run build-dist:linux && cd scripts/flatpak && ./build-flatpak.sh && cd ../.."
     },
     "build": {
         "appId": "com.github.lizl6.canbox",
