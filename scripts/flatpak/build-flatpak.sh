@@ -20,9 +20,9 @@ if [ ! -f "com.github.lizl6.canbox.yaml" ]; then
     exit 1
 fi
 
-# 检查AppImage是否存在
-if [ ! -f "../../dist/canbox-0.0.8-linux-x86_64.AppImage" ]; then
-    echo "错误: 请先构建Linux AppImage包 (npm run build-dist:linux)"
+# 检查unpacked目录是否存在
+if [ ! -d "../../dist/linux-unpacked" ]; then
+    echo "错误: 请先构建Linux包 (npm run build-dist:linux)"
     exit 1
 fi
 

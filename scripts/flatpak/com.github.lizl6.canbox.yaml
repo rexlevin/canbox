@@ -15,14 +15,13 @@ finish-args:
   - --talk-name=org.freedesktop.Notifications
   - --own-name=com.github.lizl6.canbox
 
-
 modules:
   - name: canbox
     buildsystem: simple
     sources:
-      - type: file
-        path: ../../dist/canbox-0.0.8-linux-x86_64.AppImage
-        dest: .
+      - type: dir
+        path: ../../dist/linux-unpacked
+        dest: canbox-src
     build-commands:
       # 创建一个包装脚本，包含--no-sandbox参数
       - mkdir -p /app/bin
@@ -32,30 +31,31 @@ modules:
         exec /app/bin/canbox --no-sandbox "$@"
         EOF
       - chmod +x /app/bin/canbox-launcher
-      # 提取AppImage内容
-      - chmod +x canbox-0.0.8-linux-x86_64.AppImage
-      - ./canbox-0.0.8-linux-x86_64.AppImage --appimage-extract
       
       # 安装应用文件
-      - install -Dm755 squashfs-root/canbox /app/bin/canbox
-      - install -Dm755 squashfs-root/chrome_crashpad_handler /app/bin/
-      - install -Dm755 squashfs-root/chrome-sandbox /app/bin/
+      - install -Dm755 canbox-src/canbox /app/bin/canbox
+      - install -Dm755 canbox-src/chrome_crashpad_handler /app/bin/
+      - install -Dm755 canbox-src/chrome-sandbox /app/bin/
       
       # 复制资源文件
-      - cp -r squashfs-root/resources /app/bin/
-      - cp -r squashfs-root/locales /app/bin/
-      - cp squashfs-root/*.pak /app/bin/ 2>/dev/null || true
-      - cp squashfs-root/*.dat /app/bin/ 2>/dev/null || true
-      - cp squashfs-root/*.bin /app/bin/ 2>/dev/null || true
-      - cp squashfs-root/*.so* /app/bin/ 2>/dev/null || true
-      - cp squashfs-root/*.json /app/bin/ 2>/dev/null || true
-      - cp squashfs-root/*.html /app/bin/ 2>/dev/null || true
+      - cp -r canbox-src/resources /app/bin/
+      - cp -r canbox-src/locales /app/bin/
+      - cp canbox-src/*.pak /app/bin/ 2>/dev/null || true
+      - cp canbox-src/*.dat /app/bin/ 2>/dev/null || true
+      - cp canbox-src/*.bin /app/bin/ 2>/dev/null || true
+      - cp canbox-src/*.so* /app/bin/ 2>/dev/null || true
+      - cp canbox-src/*.json /app/bin/ 2>/dev/null || true
+      - cp canbox-src/*.html /app/bin/ 2>/dev/null || true
       
-      # 创建桌面文件和图标（从AppImage中提取）
-      - install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/512x512/apps/com.github.lizl6.canbox.png
-      # 如果没有找到特定大小的图标，使用默认的256x256图标
-      - install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/256x256/apps/com.github.lizl6.canbox.png 2>/dev/null || install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/256x256/apps/com.github.lizl6.canbox.png
-      - install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/128x128/apps/com.github.lizl6.canbox.png 2>/dev/null || install -Dm644 squashfs-root/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/128x128/apps/com.github.lizl6.canbox.png
+      # 创建图标目录
+      - mkdir -p /app/share/icons/hicolor/512x512/apps
+      - mkdir -p /app/share/icons/hicolor/256x256/apps
+      - mkdir -p /app/share/icons/hicolor/128x128/apps
+      
+      # 安装图标（检查不同尺寸）
+      - test -f canbox-src/usr/share/icons/hicolor/512x512/apps/canbox.png && install -Dm644 canbox-src/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/512x512/apps/com.github.lizl6.canbox.png || true
+      - test -f canbox-src/usr/share/icons/hicolor/512x512/apps/canbox.png && install -Dm644 canbox-src/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/256x256/apps/com.github.lizl6.canbox.png || true
+      - test -f canbox-src/usr/share/icons/hicolor/512x512/apps/canbox.png && install -Dm644 canbox-src/usr/share/icons/hicolor/512x512/apps/canbox.png /app/share/icons/hicolor/128x128/apps/com.github.lizl6.canbox.png || true
       
       # 创建桌面文件
       - mkdir -p /app/share/applications
@@ -78,7 +78,7 @@ modules:
       - rm -f com.github.lizl6.canbox.desktop
       
       # 清理临时文件
-      - rm -rf squashfs-root
+      - rm -rf canbox-src
 
 cleanup:
   - '/include'
