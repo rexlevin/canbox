@@ -253,12 +253,15 @@ async function handleImportApp(event, zipPath, uid) {
             if (!fs.existsSync(getAppPath())) {
                 fs.mkdirSync(getAppPath(), { recursive: true });
             }
-            // 使用 original-fs 移动文件
+            // 使用 original-fs 复制文件，然后删除源文件（避免跨目录移动的权限问题）
             const filesToMove = originalFs.readdirSync(getAppTempPath());
             filesToMove.forEach(file => {
                 const srcPath = path.join(getAppTempPath(), file);
                 const destPath = path.join(getAppPath(), file);
-                originalFs.renameSync(srcPath, destPath);
+                // 先复制文件，设置权限
+                originalFs.cpSync(srcPath, destPath, { dereference: true });
+                // 删除源文件
+                originalFs.rmSync(srcPath, { recursive: true, force: true });
             });
             // 删除临时目录
             originalFs.rmSync(getAppTempPath(), { recursive: true, force: true });
@@ -268,7 +271,8 @@ async function handleImportApp(event, zipPath, uid) {
         console.info(DateFormat.format(new Date()));
 
         const asarTargetPath = path.join(getAppPath(), `${uuid}.asar`);
-        const appJson = JSON.parse(fs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8'));
+        // 使用 original-fs 读取 asar 文件内部内容（Flatpak 环境中必需）
+        const appJson = JSON.parse(originalFs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8'));
 
         let appsConfig = getAppsStore().get('default') || {};
         appsConfig[uuid] = {
