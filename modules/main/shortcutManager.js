@@ -85,10 +85,24 @@ async function generateShortcuts(appsData) {
                     fs.mkdirSync(applicationsPath, { recursive: true });
                 }
                 shortcutPath = path.join(applicationsPath, `${appName}.desktop`);
+
+                // 检测是否在 flatpak 环境中
+                const isFlatpak = process.env.FLATPAK_ID || process.env.container && process.env.container.includes('flatpak');
+
+                let execCommand;
+                if (isFlatpak) {
+                    // Flatpak 环境：使用 flatpak run 命令
+                    const flatpakId = process.env.FLATPAK_ID || 'com.github.lizl6.canbox';
+                    execCommand = `flatpak run ${flatpakId} --app-id=${uid}`;
+                } else {
+                    // 非 Flatpak 环境（AppImage 或其他）
+                    execCommand = `"${execPath}" --no-sandbox --app-id=${uid}`;
+                }
+
                 const desktopFile = `[Desktop Entry]
 Name=${appName}
 Comment=${appItem.description || ''}
-Exec="${execPath}" --no-sandbox --app-id=${uid} --class=canbox-app-${uid} --wm-class=canbox-app-${uid} --wm_class=canbox-app-${uid} --app-name=${appItem.name || uid}
+Exec=${execCommand} --class=canbox-app-${uid} --wm-class=canbox-app-${uid} --wm_class=canbox-app-${uid} --app-name=${appItem.name || uid}
 Icon=${iconPath}
 Type=Application
 StartupWMClass=${uid}
@@ -221,51 +235,78 @@ async function initShortcuts(currentVersion, appsData) {
 }
 
 /**
- * 创建 Canbox 主程序的 desktop 文件（Linux AppImage）
+ * 创建 Canbox 主程序的 desktop 文件（Linux AppImage 或 Flatpak）
  * 该文件会出现在系统应用菜单中，方便启动 Canbox
  */
 function createCanboxDesktop() {
     const applicationsPath = path.join(os.homedir(), '.local', 'share', 'applications');
     const desktopFilePath = path.join(applicationsPath, 'canbox.desktop');
 
-    // 获取 AppImage 路径
-    const appImagePath = process.env.APPIMAGE;
-    console.info('[shortcutManager.js] appImagePath: ', appImagePath);
-    if (!appImagePath) {
-        throw new Error('未检测到 APPIMAGE 环境变量，无法创建 desktop 文件');
-    }
-
     // 确保 applications 目录存在
     if (!fs.existsSync(applicationsPath)) {
         fs.mkdirSync(applicationsPath, { recursive: true });
     }
 
-    // 获取 AppImage 所在目录和文件名
-    const appImageDir = path.dirname(appImagePath);
-    const appImageBaseName = path.basename(appImagePath, '.AppImage');
-    const iconFileName = 'canbox.png';
-    const externalIconPath = path.join(appImageDir, iconFileName);
+    // 检测运行环境：Flatpak 或 AppImage
+    const isFlatpak = process.env.FLATPAK_ID || (process.env.container && process.env.container.includes('flatpak'));
+    const appImagePath = process.env.APPIMAGE;
 
-    // 尝试从 AppImage 包内复制图标到外部
-    const internalIconPath1 = path.join(__dirname, '..', '..', 'logo_256x256.png');
-    const internalIconPath2 = path.join(__dirname, '..', '..', 'logo.png');
-    const internalIconPath = fs.existsSync(internalIconPath1) ? internalIconPath1 : internalIconPath2;
+    if (isFlatpak) {
+        // Flatpak 环境
+        console.info('[shortcutManager.js] Running in Flatpak environment');
+        const flatpakId = process.env.FLATPAK_ID || 'com.github.lizl6.canbox';
 
-    if (fs.existsSync(internalIconPath)) {
-        try {
-            // 将图标复制到 AppImage 文件旁边
-            fs.copyFileSync(internalIconPath, externalIconPath);
-            console.log(`图标复制成功: ${internalIconPath} -> ${externalIconPath}`);
-        } catch (error) {
-            console.warn('图标复制失败，使用原始路径:', error);
+        // 获取图标路径
+        const internalIconPath1 = path.join(__dirname, '..', '..', 'logo_256x256.png');
+        const internalIconPath2 = path.join(__dirname, '..', '..', 'logo.png');
+        const internalIconPath = fs.existsSync(internalIconPath1) ? internalIconPath1 : internalIconPath2;
+
+        // 创建 desktop 文件内容
+        const desktopContent = `[Desktop Entry]
+Name=Canbox
+Comment=Canbox - 应用集合平台
+Exec=flatpak run ${flatpakId} %U
+Icon=${internalIconPath}
+Type=Application
+Categories=Utility;Development;
+Terminal=false
+StartupNotify=true
+StartupWMClass=canbox
+`;
+
+        // 写入 desktop 文件
+        fs.writeFileSync(desktopFilePath, desktopContent);
+        console.log(`Canbox desktop 文件创建成功 (Flatpak): ${desktopFilePath}`);
+    } else if (appImagePath) {
+        // AppImage 环境
+        console.info('[shortcutManager.js] appImagePath: ', appImagePath);
+
+        // 获取 AppImage 所在目录和文件名
+        const appImageDir = path.dirname(appImagePath);
+        const appImageBaseName = path.basename(appImagePath, '.AppImage');
+        const iconFileName = 'canbox.png';
+        const externalIconPath = path.join(appImageDir, iconFileName);
+
+        // 尝试从 AppImage 包内复制图标到外部
+        const internalIconPath1 = path.join(__dirname, '..', '..', 'logo_256x256.png');
+        const internalIconPath2 = path.join(__dirname, '..', '..', 'logo.png');
+        const internalIconPath = fs.existsSync(internalIconPath1) ? internalIconPath1 : internalIconPath2;
+
+        if (fs.existsSync(internalIconPath)) {
+            try {
+                // 将图标复制到 AppImage 文件旁边
+                fs.copyFileSync(internalIconPath, externalIconPath);
+                console.log(`图标复制成功: ${internalIconPath} -> ${externalIconPath}`);
+            } catch (error) {
+                console.warn('图标复制失败，使用原始路径:', error);
+            }
         }
-    }
 
-    // 确定最终使用的图标路径
-    const finalIconPath = fs.existsSync(externalIconPath) ? externalIconPath : internalIconPath;
+        // 确定最终使用的图标路径
+        const finalIconPath = fs.existsSync(externalIconPath) ? externalIconPath : internalIconPath;
 
-    // 创建 desktop 文件内容
-    const desktopContent = `[Desktop Entry]
+        // 创建 desktop 文件内容
+        const desktopContent = `[Desktop Entry]
 Name=Canbox
 Comment=Canbox - 应用集合平台
 Exec="${appImagePath}" --no-sandbox %U
@@ -277,9 +318,13 @@ StartupNotify=true
 StartupWMClass=canbox
 `;
 
-    // 写入 desktop 文件
-    fs.writeFileSync(desktopFilePath, desktopContent);
-    console.log(`Canbox desktop 文件创建成功: ${desktopFilePath}`);
+        // 写入 desktop 文件
+        fs.writeFileSync(desktopFilePath, desktopContent);
+        console.log(`Canbox desktop 文件创建成功 (AppImage): ${desktopFilePath}`);
+    } else {
+        console.warn('[shortcutManager.js] 未检测到 Flatpak 或 AppImage 环境，跳过创建 desktop 文件');
+        return;
+    }
 
     // 设置执行权限
     try {
