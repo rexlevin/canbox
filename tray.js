@@ -12,6 +12,12 @@ module.exports = {
                 win.show();
             }
         }, {
+            label: '隐藏窗口',
+            type: 'normal',
+            click: function() {
+                win.hide();
+            }
+        }, {
             label: 'Toggle DevTools',
             type: 'normal',
             click: function() {
