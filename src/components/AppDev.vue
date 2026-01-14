@@ -206,9 +206,11 @@ const warningContent = ref('');
 
 function addAppDev() {
     window.api.appDev.add((result) => {
-        if (result?.correct) {
+        if (result?.correct && Object.keys(result.correct).length > 0) {
+            // 只在有应用数据时才更新（避免用户取消时清空列表）
             appDevData.value = result.correct;
         }
+        // 如果用户取消或返回空数据，不更新列表
     });
 }
 
