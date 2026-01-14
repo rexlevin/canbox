@@ -152,23 +152,21 @@ class AppManagerIpcHandler {
                 // 删除应用文件
                 let appPath;
                 if (devTag) {
-                    appPath = appItem.path;
+                    // 开发环境：只从数据中移除，不删除用户的项目源代码目录
+                    logger.info(`开发应用移除: ${id}, path: ${appItem.path}`);
                 } else {
                     appPath = path.join(getAppPath(), `${id}.asar`);
-                }
 
-                // 使用 original-fs 删除 asar 文件
-                try {
-                    originalFs.rmSync(appPath, { recursive: true, force: true });
-                    logger.info(`应用文件已删除: ${appPath}`);
-                } catch (error) {
-                    logger.warn(`删除应用文件失败: ${error}`);
-                }
-
-                // 删除 logo 文件（生产环境）
-                if (!devTag) {
+                    // 使用 original-fs 删除 asar 文件
                     try {
-                        // 删除 .asar.unpacked 目录
+                        originalFs.rmSync(appPath, { recursive: true, force: true });
+                        logger.info(`应用文件已删除: ${appPath}`);
+                    } catch (error) {
+                        logger.warn(`删除应用文件失败: ${error}`);
+                    }
+
+                    // 删除 .asar.unpacked 目录
+                    try {
                         const unpackedPath = path.join(getAppPath(), `${id}.asar.unpacked`);
                         originalFs.rmSync(unpackedPath, { recursive: true, force: true });
                         logger.info(`asar.unpacked 目录已删除: ${unpackedPath}`);
@@ -194,14 +192,8 @@ class AppManagerIpcHandler {
                     } catch (error) {
                         logger.warn(`删除 logo 文件失败: ${error}`);
                     }
-                }
 
-                // 从存储中删除
-                delete appsData[id];
-                store.set('default', appsData);
-
-                // 删除快捷方式（仅生产环境应用）
-                if (!devTag) {
+                    // 删除快捷方式（仅生产环境应用）
                     try {
                         const result = deleteShortcuts({ [id]: appItem });
                         if (result.success) {
@@ -213,6 +205,10 @@ class AppManagerIpcHandler {
                         logger.warn(`删除应用快捷方式异常: ${id}, ${error}`);
                     }
                 }
+
+                // 从存储中删除
+                delete appsData[id];
+                store.set('default', appsData);
 
                 logger.info(`应用已删除: ${id}, devTag: ${devTag}`);
                 return { success: true };
@@ -241,6 +237,77 @@ class AppManagerIpcHandler {
                 return { success: true };
             } catch (error) {
                 return handleError(error, 'clearAppData');
+            }
+        });
+
+        // 添加开发应用（选择 app.json）
+        this.handlers.set('handle-app-dev-add', async () => {
+            try {
+                const { dialog } = require('electron');
+
+                // 显示文件选择对话框
+                const result = await dialog.showOpenDialog({
+                    title: '选择 app.json 文件',
+                    properties: ['openFile'],
+                    filters: [
+                        { name: 'App JSON', extensions: ['json'] },
+                        { name: 'All Files', extensions: ['*'] }
+                    ]
+                });
+
+                if (result.canceled || result.filePaths.length === 0) {
+                    logger.info('用户取消选择 app.json 文件');
+                    return { correct: {} };
+                }
+
+                const selectedPath = result.filePaths[0];
+                const appDir = path.dirname(selectedPath);
+                const { v4: uuidv4 } = require('uuid');
+                const uid = uuidv4().replace(/-/g, '');
+
+                // 验证 app.json 文件
+                try {
+                    const appJsonContent = fs.readFileSync(selectedPath, 'utf8');
+                    const appJson = JSON.parse(appJsonContent);
+
+                    // 验证必需字段
+                    if (!appJson.name || !appJson.version) {
+                        return { correct: {}, wrong: { error: 'app.json 缺少必需字段 (name, version)' } };
+                    }
+
+                    // 保存到开发应用存储（只保存 path，appJson 由 get-apps-dev-data 动态读取）
+                    let appDevInfoData = getAppsDevStore().get('default') || {};
+                    appDevInfoData[uid] = {
+                        path: appDir
+                    };
+                    getAppsDevStore().set('default', appDevInfoData);
+
+                    logger.info(`开发应用添加成功: ${uid}, name: ${appJson.name}`);
+
+                    // 返回包含 appJson 的数据用于前端立即显示
+                    const appDevDataWithJson = {};
+                    for (const [key, value] of Object.entries(appDevInfoData)) {
+                        if (key === uid) {
+                            appDevDataWithJson[key] = { ...value, appJson };
+                        } else {
+                            // 读取其他应用的 app.json
+                            try {
+                                const jsonPath = path.join(value.path, 'app.json');
+                                const jsonContent = fs.readFileSync(jsonPath, 'utf8');
+                                appDevDataWithJson[key] = { ...value, appJson: JSON.parse(jsonContent) };
+                            } catch (e) {
+                                appDevDataWithJson[key] = { ...value };
+                            }
+                        }
+                    }
+                    return { correct: appDevDataWithJson };
+                } catch (error) {
+                    logger.error(`解析 app.json 失败: ${selectedPath}`, error);
+                    return { correct: {}, wrong: { error: error.message } };
+                }
+            } catch (error) {
+                logger.error('添加开发应用失败:', error);
+                return { correct: {}, wrong: { error: error.message } };
             }
         });
     }
