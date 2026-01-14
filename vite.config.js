@@ -23,4 +23,17 @@ export default defineConfig({
             }
         }
     },
+    server: {
+        watch: {
+            // 排除不需要监听的目录，避免符号链接循环导致的 ELOOP 错误
+            ignored: [
+                '**/node_modules/**',
+                '**/dist/**',
+                '**/build/**',
+                '**/scripts/flatpak/**',
+                '**/.git/**',
+                '**/logs/**'
+            ]
+        }
+    }
 })
