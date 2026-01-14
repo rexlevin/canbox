@@ -16,5 +16,8 @@
         "typeRoots": ["./types", "./node_modules/@types"]
     },
     "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
-    "exclude": ["node_modules", "build", "dist"]
+    "exclude": [
+        "node_modules", "build", "dist", "scripts/flatpak/.flatpak-builder",
+        "scripts/flatpak/build-dir", "scripts/flatpak/repo"
+    ]
 }

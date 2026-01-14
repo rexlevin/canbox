@@ -10,6 +10,19 @@ const DateFormat = require('@modules/utils/DateFormat');
 const logger = require('@modules/utils/logger');
 const fsUtils = require('@modules/utils/fs-utils');
 
+// 检测是否在 Flatpak 环境中
+const isFlatpak = process.env.FLATPAK_ID || (process.env.container && process.env.container.includes('flatpak'));
+
+// 动态加载 asar 模块（仅在 Flatpak 环境中需要）
+let asarModule = null;
+if (isFlatpak) {
+    try {
+        asarModule = require('asar');
+    } catch (error) {
+        console.warn('Flatpak 环境中 asar 模块加载失败:', error.message);
+    }
+}
+
 // 延迟加载 sharp 的缓存，只在需要时动态加载（仅 Windows）
 let sharpCache = null;
 
@@ -139,7 +152,22 @@ function getAllApps() {
             return { success: true, data: {}};
         }
         Object.entries(appsData).forEach(([uid, appItem]) => {
-            const appJson = JSON.parse(fs.readFileSync(path.join(getAppPath(), uid + '.asar/app.json'), 'utf8'));
+            const asarPath = path.join(getAppPath(), uid + '.asar');
+            let appJson;
+            try {
+                let appJsonContent;
+                if (isFlatpak && asarModule) {
+                    // Flatpak 环境：使用 asar 模块读取
+                    appJsonContent = asarModule.extractFile(asarPath, 'app.json');
+                } else {
+                    // 非Flatpak 环境：使用 fs 读取
+                    appJsonContent = fs.readFileSync(path.join(asarPath, 'app.json'), 'utf8');
+                }
+                appJson = JSON.parse(appJsonContent);
+            } catch (error) {
+                console.error(`读取 ${uid}.asar/app.json 失败:`, error);
+                return;
+            }
             const iconPath = path.join(getAppPath(), uid + '.asar', appJson.logo);
             const appJsonData = {...appJson, logo: iconPath };
             appItem.appJson = appJsonData;
@@ -271,8 +299,16 @@ async function handleImportApp(event, zipPath, uid) {
         console.info(DateFormat.format(new Date()));
 
         const asarTargetPath = path.join(getAppPath(), `${uuid}.asar`);
-        // 使用 original-fs 读取 asar 文件内部内容（Flatpak 环境中必需）
-        const appJson = JSON.parse(originalFs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8'));
+        // 读取 asar 文件内部内容
+        let appJsonContent;
+        if (isFlatpak && asarModule) {
+            // Flatpak 环境：使用 asar 模块读取
+            appJsonContent = asarModule.extractFile(asarTargetPath, 'app.json');
+        } else {
+            // 非Flatpak 环境：使用 fs 读取
+            appJsonContent = fs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8');
+        }
+        const appJson = JSON.parse(appJsonContent);
 
         let appsConfig = getAppsStore().get('default') || {};
         appsConfig[uuid] = {
