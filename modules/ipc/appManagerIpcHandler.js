@@ -245,6 +245,29 @@ class AppManagerIpcHandler {
             try {
                 const { dialog } = require('electron');
 
+                // 检测是否在 Flatpak 环境
+                const isFlatpak = process.env.FLATPAK_ID || (process.env.container && process.env.container.includes('flatpak'));
+
+                // Flatpak 环境下，先提示用户确认文件系统访问权限
+                if (isFlatpak) {
+                    const confirmResult = await dialog.showMessageBox({
+                        type: 'info',
+                        title: 'Flatpak 环境提示',
+                        message: '开发中的应用需要访问文件系统',
+                        detail: '在 Flatpak 环境下，您需要确保开发应用所在的分区具有访问权限。\n\n' +
+                            '请使用 flatseal 工具为 Canbox 添加文件系统访问权限：\n\n' +
+                            '1. 安装 flatseal: sudo apt install flatseal\n' +
+                            '2. 打开 flatseal: flatseal\n' +
+                            '3. 找到 com.github.lizl6.canbox\n' +
+                            '4. 在 Filesystem > Other files 中添加开发项目所在路径（如: /myPartition）\n\n' +
+                            '设置完成后，点击"确定"继续。',
+                        buttons: ['确定'],
+                        defaultId: 1,
+                        cancelId: 0
+                    });
+                    logger.info('用户确认了 Flatpak 权限提示，继续添加开发应用');
+                }
+
                 // 显示文件选择对话框
                 const result = await dialog.showOpenDialog({
                     title: '选择 app.json 文件',
