@@ -2,9 +2,9 @@
     <div class="app-list-container">
         <!-- 第一部分：按钮区域 -->
         <div class="button-section">
-            <el-button type="primary" @click="importApp">导入已有app</el-button>
-            <el-button type="primary" @click="toAnotherTab('appRepos')">去仓库下载</el-button>
-            <el-button type="primary" @click.prevent="toAnotherTab('devApp')">去开发自己的app</el-button>
+            <el-button type="primary" @click="importApp">{{ $t('appList.importApp') }}</el-button>
+            <el-button type="primary" @click="toAnotherTab('appRepos')">{{ $t('appList.goToRepo') }}</el-button>
+            <el-button type="primary" @click.prevent="toAnotherTab('devApp')">{{ $t('appList.goToDev') }}</el-button>
         </div>
 
         <!-- 第二部分：应用列表区域 -->
@@ -14,7 +14,7 @@
                      <div class="card">
                          <div class="img-block">
                             <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.appJson.logo" alt="" />
-                            <span v-if="appItem.sourceTag === 'import'" class="import-tag" title="这是一个导入的app"><el-tag type="info" effect="dark">导入</el-tag></span>
+                            <span v-if="appItem.sourceTag === 'import'" class="import-tag" :title="$t('appList.importTagTitle')"><el-tag type="info" effect="dark">{{ $t('appList.importTag') }}</el-tag></span>
                         </div>
                         <div class="info-block vertical-block">
                             <div class="app-name" @click="drawerInfo = true">
@@ -25,13 +25,13 @@
                         </div>
                         <div class="operate-block">
                             <div>
-                                <span class="operate-icon-span" @click="loadApp(uid)" title="运行这个app">
+                                <span class="operate-icon-span" @click="loadApp(uid)" :title="$t('appList.runApp')">
                                     <el-icon :size="33" color="#228b22"><VideoPlay /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" @click="clearData(uid)" title="清除用户数据">
+                                <span class="operate-icon-span" @click="clearData(uid)" :title="$t('appList.clearData')">
                                     <el-icon :size="33" color=""><Delete /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" @click="removeApp(uid)" title="移除这个app">
+                                <span class="operate-icon-span" @click="removeApp(uid)" :title="$t('appList.removeApp')">
                                     <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
                                 </span>
                             </div>
@@ -43,16 +43,16 @@
 
         <!-- 空状态提示 -->
         <div class="empty-section" v-show="Object.keys(appsData).length == 0">
-            <p>暂无应用</p>
+            <p>{{ $t('appList.empty') }}</p>
         </div>
     </div>
 
     <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
         <el-tabs>
-            <el-tab-pane label="app介绍">
+            <el-tab-pane :label="$t('appList.appIntro')">
                 <div style="text-align: left;" v-html="readme" id="divAppInfo"></div>
             </el-tab-pane>
-            <el-tab-pane label="版本记录" v-if="historyFlag" v-html="history"></el-tab-pane>
+            <el-tab-pane :label="$t('appList.versionHistory')" v-if="historyFlag" v-html="history"></el-tab-pane>
         </el-tabs>
     </el-drawer>
 </template>
@@ -194,7 +194,7 @@ function clearData(uid) {
             return;
         }
         ElMessage({
-            message: '清除数据成功',
+            message: $t('appList.clearDataSuccess'),
             type:'success'
         });
     });
@@ -216,9 +216,9 @@ function removeApp(uid) {
         delete appsData.value[uid];
         appStore.setRemovedAppId(uid);
         ElMessage({
-            message: 'APP 删除成功',
+            message: $t('appList.removeSuccess'),
             type:'success'
-        }); 
+        });
     });
 }
 
@@ -227,7 +227,7 @@ async function importApp() {
     try {
         // 1. 选择 .zip 文件
         const { canceled, filePaths } = await window.api.selectFile({
-            title: '选择应用文件',
+            title: $t('appList.selectFile'),
             properties: ['openFile'],
             filters: [{ name: 'App Files', extensions: ['zip'] }],
         });
@@ -249,12 +249,12 @@ async function importApp() {
         });
 
         ElMessage({
-            message: '应用导入成功！',
+            message: $t('appList.importSuccess'),
             type: 'success',
         });
     } catch (error) {
         console.error('导入应用失败:', error);
-        ElMessage.error('导入应用失败：' + error.message)
+        ElMessage.error($t('appList.importFailed') + error.message)
     }
 }
 </script>

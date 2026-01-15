@@ -1,45 +1,45 @@
 <template>
     <div class="app-repos" v-loading="loading">
         <div class="button-section">
-            <el-button type="primary" @click="showDialog">添加 APP 源</el-button>
-            <el-button type="primary" @click="importAppRepos">导入 APP 源列表</el-button>
-            <el-button type="primary" @click="exportAppRepos">导出 APP 源列表</el-button>
+            <el-button type="primary" @click="showDialog">{{ $t('appRepo.addSource') }}</el-button>
+            <el-button type="primary" @click="importAppRepos">{{ $t('appRepo.importSources') }}</el-button>
+            <el-button type="primary" @click="exportAppRepos">{{ $t('appRepo.exportSources') }}</el-button>
         </div>
 
         <el-dialog
             v-model="dialogVisible"
-            title="添加 APP 源"
+            :title="$t('appRepo.addSourceTitle')"
             width="600px"
             :before-close="handleClose">
-            <el-form 
+            <el-form
                 ref="formRef"
-                :model="{ repoUrl }" 
-                label-width="120px" 
+                :model="{ repoUrl }"
+                label-width="120px"
                 label-position="top"
                 @submit.prevent="addAppRepo">
-                <el-form-item 
-                    label="Git 仓库地址"
+                <el-form-item
+                    :label="$t('appRepo.repoUrl')"
                     prop="repoUrl"
                     :rules="[
-                        { required: true, message: '请输入仓库地址', trigger: 'blur' },
-                        { 
-                            pattern: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/, 
-                            message: '请输入有效的URL地址', 
-                            trigger: ['blur', 'change'] 
+                        { required: true, message: $t('appRepo.repoUrlRequired'), trigger: 'blur' },
+                        {
+                            pattern: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+                            message: $t('appRepo.repoUrlInvalid'),
+                            trigger: ['blur', 'change']
                         }
                     ]">
                     <el-input
                         v-model="repoUrl"
-                        placeholder="例如: https://github.com/username/repo"
-                        clearable 
+                        :placeholder="$t('appRepo.repoUrlPlaceholder')"
+                        clearable
                         @input="formRef?.clearValidate('repoUrl')"/>
                 </el-form-item>
             </el-form>
             <template #footer>
                 <div class="dialog-footer">
-                    <el-button @click="dialogVisible = false">取消</el-button>
+                    <el-button @click="dialogVisible = false">{{ $t('appRepo.cancel') }}</el-button>
                     <el-button type="primary" @click="formRef?.validate().then(() => addAppRepo())">
-                        确认
+                        {{ $t('appRepo.confirm') }}
                     </el-button>
                 </div>
             </template>
@@ -62,19 +62,19 @@
                         </div>
                         <div class="operate-block">
                             <div>
-                                <span class="operate-icon-span" @click="copyRepoURL(uid)" title="复制这个 APP 源">
+                                <span class="operate-icon-span" @click="copyRepoURL(uid)" :title="$t('appRepo.copySource')">
                                     <el-icon :size="33"><CopyDocument /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" v-show="!repo.downloaded" @click="downloadAppsFromRepo(uid)" title="下载这个 APP">
+                                <span class="operate-icon-span" v-show="!repo.downloaded" @click="downloadAppsFromRepo(uid)" :title="$t('appRepo.downloadApp')">
                                     <el-icon :size="33" color="#228b22"><Download /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" v-show="repo.downloaded && !repo.toUpdate" style="cursor: not-allowed;" title="这个 APP 已下载">
+                                <span class="operate-icon-span" v-show="repo.downloaded && !repo.toUpdate" style="cursor: not-allowed;" :title="$t('appRepo.appDownloaded')">
                                     <el-icon :size="33" color="#228b22"><CircleCheck /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" v-show="repo.downloaded && repo.toUpdate" @click="downloadAppsFromRepo(uid)" title="更新这个 APP">
+                                <span class="operate-icon-span" v-show="repo.downloaded && repo.toUpdate" @click="downloadAppsFromRepo(uid)" :title="$t('appRepo.updateApp')">
                                     <el-icon :size="33" color="#228b22"><Refresh /></el-icon>
                                 </span>
-                                <span class="operate-icon-span" @click="removeRepo(uid)" title="移除这个 APP 源">
+                                <span class="operate-icon-span" @click="removeRepo(uid)" :title="$t('appRepo.removeSource')">
                                     <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
                                 </span>
                             </div>
@@ -86,7 +86,7 @@
 
         <!-- 空状态提示 -->
         <div class="empty-section" v-show="Object.keys(reposData).length == 0">
-            <p>暂无仓库</p>
+            <p>{{ $t('appRepo.empty') }}</p>
         </div>
     </div>
 </template>
@@ -145,7 +145,7 @@ const fetchReposData = async () => {
             // Object.keys(reposData).forEach(key => delete reposData[key]);
             // Object.assign(reposData, result.data || {});
         } else {
-            ElMessage.error(result.msg || '获取仓库列表失败');
+            ElMessage.error(result.msg || $t('appRepo.fetchFailed'));
         }
         loading.value = false;
     });
@@ -157,12 +157,12 @@ const downloadAppsFromRepo = (uid) => {
     window.api.downloadAppsFromRepo(uid, result => {
         console.info('downloadAppsFromRepo result: %o', result);
         if (result.success) {
-            ElMessage.success('app下载成功');
+            ElMessage.success($t('appRepo.downloadSuccess'));
             const appStore = useAppStore();
             appStore.triggerAppListUpdate();
             fetchReposData();   // 更新仓库列表
         } else {
-            ElMessage.error(result.msg || 'app下载失败');
+            ElMessage.error(result.msg || $t('appRepo.downloadFailed'));
         }
         loadingTag.value[uid] = false;
     });
@@ -172,10 +172,10 @@ const downloadAppsFromRepo = (uid) => {
 const removeRepo = (uid) => {
     window.api.removeRepo(uid, result => {
         if (result.success) {
-            ElMessage.success('仓库删除成功');
+            ElMessage.success($t('appRepo.removeSuccess'));
             fetchReposData();
         } else {
-            ElMessage.error(result.msg || '仓库删除失败');
+            ElMessage.error(result.msg || $t('appRepo.removeFailed'));
         }
     });
 };
@@ -183,21 +183,21 @@ const removeRepo = (uid) => {
 // 添加app源
 const addAppRepo = async () => {
     loading.value = true;
-    
+
     // 验证表单
     await formRef.value?.validate();
 
     dialogVisible.value = false;
-    
+
     // 调用IPC接口
     window.api.addAppRepo(repoUrl.value, result => {
         if (result.success) {
-            ElMessage.success('仓库添加成功');
+            ElMessage.success($t('appRepo.addSuccess'));
             dialogVisible.value = false;
             repoUrl.value = '';
             fetchReposData();
         } else {
-            ElMessage.error(result.msg || '仓库添加失败');
+            ElMessage.error(result.msg || $t('appRepo.addFailed'));
         }
         loading.value = false;
     });
@@ -207,32 +207,32 @@ const importAppRepos = () => {
     window.api.importAppRepos(ret => {
         console.log('importAppRepos ret: %o', ret);
         if (!ret.success && 'NoFileSelected' === ret.msg) {
-            ElMessage('未选择任何文件');
+            ElMessage($t('appRepo.noFileSelected'));
         } else if (!ret.success && 'Invalid JSON format' === ret.msg) {
             ElMessage({
                 type: 'error',
-                message: '导入失败：JSON 格式无效'
+                message: $t('appRepo.invalidJson')
             });
         } else if (!ret.success && 'Invalid format: expected an array of repos' === ret.msg) {
             ElMessage({
                 type: 'error',
-                message: '导入失败：JSON 格式应为仓库数组'
+                message: $t('appRepo.invalidFormat')
             });
         } else if (!ret.success) {
             ElMessage({
                 type: 'error',
-                message: '导入失败：' + ret.msg
+                message: $t('appRepo.importFailedPrefix') + ret.msg
             });
         } else {
             const { successCount, failedRepos, skippedCount } = ret.data || {};
             const failedCount = failedRepos ? failedRepos.length : 0;
             if (failedCount > 0 || skippedCount > 0) {
-                let message = `成功导入 ${successCount} 个仓库`;
+                let message = $t('appRepo.importSuccessMsg', { count: successCount });
                 if (skippedCount > 0) {
-                    message += `，跳过 ${skippedCount} 个已存在的仓库`;
+                    message = $t('appRepo.importSuccessWithSkipped', { success: successCount, skipped: skippedCount });
                 }
                 if (failedCount > 0) {
-                    message += `，失败 ${failedCount} 个`;
+                    message = $t('appRepo.importSuccessWithFailed', { success: successCount, failed: failedCount });
                 }
                 ElMessage({
                     type: failedCount > 0 ? 'warning' : 'success',
@@ -241,7 +241,7 @@ const importAppRepos = () => {
             } else {
                 ElMessage({
                     type: 'success',
-                    message: `成功导入 ${successCount} 个仓库`
+                    message: $t('appRepo.importSuccessAll', { success: successCount })
                 });
             }
         }
@@ -254,12 +254,12 @@ const exportAppRepos = () => {
         if (!ret.success) {
             ElMessage({
                 type: 'error',
-                message: '导出失败：' + ret.msg
+                message: $t('appRepo.exportFailed') + ret.msg
             });
         } else {
             ElMessage({
                 type: 'success',
-                message: '导出成功'
+                message: $t('appRepo.exportSuccess')
             });
         }
     });
@@ -270,9 +270,9 @@ const copyRepoURL = (uid) => {
     const repo = reposData.value[uid];
     if (repo && repo.repo) {
         navigator.clipboard.writeText(repo.repo).then(() => {
-            ElMessage.success('复制成功');
+            ElMessage.success($t('appRepo.copySuccess'));
         }).catch(() => {
-            ElMessage.error('复制失败');
+            ElMessage.error($t('appRepo.copyFailed'));
         });
     }
 }

@@ -1,5 +1,5 @@
 <template>
-    <h1>建设中...</h1>
+    <h1>{{ $t('userCenter.underConstruction') }}</h1>
 </template>
 
 <script setup>
