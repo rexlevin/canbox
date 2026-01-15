@@ -7,6 +7,16 @@ const { handleError } = require('@modules/ipc/errorHandler');
 const logger = require('@modules/utils/logger');
 const { handleImportApp } = require('@modules/main/appManager');
 const { deleteShortcuts } = require('@modules/main/shortcutManager');
+const i18nModule = require('../../locales');
+const { getCanboxStore } = require('@modules/main/storageManager');
+
+// 获取当前语言
+function getCurrentLanguage() {
+    const canboxStore = getCanboxStore();
+    return canboxStore.get('language') || 'en-US';
+}
+
+const translate = (key) => i18nModule.translate(key, getCurrentLanguage());
 
 class AppManagerIpcHandler {
     constructor() {
@@ -252,17 +262,11 @@ class AppManagerIpcHandler {
                 if (isFlatpak) {
                     const confirmResult = await dialog.showMessageBox({
                         type: 'info',
-                        title: 'Flatpak 环境提示',
-                        message: '开发中的应用需要访问文件系统',
-                        detail: '在 Flatpak 环境下，您需要确保开发应用所在的分区具有访问权限。\n\n' +
-                            '请使用 flatseal 工具为 Canbox 添加文件系统访问权限：\n\n' +
-                            '1. 安装 flatseal: sudo apt install flatseal\n' +
-                            '2. 打开 flatseal: flatseal\n' +
-                            '3. 找到 com.github.lizl6.canbox\n' +
-                            '4. 在 Filesystem > Other files 中添加开发项目所在路径（如: /myPartition）\n\n' +
-                            '设置完成后，点击"确定"继续。',
-                        buttons: ['确定'],
-                        defaultId: 1,
+                        title: translate('flatpak.permissionTitle'),
+                        message: translate('flatpak.permissionMessage'),
+                        detail: translate('flatpak.permissionDetail'),
+                        buttons: [translate('flatpak.confirm')],
+                        defaultId: 0,
                         cancelId: 0
                     });
                     logger.info('用户确认了 Flatpak 权限提示，继续添加开发应用');
@@ -270,7 +274,7 @@ class AppManagerIpcHandler {
 
                 // 显示文件选择对话框
                 const result = await dialog.showOpenDialog({
-                    title: '选择 app.json 文件',
+                    title: translate('devApp.addApp'),
                     properties: ['openFile'],
                     filters: [
                         { name: 'App JSON', extensions: ['json'] },

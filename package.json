@@ -28,6 +28,7 @@
         "files": [
             "build/**/*",
             "docs/**/*",
+            "locales/**/*",
             "modules/**/*",
             "public/**/*",
             "ipcHandlers.js",
