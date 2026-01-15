@@ -36,8 +36,8 @@ contextBridge.exposeInMainWorld(
             console.info('url====', url);
             ipcRenderer.send('open-url', url);
         },
-        openHtml: async (htmlContent) => {
-            return ipcRenderer.invoke('open-html', htmlContent);
+        openHtml: async (htmlContent, docName) => {
+            return ipcRenderer.invoke('open-html', htmlContent, docName);
         },
         selectFile: (options) => {
             return ipcRenderer.invoke('select-file', options);

@@ -2,6 +2,7 @@ const { ipcMain, dialog, shell, app, BrowserWindow } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { execSync } = require('child_process');
 const repoIpcHandler = require('./modules/ipc/repoIpcHandler');
 const shortcutIpcHandler = require('./modules/ipc/shortcutIpcHandler');
 const appManagerIpcHandler = require('./modules/ipc/appManagerIpcHandler');
@@ -12,6 +13,9 @@ const { getCanboxStore } = require('./modules/main/storageManager');
 
 // 默认语言为英文
 let currentLanguage = 'en-US';
+
+// 缓存已创建的临时文件，避免重复创建
+let cachedTempFiles = new Map();
 
 // 初始化时读取保存的语言设置
 function initLanguage() {
@@ -33,6 +37,23 @@ function initLanguage() {
     } catch (error) {
         logger.error('Failed to initialize language:', error);
     }
+}
+
+/**
+ * 获取文档目录名称
+ * @returns {string} 中文环境返回"文档"，其他返回"Documents"
+ */
+function getDocumentsDirName() {
+    return currentLanguage === 'zh-CN' ? '文档' : 'Documents';
+}
+
+/**
+ * 获取文档目录路径
+ * @returns {string} 文档目录的完整路径
+ */
+function getDocumentsDir() {
+    const docsDirName = getDocumentsDirName();
+    return path.join(os.homedir(), docsDirName);
 }
 
 /**
@@ -101,39 +122,56 @@ function initIpcHandlers() {
     });
 
     // 使用外部浏览器打开 HTML 内容（用于显示 markdown 文档）
-    ipcMain.handle('open-html', async (event, htmlContent) => {
+    ipcMain.handle('open-html', async (event, htmlContent, docName) => {
         if (!htmlContent) {
             logger.warn('open-html received empty content');
             return { success: false, msg: '内容为空' };
         }
         try {
-            // 创建临时目录
-            const tempDir = path.join(os.tmpdir(), 'canbox-docs');
-            if (!fs.existsSync(tempDir)) {
-                fs.mkdirSync(tempDir, { recursive: true });
-            }
-            
-            // 创建临时 HTML 文件
-            const tempFile = path.join(tempDir, `doc-${Date.now()}.html`);
-            fs.writeFileSync(tempFile, htmlContent, 'utf8');
-            
-            logger.info('Opening temporary HTML file: {}', tempFile);
-            shell.openExternal(`file://${tempFile}`).catch(error => {
-                console.error('Error opening HTML file:', error);
-            });
-            
-            // 30分钟后删除临时文件
-            setTimeout(() => {
-                try {
-                    if (fs.existsSync(tempFile)) {
-                        fs.unlinkSync(tempFile);
-                        logger.info('Deleted temporary file: {}', tempFile);
-                    }
-                } catch (err) {
-                    console.error('Error deleting temp file:', err);
+            // 检测是否在 Flatpak 环境
+            const isFlatpak = process.env.FLATPAK_ID || (process.env.container && process.env.container.includes('flatpak'));
+
+            if (isFlatpak) {
+                // 使用文档名称作为文件名，每次都覆盖写入
+                const cacheKey = docName || 'default';
+
+                // 创建文档目录
+                const docsDir = getDocumentsDir();
+                const tempDir = path.join(docsDir, 'canbox-docs');
+                if (!fs.existsSync(tempDir)) {
+                    fs.mkdirSync(tempDir, { recursive: true });
                 }
-            }, 30 * 60 * 1000);
-            
+
+                // 固定文件名，每次都覆盖写入
+                const tempFile = path.join(tempDir, `${cacheKey}.html`);
+                fs.writeFileSync(tempFile, htmlContent, 'utf8');
+
+                logger.info('[Flatpak] Created/Updated temporary HTML file: {}', tempFile);
+
+                // 在 Flatpak 环境下使用 xdg-open 命令打开文件
+                try {
+                    execSync(`xdg-open "${tempFile}"`, {
+                        stdio: 'ignore',
+                        detached: true
+                    });
+                } catch (error) {
+                    // 如果 xdg-open 失败，回退到 shell.openPath
+                    shell.openPath(tempFile).catch(err => {
+                        console.error('Error opening HTML file with shell.openPath:', err);
+                    });
+                }
+            } else {
+                // 非 Flatpak 环境，使用原方式：创建临时文件并打开
+                const tempDir = os.tmpdir();
+                const tempFile = path.join(tempDir, `doc-${Date.now()}.html`);
+                fs.writeFileSync(tempFile, htmlContent, 'utf8');
+
+                logger.info('Opening temporary HTML file: {}', tempFile);
+                shell.openExternal(`file://${tempFile}`).catch(error => {
+                    console.error('Error opening HTML file:', error);
+                });
+            }
+
             return { success: true };
         } catch (error) {
             console.error('Error creating temp HTML file:', error);

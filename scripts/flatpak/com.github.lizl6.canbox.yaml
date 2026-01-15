@@ -31,6 +31,9 @@ modules:
       - type: file
         path: ../../logo_128x128.png
         dest-filename: logo_128x128.png
+      - type: dir
+        path: ../../docs
+        dest: docs-src
     build-commands:
       # 创建一个包装脚本，包含--no-sandbox参数
       - mkdir -p /app/bin
@@ -55,6 +58,11 @@ modules:
       - cp canbox-src/*.so* /app/bin/ 2>/dev/null || true
       - cp canbox-src/*.json /app/bin/ 2>/dev/null || true
       - cp canbox-src/*.html /app/bin/ 2>/dev/null || true
+
+      # 复制文档目录（从源代码目录，使用 cp 命令）
+      - mkdir -p /app/bin/docs
+      - install -m644 docs-src/APP_DEV_CN.md /app/bin/docs/APP_DEV_CN.md
+      - install -m644 docs-src/API_CN.md /app/bin/docs/API_CN.md
 
       # 创建图标目录
       - mkdir -p /app/share/icons/hicolor/512x512/apps

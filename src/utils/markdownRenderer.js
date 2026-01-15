@@ -8,6 +8,18 @@ import { ElMessage } from 'element-plus';
  */
 
 // 初始化 markdown-it
+
+/**
+ * 获取文件名（去除扩展名）
+ * @param {string} filePath - 文件路径
+ * @param {string} ext - 扩展名，默认 '.md'
+ * @returns {string} 文件名（不含扩展名）
+ */
+function getBasename(filePath, ext = '.md') {
+    const parts = filePath.split('/');
+    const filename = parts[parts.length - 1];
+    return filename.endsWith(ext) ? filename.slice(0, -ext.length) : filename;
+}
 const md = new MarkdownIt({
     html: true,
     linkify: true,
@@ -183,7 +195,9 @@ export async function renderAndOpenMarkdown(filePath, title, options = {}) {
         const tocHtml = generateTocHtml(htmlContent);
         const tempHtml = generateHtmlTemplate(title, htmlContent, tocHtml, maxContentWidth);
 
-        const openResult = await window.api.openHtml(tempHtml);
+        // 传递文档名称作为缓存键
+        const docName = getBasename(filePath, '.md');
+        const openResult = await window.api.openHtml(tempHtml, docName);
         if (!openResult.success) {
             ElMessage.error('无法打开文档: ' + openResult.msg);
         }
