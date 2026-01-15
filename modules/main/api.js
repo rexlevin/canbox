@@ -127,36 +127,46 @@ function initReadFileIpcHandlers() {
             const fs = require('fs');
             const path = require('path');
             const { app } = require('electron');
-            
+
             // 获取应用路径：开发环境使用项目根目录，打包后使用 app.getAppPath()
-            const appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');
-            
+            let appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');
+
+            // Flatpak 环境特殊处理：docs 目录在 /app/bin/docs/
+            if (process.env.FLATPAK_ID || (process.env.container && process.env.container.includes('flatpak'))) {
+                // 如果是 docs 目录下的文件，使用 Flatpak 中的路径
+                if (args.filePath && args.filePath.startsWith('docs/')) {
+                    const fileName = args.filePath.replace('docs/', '');
+                    appPath = '/app/bin';
+                    args.filePath = `docs/${fileName}`;
+                }
+            }
+
             // 构建完整的文件路径
             const filePath = path.join(appPath, args.filePath);
-            
+
             console.info('[api.js] 尝试读取文件: ', filePath);
-            
+
             // 检查文件是否存在
             if (!fs.existsSync(filePath)) {
                 console.error('[api.js] 文件不存在: ', filePath);
-                return { 
-                    success: false, 
-                    msg: `文件不存在: ${args.filePath}` 
+                return {
+                    success: false,
+                    msg: `文件不存在: ${args.filePath}`
                 };
             }
-            
+
             // 读取文件内容
             const content = fs.readFileSync(filePath, 'utf8');
             console.info('[api.js] 文件读取成功: ', args.filePath);
-            return { 
-                success: true, 
-                data: content 
+            return {
+                success: true,
+                data: content
             };
         } catch (error) {
             console.error('[api.js] 读取文件失败:', error);
-            return { 
-                success: false, 
-                msg: `读取文件失败: ${error.message}` 
+            return {
+                success: false,
+                msg: `读取文件失败: ${error.message}`
             };
         }
     });

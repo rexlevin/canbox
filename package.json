@@ -16,8 +16,8 @@
         "start": "electron . --no-sandbox",
         "startExt": "electron . --no-sandbox --app-id=118a8df9bf0f4ea9b98c7733dbc70f7e",
         "build-dist": "electron-builder --dir",
-        "build-dist:win": "electron-builder -w",
-        "build-dist:linux": "electron-builder -l",
+        "build-exe": "electron-builder -w",
+        "build-appimage": "electron-builder -l",
         "build-flatpak": "electron-builder --dir && cd scripts/flatpak && ./build-flatpak.sh && cd ../..",
         "build-flatpak2": "npm run build && npm run build-dist && cd scripts/flatpak && ./build-flatpak.sh && cd ../.."
     },
