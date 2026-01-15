@@ -1,0 +1,67 @@
+{
+    "language": {"title": "English (US)"},
+    "app": {
+        "title": "Canbox",
+        "description": "Lightweight Desktop Application Container"
+    },
+    "tray": {
+        "showWindow": "Show Window",
+        "hideWindow": "Hide Window",
+        "toggleDevTools": "Toggle DevTools",
+        "reloadCanbox": "Reload Canbox",
+        "about": "About",
+        "projectRepository": "Project Repository",
+        "quit": "Quit"
+    },
+    "devApp": {
+        "title": "APP Development",
+        "addApp": "Select app.json to Create App Project",
+        "empty": "No development apps",
+        "packApp": "Pack App",
+        "runApp": "Run this development app",
+        "clearData": "Clear User Data",
+        "removeApp": "Remove this development app",
+        "viewDevDoc": "View APP Development Docs",
+        "viewApiDoc": "View API Docs",
+        "packSuccess": "Pack successful!",
+        "clearDataSuccess": "Clear data successful",
+        "removeSuccess": "APP removed successfully",
+        "warningTitle": "Warning",
+        "confirm": "Confirm"
+    },
+    "flatpak": {
+        "permissionTitle": "Flatpak Environment Notice",
+        "permissionMessage": "Development apps require filesystem access",
+        "permissionDetail": "In Flatpak environment, you need to ensure the partition where your development app is located has access permissions.\n\nPlease use flatseal tool to add filesystem access permissions for Canbox:\n\n1. Install flatseal: sudo apt install flatseal\n2. Open flatseal: flatseal\n3. Find com.canbox.app\n4. Add development project path in Filesystem > Other files (e.g., /depot)\n\nAfter setting up, click \"Confirm\" to continue.",
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+    },
+    "common": {
+        "name": "Name",
+        "version": "Version",
+        "description": "Description",
+        "author": "Author",
+        "actions": "Actions",
+        "success": "Success",
+        "error": "Error",
+        "loading": "Loading...",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit",
+        "add": "Add",
+        "import": "Import",
+        "export": "Export",
+        "search": "Search",
+        "filter": "Filter",
+        "refresh": "Refresh"
+    },
+    "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "shortcutTitle": "For all App",
+        "createShortcut": "Create Shortcut",
+        "deleteShortcut": "Delete Shortcut",
+        "shortcutCreated": "App shortcuts created successfully",
+        "shortcutDeleted": "App shortcuts deleted successfully"
+    }
+}

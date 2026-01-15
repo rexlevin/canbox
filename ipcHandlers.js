@@ -1,4 +1,4 @@
-const { ipcMain, dialog, shell, app } = require('electron');
+const { ipcMain, dialog, shell, app, BrowserWindow } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -7,11 +7,80 @@ const shortcutIpcHandler = require('./modules/ipc/shortcutIpcHandler');
 const appManagerIpcHandler = require('./modules/ipc/appManagerIpcHandler');
 const initApiIpcHandlers = require('./modules/main/api');
 const logger = require('./modules/utils/logger');
+const i18nModule = require('./locales');
+const { getCanboxStore } = require('./modules/main/storageManager');
+
+// 默认语言为英文
+let currentLanguage = 'en-US';
+
+// 初始化时读取保存的语言设置
+function initLanguage() {
+    try {
+        const canboxStore = getCanboxStore();
+        const savedLanguage = canboxStore.get('language');
+        if (savedLanguage) {
+            currentLanguage = savedLanguage;
+        } else {
+            // 使用系统默认语言
+            const systemLocale = app.getLocale();
+            if (systemLocale.startsWith('zh')) {
+                currentLanguage = 'zh-CN';
+            } else {
+                currentLanguage = 'en-US';
+            }
+        }
+        logger.info(`Initialized language: ${currentLanguage}`);
+    } catch (error) {
+        logger.error('Failed to initialize language:', error);
+    }
+}
 
 /**
  * 初始化所有 IPC 消息处理逻辑
  */
 function initIpcHandlers() {
+    // i18n 相关 IPC 处理
+    ipcMain.handle('i18n-get-language', () => {
+        return currentLanguage;
+    });
+
+    ipcMain.handle('i18n-set-language', async (event, lang) => {
+        try {
+            const availableLanguages = i18nModule.getAvailableLanguages();
+            const isValidLang = availableLanguages.some(l => l.code === lang);
+
+            if (!isValidLang) {
+                logger.warn(`Invalid language code: ${lang}`);
+                return { success: false, msg: '不支持的语言' };
+            }
+
+            currentLanguage = lang;
+            const canboxStore = getCanboxStore();
+            canboxStore.set('language', lang);
+            logger.info(`Language changed to: ${lang}`);
+
+            // 通知所有窗口语言已更改
+            BrowserWindow.getAllWindows().forEach(win => {
+                if (win.webContents) {
+                    win.webContents.send('language-changed', lang);
+                }
+            });
+
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to set language:', error);
+            return { success: false, msg: error.message };
+        }
+    });
+
+    ipcMain.handle('i18n-get-available-languages', () => {
+        return i18nModule.getAvailableLanguages();
+    });
+
+    ipcMain.handle('i18n-translate', (event, key, params = {}) => {
+        return i18nModule.translate(key, currentLanguage, params);
+    });
+
     // 初始化拆分后的 IPC 处理逻辑
     repoIpcHandler.init(ipcMain);
     shortcutIpcHandler.init(ipcMain);
@@ -101,6 +170,10 @@ function initIpcHandlers() {
 
 }
 
+// 初始化语言
+initLanguage();
+
 module.exports = {
-    initIpcHandlers
+    initIpcHandlers,
+    getCurrentLanguage: () => currentLanguage
 };

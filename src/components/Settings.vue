@@ -6,13 +6,23 @@
                 <el-col :span="24">
                     <div class="card">
                         <el-form label-width="120px">
-                            <el-form-item label="为所有APP" style="margin-bottom: 20px;">
+                            <el-form-item :label="$t('settings.language')" style="margin-bottom: 20px;">
+                                <el-select v-model="currentLanguage" @change="handleLanguageChange" style="width: 200px;">
+                                    <el-option
+                                        v-for="lang in availableLanguages"
+                                        :key="lang.code"
+                                        :label="lang.name"
+                                        :value="lang.code"
+                                    />
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item :label="$t('settings.shortcutTitle')" style="margin-bottom: 20px;">
                                 <div style="display: flex; gap: 10px;">
                                     <el-button type="primary" size="" @click="generateShortcut">
-                                        创建快捷方式
+                                        {{ $t('settings.createShortcut') }}
                                     </el-button>
                                     <el-button type="danger" size="" @click="deleteShortcut">
-                                        删除快捷方式
+                                        {{ $t('settings.deleteShortcut') }}
                                     </el-button>
                                 </div>
                             </el-form-item>
@@ -28,11 +38,14 @@
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 
+const currentLanguage = ref('en-US');
+const availableLanguages = ref([]);
+
 function generateShortcut() {
     window.api.generateShortcut(ret => {
         if (ret.success) {
             ElMessage({
-                message: 'app快捷方式生成成功',
+                message: $t('settings.shortcutCreated'),
                 type:'success'
             });
         } else {
@@ -44,7 +57,7 @@ function deleteShortcut() {
     window.api.deleteShortcut(ret => {
         if (ret.success) {
             ElMessage({
-                message: 'app快捷方式清除成功',
+                message: $t('settings.shortcutDeleted'),
                 type:'success'
             });
         } else {
@@ -52,6 +65,24 @@ function deleteShortcut() {
         }
     });
 }
+
+async function handleLanguageChange(lang) {
+    const result = await window.api.i18n.setLanguage(lang);
+    if (!result.success) {
+        ElMessage.error(result.msg || 'Failed to change language');
+        currentLanguage.value = await window.api.i18n.getLanguage();
+    }
+}
+
+async function loadSettings() {
+    currentLanguage.value = await window.api.i18n.getLanguage();
+    availableLanguages.value = await window.api.i18n.getAvailableLanguages();
+    console.info('Current language:', currentLanguage.value);
+    console.info('Available languages:', availableLanguages.value)
+}
+onMounted(() => {
+    loadSettings();
+});
 </script>
 
 <style scoped>

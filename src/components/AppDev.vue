@@ -2,7 +2,7 @@
     <div class="app-list-container">
         <!-- 第一部分：按钮区域 -->
         <div class="button-section">
-            <el-button type="primary" @click="addAppDev">选择 app.json 新建 app 项目</el-button>
+            <el-button type="primary" @click="addAppDev">{{ $t('devApp.addApp') }}</el-button>
         </div>
 
         <!-- 第二部分：应用列表区域 -->
@@ -24,22 +24,22 @@
                                 appDevItem.appJson.description }}</div>
                         </div>
                         <div class="operate-block">
-                            <span class="operate-icon-span" @click="packApp(uid)" title="打包app">
+                            <span class="operate-icon-span" @click="packApp(uid)" :title="$t('devApp.packApp')">
                                 <el-icon :size="35" color="#6a8759">
                                     <Expand />
                                 </el-icon>
                             </span>
-                            <span class="operate-icon-span" @click="loadApp(uid)" title="运行这个开发中的app">
+                            <span class="operate-icon-span" @click="loadApp(uid)" :title="$t('devApp.runApp')">
                                 <el-icon :size="35" color="#228b22">
                                     <VideoPlay />
                                 </el-icon>
                             </span>
-                            <span class="operate-icon-span" @click="clearData(uid)" title="清除用户数据">
+                            <span class="operate-icon-span" @click="clearData(uid)" :title="$t('devApp.clearData')">
                                 <el-icon :size="35" color="">
                                     <Delete />
                                 </el-icon>
                             </span>
-                            <span class="operate-icon-span" @click="removeApp(uid)" title="移除这个开发中的app">
+                            <span class="operate-icon-span" @click="removeApp(uid)" :title="$t('devApp.removeApp')">
                                 <el-icon :size="35" color="#ab4e52">
                                     <Remove />
                                 </el-icon>
@@ -52,21 +52,21 @@
 
         <!-- 空状态提示 -->
         <div class="empty-section" v-show="Object.keys(appDevData).length == 0">
-            <p>暂无开发中的应用</p>
+            <p>{{ $t('devApp.empty') }}</p>
         </div>
 
         <div class="doc-links">
-            <el-link type="primary" @click="openAppDevDoc">查看 APP 开发文档</el-link>
-            <el-link type="primary" @click="openApiDoc">查看 API 文档</el-link>
+            <el-link type="primary" @click="openAppDevDoc">{{ $t('devApp.viewDevDoc') }}</el-link>
+            <el-link type="primary" @click="openApiDoc">{{ $t('devApp.viewApiDoc') }}</el-link>
         </div>
 
     </div>
 
-    <el-dialog v-model="centerDialogVisible" title="Warning" width="300" center>
+    <el-dialog v-model="centerDialogVisible" :title="$t('devApp.warningTitle')" width="300" center>
         <span style="white-space:pre-line">{{ warningContent }}</span>
         <template #footer>
             <div class="dialog-footer">
-                <el-button type="primary" @click="centerDialogVisible = false"> 确&nbsp;&nbsp;&nbsp;&nbsp;定 </el-button>
+                <el-button type="primary" @click="centerDialogVisible = false"> {{ $t('devApp.confirm') }} </el-button>
             </div>
         </template>
     </el-dialog>
@@ -229,7 +229,7 @@ async function packApp(uid) {
             return;
         }
         ElMessage({
-            message: '打包成功！',
+            message: $t('devApp.packSuccess'),
             type: 'success',
         });
     }).catch((err) => {
@@ -256,7 +256,7 @@ function clearData(uid) {
             return;
         }
         ElMessage({
-            message: '清除数据成功',
+            message: $t('devApp.clearDataSuccess'),
             type: 'success'
         });
     });
@@ -273,7 +273,7 @@ function removeApp(uid) {
             return;
         }
         ElMessage({
-            message: 'APP 删除成功',
+            message: $t('devApp.removeSuccess'),
             type: 'success'
         });
         load();

@@ -1,0 +1,67 @@
+{
+    "language": {"title": "中文 (简体)"},
+    "app": {
+        "title": "Canbox",
+        "description": "轻量级桌面应用容器"
+    },
+    "tray": {
+        "showWindow": "显示窗口",
+        "hideWindow": "隐藏窗口",
+        "toggleDevTools": "切换开发者工具",
+        "reloadCanbox": "重载 Canbox",
+        "about": "关于",
+        "projectRepository": "项目仓库",
+        "quit": "退出"
+    },
+    "devApp": {
+        "title": "APP 开发",
+        "addApp": "选择 app.json 新建 app 项目",
+        "empty": "暂无开发中的应用",
+        "packApp": "打包app",
+        "runApp": "运行这个开发中的app",
+        "clearData": "清除用户数据",
+        "removeApp": "移除这个开发中的app",
+        "viewDevDoc": "查看 APP 开发文档",
+        "viewApiDoc": "查看 API 文档",
+        "packSuccess": "打包成功！",
+        "clearDataSuccess": "清除数据成功",
+        "removeSuccess": "APP 删除成功",
+        "warningTitle": "警告",
+        "confirm": "确 定"
+    },
+    "flatpak": {
+        "permissionTitle": "Flatpak 环境提示",
+        "permissionMessage": "开发中的应用需要访问文件系统",
+        "permissionDetail": "在 Flatpak 环境下，您需要确保开发应用所在的分区具有访问权限。\n\n请使用 flatseal 工具为 Canbox 添加文件系统访问权限：\n\n1. 安装 flatseal: sudo apt install flatseal\n2. 打开 flatseal: flatseal\n3. 找到 com.canbox.app\n4. 在 Filesystem > Other files 中添加开发项目所在路径（如: /depot）\n\n设置完成后，点击\"确定\"继续。",
+        "cancel": "取消",
+        "confirm": "确定"
+    },
+    "common": {
+        "name": "名称",
+        "version": "版本",
+        "description": "描述",
+        "author": "作者",
+        "actions": "操作",
+        "success": "成功",
+        "error": "错误",
+        "loading": "加载中...",
+        "save": "保存",
+        "delete": "删除",
+        "edit": "编辑",
+        "add": "添加",
+        "import": "导入",
+        "export": "导出",
+        "search": "搜索",
+        "filter": "筛选",
+        "refresh": "刷新"
+    },
+    "settings": {
+        "title": "设置",
+        "language": "语言",
+        "shortcutTitle": "为所有 APP",
+        "createShortcut": "创建快捷方式",
+        "deleteShortcut": "删除快捷方式",
+        "shortcutCreated": "app快捷方式生成成功",
+        "shortcutDeleted": "app快捷方式清除成功"
+    }
+}

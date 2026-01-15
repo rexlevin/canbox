@@ -263,5 +263,5 @@ const createWindow = () => {
     });
 }
 
-// 初始化 IPC 消息处理
+// 初始化 IPC 消息处理（包含语言初始化）
 initIpcHandlers();

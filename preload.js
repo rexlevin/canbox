@@ -2,6 +2,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld(
     "api", {
+        i18n: {
+            getLanguage: () => ipcRenderer.invoke('i18n-get-language'),
+            setLanguage: (lang) => ipcRenderer.invoke('i18n-set-language', lang),
+            getAvailableLanguages: () => ipcRenderer.invoke('i18n-get-available-languages'),
+            translate: (key, params) => ipcRenderer.invoke('i18n-translate', key, params)
+        },
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
         },
