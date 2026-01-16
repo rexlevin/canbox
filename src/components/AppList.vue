@@ -115,7 +115,10 @@
 <script setup>
 import { onBeforeMount, onMounted, ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 import { useAppStore } from '@/stores/appStore';
+
+const { t } = useI18n();
 
 // 定义触发的自定义事件
 const emit = defineEmits(['switchTab']);
@@ -194,7 +197,7 @@ function clearData(uid) {
             return;
         }
         ElMessage({
-            message: $t('appList.clearDataSuccess'),
+            message: t('appList.clearDataSuccess'),
             type:'success'
         });
     });
@@ -216,7 +219,7 @@ function removeApp(uid) {
         delete appsData.value[uid];
         appStore.setRemovedAppId(uid);
         ElMessage({
-            message: $t('appList.removeSuccess'),
+            message: t('appList.removeSuccess'),
             type:'success'
         });
     });
@@ -227,7 +230,7 @@ async function importApp() {
     try {
         // 1. 选择 .zip 文件
         const { canceled, filePaths } = await window.api.selectFile({
-            title: $t('appList.selectFile'),
+            title: t('appList.selectFile'),
             properties: ['openFile'],
             filters: [{ name: 'App Files', extensions: ['zip'] }],
         });
@@ -249,12 +252,12 @@ async function importApp() {
         });
 
         ElMessage({
-            message: $t('appList.importSuccess'),
+            message: t('appList.importSuccess'),
             type: 'success',
         });
     } catch (error) {
         console.error('导入应用失败:', error);
-        ElMessage.error($t('appList.importFailed') + error.message)
+        ElMessage.error(t('appList.importFailed') + error.message)
     }
 }
 </script>

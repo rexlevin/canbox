@@ -314,7 +314,7 @@ async function exportReposData() {
 
         // 写入文件
         fs.writeFileSync(result.filePath, JSON.stringify(exportData, null, 2), 'utf8');
-        logger.info('导出仓库列表成功，文件路径: %s', result.filePath);
+        logger.info('导出仓库列表成功，文件路径: {}', result.filePath);
 
         return { success: true, data: { filePath: result.filePath } };
     } catch (error) {

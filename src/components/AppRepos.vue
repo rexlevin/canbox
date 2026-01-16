@@ -94,9 +94,12 @@
 <script setup>
 import { onBeforeMount, ref, reactive, watch } from 'vue';
 import { ElMessage } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 
 import { useAppStore } from '@/stores/appStore';
 const appStore = useAppStore();
+
+const { t } = useI18n();
 
 const dialogVisible = ref(false);
 const repoUrl = ref('');
@@ -145,7 +148,7 @@ const fetchReposData = async () => {
             // Object.keys(reposData).forEach(key => delete reposData[key]);
             // Object.assign(reposData, result.data || {});
         } else {
-            ElMessage.error(result.msg || $t('appRepo.fetchFailed'));
+            ElMessage.error(result.msg || t('appRepo.fetchFailed'));
         }
         loading.value = false;
     });
@@ -157,12 +160,12 @@ const downloadAppsFromRepo = (uid) => {
     window.api.downloadAppsFromRepo(uid, result => {
         console.info('downloadAppsFromRepo result: %o', result);
         if (result.success) {
-            ElMessage.success($t('appRepo.downloadSuccess'));
+            ElMessage.success(t('appRepo.downloadSuccess'));
             const appStore = useAppStore();
             appStore.triggerAppListUpdate();
             fetchReposData();   // 更新仓库列表
         } else {
-            ElMessage.error(result.msg || $t('appRepo.downloadFailed'));
+            ElMessage.error(result.msg || t('appRepo.downloadFailed'));
         }
         loadingTag.value[uid] = false;
     });
@@ -172,10 +175,10 @@ const downloadAppsFromRepo = (uid) => {
 const removeRepo = (uid) => {
     window.api.removeRepo(uid, result => {
         if (result.success) {
-            ElMessage.success($t('appRepo.removeSuccess'));
+            ElMessage.success(t('appRepo.removeSuccess'));
             fetchReposData();
         } else {
-            ElMessage.error(result.msg || $t('appRepo.removeFailed'));
+            ElMessage.error(result.msg || t('appRepo.removeFailed'));
         }
     });
 };
@@ -192,12 +195,12 @@ const addAppRepo = async () => {
     // 调用IPC接口
     window.api.addAppRepo(repoUrl.value, result => {
         if (result.success) {
-            ElMessage.success($t('appRepo.addSuccess'));
+            ElMessage.success(t('appRepo.addSuccess'));
             dialogVisible.value = false;
             repoUrl.value = '';
             fetchReposData();
         } else {
-            ElMessage.error(result.msg || $t('appRepo.addFailed'));
+            ElMessage.error(result.msg || t('appRepo.addFailed'));
         }
         loading.value = false;
     });
@@ -207,32 +210,32 @@ const importAppRepos = () => {
     window.api.importAppRepos(ret => {
         console.log('importAppRepos ret: %o', ret);
         if (!ret.success && 'NoFileSelected' === ret.msg) {
-            ElMessage($t('appRepo.noFileSelected'));
+            ElMessage(t('appRepo.noFileSelected'));
         } else if (!ret.success && 'Invalid JSON format' === ret.msg) {
             ElMessage({
                 type: 'error',
-                message: $t('appRepo.invalidJson')
+                message: t('appRepo.invalidJson')
             });
         } else if (!ret.success && 'Invalid format: expected an array of repos' === ret.msg) {
             ElMessage({
                 type: 'error',
-                message: $t('appRepo.invalidFormat')
+                message: t('appRepo.invalidFormat')
             });
         } else if (!ret.success) {
             ElMessage({
                 type: 'error',
-                message: $t('appRepo.importFailedPrefix') + ret.msg
+                message: t('appRepo.importFailedPrefix') + ret.msg
             });
         } else {
             const { successCount, failedRepos, skippedCount } = ret.data || {};
             const failedCount = failedRepos ? failedRepos.length : 0;
             if (failedCount > 0 || skippedCount > 0) {
-                let message = $t('appRepo.importSuccessMsg', { count: successCount });
+                let message = t('appRepo.importSuccessMsg', { count: successCount });
                 if (skippedCount > 0) {
-                    message = $t('appRepo.importSuccessWithSkipped', { success: successCount, skipped: skippedCount });
+                    message = t('appRepo.importSuccessWithSkipped', { success: successCount, skipped: skippedCount });
                 }
                 if (failedCount > 0) {
-                    message = $t('appRepo.importSuccessWithFailed', { success: successCount, failed: failedCount });
+                    message = t('appRepo.importSuccessWithFailed', { success: successCount, failed: failedCount });
                 }
                 ElMessage({
                     type: failedCount > 0 ? 'warning' : 'success',
@@ -241,7 +244,7 @@ const importAppRepos = () => {
             } else {
                 ElMessage({
                     type: 'success',
-                    message: $t('appRepo.importSuccessAll', { success: successCount })
+                    message: t('appRepo.importSuccessAll', { success: successCount })
                 });
             }
         }
@@ -250,16 +253,16 @@ const importAppRepos = () => {
 
 const exportAppRepos = () => {
     window.api.exportReposData(ret => {
-        console.log('exportAppRepos ret: %o', ret);
+        console.log('exportAppRepos ret: %s', JSON.stringify(ret));
         if (!ret.success) {
             ElMessage({
                 type: 'error',
-                message: $t('appRepo.exportFailed') + ret.msg
+                message: t('appRepo.exportFailed') + ret.msg
             });
         } else {
             ElMessage({
                 type: 'success',
-                message: $t('appRepo.exportSuccess')
+                message: t('appRepo.exportSuccess')
             });
         }
     });
@@ -270,9 +273,9 @@ const copyRepoURL = (uid) => {
     const repo = reposData.value[uid];
     if (repo && repo.repo) {
         navigator.clipboard.writeText(repo.repo).then(() => {
-            ElMessage.success($t('appRepo.copySuccess'));
+            ElMessage.success(t('appRepo.copySuccess'));
         }).catch(() => {
-            ElMessage.error($t('appRepo.copyFailed'));
+            ElMessage.error(t('appRepo.copyFailed'));
         });
     }
 }

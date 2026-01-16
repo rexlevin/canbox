@@ -43,12 +43,12 @@ modules:
         exec /app/bin/canbox --no-sandbox "$@"
         EOF
       - chmod +x /app/bin/canbox-launcher
-      
+
       # 安装应用文件
       - install -Dm755 canbox-src/canbox /app/bin/canbox
       - install -Dm755 canbox-src/chrome_crashpad_handler /app/bin/
       - install -Dm755 canbox-src/chrome-sandbox /app/bin/
-      
+
       # 复制资源文件
       - cp -r canbox-src/resources /app/bin/
       - cp -r canbox-src/locales /app/bin/
@@ -73,7 +73,7 @@ modules:
       - install -Dm644 logo_512x512.png /app/share/icons/hicolor/512x512/apps/com.github.lizl6.canbox.png
       - install -Dm644 logo_256x256.png /app/share/icons/hicolor/256x256/apps/com.github.lizl6.canbox.png
       - install -Dm644 logo_128x128.png /app/share/icons/hicolor/128x128/apps/com.github.lizl6.canbox.png
-      
+
       # 创建桌面文件
       - mkdir -p /app/share/applications
       - |
@@ -93,7 +93,7 @@ modules:
         EOF
       - install -Dm644 com.github.lizl6.canbox.desktop /app/share/applications/com.github.lizl6.canbox.desktop
       - rm -f com.github.lizl6.canbox.desktop
-      
+
       # 清理临时文件
       - rm -rf canbox-src
 

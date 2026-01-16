@@ -37,6 +37,9 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const currentLanguage = ref('en-US');
 const availableLanguages = ref([]);
@@ -45,7 +48,7 @@ function generateShortcut() {
     window.api.generateShortcut(ret => {
         if (ret.success) {
             ElMessage({
-                message: $t('settings.shortcutCreated'),
+                message: t('settings.shortcutCreated'),
                 type:'success'
             });
         } else {
@@ -57,7 +60,7 @@ function deleteShortcut() {
     window.api.deleteShortcut(ret => {
         if (ret.success) {
             ElMessage({
-                message: $t('settings.shortcutDeleted'),
+                message: t('settings.shortcutDeleted'),
                 type:'success'
             });
         } else {

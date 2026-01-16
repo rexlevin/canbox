@@ -198,7 +198,10 @@
 <script setup>
 import { onBeforeMount, onUpdated, ref } from 'vue';
 import { ElMessage } from 'element-plus';
+import { useI18n } from 'vue-i18n';
 import { renderAndOpenMarkdown } from '../utils/markdownRenderer';
+
+const { t } = useI18n();
 
 let appDevData = ref({});
 const centerDialogVisible = ref(false);
@@ -229,7 +232,7 @@ async function packApp(uid) {
             return;
         }
         ElMessage({
-            message: $t('devApp.packSuccess'),
+            message: t('devApp.packSuccess'),
             type: 'success',
         });
     }).catch((err) => {
@@ -256,7 +259,7 @@ function clearData(uid) {
             return;
         }
         ElMessage({
-            message: $t('devApp.clearDataSuccess'),
+            message: t('devApp.clearDataSuccess'),
             type: 'success'
         });
     });
@@ -273,7 +276,7 @@ function removeApp(uid) {
             return;
         }
         ElMessage({
-            message: $t('devApp.removeSuccess'),
+            message: t('devApp.removeSuccess'),
             type: 'success'
         });
         load();
