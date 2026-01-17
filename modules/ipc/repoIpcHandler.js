@@ -208,7 +208,7 @@ async function handleImportAppRepos() {
         filters: [{ name: 'JSON Files', extensions: ['json'] }]
     });
     if (result.canceled || result.filePaths.length === 0) {
-        throw new Error('NoFileSelected');
+        return { success: true, msg: 'NoFileSelected' };
     }
     const filePath = result.filePaths[0];
     const content = fs.readFileSync(filePath, 'utf-8');

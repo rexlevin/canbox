@@ -7,7 +7,7 @@
                         <AppList @switchTab="changeActiveTab"/>
                     </el-tab-pane>
                     <el-tab-pane :label="$t('canbox.appRepo')" name="appRepos" class="full-height-pane"><AppRepos /></el-tab-pane>
-                    <el-tab-pane :label="$t('canbox.userCenter')" class="full-height-pane"><UserCenter/></el-tab-pane>
+                    <!-- <el-tab-pane :label="$t('canbox.userCenter')" class="full-height-pane"><UserCenter/></el-tab-pane> -->
                     <el-tab-pane :label="$t('canbox.devApp')" name="devApp" class="full-height-pane"><AppDev/></el-tab-pane>
                     <el-tab-pane :label="$t('settings.title')" class="full-height-pane"><Settings/></el-tab-pane>
                 </el-tabs>

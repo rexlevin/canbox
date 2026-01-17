@@ -2,80 +2,86 @@
 
 ![Logo](logo_128x128.png)
 
-**Canbox** 是一个集合了多种实用工具的应用平台，旨在为大家提供一个便捷的使用各种小工具的途径。
+**Canbox** is an application platform that integrates various utility tools, designed to provide a convenient way for everyone to use various small tools.
 
-**Canbox** 是一个app集合平台，在这里我们可以开发自己的小工具，并且分享给他人使用。
+**Canbox** is an app collection platform where we can develop our own small tools and share them with others.
 
-**Canbox** 没有服务器，可以：
+**Canbox** has no server and can:
 
-1. 通过 github、gitee 等进行 APP 分享
-2. 导入 APP 开发者打包好的程序包
-3. 开发自己的 APP，打包分享给别人
+1. Share apps through GitHub, Gitee, etc.
+2. Import application packages packaged by developers
+3. Develop your own apps and package them for sharing with others
 
-# 功能特性
+# Features
 
-- **应用管理**：支持应用的安装、卸载和更新。
-- **快捷方式**：为常用应用创建快捷方式。
-- **多系统支持**：基于Electron，支持linux、windows（未测试完全）、mac（我没有mac😢，这个等有mac的人来干😆）
+- **App Management**: Supports installation, uninstallation, and updates of applications.
+- **Shortcuts**: Create shortcuts for frequently used applications.
+- **Multi-platform Support**: Based on Electron, supports Linux, Windows (not fully tested), and macOS (I don't have a Mac 😢, waiting for someone with a Mac to do this 😆)
 
-# Canbox 使用
+# Canbox Usage
 
-## 我的 APP
+## My Apps
 
-### 导入已有 APP
+![screenshot-1](./public/screenshot/screenshot-1.png)
 
-Canbox 支持导入开发者打包好的应用包（ZIP 格式）。
+### Import Existing Apps
 
-### 导入步骤
+Canbox supports importing application packages packaged by developers (ZIP format).
 
-1. 在"我的APP"页面点击"导入 APP"按钮
-2. 选择开发者提供的 ZIP 文件
-3. 系统会自动解压并安装应用
+### Import Steps
 
-**导入文件要求**：
+1. Click the "Import App" button on the "My Apps" page
+2. Select the ZIP file provided by the developer
+3. The system will automatically extract and install the application
 
-- 文件类型：ZIP（.zip）
-- 内容：包含 asar 文件和必要的应用文件
-- 文件命名：建议使用 `{app-id}-{version}.zip` 格式
+**Import File Requirements**:
 
-导入完成后，应用会出现在"我的APP"列表中，可以直接使用。
+- File type: ZIP (.zip)
+- Content: Contains asar files and necessary application files
+- File naming: Recommended to use `{app-id}-{version}.zip` format
 
-### 数据管理
+After importing, the app will appear in the "My Apps" list and can be used directly.
 
-- **清除应用数据**：在"我的APP"中可以清除特定应用的运行数据
-- **数据存储位置**：应用数据存储在系统用户数据目录下
+### Data Management
 
-## APP 仓库
+- **Clear App Data**: Clear runtime data for specific apps in "My Apps"
+- **Data Storage Location**: App data is stored in the system user data directory
 
-### 添加 APP 源
+## App Repository
 
-在“APP仓库”-“添加APP源”里填入下面的Repo URL，即可添加APP源。
+![screenshot-2](./public/screenshot/screenshot-2.png)
 
-| App     | Repo URL                               | Description                                   |
-| ------- | -------------------------------------- | --------------------------------------------- |
-| JsonBox | https://gitee.com/lizl6/cb-jsonbox     | JSON 格式化、JSON 转换其他格式， 如 xml、yaml |
-| PassGen | https://github.com/rexlevin/cb-passgen | 生成密码、随机串、时间戳                      |
+![screenshot-3](./public/screenshot/screenshot-3.png)
 
-### 导出 APP 源列表
+### Add App Source
 
-1. 在"APP仓库"页面点击"导出 APP 源列表"按钮
-2. 选择保存位置和文件名（JSON 格式）
-3. 导出的文件包含当前所有仓库的完整信息
+Enter the Repo URL in "App Repository" -> "Add App Source" to add an app source.
 
-### 导入 APP 源列表
+| App     | Repo URL                               | Description                                           |
+| ------- | -------------------------------------- | ----------------------------------------------------- |
+| JsonBox | https://gitee.com/lizl6/cb-jsonbox     | JSON formatting, JSON to other formats like xml, yaml |
+| PassGen | https://github.com/rexlevin/cb-passgen | Generate passwords, random strings, timestamps        |
 
-1. 在"APP仓库"页面点击"导入 APP 源列表"按钮
-2. 选择之前导出的 JSON 文件
-3. 系统会自动解析并添加仓库
+### Export App Source List
 
-**导入文件格式要求**：
+1. Click the "Export App Source List" button on the "App Repository" page
+2. Choose the save location and filename (JSON format)
+3. The exported file contains complete information for all current repositories
 
-- 文件类型：JSON（.json）
-- 格式：仓库数组
-- 必需字段：`repo`（仓库 URL）
-- 其他字段会被忽略
+### Import App Source List
 
-**示例文件内容**：
+1. Click the "Import App Source List" button on the "App Repository" page
+2. Select the previously exported JSON file
+3. The system will automatically parse and add repositories
+
+**Import File Format Requirements**:
+
+- File type: JSON (.json)
+- Format: Repository array
+- Required fields: `repo` (repository URL)
+- Other fields will be ignored
+
+**Example File Content**:
 
 ```json
 [
@@ -88,37 +94,39 @@ Canbox 支持导入开发者打包好的应用包（ZIP 格式）。
 ]
 ```
 
-## APP开发
+## App Development
 
-Canbox 提供了完整的 APP 开发环境，支持开发者创建、调试和打包自己的应用。
+![screenshot-4](./public/screenshot/screenshot-4.png)
 
-### 开发流程
+Canbox provides a complete app development environment, supporting developers in creating, debugging, and packaging their own applications.
 
-1. **创建开发项目**
+### Development Process
 
-   - 在"APP开发"页面点击"选择 app.json 新建 app 项目"
-   - 选择包含 app.json 配置文件的目录
-   - app.json 必须包含以下字段：
-     - `id`：应用唯一标识
-     - `name`：应用名称
-     - `version`：应用版本
-     - `description`：应用描述
-     - `author`：作者信息
-     - `logo`：应用图标路径（相对于 app.json）
-2. **调试应用**
+1. **Create Development Project**
 
-   - 点击运行图标即可在开发环境中测试应用
-   - 可以随时修改代码并重新运行
-   - 支持清除应用数据以便重新测试
-3. **打包应用**
+   - Click "Select app.json to create new app project" on the "App Development" page
+   - Select the directory containing the app.json configuration file
+   - app.json must contain the following fields:
+     - `id`: Unique app identifier
+     - `name`: App name
+     - `version`: App version
+     - `description`: App description
+     - `author`: Author information
+     - `logo`: App icon path (relative to app.json)
+2. **Debug App**
 
-   - 点击打包图标将应用打包为 asar 文件
-   - 自动生成 ZIP 包供分享
-   - 打包产物位于项目的 `dist` 目录下
+   - Click the run icon to test the app in the development environment
+   - Can modify code and re-run at any time
+   - Supports clearing app data for re-testing
+3. **Package App**
 
-### 打包配置
+   - Click the package icon to package the app as an asar file
+   - Automatically generate a ZIP package for sharing
+   - Package artifacts are located in the project's `dist` directory
 
-在项目根目录创建 `cb.build.json` 配置文件：
+### Package Configuration
+
+Create a `cb.build.json` configuration file in the project root directory:
 
 ```json
 {
@@ -133,59 +141,69 @@ Canbox 提供了完整的 APP 开发环境，支持开发者创建、调试和�
 }
 ```
 
-配置说明：
+Configuration description:
 
-- `outputDir`：打包输出目录
-- `files`：需要打包的文件模式（支持 glob 语法）
+- `outputDir`: Package output directory
+- `files`: File patterns to package (supports glob syntax)
 
-详细的开发指南请参考：
+For detailed development guides, please refer to:
 
-- [Canbox 开发文档](./docs/CANBOX_DEV_CN.md)
-- [APP 开发文档](./docs/APP_DEV_CN.md)
-- [API 文档](./docs/API.md)
+- [Canbox Development Documentation](./docs/CANBOX_DEV_CN.md)
+- [App Development Documentation](./docs/APP_DEV_CN.md)
+- [API Documentation](./docs/API.md)
 
-## 设置
+## Settings
 
-Canbox 提供了丰富的设置选项，帮助您个性化配置应用。
+![screenshot-5](./public/screenshot/screenshot-5.png)
 
-### 通用设置（还未实现）
+Canbox provides rich settings options to help you personalize the application configuration.
 
-- **应用路径**：设置应用安装目录（默认为应用数据目录下的 apps）
-- **临时目录**：设置应用临时文件目录
-- **日志级别**：调整应用日志输出级别（info, warn, error）
+### General Settings (Not Yet Implemented)
 
-### 快捷方式
+- **App Path**: Set the app installation directory (default is apps in the application data directory)
+- **Temporary Directory**: Set the app temporary file directory
+- **Log Level**: Adjust the application log output level (info, warn, error)
 
-Canbox 支持为常用应用创建快捷方式：
+### Shortcuts
 
-- 桌面快捷方式（Windows、Linux）
-- 启动菜单快捷方式（Windows）
-- 应用菜单快捷方式（macOS）
+Canbox supports creating shortcuts for frequently used applications:
 
-快捷方式会自动与应用同步，删除应用时会自动清理对应的快捷方式。
+- Desktop shortcuts (Windows, Linux)
+- Start menu shortcuts (Windows)
+- Application menu shortcuts (macOS)
 
-# Canbox ScreenShot
+Shortcuts automatically sync with the application. When an app is deleted, corresponding shortcuts are automatically cleaned up.
 
-![warehouse-00](./public/screenshot/warehouse-00.png)
+# Installation
 
-![warehouse-source](./public/screenshot/warehouse-source.png)
+## Install via Flatpak (Recommended)
 
-![myapp-00](./public/screenshot/myapp-00.png)
+Canbox is available on Flathub as a Flatpak package, which is the recommended installation method for most Linux distributions.
 
-# 下载
+```bash
+flatpak install flathub com.github.lizl6.canbox
+```
 
-[GitHub Release](https://github.com/rexlevin/canbox/releases)
+Once installed, you can launch Canbox from your application menu or run:
 
-# 欢迎提交 Issue！
+```bash
+flatpak run com.github.lizl6.canbox
+```
 
-# 开发文档
+## Download Other Formats
 
-[Canbox 开发文档](./docs/CANBOX_DEV_CN.md)
+Under construction
 
-[APP 开发文档](./docs/APP_DEV_CN.md)
+# Issues Welcome!
 
-[API 文档](./docs/API.md)
+# Development Documentation
 
-# 许可证
+[Canbox Development Documentation](./docs/CANBOX_DEV_CN.md)
+
+[App Development Documentation](./docs/APP_DEV_CN.md)
+
+[API Documentation](./docs/API.md)
+
+# License
 
 Apache 2.0

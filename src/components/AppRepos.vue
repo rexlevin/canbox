@@ -209,8 +209,9 @@ const addAppRepo = async () => {
 const importAppRepos = () => {
     window.api.importAppRepos(ret => {
         console.log('importAppRepos ret: %o', ret);
-        if (!ret.success && 'NoFileSelected' === ret.msg) {
-            ElMessage(t('appRepo.noFileSelected'));
+        if (ret.success && ret.msg === 'NoFileSelected') {
+            // 用户取消操作，不显示任何提示
+            return;
         } else if (!ret.success && 'Invalid JSON format' === ret.msg) {
             ElMessage({
                 type: 'error',
@@ -259,6 +260,9 @@ const exportAppRepos = () => {
                 type: 'error',
                 message: t('appRepo.exportFailed') + ret.msg
             });
+        } else if (ret.msg === '已取消导出') {
+            // 用户取消操作，不显示任何提示
+            return;
         } else {
             ElMessage({
                 type: 'success',
