@@ -99,7 +99,10 @@ exports.getDownloadUrl = function (repo, version, fileName) {
 exports.downloadFileFromRepo = async function (fileUrl, filePath) {
     try {
         console.log(`尝试下载文件: ${fileUrl}`);
-        const response = await fetch(fileUrl);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+        const response = await fetch(fileUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!response.ok) {
             console.warn(`下载失败(${response.status}): ${fileUrl}`);
             return false;
@@ -109,7 +112,11 @@ exports.downloadFileFromRepo = async function (fileUrl, filePath) {
         console.log(`文件下载成功: ${filePath}`);
         return true;
     } catch (error) {
-        console.error(`下载文件错误(${fileUrl}):`, error);
+        if (error.name === 'AbortError') {
+            console.warn(`下载超时: ${fileUrl}`);
+        } else {
+            console.error(`下载文件错误(${fileUrl}):`, error);
+        }
         return false;
     }
 };
@@ -123,7 +130,10 @@ exports.downloadFileFromRepo = async function (fileUrl, filePath) {
 exports.downloadLogoFromRepo = async function (fileUrl, filePath) {
     try {
         console.log(`尝试下载文件: ${fileUrl}`);
-        const response = await fetch(fileUrl);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+        const response = await fetch(fileUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (!response.ok) {
             console.warn(`下载失败(${response.status}): ${fileUrl}`);
             return false;
@@ -140,7 +150,11 @@ exports.downloadLogoFromRepo = async function (fileUrl, filePath) {
         console.log(`文件下载成功: ${filePath}`);
         return true;
     } catch (error) {
-        console.error(`下载文件错误(${fileUrl}):`, error);
+        if (error.name === 'AbortError') {
+            console.warn(`下载超时: ${fileUrl}`);
+        } else {
+            console.error(`下载文件错误(${fileUrl}):`, error);
+        }
         return false;
     }
 };

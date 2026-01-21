@@ -200,7 +200,20 @@ const addAppRepo = async () => {
             repoUrl.value = '';
             fetchReposData();
         } else {
-            ElMessage.error(result.msg || t('appRepo.addFailed'));
+            // 根据错误类型显示对应的国际化消息
+            let errorMsg = result.msg || t('appRepo.addFailed');
+            const errorKey = {
+                'NoGitRepo': 'noGitRepo',
+                'InvalidGitRepo': 'invalidGitRepo',
+                'UnableToAccessRepo': 'unableToAccessRepo',
+                'NetworkTimeout': 'networkTimeout',
+                'CannotDownloadAppJson': 'cannotDownloadAppJson'
+            }[errorMsg];
+
+            if (errorKey) {
+                errorMsg = t(`appRepo.${errorKey}`);
+            }
+            ElMessage.error(errorMsg);
         }
         loading.value = false;
     });

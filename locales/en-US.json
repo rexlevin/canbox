@@ -123,7 +123,12 @@
         "exportFailed": "Export failed: ",
         "exportSuccess": "Export successful",
         "copySuccess": "Copy successful",
-        "copyFailed": "Copy failed"
+        "copyFailed": "Copy failed",
+        "noGitRepo": "Repository URL cannot be empty",
+        "invalidGitRepo": "Invalid repository URL format",
+        "unableToAccessRepo": "Unable to access repository, please check network or repository URL",
+        "networkTimeout": "Network connection timeout, please check network or try again later",
+        "cannotDownloadAppJson": "Unable to download app.json file"
     },
     "userCenter": {
         "underConstruction": "Under construction..."

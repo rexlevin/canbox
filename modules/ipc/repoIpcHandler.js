@@ -46,12 +46,20 @@ async function handleAddAppRepo(repoUrl) {
             throw new Error('NoGitRepo');
         }
 
+        // 校验仓库地址格式
+        if (!repoUtils.validateRepoUrl(repoUrl)) {
+            throw new Error('InvalidGitRepo');
+        }
+
         // 自动获取仓库的默认分支
         let branch = '';
         try {
             // 尝试获取仓库信息来推断默认分支
             const repoInfoUrl = repoUrl.replace(/\\.git$/, '') + '/info/refs?service=git-upload-pack';
-            const response = await fetch(repoInfoUrl);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+            const response = await fetch(repoInfoUrl, { signal: controller.signal });
+            clearTimeout(timeoutId);
             if (response.ok) {
                 const text = await response.text();
                 // 从响应中提取默认分支信息
@@ -65,23 +73,28 @@ async function handleAddAppRepo(repoUrl) {
                 branch = 'main'; // 回退到 main
             }
         } catch (error) {
-            logger.info('无法自动获取默认分支，使用 main 作为默认分支: {}', error);
+            if (error.name === 'AbortError') {
+                logger.warn('获取默认分支超时，使用 main 作为默认分支');
+            } else {
+                logger.info('无法自动获取默认分支，使用 main 作为默认分支: {}', error);
+            }
             branch = repoUrl.includes('github.com') ? 'main' : 'master'; // 回退到 main
-        }
-
-        // 校验仓库地址格式
-        if (!repoUtils.validateRepoUrl(repoUrl)) {
-            throw new Error('InvalidGitRepo');
         }
 
         // 尝试访问仓库地址
         try {
             const url = repoUtils.getFileUrl(repoUrl, branch, 'app.json');
-            const response = await fetch(url);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timeoutId);
             if (!response.ok) {
                 throw new Error('UnableToAccessRepo');
             }
         } catch (error) {
+            if (error.name === 'AbortError') {
+                throw new Error('NetworkTimeout');
+            }
             throw error;
         }
 

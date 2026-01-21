@@ -123,7 +123,12 @@
         "exportFailed": "导出失败：",
         "exportSuccess": "导出成功",
         "copySuccess": "复制成功",
-        "copyFailed": "复制失败"
+        "copyFailed": "复制失败",
+        "noGitRepo": "仓库地址不能为空",
+        "invalidGitRepo": "无效的仓库地址格式",
+        "unableToAccessRepo": "无法访问仓库，请检查网络或仓库地址",
+        "networkTimeout": "网络连接超时，请检查网络或稍后重试",
+        "cannotDownloadAppJson": "无法下载 app.json 文件"
     },
     "userCenter": {
         "underConstruction": "建设中..."
