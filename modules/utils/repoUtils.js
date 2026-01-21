@@ -23,32 +23,43 @@ exports.getFileUrl = function (repoUrl, branch, file) {
     try {
         const url = new URL(repoUrl);
         const host = url.hostname;
-        const pathParts = url.pathname.split('/').filter(Boolean);
+
+        // 移除末尾的 .git 后缀（如果有）
+        let cleanRepoUrl = repoUrl;
+        if (cleanRepoUrl.endsWith('.git')) {
+            cleanRepoUrl = cleanRepoUrl.slice(0, -4);
+        }
 
         // GitHub
         if (host.includes('github.com')) {
-            return `https://raw.githubusercontent.com/${repoUrl.split('/').slice(3).join('/')}/${branch}/${file}`;
+            const repoPath = cleanRepoUrl.split('/').slice(3).join('/');
+            return `https://raw.githubusercontent.com/${repoPath}/${branch}/${file}`;
         }
         // GitLab
         else if (host.includes('gitlab.com') || host.includes('gitlab.')) {
-            return `${repoUrl}/-/raw/${branch}/${file}`;
+            return `${cleanRepoUrl}/-/raw/${branch}/${file}`;
         }
         // Bitbucket
         else if (host.includes('bitbucket.org')) {
-            return `${repoUrl}/raw/${branch}/${file}`;
+            return `${cleanRepoUrl}/raw/${branch}/${file}`;
         }
         // Gitee
         else if (host.includes('gitee.com')) {
-            return `${repoUrl}/raw/${branch}/${file}`;
+            return `${cleanRepoUrl}/raw/${branch}/${file}`;
         }
         // 自托管服务（如Gitea/GitLab CE）
         else {
             // 尝试常见模式
-            return `${repoUrl}/raw/branch/${branch}/${file}`;
+            return `${cleanRepoUrl}/raw/branch/${branch}/${file}`;
         }
     } catch (e) {
         console.error('解析仓库URL失败:', e);
-        return `${repoUrl}/raw/${branch}/${file}`; // 默认回退
+        // 如果出错，也尝试移除 .git 后缀
+        let cleanUrl = repoUrl;
+        if (cleanUrl.endsWith('.git')) {
+            cleanUrl = cleanUrl.slice(0, -4);
+        }
+        return `${cleanUrl}/raw/${branch}/${file}`; // 默认回退
     }
 };
 
@@ -61,32 +72,43 @@ exports.getFileUrl = function (repoUrl, branch, file) {
  */
 exports.getDownloadUrl = function (repo, version, fileName) {
     try {
-        const url = new URL(repo);
+        // 移除末尾的 .git 后缀（如果有）
+        let cleanRepo = repo;
+        if (cleanRepo.endsWith('.git')) {
+            cleanRepo = cleanRepo.slice(0, -4);
+        }
+
+        const url = new URL(cleanRepo);
         const host = url.hostname;
 
         // GitHub
         if (host.includes('github.com')) {
-            return `${repo}/releases/download/${version}/${fileName}`;
+            return `${cleanRepo}/releases/download/${version}/${fileName}`;
         }
         // GitLab
         else if (host.includes('gitlab.com')) {
-            return `${repo}/-/archive/v${version}/${fileName}`;
+            return `${cleanRepo}/-/archive/v${version}/${fileName}`;
         }
         // Bitbucket
         else if (host.includes('bitbucket.org')) {
-            return `${repo}/downloads/${fileName}`;
+            return `${cleanRepo}/downloads/${fileName}`;
         }
         // Gitee
         else if (host.includes('gitee.com')) {
-            return `${repo}/releases/download/${version}/${fileName}`;
+            return `${cleanRepo}/releases/download/${version}/${fileName}`;
         }
         // 自托管服务（如 Gitea/GitLab CE）
         else {
-            return `${repo}/archive/${fileName}`;
+            return `${cleanRepo}/archive/${fileName}`;
         }
     } catch (e) {
         console.error('解析仓库URL失败:', e);
-        return `${repo}/archive/${fileName}`; // 默认回退
+        // 如果出错，也尝试移除 .git 后缀
+        let cleanRepo = repo;
+        if (cleanRepo.endsWith('.git')) {
+            cleanRepo = cleanRepo.slice(0, -4);
+        }
+        return `${cleanRepo}/archive/${fileName}`; // 默认回退
     }
 };
 
@@ -99,23 +121,24 @@ exports.getDownloadUrl = function (repo, version, fileName) {
 exports.downloadFileFromRepo = async function (fileUrl, filePath) {
     try {
         console.log(`尝试下载文件: ${fileUrl}`);
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
-        const response = await fetch(fileUrl, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (!response.ok) {
-            console.warn(`下载失败(${response.status}): ${fileUrl}`);
-            return false;
-        }
-        const content = await response.text();
-        fs.writeFileSync(filePath, content);
+        const response = await axios.get(fileUrl, {
+            timeout: 30000, // 30秒超时
+            responseType: 'text',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) Canbox/0.1.0'
+            }
+        });
+        fs.writeFileSync(filePath, response.data);
         console.log(`文件下载成功: ${filePath}`);
         return true;
     } catch (error) {
-        if (error.name === 'AbortError') {
+        if (error.code === 'ECONNABORTED') {
             console.warn(`下载超时: ${fileUrl}`);
+        } else if (error.response) {
+            console.warn(`下载失败(${error.response.status}): ${fileUrl}`);
+            console.warn(`响应内容: ${JSON.stringify(error.response.data).substring(0, 200)}`);
         } else {
-            console.error(`下载文件错误(${fileUrl}):`, error);
+            console.error(`下载文件错误(${fileUrl}):`, error.message);
         }
         return false;
     }
@@ -130,30 +153,28 @@ exports.downloadFileFromRepo = async function (fileUrl, filePath) {
 exports.downloadLogoFromRepo = async function (fileUrl, filePath) {
     try {
         console.log(`尝试下载文件: ${fileUrl}`);
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
-        const response = await fetch(fileUrl, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (!response.ok) {
-            console.warn(`下载失败(${response.status}): ${fileUrl}`);
-            return false;
-        }
-        // 根据文件类型选择处理方式
         const isBinary = filePath.endsWith('.png') || filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.gif');
+        const response = await axios.get(fileUrl, {
+            timeout: 30000, // 30秒超时
+            responseType: isBinary ? 'arraybuffer' : 'text',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) Canbox/0.1.0'
+            }
+        });
         if (isBinary) {
-            const buffer = await response.arrayBuffer();
-            fs.writeFileSync(filePath, Buffer.from(buffer));
+            fs.writeFileSync(filePath, Buffer.from(response.data));
         } else {
-            const content = await response.text();
-            fs.writeFileSync(filePath, content);
+            fs.writeFileSync(filePath, response.data);
         }
         console.log(`文件下载成功: ${filePath}`);
         return true;
     } catch (error) {
-        if (error.name === 'AbortError') {
+        if (error.code === 'ECONNABORTED') {
             console.warn(`下载超时: ${fileUrl}`);
+        } else if (error.response) {
+            console.warn(`下载失败(${error.response.status}): ${fileUrl}`);
         } else {
-            console.error(`下载文件错误(${fileUrl}):`, error);
+            console.error(`下载文件错误(${fileUrl}):`, error.message);
         }
         return false;
     }

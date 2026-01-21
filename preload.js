@@ -95,14 +95,27 @@ contextBridge.exposeInMainWorld(
             fn(result);
         }).catch(error => {
             console.error('addAppRepo: IPC call failed:', error);
-            fn({ success: false, msg: error.message });
+            // 解析错误消息，提取真正的错误类型
+            let errorMsg = error.message;
+            // 尝试从完整的错误消息中提取错误类型
+            const match = errorMsg.match(/Error: (.+)$/);
+            if (match && match[1]) {
+                errorMsg = match[1];
+            }
+            fn({ success: false, msg: errorMsg });
         }),
         importAppRepos: (fn) => {
             ipcRenderer.invoke('import-app-repos').then(result => {
                 fn(result);
             }).catch(error => {
                 console.error('importAppRepos: IPC call failed:', error);
-                fn({ success: false, msg: error.message });
+                // 解析错误消息，提取真正的错误类型
+                let errorMsg = error.message;
+                const match = errorMsg.match(/Error: (.+)$/);
+                if (match && match[1]) {
+                    errorMsg = match[1];
+                }
+                fn({ success: false, msg: errorMsg });
             });
         },
         getReposData: (fn) => {
@@ -126,7 +139,13 @@ contextBridge.exposeInMainWorld(
                 fn(result);
             }).catch(error => {
                 console.error('removeRepo: IPC call failed:', error);
-                fn({ success: false, msg: error.message });
+                // 解析错误消息，提取真正的错误类型
+                let errorMsg = error.message;
+                const match = errorMsg.match(/Error: (.+)$/);
+                if (match && match[1]) {
+                    errorMsg = match[1];
+                }
+                fn({ success: false, msg: errorMsg });
             });
         },
         downloadAppsFromRepo: (uid, fn) => {
@@ -134,7 +153,13 @@ contextBridge.exposeInMainWorld(
                 fn(result);
             }).catch(error => {
                 console.error('downloadAppsFromRepo: IPC call failed:', error);
-                fn({ success: false, msg: error.message });
+                // 解析错误消息，提取真正的错误类型
+                let errorMsg = error.message;
+                const match = errorMsg.match(/Error: (.+)$/);
+                if (match && match[1]) {
+                    errorMsg = match[1];
+                }
+                fn({ success: false, msg: errorMsg });
             });
         },
         readFile: (filePath) => {

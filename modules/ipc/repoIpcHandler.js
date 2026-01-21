@@ -54,29 +54,33 @@ async function handleAddAppRepo(repoUrl) {
         // 自动获取仓库的默认分支
         let branch = '';
         try {
+            // 移除末尾的 .git 后缀（如果有）
+            let cleanRepoUrl = repoUrl;
+            if (cleanRepoUrl.endsWith('.git')) {
+                cleanRepoUrl = cleanRepoUrl.slice(0, -4);
+            }
+
             // 尝试获取仓库信息来推断默认分支
-            const repoInfoUrl = repoUrl.replace(/\\.git$/, '') + '/info/refs?service=git-upload-pack';
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-            const response = await fetch(repoInfoUrl, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (response.ok) {
-                const text = await response.text();
-                // 从响应中提取默认分支信息
-                const match = text.match(/refs\/heads\/([^\s]+)/);
-                if (match) {
-                    branch = match[1];
-                } else {
-                    branch = 'main'; // 回退到 main
+            const repoInfoUrl = cleanRepoUrl + '/info/refs?service=git-upload-pack';
+            const response = await axios.get(repoInfoUrl, {
+                timeout: 10000, // 10秒超时
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) Canbox/0.1.0'
                 }
+            });
+            const text = response.data;
+            // 从响应中提取默认分支信息
+            const match = text.match(/refs\/heads\/([^\s]+)/);
+            if (match) {
+                branch = match[1];
             } else {
                 branch = 'main'; // 回退到 main
             }
         } catch (error) {
-            if (error.name === 'AbortError') {
+            if (error.code === 'ECONNABORTED') {
                 logger.warn('获取默认分支超时，使用 main 作为默认分支');
             } else {
-                logger.info('无法自动获取默认分支，使用 main 作为默认分支: {}', error);
+                logger.info('无法自动获取默认分支，使用 main 作为默认分支: {}', error.message);
             }
             branch = repoUrl.includes('github.com') ? 'main' : 'master'; // 回退到 main
         }
@@ -84,16 +88,26 @@ async function handleAddAppRepo(repoUrl) {
         // 尝试访问仓库地址
         try {
             const url = repoUtils.getFileUrl(repoUrl, branch, 'app.json');
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-            const response = await fetch(url, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (!response.ok) {
+            logger.info('验证仓库访问: {}', url);
+            const response = await axios.get(url, {
+                timeout: 10000, // 10秒超时
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) Canbox/0.1.0'
+                }
+            });
+            if (response.status !== 200) {
+                logger.error('仓库访问失败，状态码: {} URL: {}', response.status, url);
+                logger.error('响应内容(前500字符): {}', JSON.stringify(response.data).substring(0, 500));
                 throw new Error('UnableToAccessRepo');
             }
         } catch (error) {
-            if (error.name === 'AbortError') {
+            if (error.code === 'ECONNABORTED') {
+                logger.warn('仓库访问超时: {}', repoUrl);
                 throw new Error('NetworkTimeout');
+            } else if (error.response) {
+                logger.error('仓库访问失败，状态码: {} URL: {}', error.response.status, url);
+                logger.error('响应内容(前500字符): {}', JSON.stringify(error.response.data).substring(0, 500));
+                throw new Error('UnableToAccessRepo');
             }
             throw error;
         }
