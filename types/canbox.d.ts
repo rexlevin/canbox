@@ -84,14 +84,21 @@ declare global {
                  * @param options - 对话框配置
                  * @returns Promise<any>
                  */
-                openFile: (options: any) => Promise<any>;
+                showOpenDialog: (options: any) => Promise<any>;
 
                 /**
-                 * 保存文件对话框
+                 * 打开保存对话框
                  * @param options - 对话框配置
                  * @returns Promise<any>
                  */
-                saveFile: (options: any) => Promise<any>;
+                showSaveDialog: (options: any) => Promise<any>;
+
+                /**
+                 * 打开消息对话框
+                 * @param options - 对话框配置
+                 * @returns Promise<any>
+                 */
+                showMessageBox: (options: any) => Promise<any>;
             };
 
             /**
@@ -128,7 +135,7 @@ declare global {
                  * @param name - 存储的名称
                  * @returns Promise<void>
                  */
-                clear: (name) => Promise<void>;
+                clear: (name: string) => Promise<void>;
             };
 
             /**

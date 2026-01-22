@@ -72,7 +72,6 @@ tsconfig.json 文件内容示例如下：
 }
 ```
 
-
 # app.json
 
 ```json
@@ -99,11 +98,7 @@ tsconfig.json 文件内容示例如下：
     },
     "platform": ["windows", "darwin", "linux"],
     "categories": ["development", "utility"],
-    "tags": ["json", "jsonformatter"],
-    "development": {
-        "main": "index.html",
-        "devTools": "detach"
-    }
+    "tags": ["json", "jsonformatter"]
 }
 ```
 
