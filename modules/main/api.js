@@ -173,6 +173,78 @@ function initReadFileIpcHandlers() {
 }
 
 /**
+ * 初始化下载 canbox.d.ts 的 IPC 消息处理逻辑
+ * @description 处理来自渲染进程的下载 canbox.d.ts 请求
+ * @listens ipcMain.handle('download-canbox-types')
+ * @returns {Promise} 返回下载结果，格式为 { success: boolean, msg: string }
+ */
+function initDownloadCanboxTypesIpcHandlers() {
+    ipcMain.handle('download-canbox-types', async () => {
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const { app, dialog } = require('electron');
+            const logger = require('@modules/utils/logger');
+
+            // 获取应用路径：开发环境使用项目根目录，打包后使用 app.getAppPath()
+            let appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');
+
+            // Flatpak 环境特殊处理
+            if (process.env.FLATPAK_ID || (process.env.container && process.env.container.includes('flatpak'))) {
+                appPath = '/app/bin';
+            }
+
+            // canbox.d.ts 文件路径
+            const canboxTypesPath = path.join(appPath, 'types', 'canbox.d.ts');
+
+            // 检查文件是否存在
+            if (!fs.existsSync(canboxTypesPath)) {
+                logger.error('[api.js] canbox.d.ts 文件不存在: ' + canboxTypesPath);
+                return {
+                    success: false,
+                    msg: 'canbox.d.ts 文件不存在'
+                };
+            }
+
+            // 打开文件保存对话框
+            const result = await dialog.showSaveDialog({
+                title: '保存 canbox.d.ts',
+                defaultPath: 'canbox.d.ts',
+                filters: [
+                    { name: 'TypeScript Declaration Files', extensions: ['d.ts'] }
+                ]
+            });
+
+            if (result.canceled || !result.filePath) {
+                logger.info('[api.js] 用户取消保存 canbox.d.ts');
+                return {
+                    success: true,
+                    msg: 'canceled'
+                };
+            }
+
+            // 读取 canbox.d.ts 文件内容
+            const content = fs.readFileSync(canboxTypesPath, 'utf8');
+
+            // 写入用户选择的路径
+            fs.writeFileSync(result.filePath, content);
+
+            logger.info('[api.js] canbox.d.ts 保存成功: ' + result.filePath);
+            return {
+                success: true,
+                msg: '保存成功'
+            };
+        } catch (error) {
+            console.error('[api.js] 下载 canbox.d.ts 失败:', error);
+            return {
+                success: false,
+                msg: `下载失败: ${error.message}`
+            };
+        }
+    });
+}
+
+/**
  * 统一初始化所有 IPC 消息处理逻辑
  */
 function initApiIpcHandlers() {
@@ -182,6 +254,7 @@ function initApiIpcHandlers() {
     initDialogIpcHandlers();
     initElectronStoreIpcHandlers();
     initReadFileIpcHandlers();
+    initDownloadCanboxTypesIpcHandlers();
 }
 
 module.exports = initApiIpcHandlers;

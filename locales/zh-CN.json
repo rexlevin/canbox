@@ -21,13 +21,16 @@
         "runApp": "运行这个开发中的app",
         "clearData": "清除用户数据",
         "removeApp": "移除这个开发中的app",
-        "viewDevDoc": "查看 APP 开发文档",
-        "viewApiDoc": "查看 API 文档",
+        "viewDevDoc": "APP 开发文档",
+        "viewApiDoc": "API 文档",
+        "downloadCanboxTypes": "下载 canbox.d.ts",
         "packSuccess": "打包成功！",
         "clearDataSuccess": "清除数据成功",
         "removeSuccess": "APP 删除成功",
         "warningTitle": "警告",
-        "confirm": "确 定"
+        "confirm": "确 定",
+        "downloadSuccess": "下载成功",
+        "downloadFailed": "下载失败："
     },
     "flatpak": {
         "permissionTitle": "Flatpak 环境提示",

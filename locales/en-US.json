@@ -21,13 +21,16 @@
         "runApp": "Run this development app",
         "clearData": "Clear User Data",
         "removeApp": "Remove this development app",
-        "viewDevDoc": "View APP Development Docs",
-        "viewApiDoc": "View API Docs",
+        "viewDevDoc": "APP Development Docs",
+        "viewApiDoc": "API Docs",
+        "downloadCanboxTypes": "Download canbox.d.ts",
         "packSuccess": "Pack successful!",
         "clearDataSuccess": "Clear data successful",
         "removeSuccess": "APP removed successfully",
         "warningTitle": "Warning",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "downloadSuccess": "Download successful",
+        "downloadFailed": "Download failed: "
     },
     "flatpak": {
         "permissionTitle": "Flatpak Environment Notice",

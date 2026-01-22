@@ -58,6 +58,7 @@
         <div class="doc-links">
             <el-link type="primary" @click="openAppDevDoc">{{ $t('devApp.viewDevDoc') }}</el-link>
             <el-link type="primary" @click="openApiDoc">{{ $t('devApp.viewApiDoc') }}</el-link>
+            <el-link type="primary" @click="downloadCanboxTS">{{ $t('devApp.downloadCanboxTypes') }}</el-link>
         </div>
 
     </div>
@@ -311,6 +312,28 @@ async function openAppDevDoc() {
 // 打开API文档
 async function openApiDoc() {
     await renderAndOpenMarkdown('docs/API_CN.md', 'API 文档');
+}
+
+// 下载 canbox.d.ts 类型定义文件
+async function downloadCanboxTS() {
+    try {
+        const result = await window.api.downloadCanboxTypes();
+
+        if (!result.success) {
+            ElMessage.error(t('devApp.downloadFailed') + result.msg);
+            return;
+        }
+
+        // 用户取消操作，不显示任何提示
+        if (result.msg === 'canceled') {
+            return;
+        }
+
+        ElMessage.success(t('devApp.downloadSuccess'));
+    } catch (error) {
+        console.error('下载 canbox.d.ts 失败:', error);
+        ElMessage.error(t('devApp.downloadFailed') + error.message);
+    }
 }
 
 onBeforeMount(() => {

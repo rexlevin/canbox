@@ -164,6 +164,9 @@ contextBridge.exposeInMainWorld(
         },
         readFile: (filePath) => {
             return ipcRenderer.invoke('msg-readFile', { filePath });
+        },
+        downloadCanboxTypes: () => {
+            return ipcRenderer.invoke('download-canbox-types');
         }
     }
 );
