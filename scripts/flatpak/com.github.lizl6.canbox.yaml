@@ -34,6 +34,9 @@ modules:
       - type: dir
         path: ../../docs
         dest: docs-src
+      - type: dir
+        path: ../../types
+        dest: types-src
     build-commands:
       # 创建一个包装脚本，包含--no-sandbox参数
       - mkdir -p /app/bin
@@ -63,6 +66,10 @@ modules:
       - mkdir -p /app/bin/docs
       - install -m644 docs-src/APP_DEV_CN.md /app/bin/docs/APP_DEV_CN.md
       - install -m644 docs-src/API_CN.md /app/bin/docs/API_CN.md
+
+      # 复制 types 目录
+      - mkdir -p /app/bin/types
+      - install -m644 types-src/canbox.d.ts /app/bin/types/canbox.d.ts
 
       # 创建图标目录
       - mkdir -p /app/share/icons/hicolor/512x512/apps
