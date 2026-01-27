@@ -2,9 +2,9 @@
 
 ![Logo](logo_128x128.png)
 
-**Canbox** 是一个集合了多种实用工具的应用平台，旨在为大家提供一个便捷的使用各种小工具的途径。
+**Canbox** 是一个轻量级应用运行时（runtime）平台，提供了最基础的功能能力，让开发者可以专注于应用本身的逻辑实现。
 
-**Canbox** 是一个app集合平台，在这里我们可以开发自己的小工具，并且分享给他人使用。
+**Canbox** 是一个 app 集合平台，在这里我们可以开发自己的小工具，并且分享给他人使用。
 
 **Canbox** 没有服务器，可以：
 
@@ -98,7 +98,28 @@ Canbox 支持导入开发者打包好的应用包（ZIP 格式）。
 
 ![screenshot-4](./public/screenshot/screenshot-4.png)
 
-Canbox 提供了完整的 APP 开发环境，支持开发者创建、调试和打包自己的应用。
+Canbox 作为轻量级 runtime，提供了最小化的基础功能集，让 APP 自由实现各类业务逻辑。
+
+### Runtime 提供的基础能力
+
+Canbox 为 APP 提供以下核心功能：
+
+**数据持久化**
+- `canbox.db` - 基于 PouchDB 的本地数据库（put/get/bulkDocs/remove）
+- `canbox.store` - 基于 electron-store 的键值存储
+
+**系统交互**
+- `canbox.dialog` - 原生文件对话框（打开/保存/消息）
+- `canbox.win.createWindow` - 创建子窗口
+- `canbox.win.notification` - 系统通知
+
+**生命周期**
+- `registerCloseCallback` - 窗口关闭回调
+
+**设计原则**
+- 保持最小化，仅提供核心能力
+- 其他功能由 APP 自行实现（如网络请求、剪贴板操作等）
+- 保证 APP 有足够的自由度
 
 ### 开发流程
 

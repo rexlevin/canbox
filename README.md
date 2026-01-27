@@ -2,7 +2,7 @@
 
 ![Logo](logo_128x128.png)
 
-**Canbox** is an application platform that integrates various utility tools, designed to provide a convenient way for everyone to use various small tools.
+**Canbox** is a lightweight application runtime platform that provides minimal core capabilities, allowing developers to focus on implementing their own application logic.
 
 **Canbox** is an app collection platform where we can develop our own small tools and share them with others.
 
@@ -98,7 +98,28 @@ Enter the Repo URL in "App Repository" -> "Add App Source" to add an app source.
 
 ![screenshot-4](./public/screenshot/screenshot-4.png)
 
-Canbox provides a complete app development environment, supporting developers in creating, debugging, and packaging their own applications.
+Canbox acts as a lightweight runtime, providing a minimal set of core capabilities to give apps the freedom to implement their own business logic.
+
+### Runtime Core Capabilities
+
+Canbox provides the following core features for apps:
+
+**Data Persistence**
+- `canbox.db` - Local database based on PouchDB (put/get/bulkDocs/remove)
+- `canbox.store` - Key-value storage based on electron-store
+
+**System Interaction**
+- `canbox.dialog` - Native file dialogs (open/save/message)
+- `canbox.win.createWindow` - Create child windows
+- `canbox.win.notification` - System notifications
+
+**Lifecycle**
+- `registerCloseCallback` - Window close callback
+
+**Design Principles**
+- Keep minimal, providing only core capabilities
+- Other features are implemented by apps themselves (e.g., network requests, clipboard operations, etc.)
+- Ensure apps have sufficient freedom
 
 ### Development Process
 
