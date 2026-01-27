@@ -1,5 +1,7 @@
 # Canbox
 
+[中文版](README_zh-CN.md) | [English](README.md)
+
 ![Logo](logo_128x128.png)
 
 **Canbox** is a lightweight application runtime platform that provides minimal core capabilities, allowing developers to focus on implementing their own application logic.
