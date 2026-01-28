@@ -46,6 +46,13 @@ declare global {
                 getSync: (param: { _id: string }) => any | null;
 
                 /**
+                 * 获取所有文档
+                 * @param options - 查询选项
+                 * @returns Promise<any> - 返回查询结果，包含 total_rows、offset、rows
+                 */
+                allDocs: (options?: { include_docs?: boolean; limit?: number; descending?: boolean; startkey?: string; endkey?: string; skip?: number }) => Promise<any>;
+
+                /**
                  * 查询文档
                  * @param query - 查询条件，支持 Mango 查询语法
                  * @returns Promise<any> - 返回查询结果，成功时返回包含 docs 数组的结果对象

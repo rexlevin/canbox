@@ -276,6 +276,118 @@ canbox.db.get({
 */
 ```
 
+## canbox.db.allDocs(options)
+
+获取数据库中的所有文档。
+
+- 参数
+  1. `object` options - 查询选项
+- 应答 `object` - 包含 `total_rows`、`offset`、`rows` 的结果对象
+
+### 基础示例
+
+```javascript
+// 获取所有文档
+canbox.db.allDocs({
+    include_docs: true
+}).then(result => {
+    console.info('文档总数:', result.total_rows);
+    console.info('文档列表:', result.rows);
+}).catch(error => {
+    console.error('查询失败:', error);
+});
+/*
+ * 成功返回：
+{
+    total_rows: 3,
+    offset: 0,
+    rows: [
+        {
+            id: "001",
+            key: "001",
+            value: { rev: "1-xxx" },
+            doc: {
+                _id: "001",
+                _rev: "1-xxx",
+                data: "内容1",
+                createTime: "20241227100000"
+            }
+        },
+        {
+            id: "002",
+            key: "002",
+            value: { rev: "1-xxx" },
+            doc: {
+                _id: "002",
+                _rev: "1-xxx",
+                data: "内容2",
+                createTime: "20241227100100"
+            }
+        },
+        {
+            id: "003",
+            key: "003",
+            value: { rev: "1-xxx" },
+            doc: {
+                _id: "003",
+                _rev: "1-xxx",
+                data: "内容3",
+                createTime: "20241227100200"
+            }
+        }
+    ]
+}
+ */
+```
+
+### 高级选项示例
+
+```javascript
+// 限制返回数量
+canbox.db.allDocs({
+    include_docs: true,
+    limit: 10
+}).then(result => {
+    console.info('前10条文档:', result.rows);
+});
+
+// 倒序排列
+canbox.db.allDocs({
+    include_docs: true,
+    descending: true
+}).then(result => {
+    console.info('倒序文档:', result.rows);
+});
+
+// 按键范围查询
+canbox.db.allDocs({
+    include_docs: true,
+    startkey: '002',
+    endkey: '005'
+}).then(result => {
+    console.info('002-005范围的文档:', result.rows);
+});
+
+// 只返回文档元数据（不包含 doc）
+canbox.db.allDocs().then(result => {
+    console.info('文档ID和版本:', result.rows.map(row => ({
+        id: row.id,
+        rev: row.value.rev
+    })));
+});
+```
+
+**参数说明**：
+- `include_docs` - 是否返回完整文档内容（默认 false）
+- `limit` - 限制返回的文档数量
+- `descending` - 是否倒序排列
+- `startkey` - 开始的文档 ID
+- `endkey` - 结束的文档 ID
+- `skip` - 跳过的文档数量
+
+**注意**：`allDocs` 会返回数据库中的所有文档，适合用于数据遍历、统计等场景。如果只需要特定条件的文档，建议使用 `find()` 方法。
+```
+
 ## canbox.db.remove(doc)
 
 - 参数

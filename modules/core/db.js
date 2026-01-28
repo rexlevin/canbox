@@ -99,6 +99,12 @@ module.exports = {
             .then(res => callback(res))
             .catch(err => callback(null, err));
     },
+    allDocs: (appId, options, callback) => {
+        const db = getDB(appId);
+        db.allDocs(options)
+            .then(res => callback(res))
+            .catch(err => callback(null, err));
+    },
     closeDB: (appId) => {
         if (dbCache[appId]) {
             dbCache[appId].db.close();

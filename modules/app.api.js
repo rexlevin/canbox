@@ -219,6 +219,21 @@ const db = {
             const ret = ipcSendSyncDB('createIndex', index);
             ret.success ? resolve(ret.data) : reject(ret.msg);
         })
+    },
+    /**
+     * 获取所有文档
+     * @param {object} options - 查询选项
+     * @returns {Promise<any>} - 返回查询结果，成功时返回文档列表，失败时返回错误信息
+     * @example
+     * canbox.db.allDocs({ include_docs: true })
+     *   .then(data => console.log(data))
+     *   .catch(err => console.error(err));
+     */
+    allDocs: (options) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcSendSyncDB('allDocs', options);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
+        })
     }
 }
 
