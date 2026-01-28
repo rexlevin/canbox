@@ -87,6 +87,12 @@ module.exports = {
             .then(res => callback(res))
             .catch(err => callback(null, err));
     },
+    remove: (appId, param, callback) => {
+        const db = getDB(appId);
+        db.remove(param._id, param._rev)
+            .then(res => callback(res))
+            .catch(err => callback(null, err));
+    },
     closeDB: (appId) => {
         if (dbCache[appId]) {
             dbCache[appId].db.close();
