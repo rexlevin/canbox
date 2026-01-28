@@ -237,6 +237,36 @@ const db = {
     }
 }
 
+const sudo = {
+    /**
+     * 执行需要提权的命令
+     * @param {object} options - 提权选项
+     * @param {string} options.command - 要执行的命令
+     * @param {string} options.name - 操作名称（用于提示用户）
+     * @returns {Promise<any>} - 返回执行结果
+     * @example
+     * canbox.sudo.exec({
+     *     command: 'echo "127.0.0.1 example.com" >> /etc/hosts',
+     *     name: '修改 hosts 文件'
+     * })
+     *   .then(data => console.log(data))
+     *   .catch(err => console.error(err));
+     */
+    exec: (options) => {
+        return new Promise((resolve, reject) => {
+            if (!window.appId) {
+                throw new Error('appId is not set');
+            }
+            ipcRenderer.invoke('msg-sudo', {
+                options,
+                appId: window.appId
+            }).then(result => {
+                result.success ? resolve(result.data) : reject(result.msg);
+            });
+        });
+    }
+};
+
 const dialog = {
     /**
      * 打开文件对话框
@@ -388,6 +418,7 @@ window.canbox = {
         console.info('hello, appId: ', appId);
     },
     db,
+    sudo,
     win,
     dialog,
     store: electronStore,

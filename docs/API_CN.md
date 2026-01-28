@@ -613,6 +613,81 @@ canbox.win.notification(options)
     });
 ```
 
+# sudo
+
+提供跨平台的提权执行命令功能，支持 Linux、macOS 和 Windows。
+
+## canbox.sudo.exec(options)
+
+执行需要提权的命令。
+
+- 参数
+  1. `object` options - 提权选项
+- 应答 `object` - 包含 `stdout` 和 `stderr` 的执行结果
+
+**参数说明**：
+- `command` - 要执行的命令（必填）
+- `name` - 操作名称，用于向用户提示为何需要提权（必填）
+
+**name 参数要求**：
+- 只能包含字母、数字和空格（不支持中文等非 ASCII 字符）
+- 长度不超过 70 个字符
+- 建议使用英文描述，例如：`'Apply Hosts Config'`、`'Restart Service'`
+
+### 基础示例
+
+```javascript
+// 修改 hosts 文件
+canbox.sudo.exec({
+    command: 'echo "127.0.0.1 example.com" >> /etc/hosts',
+    name: 'Apply Hosts Config'
+}).then(result => {
+    console.info('执行成功，stdout:', result.stdout);
+    console.info('stderr:', result.stderr);
+}).catch(error => {
+    console.error('执行失败:', error);
+});
+```
+
+### 高级示例
+
+```javascript
+// 创建系统文件
+canbox.sudo.exec({
+    command: 'touch /etc/hosts.d/custom-hosts',
+    name: 'Create Custom Hosts File'
+}).then(result => {
+    console.info('文件创建成功');
+});
+
+// 重启系统服务
+canbox.sudo.exec({
+    command: 'systemctl restart nginx',
+    name: 'Restart Nginx Service'
+}).then(result => {
+    console.info('服务重启成功');
+});
+
+// 复制文件到系统目录
+canbox.sudo.exec({
+    command: 'cp /tmp/config.conf /etc/app/',
+    name: 'Copy Config File'
+}).then(result => {
+    console.info('文件复制成功');
+});
+```
+
+**平台说明**：
+- **Linux/macOS** - 使用 `sudo-prompt`，会弹出系统提权对话框
+- **Windows** - 使用 `electron-sudo`，会弹出 UAC 提权对话框
+- **Flatpak** - 当前不支持（受沙盒限制），需要用户在 Flatpak 环境外使用
+
+**参数说明**：
+- `command` - 要执行的命令（必填）
+- `name` - 操作名称，用于向用户提示为何需要提权（必填）
+
+**注意**：提权操作涉及系统安全，请谨慎使用。确保只执行必要的命令，并在 `name` 参数中清晰说明操作目的。
+
 # dialog
 
 直接的封装，没有做任何修建，请求参数和应答均可参见electron的 [`dialog`](https://www.electronjs.org/zh/docs/latest/api/dialog) 模块

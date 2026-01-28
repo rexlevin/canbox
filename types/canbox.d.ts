@@ -97,6 +97,18 @@ declare global {
             };
 
             /**
+             * 提权执行模块
+             */
+            sudo: {
+                /**
+                 * 执行需要提权的命令
+                 * @param options - 提权选项
+                 * @returns Promise<any> - 返回执行结果
+                 */
+                exec: (options: { command: string; name: string }) => Promise<{ stdout: string; stderr: string }>;
+            };
+
+            /**
              * 对话框模块
              */
             dialog: {

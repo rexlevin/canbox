@@ -4,6 +4,7 @@ const winFactory = require('@modules/core/win');
 const dialogFactory = require('@modules/core/dialog');
 const ElectronStore = require('@modules/core/electronStore');
 const DB = require('@modules/core/db');
+const sudo = require('@modules/core/sudo');
 
 /**
  * 初始化数据库相关的 IPC 消息处理逻辑
@@ -110,6 +111,32 @@ function initDialogIpcHandlers() {
             .catch(err => {
                 event.returnValue = JSON.stringify({ success: false, msg: err.message });
             });
+    });
+}
+
+/**
+ * 初始化 sudo 相关的 IPC 消息处理逻辑
+ * @description 处理来自渲染进程的 IPC 消息，执行需要提权的命令
+ * @listens ipcMain.handle('msg-sudo')
+ * @param {object} args - IPC 消息参数
+ * @param {object} args.options - 提权选项（包含 command 和 name）
+ * @param {string} args.appId - 应用 ID
+ * @returns {Promise} 返回执行结果，格式为 { success: boolean, data: object }
+ */
+function initSudoIpcHandlers() {
+    ipcMain.handle('msg-sudo', async (event, args) => {
+        try {
+            const result = await sudo.exec(args.options);
+            return {
+                success: true,
+                data: result
+            };
+        } catch (error) {
+            return {
+                success: false,
+                msg: error.message
+            };
+        }
     });
 }
 
@@ -255,6 +282,7 @@ function initApiIpcHandlers() {
     initElectronStoreIpcHandlers();
     initReadFileIpcHandlers();
     initDownloadCanboxTypesIpcHandlers();
+    initSudoIpcHandlers();
 }
 
 module.exports = initApiIpcHandlers;
