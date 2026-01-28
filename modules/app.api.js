@@ -189,6 +189,21 @@ const db = {
             const ret = ipcSendSyncDB('remove', param);
             ret.success ? resolve(ret.data) : reject(ret.msg);
         })
+    },
+    /**
+     * 查询文档
+     * @param {object} query - 查询条件，支持 Mango 查询语法
+     * @returns {Promise<any>} - 返回查询结果，成功时返回文档数组，失败时返回错误信息
+     * @example
+     * canbox.db.find({ selector: { type: 'hosts_entry' } })
+     *   .then(data => console.log(data.docs))
+     *   .catch(err => console.error(err));
+     */
+    find: (query) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcSendSyncDB('find', query);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
+        })
     }
 }
 

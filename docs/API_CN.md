@@ -222,6 +222,101 @@ canbox.db.remove({
 */
 ```
 
+## canbox.db.find(query)
+
+使用 Mango 查询语法查询文档。
+
+- 参数
+  1. `object` query - 查询条件对象，支持 Mango 查询语法
+- 应答 `object` - 包含 `docs` 数组的查询结果
+
+### 基础查询示例
+
+```javascript
+// 查询所有 type 为 'hosts_entry' 的文档
+canbox.db.find({
+    selector: {
+        type: 'hosts_entry'
+    }
+}).then(result => {
+    console.info('查询到的文档数量:', result.docs.length);
+    console.info('文档列表:', result.docs);
+}).catch(error => {
+    console.error('查询失败:', error);
+});
+/*
+ * 成功返回：
+{
+    "docs": [
+        {
+            "_id": "001",
+            "_rev": "1-xxx",
+            "type": "hosts_entry",
+            "name": "配置1",
+            "content": "192.168.1.1 example.com",
+            "active": true,
+            "createTime": "20241227100000"
+        },
+        {
+            "_id": "002",
+            "_rev": "1-xxx",
+            "type": "hosts_entry",
+            "name": "配置2",
+            "content": "192.168.1.2 test.com",
+            "active": false,
+            "createTime": "20241227100100"
+        }
+    ]
+}
+ */
+```
+
+### 高级查询示例
+
+```javascript
+// 多条件查询
+canbox.db.find({
+    selector: {
+        type: 'hosts_entry',
+        active: true
+    }
+}).then(result => {
+    console.info('激活的 hosts 配置:', result.docs);
+});
+
+// 排序
+canbox.db.find({
+    selector: {
+        type: 'hosts_entry'
+    },
+    sort: [{ createTime: 'desc' }]
+}).then(result => {
+    console.info('按创建时间倒序:', result.docs);
+});
+
+// 限制返回数量
+canbox.db.find({
+    selector: {
+        type: 'hosts_entry'
+    },
+    limit: 10
+}).then(result => {
+    console.info('前10条记录:', result.docs);
+});
+
+// 指定返回字段
+canbox.db.find({
+    selector: {
+        type: 'hosts_entry'
+    },
+    fields: ['_id', 'name', 'active']
+}).then(result => {
+    console.info('只返回指定字段:', result.docs);
+});
+```
+
+**注意**：`find` 方法使用 PouchDB 的 Mango 查询语法，支持复杂的查询条件、排序、分页等功能。
+
 # window
 
 ## canbox.win.createWindow(options, params)
@@ -283,7 +378,9 @@ canbox.win.notification(options)
 
 与 Electron `showMessageBox` 一致
 
-## registterCloseCallback
+# 生命周期
+
+## registerCloseCallback
 
 注册窗口关闭时APP的回调函数
 

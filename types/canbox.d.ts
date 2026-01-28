@@ -46,6 +46,13 @@ declare global {
                 getSync: (param: { _id: string }) => any | null;
 
                 /**
+                 * 查询文档
+                 * @param query - 查询条件，支持 Mango 查询语法
+                 * @returns Promise<any> - 返回查询结果，成功时返回包含 docs 数组的结果对象
+                 */
+                find: (query: { selector: any; sort?: any; limit?: number; fields?: string[] }) => Promise<any>;
+
+                /**
                  * 删除文档
                  * @param param - 删除参数，必须包含 `_id` 字段
                  * @returns Promise<any> - 返回操作结果，成功时返回删除的文档数据，失败时返回错误信息

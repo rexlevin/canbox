@@ -2,6 +2,7 @@ const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const PouchDB = require('pouchdb');
+PouchDB.plugin(require('pouchdb-find'));
 const { customAlphabet } = require('nanoid-cjs');
 const nanoid = customAlphabet('1234567890abcdef', 10);
 
@@ -77,6 +78,12 @@ module.exports = {
     get: (appId, param, callback) => {
         const db = getDB(appId);
         db.get(param._id)
+            .then(res => callback(res))
+            .catch(err => callback(null, err));
+    },
+    find: (appId, query, callback) => {
+        const db = getDB(appId);
+        db.find(query)
             .then(res => callback(res))
             .catch(err => callback(null, err));
     },
