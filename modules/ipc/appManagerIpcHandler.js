@@ -234,7 +234,7 @@ class AppManagerIpcHandler {
                     return handleError(new Error('应用 ID 不能为空'), 'clearAppData');
                 }
 
-                const appDataPath = getAppDataPath(id);
+                const appDataPath = path.join(getAppDataPath(), id);
 
                 // 使用 original-fs 删除应用数据目录
                 if (fs.existsSync(appDataPath)) {
@@ -243,6 +243,14 @@ class AppManagerIpcHandler {
                 } else {
                     logger.info(`应用数据目录不存在: ${appDataPath}`);
                 }
+
+                // 清除窗口状态
+                const winState = require('@modules/main/winState');
+                winState.remove(id, (result) => {
+                    if (result.success) {
+                        logger.info(`应用窗口状态已清除: ${id}`);
+                    }
+                });
 
                 return { success: true };
             } catch (error) {

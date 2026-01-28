@@ -1,6 +1,89 @@
 # store
 
-使用electron-store进行数据存储
+使用 electron-store 进行数据存储
+
+**存储位置**：`{userData}/Users/data/{appId}/store/{name}.json`
+
+## canbox.store.get(name, key)
+
+获取存储的值。
+
+- 参数
+  1. `string` name - 存储名称，对应不同的 `.json` 文件
+  2. `string` key - 存储的键
+- 应答 `any` - 返回存储的值
+
+```javascript
+canbox.store.get('config', 'theme')
+    .then(value => {
+        console.info('主题设置:', value);
+    })
+    .catch(error => {
+        console.error('获取失败:', error);
+    });
+```
+
+## canbox.store.set(name, key, value)
+
+设置存储的值。
+
+- 参数
+  1. `string` name - 存储名称，对应不同的 `.json` 文件
+  2. `string` key - 存储的键
+  3. `any` value - 存储的值
+- 应答 `void`
+
+```javascript
+canbox.store.set('config', 'theme', 'dark')
+    .then(() => {
+        console.info('主题设置已保存');
+    })
+    .catch(error => {
+        console.error('保存失败:', error);
+    });
+```
+
+## canbox.store.delete(name, key)
+
+删除存储的值。
+
+- 参数
+  1. `string` name - 存储名称，对应不同的 `.json` 文件
+  2. `string` key - 存储的键
+- 应答 `void`
+
+```javascript
+canbox.store.delete('config', 'theme')
+    .then(() => {
+        console.info('主题设置已删除');
+    })
+    .catch(error => {
+        console.error('删除失败:', error);
+    });
+```
+
+## canbox.store.clear(name)
+
+清空指定存储的所有数据。
+
+- 参数
+  1. `string` name - 存储名称，对应不同的 `.json` 文件
+- 应答 `void`
+
+```javascript
+canbox.store.clear('config')
+    .then(() => {
+        console.info('配置文件已清空');
+    })
+    .catch(error => {
+        console.error('清空失败:', error);
+    });
+```
+
+**注意**：每个 `name` 对应一个独立的 `.json` 文件，用于存储不同类型的数据。例如：
+- `config.json` - 应用配置
+- `user.json` - 用户数据
+- `cache.json` - 缓存数据
 
 # db
 
