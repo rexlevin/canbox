@@ -8,6 +8,8 @@ canbox 使用 [pouchdb](https://pouchdb.com/) 作为本地存储库
 
 pouchdb中文教程：[PouchDB 教程](https://www.w3ccoo.com/pouchdb/)
 
+Canbox 为每个 APP 生成单独的 pouchdb 存储
+
 ## canbox.db.put(doc)
 
 新增/修改数据文档
@@ -62,42 +64,106 @@ canbox.db.put({
 
 ## canbox.db.bulkDocs(docs)
 
+批量操作文档，支持新增、修改和删除。
+
 - 参数
-  1. `array` docs
-- 应答 `array`
+  1. `array` docs - 文档数组
+- 应答 `array` - 每个文档的操作结果
+
+### 功能说明
+
+- **新增文档**：当文档没有 `_id` 或没有 `_rev` 时，canbox 会自动生成 `_id` 并插入新文档
+- **修改文档**：当文档包含 `_id` 和 `_rev` 时，会更新现有文档
+- **删除文档**：当文档包含 `_deleted: true` 参数时，会删除该文档（需要提供 `_id` 和 `_rev`）
+
+### 新增文档示例
 
 ```javascript
 canbox.db.bulkDocs([{
     _id: '001',
-    data: '这里是第一个节点的数据',
-},{
+    data: '第一个文档'
+}, {
     _id: '002',
-    data: '这里是第二个节点的数据',
-    _rev: '1-7b80fc50b6af7a905f368670429a757e'
+    data: '第二个文档'
 }]).then(result => {
     console.info('result=', result);
 }).catch(error => {
     console.error('error=', error);
 });
 /*
- * 成功：
+ * 成功返回：
 [
-    {
-        "ok": true,
-        "id": "0001",
-        "rev": "1-84abc2a942007bee7cf55007cba56198"
-    },
-    {
-        "ok": true,
-        "id": "0002",
-        "rev": "2-7b80fc50b6af7a905f368670429a757e"
-    }
+    { "ok": true, "id": "001", "rev": "1-xxx" },
+    { "ok": true, "id": "002", "rev": "1-xxx" }
+]
+ */
+```
+
+### 修改文档示例
+
+```javascript
+canbox.db.bulkDocs([{
+    _id: '001',
+    data: '第一个文档（已修改）',
+    _rev: '1-xxx'
+}, {
+    _id: '002',
+    data: '第二个文档（已修改）',
+    _rev: '1-xxx'
+}]).then(result => {
+    console.info('result=', result);
+}).catch(error => {
+    console.error('error=', error);
+});
+/*
+ * 成功返回：
+[
+    { "ok": true, "id": "001", "rev": "2-xxx" },
+    { "ok": true, "id": "002", "rev": "2-xxx" }
+]
+ */
+```
+
+### 删除文档示例
+
+```javascript
+canbox.db.bulkDocs([{
+    _id: '001',
+    _rev: '1-xxx',
+    _deleted: true
+}, {
+    _id: '002',
+    data: '保留这个文档'
+}]).then(result => {
+    console.info('result=', result);
+}).catch(error => {
+    console.error('error=', error);
+});
+/*
+ * 成功返回（删除的文档也会返回 ok: true）：
+[
+    { "ok": true, "id": "001", "rev": "2-xxx" },
+    { "ok": true, "id": "002", "rev": "1-xxx" }
 ]
  *
- * 失败的话：
+ * 失败：
 "Document update conflict"
  */
 ```
+
+### 混合操作示例
+
+```javascript
+canbox.db.bulkDocs([
+    { _id: '001', data: '新增' },              // 新增
+    { _id: '002', data: '修改', _rev: '1-xxx' }, // 修改
+    { _id: '003', _rev: '1-xxx', _deleted: true } // 删除
+]).then(result => {
+    console.info('混合操作成功');
+});
+```
+
+**注意**：canbox 会自动为新文档生成 `createTime`，为更新文档生成 `updateTime`。
 
 ## canbox.db.get(query)
 
