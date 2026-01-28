@@ -93,6 +93,12 @@ module.exports = {
             .then(res => callback(res))
             .catch(err => callback(null, err));
     },
+    createIndex: (appId, index, callback) => {
+        const db = getDB(appId);
+        db.createIndex(index)
+            .then(res => callback(res))
+            .catch(err => callback(null, err));
+    },
     closeDB: (appId) => {
         if (dbCache[appId]) {
             dbCache[appId].db.close();

@@ -204,6 +204,21 @@ const db = {
             const ret = ipcSendSyncDB('find', query);
             ret.success ? resolve(ret.data) : reject(ret.msg);
         })
+    },
+    /**
+     * 创建索引
+     * @param {object} index - 索引配置对象
+     * @returns {Promise<any>} - 返回创建结果，成功时返回索引信息，失败时返回错误信息
+     * @example
+     * canbox.db.createIndex({ index: { fields: ['type'] } })
+     *   .then(data => console.log(data))
+     *   .catch(err => console.error(err));
+     */
+    createIndex: (index) => {
+        return new Promise((resolve, reject) => {
+            const ret = ipcSendSyncDB('createIndex', index);
+            ret.success ? resolve(ret.data) : reject(ret.msg);
+        })
     }
 }
 

@@ -317,6 +317,68 @@ canbox.db.find({
 
 **注意**：`find` 方法使用 PouchDB 的 Mango 查询语法，支持复杂的查询条件、排序、分页等功能。
 
+## canbox.db.createIndex(index)
+
+创建索引以提升查询性能。
+
+- 参数
+  1. `object` index - 索引配置对象
+- 应答 `object` - 索引创建结果
+
+### 基础示例
+
+```javascript
+// 创建单字段索引
+canbox.db.createIndex({
+    index: {
+        fields: ['type']
+    }
+}).then(result => {
+    console.info('索引创建成功:', result);
+}).catch(error => {
+    console.error('索引创建失败:', error);
+});
+/*
+ * 成功返回：
+{
+    result: 'created',
+    id: '_design/index1',
+    name: 'index1',
+    ok: true
+}
+ */
+```
+
+### 复合索引示例
+
+```javascript
+// 创建多字段索引
+canbox.db.createIndex({
+    index: {
+        fields: ['type', 'active']
+    }
+}).then(result => {
+    console.info('复合索引创建成功:', result);
+});
+
+// 创建带排序的索引
+canbox.db.createIndex({
+    index: {
+        fields: [
+            { type: 'asc' },
+            { createTime: 'desc' }
+        ]
+    }
+}).then(result => {
+    console.info('排序索引创建成功:', result);
+});
+```
+
+**性能提示**：
+- 创建索引可以显著提升 `find` 查询性能
+- 建议在应用初始化时创建常用的索引
+- 索引创建是异步操作，建议在应用启动时完成
+
 # window
 
 ## canbox.win.createWindow(options, params)
