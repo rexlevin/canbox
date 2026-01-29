@@ -158,16 +158,6 @@ function initReadFileIpcHandlers() {
             // 获取应用路径：开发环境使用项目根目录，打包后使用 app.getAppPath()
             let appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');
 
-            // Flatpak 环境特殊处理：docs 目录在 /app/bin/docs/
-            if (process.env.FLATPAK_ID || (process.env.container && process.env.container.includes('flatpak'))) {
-                // 如果是 docs 目录下的文件，使用 Flatpak 中的路径
-                if (args.filePath && args.filePath.startsWith('docs/')) {
-                    const fileName = args.filePath.replace('docs/', '');
-                    appPath = '/app/bin';
-                    args.filePath = `docs/${fileName}`;
-                }
-            }
-
             // 构建完整的文件路径
             const filePath = path.join(appPath, args.filePath);
 
@@ -215,11 +205,6 @@ function initDownloadCanboxTypesIpcHandlers() {
 
             // 获取应用路径：开发环境使用项目根目录，打包后使用 app.getAppPath()
             let appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');
-
-            // Flatpak 环境特殊处理
-            if (process.env.FLATPAK_ID || (process.env.container && process.env.container.includes('flatpak'))) {
-                appPath = '/app/bin';
-            }
 
             // canbox.d.ts 文件路径
             const canboxTypesPath = path.join(appPath, 'types', 'canbox.d.ts');

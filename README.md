@@ -199,23 +199,15 @@ Shortcuts automatically sync with the application. When an app is deleted, corre
 
 # Installation
 
-## Install via Flatpak (Recommended)
+## Download
 
-Canbox is available on Flathub as a Flatpak package, which is the recommended installation method for most Linux distributions.
+Canbox provides the following formats for download and installation:
 
-```bash
-flatpak install flathub com.github.lizl6.canbox
-```
+- **Linux**: AppImage format (recommended) - Compatible with most Linux distributions
+- **Windows**: Installer package
+- **macOS**: Coming soon
 
-Once installed, you can launch Canbox from your application menu or run:
-
-```bash
-flatpak run com.github.lizl6.canbox
-```
-
-## Download Other Formats
-
-Under construction
+Please visit the project's GitHub Releases page to download the latest version of Canbox.
 
 # Issues Welcome!
 

@@ -203,23 +203,15 @@ Canbox 支持为常用应用创建快捷方式：
 
 # 安装
 
-## 通过 Flatpak 安装（推荐）
+## 下载安装
 
-Canbox 已在 Flathub 上架，这是大多数 Linux 发行版推荐的安装方式。
+Canbox 提供以下格式供下载安装：
 
-```bash
-flatpak install flathub com.github.lizl6.canbox
-```
+- **Linux**: AppImage 格式（推荐）- 适用于大多数 Linux 发行版
+- **Windows**: 安装包格式
+- **macOS**: 待支持
 
-安装完成后，您可以从应用菜单启动 Canbox，或运行以下命令：
-
-```bash
-flatpak run com.github.lizl6.canbox
-```
-
-## 下载其他格式的 Canbox
-
-建设中
+请访问项目的 GitHub Releases 页面下载最新版本的 Canbox。
 
 # 欢迎提交 Issue！
 

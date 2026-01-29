@@ -32,13 +32,6 @@
         "downloadSuccess": "Download successful",
         "downloadFailed": "Download failed: "
     },
-    "flatpak": {
-        "permissionTitle": "Flatpak Environment Notice",
-        "permissionMessage": "Development apps require filesystem access",
-        "permissionDetail": "In Flatpak environment, you need to ensure the partition where your development app is located has access permissions.\n\nPlease use flatseal tool to add filesystem access permissions for Canbox:\n\n1. Install flatseal: sudo apt install flatseal\n2. Open flatseal: flatseal\n3. Find com.github.lizl6.canbox\n4. Add development project path in Filesystem > Other files (e.g., /depot)\n\nAfter setting up, click \"Confirm\" to continue.",
-        "cancel": "Cancel",
-        "confirm": "Confirm"
-    },
     "common": {
         "name": "Name",
         "version": "Version",

@@ -680,7 +680,6 @@ canbox.sudo.exec({
 **平台说明**：
 - **Linux/macOS** - 使用 `sudo-prompt`，会弹出系统提权对话框
 - **Windows** - 使用 `electron-sudo`，会弹出 UAC 提权对话框
-- **Flatpak** - 当前不支持（受沙盒限制），需要用户在 Flatpak 环境外使用
 
 **参数说明**：
 - `command` - 要执行的命令（必填）

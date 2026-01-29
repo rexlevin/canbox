@@ -263,23 +263,6 @@ class AppManagerIpcHandler {
             try {
                 const { dialog } = require('electron');
 
-                // 检测是否在 Flatpak 环境
-                const isFlatpak = process.env.FLATPAK_ID || (process.env.container && process.env.container.includes('flatpak'));
-
-                // Flatpak 环境下，先提示用户确认文件系统访问权限
-                if (isFlatpak) {
-                    const confirmResult = await dialog.showMessageBox({
-                        type: 'info',
-                        title: translate('flatpak.permissionTitle'),
-                        message: translate('flatpak.permissionMessage'),
-                        detail: translate('flatpak.permissionDetail'),
-                        buttons: [translate('flatpak.confirm')],
-                        defaultId: 0,
-                        cancelId: 0
-                    });
-                    logger.info('用户确认了 Flatpak 权限提示，继续添加开发应用');
-                }
-
                 // 显示文件选择对话框
                 const result = await dialog.showOpenDialog({
                     title: translate('devApp.addApp'),

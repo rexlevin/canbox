@@ -30,7 +30,6 @@ export default defineConfig({
                 '**/node_modules/**',
                 '**/dist/**',
                 '**/build/**',
-                '**/scripts/flatpak/**',
                 '**/.git/**',
                 '**/logs/**'
             ]

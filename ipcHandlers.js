@@ -128,49 +128,15 @@ function initIpcHandlers() {
             return { success: false, msg: '内容为空' };
         }
         try {
-            // 检测是否在 Flatpak 环境
-            const isFlatpak = process.env.FLATPAK_ID || (process.env.container && process.env.container.includes('flatpak'));
+            // 创建临时文件并打开
+            const tempDir = os.tmpdir();
+            const tempFile = path.join(tempDir, `doc-${Date.now()}.html`);
+            fs.writeFileSync(tempFile, htmlContent, 'utf8');
 
-            if (isFlatpak) {
-                // 使用文档名称作为文件名，每次都覆盖写入
-                const cacheKey = docName || 'default';
-
-                // 创建文档目录
-                const docsDir = getDocumentsDir();
-                const tempDir = path.join(docsDir, 'canbox-docs');
-                if (!fs.existsSync(tempDir)) {
-                    fs.mkdirSync(tempDir, { recursive: true });
-                }
-
-                // 固定文件名，每次都覆盖写入
-                const tempFile = path.join(tempDir, `${cacheKey}.html`);
-                fs.writeFileSync(tempFile, htmlContent, 'utf8');
-
-                logger.info('[Flatpak] Created/Updated temporary HTML file: {}', tempFile);
-
-                // 在 Flatpak 环境下使用 xdg-open 命令打开文件
-                try {
-                    execSync(`xdg-open "${tempFile}"`, {
-                        stdio: 'ignore',
-                        detached: true
-                    });
-                } catch (error) {
-                    // 如果 xdg-open 失败，回退到 shell.openPath
-                    shell.openPath(tempFile).catch(err => {
-                        console.error('Error opening HTML file with shell.openPath:', err);
-                    });
-                }
-            } else {
-                // 非 Flatpak 环境，使用原方式：创建临时文件并打开
-                const tempDir = os.tmpdir();
-                const tempFile = path.join(tempDir, `doc-${Date.now()}.html`);
-                fs.writeFileSync(tempFile, htmlContent, 'utf8');
-
-                logger.info('Opening temporary HTML file: {}', tempFile);
-                shell.openExternal(`file://${tempFile}`).catch(error => {
-                    console.error('Error opening HTML file:', error);
-                });
-            }
+            logger.info('Opening temporary HTML file: {}', tempFile);
+            shell.openExternal(`file://${tempFile}`).catch(error => {
+                console.error('Error opening HTML file:', error);
+            });
 
             return { success: true };
         } catch (error) {

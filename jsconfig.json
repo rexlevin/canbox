@@ -17,7 +17,6 @@
     },
     "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
     "exclude": [
-        "node_modules", "build", "dist", "scripts/flatpak/.flatpak-builder",
-        "scripts/flatpak/build-dir", "scripts/flatpak/repo"
+        "node_modules", "build", "dist"
     ]
 }
