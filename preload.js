@@ -89,7 +89,15 @@ contextBridge.exposeInMainWorld(
             add: (fn) => ipcRenderer.invoke('handle-app-dev-add').then(result => fn(result)).catch(error => {
                 console.error('IPC call failed:', error);
                 fn(null);
-            })
+            }),
+            info: (uid, fn) => {
+                ipcRenderer.invoke('getAppDevInfo', uid).then(result => {
+                    fn(result);
+                }).catch(error => {
+                    console.error('IPC call failed:', error);
+                    fn({ success: false, msg: error.message });
+                });
+            }
         },
         addAppRepo: (repoUrl, fn) => ipcRenderer.invoke('add-app-repo', repoUrl).then(result => {
             fn(result);
@@ -161,6 +169,16 @@ contextBridge.exposeInMainWorld(
                 }
                 fn({ success: false, msg: errorMsg });
             });
+        },
+        repo: {
+            info: (uid, fn) => {
+                ipcRenderer.invoke('getRepoInfo', uid).then(result => {
+                    fn(result);
+                }).catch(error => {
+                    console.error('IPC call failed:', error);
+                    fn({ success: false, msg: error.message });
+                });
+            }
         },
         readFile: (filePath) => {
             return ipcRenderer.invoke('msg-readFile', { filePath });

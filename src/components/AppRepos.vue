@@ -51,10 +51,10 @@
                 <el-col :span="24">
                     <div class="card" v-loading="loadingTag[uid]">
                         <div class="img-block">
-                            <img style="width: 58px; height: 58px; cursor: pointer;" :src="'file://' + repo.logo" alt="" />
+                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="showRepoInfo(uid)" :src="'file://' + repo.logo" alt="" />
                         </div>
                         <div class="info-block vertical-block">
-                            <div class="app-name">
+                            <div class="app-name" @click="showRepoInfo(uid)">
                                 <span style="font-weight: bold; font-size: 20px;">{{ repo.name }}</span>
                                 <span style="padding-left: 20px; color: gray;">{{ repo.version }}</span>
                             </div>
@@ -89,20 +89,37 @@
             <p>{{ $t('appRepo.empty') }}</p>
         </div>
     </div>
+
+    <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
+        <div class="drawer-container">
+            <el-tabs class="drawer-tabs">
+                <el-tab-pane :label="$t('appList.appIntro')">
+                    <div class="drawer-content" id="divAppInfo" v-html="renderedReadme"></div>
+                </el-tab-pane>
+                <el-tab-pane :label="$t('appList.versionHistory')" v-if="historyFlag">
+                    <div class="drawer-content" v-html="renderedHistory"></div>
+                </el-tab-pane>
+            </el-tabs>
+        </div>
+    </el-drawer>
 </template>
 
 <script setup>
-import { onBeforeMount, ref, reactive, watch } from 'vue';
+import { onBeforeMount, ref, reactive, watch, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
-
 import { useAppStore } from '@/stores/appStore';
-const appStore = useAppStore();
+import { md } from '@/utils/markdownRenderer';
 
+const appStore = useAppStore();
 const { t } = useI18n();
 
 const dialogVisible = ref(false);
 const repoUrl = ref('');
+const drawerInfo = ref(false);
+const readme = ref(null);
+const history = ref(null);
+const historyFlag = ref(false);
 
 // 控制loading状态
 let loadingTag = ref({});
@@ -119,6 +136,7 @@ const handleClose = (done) => {
 const formRef = ref();
 const loading = ref(false);
 let reposData = ref({});
+let reposInfoData = ref({});
 
 watch(() => appStore.removedAppId, (newAppId) => {
     if (newAppId) {
@@ -145,14 +163,76 @@ const fetchReposData = async () => {
         if (result.success) {
             // 清空对象并重新赋值，确保响应式更新
             reposData.value = result.data;
-            // Object.keys(reposData).forEach(key => delete reposData[key]);
-            // Object.assign(reposData, result.data || {});
+            // 并行获取每个仓库的详细信息
+            const promises = Object.keys(result.data).map(uid => {
+                return new Promise((resolve) => {
+                    window.api.repo.info(uid, (infoResult) => {
+                        if (infoResult.success) {
+                            resolve({ uid, data: infoResult.data });
+                        } else {
+                            console.error(`获取仓库 ${uid} 信息失败:`, infoResult.msg);
+                            resolve(null);
+                        }
+                    });
+                });
+            });
+
+            // 等待所有仓库信息加载完成
+            Promise.all(promises).then(results => {
+                results.forEach(item => {
+                    if (item && item.data) {
+                        reposInfoData.value[item.uid] = {
+                            readme: item.data.readme,
+                            history: item.data.history
+                        };
+                    }
+                });
+            });
         } else {
             ElMessage.error(result.msg || t('appRepo.fetchFailed'));
         }
         loading.value = false;
     });
 };
+
+// 显示仓库信息（点击 logo 或名称时）
+function showRepoInfo(uid) {
+    const repoInfo = reposInfoData.value[uid];
+    if (!repoInfo) {
+        console.error('仓库信息不存在:', uid);
+        return;
+    }
+
+    // 设置 readme 和 history
+    readme.value = repoInfo.readme || '';
+    history.value = repoInfo.history || '';
+    historyFlag.value = !!repoInfo.history;
+
+    // 打开 drawer
+    drawerInfo.value = true;
+}
+
+// 渲染后的 readme HTML
+const renderedReadme = computed(() => {
+    if (!readme.value) return '';
+    try {
+        return md.render(readme.value);
+    } catch (error) {
+        console.error('渲染 README 失败:', error);
+        return readme.value;
+    }
+});
+
+// 渲染后的 history HTML
+const renderedHistory = computed(() => {
+    if (!history.value) return '';
+    try {
+        return md.render(history.value);
+    } catch (error) {
+        console.error('渲染 HISTORY 失败:', error);
+        return history.value;
+    }
+});
 
 // 下载仓库中的应用
 const downloadAppsFromRepo = (uid) => {
@@ -296,6 +376,18 @@ const copyRepoURL = (uid) => {
         });
     }
 }
+
+onMounted(() => {
+    // 拦截app介绍中的a标签链接跳转，使其使用外部浏览器打开
+    const links = document.querySelectorAll('#divAppInfo a[href]');
+    links.forEach(link => {
+        link.addEventListener('click', e => {
+            const url = link.getAttribute('href');
+            e.preventDefault();
+            window.api.openUrl(url);
+        });
+    });
+});
 </script>
 
 <style scoped>
@@ -357,5 +449,115 @@ button:hover {
     justify-content: center;
     align-items: center;
     color: #909399;
+}
+
+/* 抽屉样式 */
+.drawer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.drawer-tabs {
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.drawer-tabs :deep(.el-tabs__header) {
+  flex-shrink: 0;
+}
+
+.drawer-tabs :deep(.el-tabs__content) {
+  flex: 1;
+  overflow: hidden;
+  height: calc(100% - 55px);
+}
+
+.drawer-tabs :deep(.el-tab-pane) {
+  height: 100%;
+}
+
+.drawer-content {
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.drawer-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+}
+
+.drawer-content :deep(pre) {
+  background-color: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.drawer-content :deep(code) {
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+}
+
+.drawer-content :deep(p) {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.drawer-content :deep(h1),
+.drawer-content :deep(h2),
+.drawer-content :deep(h3) {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.drawer-content :deep(h1) {
+  font-size: 28px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.drawer-content :deep(h2) {
+  font-size: 24px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.drawer-content :deep(h3) {
+  font-size: 20px;
+}
+
+.drawer-content :deep(ul),
+.drawer-content :deep(ol) {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.drawer-content :deep(li) {
+  margin: 4px 0;
+}
+
+.drawer-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.drawer-content :deep(th),
+.drawer-content :deep(td) {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.drawer-content :deep(th) {
+  background-color: #f5f5f5;
+  font-weight: bold;
 }
 </style>

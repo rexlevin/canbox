@@ -48,12 +48,16 @@
     </div>
 
     <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
-        <el-tabs>
-            <el-tab-pane :label="$t('appList.appIntro')">
-                <div style="text-align: left;" v-html="renderedReadme" id="divAppInfo"></div>
-            </el-tab-pane>
-            <el-tab-pane :label="$t('appList.versionHistory')" v-if="historyFlag" v-html="renderedHistory"></el-tab-pane>
-        </el-tabs>
+        <div class="drawer-container">
+            <el-tabs class="drawer-tabs">
+                <el-tab-pane :label="$t('appList.appIntro')">
+                    <div class="drawer-content" id="divAppInfo" v-html="renderedReadme"></div>
+                </el-tab-pane>
+                <el-tab-pane :label="$t('appList.versionHistory')" v-if="historyFlag">
+                    <div class="drawer-content" v-html="renderedHistory"></div>
+                </el-tab-pane>
+            </el-tabs>
+        </div>
     </el-drawer>
 </template>
 
@@ -109,6 +113,116 @@
   top: 5px;
   /* width: 30px;
   right: 5px; */
+}
+
+/* 抽屉样式 */
+.drawer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.drawer-tabs {
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.drawer-tabs :deep(.el-tabs__header) {
+  flex-shrink: 0;
+}
+
+.drawer-tabs :deep(.el-tabs__content) {
+  flex: 1;
+  overflow: hidden;
+  height: calc(100% - 55px);
+}
+
+.drawer-tabs :deep(.el-tab-pane) {
+  height: 100%;
+}
+
+.drawer-content {
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.drawer-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+}
+
+.drawer-content :deep(pre) {
+  background-color: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.drawer-content :deep(code) {
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+}
+
+.drawer-content :deep(p) {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.drawer-content :deep(h1),
+.drawer-content :deep(h2),
+.drawer-content :deep(h3) {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.drawer-content :deep(h1) {
+  font-size: 28px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.drawer-content :deep(h2) {
+  font-size: 24px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.drawer-content :deep(h3) {
+  font-size: 20px;
+}
+
+.drawer-content :deep(ul),
+.drawer-content :deep(ol) {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.drawer-content :deep(li) {
+  margin: 4px 0;
+}
+
+.drawer-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.drawer-content :deep(th),
+.drawer-content :deep(td) {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.drawer-content :deep(th) {
+  background-color: #f5f5f5;
+  font-weight: bold;
 }
 </style>
 

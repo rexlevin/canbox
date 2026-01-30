@@ -12,11 +12,11 @@
                 <el-col :span="24">
                     <div class="card" v-loading="exportAppFlag[uid]">
                         <div class="img-block">
-                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true"
+                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="showAppDevInfo(uid)"
                                 :src="'file://' + appDevItem.path + '/' + appDevItem.appJson.logo" alt="" />
                         </div>
                         <div class="info-block vertical-block">
-                            <div class="app-name" @click="drawerInfo = true">
+                            <div class="app-name" @click="showAppDevInfo(uid)">
                                 <span style="font-weight: bold; font-size: 20px;">{{ appDevItem.appJson.name }}</span>
                                 <span style="padding-left: 20px; color: gray;">{{ appDevItem.appJson.version }}</span>
                             </div>
@@ -71,6 +71,19 @@
             </div>
         </template>
     </el-dialog>
+
+    <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
+        <div class="drawer-container">
+            <el-tabs class="drawer-tabs">
+                <el-tab-pane :label="$t('appList.appIntro')">
+                    <div class="drawer-content" id="divAppInfo" v-html="renderedReadme"></div>
+                </el-tab-pane>
+                <el-tab-pane :label="$t('appList.versionHistory')" v-if="historyFlag">
+                    <div class="drawer-content" v-html="renderedHistory"></div>
+                </el-tab-pane>
+            </el-tabs>
+        </div>
+    </el-drawer>
 </template>
 
 <style scoped>
@@ -194,19 +207,135 @@
 .doc-links .el-link:last-child {
     margin-right: 0;
 }
+
+/* 抽屉样式 */
+.drawer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.drawer-tabs {
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.drawer-tabs :deep(.el-tabs__header) {
+  flex-shrink: 0;
+}
+
+.drawer-tabs :deep(.el-tabs__content) {
+  flex: 1;
+  overflow: hidden;
+  height: calc(100% - 55px);
+}
+
+.drawer-tabs :deep(.el-tab-pane) {
+  height: 100%;
+}
+
+.drawer-content {
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.drawer-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+}
+
+.drawer-content :deep(pre) {
+  background-color: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.drawer-content :deep(code) {
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+}
+
+.drawer-content :deep(p) {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.drawer-content :deep(h1),
+.drawer-content :deep(h2),
+.drawer-content :deep(h3) {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.drawer-content :deep(h1) {
+  font-size: 28px;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+}
+
+.drawer-content :deep(h2) {
+  font-size: 24px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.drawer-content :deep(h3) {
+  font-size: 20px;
+}
+
+.drawer-content :deep(ul),
+.drawer-content :deep(ol) {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.drawer-content :deep(li) {
+  margin: 4px 0;
+}
+
+.drawer-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.drawer-content :deep(th),
+.drawer-content :deep(td) {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.drawer-content :deep(th) {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
 </style>
 
 <script setup>
-import { onBeforeMount, onUpdated, ref } from 'vue';
+import { onBeforeMount, onUpdated, ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import { renderAndOpenMarkdown } from '../utils/markdownRenderer';
+import { md } from '@/utils/markdownRenderer';
 
 const { t } = useI18n();
 
 let appDevData = ref({});
 const centerDialogVisible = ref(false);
 const warningContent = ref('');
+const drawerInfo = ref(false);
+const readme = ref(null);
+const history = ref(null);
+const historyFlag = ref(false);
+let appDevInfoData = ref({});
 
 function addAppDev() {
     window.api.appDev.add((result) => {
@@ -301,8 +430,76 @@ function load() {
             warningContent.value = `以下 app.json 存在问题，已经移除： \n ${Object.entries(wrongApps).map(([key, item]) => item.name || key).join('\n')}`;
             centerDialogVisible.value = true;
         }
+
+        // 并行获取每个开发应用的详细信息
+        if (result && (result.data || result.correct)) {
+            const dataToProcess = result.data || result.correct || {};
+            const promises = Object.keys(dataToProcess).map(uid => {
+                return new Promise((resolve) => {
+                    window.api.appDev.info(uid, (infoResult) => {
+                        if (infoResult.success) {
+                            resolve({ uid, data: infoResult.data });
+                        } else {
+                            console.error(`获取开发应用 ${uid} 信息失败:`, infoResult.msg);
+                            resolve(null);
+                        }
+                    });
+                });
+            });
+
+            // 等待所有开发应用信息加载完成
+            Promise.all(promises).then(results => {
+                results.forEach(item => {
+                    if (item && item.data) {
+                        appDevInfoData.value[item.uid] = {
+                            readme: item.data.readme,
+                            history: item.data.history
+                        };
+                    }
+                });
+            });
+        }
     });
 }
+
+// 显示开发应用信息（点击 logo 或名称时）
+function showAppDevInfo(uid) {
+    const appInfo = appDevInfoData.value[uid];
+    if (!appInfo) {
+        console.error('开发应用信息不存在:', uid);
+        return;
+    }
+
+    // 设置 readme 和 history
+    readme.value = appInfo.readme || '';
+    history.value = appInfo.history || '';
+    historyFlag.value = !!appInfo.history;
+
+    // 打开 drawer
+    drawerInfo.value = true;
+}
+
+// 渲染后的 readme HTML
+const renderedReadme = computed(() => {
+    if (!readme.value) return '';
+    try {
+        return md.render(readme.value);
+    } catch (error) {
+        console.error('渲染 README 失败:', error);
+        return readme.value;
+    }
+});
+
+// 渲染后的 history HTML
+const renderedHistory = computed(() => {
+    if (!history.value) return '';
+    try {
+        return md.render(history.value);
+    } catch (error) {
+        console.error('渲染 HISTORY 失败:', error);
+        return history.value;
+    }
+});
 
 // 打开APP开发文档
 async function openAppDevDoc() {

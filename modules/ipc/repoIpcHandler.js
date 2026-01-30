@@ -310,6 +310,39 @@ async function getReposData() {
 }
 
 /**
+ * 获取仓库信息（README 和 HISTORY）
+ */
+async function getRepoInfo(uid) {
+    try {
+        const repoData = getReposStore().get('default');
+        if (!repoData || !repoData[uid]) {
+            return handleError(new Error('仓库不存在'), 'getRepoInfo');
+        }
+
+        const repoPath = path.join(REPOS_PATH, uid);
+        const readFileWithErrorHandling = (filePath) => {
+            try {
+                if (fs.existsSync(filePath)) {
+                    return fs.readFileSync(filePath, 'utf8');
+                }
+                return null;
+            } catch (err) {
+                console.error(`文件操作失败: ${err.path}`, err);
+                return null;
+            }
+        };
+
+        const readme = readFileWithErrorHandling(path.join(repoPath, 'README.md'));
+        const history = readFileWithErrorHandling(path.join(repoPath, 'HISTORY.md'));
+
+        const msg = (readme || history) ? null : '部分文件读取失败';
+        return { success: null === msg, data: { readme, history }, msg };
+    } catch (error) {
+        return handleError(error, 'getRepoInfo');
+    }
+}
+
+/**
  * 导出仓库列表为 JSON 文件
  */
 async function exportReposData() {
@@ -474,6 +507,11 @@ function initRepoHandlers() {
     // 获取仓库列表
     ipcMain.handle('get-repos-data', async () => {
         return getReposData();
+    });
+
+    // 获取仓库信息（README 和 HISTORY）
+    ipcMain.handle('getRepoInfo', async (event, uid) => {
+        return getRepoInfo(uid);
     });
 
     // 删除仓库

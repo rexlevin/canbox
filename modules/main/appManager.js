@@ -196,6 +196,43 @@ function getAppInfo(uid) {
 }
 
 /**
+ * 获取开发应用信息（仅用于开发应用）
+ */
+function getAppDevInfo(uid) {
+    console.info('appDev uid:', uid);
+    if (!uid) {
+        return handleError(new Error('uid 不能为空'), 'getAppDevInfo');
+    }
+
+    const appDevStore = getAppsDevStore().get('default');
+    const appItem = appDevStore && appDevStore[uid];
+
+    if (!appItem) {
+        return handleError(new Error('开发应用不存在'), 'getAppDevInfo');
+    }
+
+    const appPath = appItem.path;
+
+    const readFileWithErrorHandling = (filePath) => {
+        try {
+            if (fs.existsSync(filePath)) {
+                return fs.readFileSync(filePath, 'utf8');
+            }
+            return null;
+        } catch (err) {
+            console.error(`文件操作失败: ${err.path}`, err);
+            return null;
+        }
+    };
+
+    const readme = readFileWithErrorHandling(path.join(appPath, 'README.md'));
+    const history = readFileWithErrorHandling(path.join(appPath, 'HISTORY.md'));
+
+    const msg = (readme || history) ? null : '部分文件读取失败';
+    return { success: null === msg, data: { readme, history }, msg };
+}
+
+/**
  * 导入应用
  * @param {*} event 
  * @param {string} zipPath 
@@ -329,5 +366,6 @@ async function handleImportApp(event, zipPath, uid) {
 module.exports = {
     getAllApps,
     getAppInfo,
+    getAppDevInfo,
     handleImportApp
 }
