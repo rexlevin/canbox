@@ -152,7 +152,7 @@ function loadAppsData() {
         if (result.success) {
             // 初始化加载状态
             appsData.value = result.data;
-            return;
+            // return;
 
             // 并行获取每个应用的详细信息
             const promises = Object.keys(result.data).map(uid => {
@@ -172,8 +172,16 @@ function loadAppsData() {
             // 等待所有应用信息加载完成
             Promise.all(promises).then(results => {
                 results.forEach(item => {
-                    if (item) {
-                        appsData.value[item.uid] = item.data;
+                    if (item && item.data) {
+                        // 只合并 readme 和 history，保留原有的 appJson 等数据
+                        const existingApp = appsData.value[item.uid];
+                        if (existingApp) {
+                            appsData.value[item.uid] = {
+                                ...existingApp,
+                                readme: item.data.readme,
+                                history: item.data.history
+                            };
+                        }
                     }
                 });
             });

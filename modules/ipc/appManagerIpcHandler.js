@@ -5,7 +5,7 @@ const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager'
 const { getAppPath, getAppDataPath } = require('@modules/main/pathManager');
 const { handleError } = require('@modules/ipc/errorHandler');
 const logger = require('@modules/utils/logger');
-const { handleImportApp } = require('@modules/main/appManager');
+const { handleImportApp, getAppInfo } = require('@modules/main/appManager');
 const { deleteShortcuts } = require('@modules/main/shortcutManager');
 const i18nModule = require('../../locales');
 const { getCanboxStore } = require('@modules/main/storageManager');
@@ -255,6 +255,15 @@ class AppManagerIpcHandler {
                 return { success: true };
             } catch (error) {
                 return handleError(error, 'clearAppData');
+            }
+        });
+
+        // 获取应用信息
+        this.handlers.set('getAppInfo', async (event, uid) => {
+            try {
+                return getAppInfo(uid);
+            } catch (error) {
+                return handleError(error, 'getAppInfo');
             }
         });
 
