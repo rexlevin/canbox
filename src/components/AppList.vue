@@ -13,11 +13,11 @@
                 <el-col :span="24">
                      <div class="card">
                          <div class="img-block">
-                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="drawerInfo = true" :src="'file://' + appItem.appJson.logo" alt="" />
+                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="showAppInfo(uid)" :src="'file://' + appItem.appJson.logo" alt="" />
                             <span v-if="appItem.sourceTag === 'import'" class="import-tag" :title="$t('appList.importTagTitle')"><el-tag type="info" effect="dark">{{ $t('appList.importTag') }}</el-tag></span>
                         </div>
                         <div class="info-block vertical-block">
-                            <div class="app-name" @click="drawerInfo = true">
+                            <div class="app-name" @click="showAppInfo(uid)">
                                 <span style="font-weight: bold; font-size: 20px;">{{ appItem.name }}</span>
                                 <span style="padding-left: 20px; color: gray;">{{ appItem.version }}</span>
                             </div>
@@ -50,9 +50,9 @@
     <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
         <el-tabs>
             <el-tab-pane :label="$t('appList.appIntro')">
-                <div style="text-align: left;" v-html="readme" id="divAppInfo"></div>
+                <div style="text-align: left;" v-html="renderedReadme" id="divAppInfo"></div>
             </el-tab-pane>
-            <el-tab-pane :label="$t('appList.versionHistory')" v-if="historyFlag" v-html="history"></el-tab-pane>
+            <el-tab-pane :label="$t('appList.versionHistory')" v-if="historyFlag" v-html="renderedHistory"></el-tab-pane>
         </el-tabs>
     </el-drawer>
 </template>
@@ -113,10 +113,11 @@
 </style>
 
 <script setup>
-import { onBeforeMount, onMounted, ref, watch } from 'vue';
+import { onBeforeMount, onMounted, ref, watch, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import { useAppStore } from '@/stores/appStore';
+import { md } from '@/utils/markdownRenderer';
 
 const { t } = useI18n();
 
@@ -190,6 +191,45 @@ function loadAppsData() {
         }
     });
 }
+
+// 显示应用信息（点击 logo 或名称时）
+function showAppInfo(uid) {
+    const appData = appsData.value[uid];
+    if (!appData) {
+        console.error('应用数据不存在:', uid);
+        return;
+    }
+
+    // 设置 readme 和 history
+    readme.value = appData.readme || '';
+    history.value = appData.history || '';
+    historyFlag.value = !!appData.history;
+
+    // 打开 drawer
+    drawerInfo.value = true;
+}
+
+// 渲染后的 readme HTML
+const renderedReadme = computed(() => {
+    if (!readme.value) return '';
+    try {
+        return md.render(readme.value);
+    } catch (error) {
+        console.error('渲染 README 失败:', error);
+        return readme.value;
+    }
+});
+
+// 渲染后的 history HTML
+const renderedHistory = computed(() => {
+    if (!history.value) return '';
+    try {
+        return md.render(history.value);
+    } catch (error) {
+        console.error('渲染 HISTORY 失败:', error);
+        return history.value;
+    }
+});
 
 // 运行app
 function loadApp(uid) {

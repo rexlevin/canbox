@@ -210,3 +210,6 @@ export async function renderAndOpenMarkdown(filePath, title, options = {}) {
 export default {
     renderAndOpenMarkdown
 };
+
+// 导出 markdown-it 实例，供其他组件使用
+export { md };
