@@ -337,12 +337,42 @@ const readme = ref(null);
 const history = ref(null);
 const historyFlag = ref(false);
 let appDevInfoData = ref({});
+/**
+ * 并行获取所有开发应用的详细信息（readme/history）
+ */
+function fetchAppDevDetails(apps) {
+    const promises = Object.keys(apps).map(uid => {
+        return new Promise((resolve) => {
+            window.api.appDev.info(uid, (infoResult) => {
+                if (infoResult.success) {
+                    resolve({ uid, data: infoResult.data });
+                } else {
+                    console.error(`获取开发应用 ${uid} 信息失败:`, infoResult.msg);
+                    resolve(null);
+                }
+            });
+        });
+    });
+
+    Promise.all(promises).then(results => {
+        results.forEach(item => {
+            if (item && item.data) {
+                appDevInfoData.value[item.uid] = {
+                    readme: item.data.readme,
+                    history: item.data.history
+                };
+            }
+        });
+    });
+}
 
 function addAppDev() {
     window.api.appDev.add((result) => {
         if (result?.correct && Object.keys(result.correct).length > 0) {
             // 只在有应用数据时才更新（避免用户取消时清空列表）
             appDevData.value = result.correct;
+            // 并行获取详细信息
+            fetchAppDevDetails(result.correct);
         }
         // 如果用户取消或返回空数据，不更新列表
     });
@@ -435,30 +465,7 @@ function load() {
         // 并行获取每个开发应用的详细信息
         if (result && (result.data || result.correct)) {
             const dataToProcess = result.data || result.correct || {};
-            const promises = Object.keys(dataToProcess).map(uid => {
-                return new Promise((resolve) => {
-                    window.api.appDev.info(uid, (infoResult) => {
-                        if (infoResult.success) {
-                            resolve({ uid, data: infoResult.data });
-                        } else {
-                            console.error(`获取开发应用 ${uid} 信息失败:`, infoResult.msg);
-                            resolve(null);
-                        }
-                    });
-                });
-            });
-
-            // 等待所有开发应用信息加载完成
-            Promise.all(promises).then(results => {
-                results.forEach(item => {
-                    if (item && item.data) {
-                        appDevInfoData.value[item.uid] = {
-                            readme: item.data.readme,
-                            history: item.data.history
-                        };
-                    }
-                });
-            });
+            fetchAppDevDetails(dataToProcess);
         }
     });
 }
