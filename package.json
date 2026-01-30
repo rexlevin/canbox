@@ -39,6 +39,12 @@
             "package.json",
             "!node_modules/electron/**/*"
         ],
+        "extraResources": [
+            {
+                "from": "types",
+                "to": "types"
+            }
+        ],
         "directories": {
             "output": "./dist"
         },

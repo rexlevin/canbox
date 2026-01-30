@@ -206,8 +206,33 @@ function initDownloadCanboxTypesIpcHandlers() {
             // 获取应用路径：开发环境使用项目根目录，打包后使用 app.getAppPath()
             let appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');
 
+            logger.info('[api.js] app.isPackaged = ' + app.isPackaged);
+            logger.info('[api.js] __dirname = ' + __dirname);
+            logger.info('[api.js] appPath = ' + appPath);
+
             // canbox.d.ts 文件路径
-            const canboxTypesPath = path.join(appPath, 'types', 'canbox.d.ts');
+            // 打包后 types 目录在 resources/types，开发环境在 types
+            let canboxTypesPath;
+            if (app.isPackaged) {
+                // 打包后：types 目录在 resources/types（extraResources）
+                const resourcesPath = path.join(process.resourcesPath, 'types', 'canbox.d.ts');
+                const asarPath = path.join(appPath, 'types', 'canbox.d.ts');
+                logger.info('[api.js] resourcesPath = ' + resourcesPath);
+                logger.info('[api.js] asarPath = ' + asarPath);
+
+                // 优先尝试 resources 目录（extraResources）
+                if (fs.existsSync(resourcesPath)) {
+                    canboxTypesPath = resourcesPath;
+                } else if (fs.existsSync(asarPath)) {
+                    canboxTypesPath = asarPath;
+                } else {
+                    canboxTypesPath = resourcesPath; // 默认使用 resources 路径
+                }
+            } else {
+                // 开发环境
+                canboxTypesPath = path.join(appPath, 'types', 'canbox.d.ts');
+            }
+            logger.info('[api.js] canboxTypesPath = ' + canboxTypesPath);
 
             // 检查文件是否存在
             if (!fs.existsSync(canboxTypesPath)) {
@@ -235,7 +260,7 @@ function initDownloadCanboxTypesIpcHandlers() {
                 };
             }
 
-            // 读取 canbox.d.ts 文件内容
+            // 读取 canbox.d.ts 文件内容（Electron 的 fs 已支持 asar）
             const content = fs.readFileSync(canboxTypesPath, 'utf8');
 
             // 写入用户选择的路径
