@@ -26,10 +26,10 @@ const md = new MarkdownIt({
     typographer: true
 }).use(markdownItAnchor, {
     permalink: markdownItAnchor.permalink.linkInsideHeader({
-        symbol: '#',
+        symbol: '',
         class: 'header-anchor'
     }),
-    level: [1, 2, 3]
+    level: [1, 2, 3, 4, 5, 6]
 });
 
 /**
