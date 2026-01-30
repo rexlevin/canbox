@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { watch } from 'vue';
+import { watch, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
   modelValue: {
@@ -44,6 +44,22 @@ function handleOverlayClick() {
     emit('close');
   }
 }
+
+function handleKeydown(event) {
+  if (event.key === 'Escape' && props.modelValue) {
+    emit('update:modelValue', false);
+    emit('close');
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('keydown', handleKeydown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown);
+  document.body.style.overflow = '';
+});
 </script>
 
 <style scoped>
