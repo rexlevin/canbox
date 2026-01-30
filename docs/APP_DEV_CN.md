@@ -3,7 +3,7 @@
 - `app.json`: APP描述文件，包含 APP 启动的窗口参数
 - `uat.dev.json`: 开发环境配置，开发时的启动URL、打开开发工具
 - `READMEmd`: APP 说明，这个文件内容会作为 APP 信息在 canbox 展示
-- `HISTROY.md`: APP 版本历史，这个文件内容会作为 APP 信息在 canbox 展示
+- `HISTORY.md`: APP 版本历史，这个文件内容会作为 APP 信息在 canbox 展示
 - `cb.build.json`: APP 打包配置，指名打包包含的目录、文件，已经打包结果输出目录
 
 # CanBox API提示
@@ -194,3 +194,9 @@ canbox使用asar进行打包，打包依据 `cb.build.json` 内容进行：
 和 app.json 同级的 README.md 文件将会被解析为 app 信息在 canbox 展示
 
 **图片地址使用网络url才能正确展示**
+
+# HISTORY.md
+
+非必须文件，可以在这里记录下你的APP的版本历史。
+
+推荐倒叙记录。
