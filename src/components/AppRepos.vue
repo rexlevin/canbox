@@ -90,7 +90,7 @@
         </div>
     </div>
 
-    <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
+    <CustomDrawer v-model="drawerInfo" :size="580">
         <div class="drawer-container">
             <el-tabs class="drawer-tabs">
                 <el-tab-pane :label="$t('appList.appIntro')">
@@ -101,7 +101,7 @@
                 </el-tab-pane>
             </el-tabs>
         </div>
-    </el-drawer>
+    </CustomDrawer>
 </template>
 
 <script setup>
@@ -110,6 +110,7 @@ import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import { useAppStore } from '@/stores/appStore';
 import { md } from '@/utils/markdownRenderer';
+import CustomDrawer from './CustomDrawer.vue';
 
 const appStore = useAppStore();
 const { t } = useI18n();

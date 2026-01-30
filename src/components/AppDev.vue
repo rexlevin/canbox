@@ -72,7 +72,7 @@
         </template>
     </el-dialog>
 
-    <el-drawer v-model="drawerInfo" :with-header="false" :size="580">
+    <CustomDrawer v-model="drawerInfo" :size="580">
         <div class="drawer-container">
             <el-tabs class="drawer-tabs">
                 <el-tab-pane :label="$t('appList.appIntro')">
@@ -83,7 +83,7 @@
                 </el-tab-pane>
             </el-tabs>
         </div>
-    </el-drawer>
+    </CustomDrawer>
 </template>
 
 <style scoped>
@@ -325,6 +325,7 @@ import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import { renderAndOpenMarkdown } from '../utils/markdownRenderer';
 import { md } from '@/utils/markdownRenderer';
+import CustomDrawer from './CustomDrawer.vue';
 
 const { t } = useI18n();
 
