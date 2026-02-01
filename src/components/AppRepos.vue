@@ -55,10 +55,10 @@
                         </div>
                         <div class="info-block vertical-block">
                             <div class="app-name" @click="showRepoInfo(uid)">
-                                <span style="font-weight: bold; font-size: 20px;">{{ repo.name }}</span>
+                                <span style="font-weight: bold; font-size: 24px;">{{ repo.name }}</span>
                                 <span style="padding-left: 20px; color: gray;">{{ repo.version }}</span>
                             </div>
-                            <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ repo.description }}</div>
+                            <div style="height: 30px; line-height: 13px; font-size: 15px;">{{ repo.description }}</div>
                         </div>
                         <div class="operate-block">
                             <div>

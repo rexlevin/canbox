@@ -18,10 +18,10 @@
                         </div>
                         <div class="info-block vertical-block">
                             <div class="app-name" @click="showAppInfo(uid)">
-                                <span style="font-weight: bold; font-size: 20px;">{{ appItem.name }}</span>
+                                <span style="font-weight: bold; font-size: 24px;">{{ appItem.name }}</span>
                                 <span style="padding-left: 20px; color: gray;">{{ appItem.version }}</span>
                             </div>
-                            <div style="height: 30px; line-height: 13px; font-size: 12px;">{{ appItem.description }}</div>
+                            <div style="height: 30px; line-height: 13px; font-size: 15px;">{{ appItem.description }}</div>
                         </div>
                         <div class="operate-block">
                             <div>
