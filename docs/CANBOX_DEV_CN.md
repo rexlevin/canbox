@@ -142,14 +142,47 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
 
 ## canbox.json
 
-存储 Canbox 的全局设置，包括语言和字体配置。
+存储 Canbox 的全局设置，包括语言、字体和窗口配置。
 
 ```json
 {
+    "version": "0.1.4",
     "language": "zh-CN",
-    "font": "\"Microsoft YaHei\", sans-serif"
+    "font": "\"Microsoft YaHei\", sans-serif",
+    "windowBounds": {
+        "x": 100,
+        "y": 100,
+        "width": 700,
+        "height": 550
+    },
+    "isMaximized": false
 }
 ```
+
+**字段说明**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `version` | string | Canbox 版本号 |
+| `language` | string | 界面语言，如 "zh-CN"、"en-US" |
+| `font` | string | 全局字体，CSS 字体家族字符串 |
+| `windowBounds` | object | 窗口位置和大小（自动管理） |
+| `windowBounds.x` | number | 窗口左上角 x 坐标（屏幕坐标） |
+| `windowBounds.y` | number | 窗口左上角 y 坐标（屏幕坐标） |
+| `windowBounds.width` | number | 窗口宽度（像素） |
+| `windowBounds.height` | number | 窗口高度（像素） |
+| `isMaximized` | boolean | 窗口是否最大化（自动管理） |
+
+**注意**：`windowBounds` 和 `isMaximized` 由应用自动管理，无需手动修改。
+
+- **窗口状态保存时机**：
+  - 用户点击关闭按钮时（最小化到托盘）
+  - 应用退出时
+
+- **窗口状态恢复规则**：
+  - 如果 `isMaximized` 为 `true`，启动时直接最大化窗口
+  - 如果 `isMaximized` 为 `false`，启动时恢复 `windowBounds` 中的位置和大小
+  - 如果保存的位置无效（如屏幕分辨率改变），自动使用默认值（屏幕居中，700x550）
 
 | 字段       | 类型   | 释义                                                                 |
 | ----------- | ------ | ---------------------------------------------------------------------- |

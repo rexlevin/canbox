@@ -3,7 +3,15 @@ const path = require('path')
 const package = require('./package.json');
 const { translate } = require('./locales');
 
+// 窗口状态保存函数（由 main.js 注入）
+let saveWindowStateFn = null;
+
 module.exports = {
+    // 设置窗口状态保存函数
+    setSaveWindowStateFn: (fn) => {
+        saveWindowStateFn = fn;
+    },
+
     createTray: (win) => {
         // console.info(1, __dirname);
         const currentLang = require('./ipcHandlers').getCurrentLanguage?.() || 'zh-CN';
@@ -62,6 +70,11 @@ module.exports = {
             label: translate('tray.quit', currentLang),
             type: 'normal',
             click: function() {
+                // 先保存窗口状态
+                if (saveWindowStateFn) {
+                    saveWindowStateFn();
+                }
+
                 // 退出canbox
                 win.destroy(); // 强制关闭窗口，会触发win的closed事件，不会触发close事件
             }

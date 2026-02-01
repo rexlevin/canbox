@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, screen } = require('electron')
 const fs = require('fs');
 const path = require('path')
 
@@ -15,6 +15,7 @@ moduleAlias.addAliases({
 moduleAlias();
 
 const logger = require('@modules/utils/logger');
+const { getCanboxStore } = require('@modules/main/storageManager');
 
 const tray = require('./tray');
 const uatDev = (() => {
@@ -54,6 +55,24 @@ const os = process.platform === 'win32' ? 'win' : process.platform === 'darwin' 
 // canbox 主窗口对象
 let win = null;
 
+// 保存窗口状态的公共函数
+function saveWindowState() {
+    if (!win || win.isDestroyed()) return;
+
+    const bounds = win.getContentBounds();
+    const canboxStore = getCanboxStore();
+    canboxStore.set('windowBounds', {
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height
+    });
+
+    console.log('[main.js] Window bounds saved:', bounds);
+    logger.info('[main.js] Window bounds saved to canbox.json: x={}, y={}, width={}, height={}',
+        bounds.x, bounds.y, bounds.width, bounds.height);
+}
+
 const isDev = !app.isPackaged;
 console.info('main.js is running in %s mode', isDev ? 'development' : 'production');
 
@@ -86,6 +105,8 @@ if (!getTheLock) {
         // 创建窗口
         createWindow();
         win.setIcon(path.join(__dirname, './logo.png'));
+        // 将保存函数注入到 tray
+        tray.setSaveWindowStateFn(saveWindowState);
         // 创建托盘
         tray.createTray(win);
         app.on('activate', () => {
@@ -148,13 +169,50 @@ app.on('window-all-closed', async () => {
     }
 });
 
+// 应用退出前保存窗口位置和大小
+app.on('before-quit', () => {
+    saveWindowState();
+});
+
 const createWindow = () => {
+    // 从 canbox.json 恢复窗口状态
+    const canboxStore = getCanboxStore();
+    const savedBounds = canboxStore.get('windowBounds', {
+        x: undefined,
+        y: undefined,
+        width: 700,
+        height: 550
+    });
+
+    // 获取屏幕信息，确保窗口在可见区域
+    const display = screen.getPrimaryDisplay();
+    const { width: screenWidth, height: screenHeight } = display.workAreaSize;
+
+    let { x, y, width, height } = savedBounds;
+
+    // 检查窗口是否在屏幕范围内
+    const isPositionValid = x !== undefined && y !== undefined &&
+        x >= 0 && y >= 0 &&
+        x + width <= screenWidth &&
+        y + height <= screenHeight;
+
+    // 如果位置无效，使用默认值（屏幕居中）
+    if (!isPositionValid) {
+        x = undefined;
+        y = undefined;
+        width = 700;
+        height = 550;
+    }
+
+    logger.info('[main.js] Restoring window state: x={}, y={}, width={}, height={}, isPositionValid={}',
+        x, y, width, height, isPositionValid);
+
     let config = {
         minWidth: 700,
         minHeight: 550,
-        width: 700,
-        height: 550,
-        resizable: false,
+        width: width,
+        height: height,
+        resizable: true,
         icon: path.join(__dirname, './logo.png'),
         webPreferences: {
             sandbox: false, // 因为在preload中使用nodejs的api（如：require）
@@ -172,6 +230,13 @@ const createWindow = () => {
         show: false,
         autoHideMenuBar: true
     };
+
+    // 只在位置有效时设置 x 和 y
+    if (isPositionValid) {
+        config.x = x;
+        config.y = y;
+    }
+
     if (os === 'linux') {
         // 为Wayland环境提供更好的窗口识别支持
         config.windowClass = 'canbox-main';
@@ -249,15 +314,17 @@ const createWindow = () => {
     // 将app窗口添加到appMap中
     // windowManager.addWindow('canbox', win);
 
-    // 关闭主窗口事件，最小化到托盘
+    // 关闭主窗口事件，最小化到托盘，同时保存窗口状态
     win.on('close', (e) => {
+        saveWindowState();
         win.hide();
         win.setSkipTaskbar(true);
         e.preventDefault();
     });
 
-    // 在 win 的closed事件里退出整个app
+    // 在 win 的closed事件里退出整个app，同时保存窗口位置和大小
     win.on('closed', async () => {
+        // 注意：close 事件已经保存过了，这里不需要重复保存
         console.info('now win closed, and app will quit');
         app.quit();
     });
