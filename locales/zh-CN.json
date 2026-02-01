@@ -54,6 +54,9 @@
     "settings": {
         "title": "设置",
         "language": "语言",
+        "font": "字体",
+        "defaultFont": "默认字体",
+        "fontSetSuccess": "字体设置已保存",
         "shortcutTitle": "为所有 APP",
         "createShortcut": "创建快捷方式",
         "deleteShortcut": "删除快捷方式",

@@ -54,6 +54,9 @@
     "settings": {
         "title": "Settings",
         "language": "Language",
+        "font": "Font",
+        "defaultFont": "Default Font",
+        "fontSetSuccess": "Font settings saved",
         "shortcutTitle": "For all App",
         "createShortcut": "Create Shortcut",
         "deleteShortcut": "Delete Shortcut",

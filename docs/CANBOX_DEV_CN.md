@@ -140,6 +140,51 @@ repos文件就是app信息的集合，这是一个json格式的描述文件：
 
 你可以在electron的userData目录下找到它们：`app.getPath('userData'), 'Users')`
 
+## canbox.json
+
+存储 Canbox 的全局设置，包括语言和字体配置。
+
+```json
+{
+    "language": "zh-CN",
+    "font": "\"Microsoft YaHei\", sans-serif"
+}
+```
+
+| 字段       | 类型   | 释义                                                                 |
+| ----------- | ------ | ---------------------------------------------------------------------- |
+| language    | string | 界面语言，支持 `zh-CN`（中文简体）和 `en-US`（英文）            |
+| font        | string | 全局字体设置，CSS `font-family` 属性值，默认为空字符串（浏览器默认） |
+
+**默认值**:
+- `language`: 根据系统语言自动检测，中文系统为 `zh-CN`，其他为 `en-US`
+- `font`: `default`，使用浏览器默认字体
+
+**使用方式**:
+
+```javascript
+// 主进程（ipcHandlers.js）
+const { getCanboxStore } = require('./modules/main/storageManager');
+const canboxStore = getCanboxStore();
+
+// 读取
+const language = canboxStore.get('language', 'en-US');
+const font = canboxStore.get('font', 'default');
+
+// 保存
+canboxStore.set('language', 'zh-CN');
+canboxStore.set('font', '"Microsoft YaHei", sans-serif');
+```
+
+```javascript
+// 渲染进程（通过 IPC）
+// 读取
+const font = await window.api.font.get();
+
+// 保存
+await window.api.font.set('"Microsoft YaHei", sans-serif');
+```
+
 ## apps.json
 
 ```json

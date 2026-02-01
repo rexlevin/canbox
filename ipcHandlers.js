@@ -102,6 +102,39 @@ function initIpcHandlers() {
         return i18nModule.translate(key, currentLanguage, params);
     });
 
+    // 字体设置相关 IPC 处理
+    ipcMain.handle('font-get', () => {
+        try {
+            const canboxStore = getCanboxStore();
+            const savedFont = canboxStore.get('font', 'default');
+            logger.info(`Get font setting: ${savedFont}`);
+            return savedFont;
+        } catch (error) {
+            logger.error('Failed to get font setting:', error);
+            return 'default';
+        }
+    });
+
+    ipcMain.handle('font-set', async (event, fontValue) => {
+        try {
+            const canboxStore = getCanboxStore();
+            canboxStore.set('font', fontValue);
+            logger.info(`Font changed to: ${fontValue}`);
+
+            // 通知所有窗口字体已更改
+            BrowserWindow.getAllWindows().forEach(win => {
+                if (win.webContents) {
+                    win.webContents.send('font-changed', fontValue);
+                }
+            });
+
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to set font:', error);
+            return { success: false, msg: error.message };
+        }
+    });
+
     // 初始化拆分后的 IPC 处理逻辑
     repoIpcHandler.init(ipcMain);
     shortcutIpcHandler.init(ipcMain);

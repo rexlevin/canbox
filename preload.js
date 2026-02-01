@@ -8,6 +8,10 @@ contextBridge.exposeInMainWorld(
             getAvailableLanguages: () => ipcRenderer.invoke('i18n-get-available-languages'),
             translate: (key, params) => ipcRenderer.invoke('i18n-translate', key, params)
         },
+        font: {
+            get: () => ipcRenderer.invoke('font-get'),
+            set: (fontValue) => ipcRenderer.invoke('font-set', fontValue)
+        },
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
         },
