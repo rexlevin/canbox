@@ -59,14 +59,15 @@ let win = null;
 function saveWindowState() {
     if (!win || win.isDestroyed()) return;
 
-    const bounds = win.getContentBounds();
+    const bounds = win.getBounds();
     const canboxStore = getCanboxStore();
-    canboxStore.set('windowBounds', {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height
-    });
+    if (win.isMaximized()) {
+        canboxStore.set('isMaximized', true);
+        canboxStore.delete('windowBounds');
+    } else {
+        canboxStore.set('isMaximized', false);
+        canboxStore.set('windowBounds', win.getBounds());
+    }
 
     console.log('[main.js] Window bounds saved:', bounds);
     logger.info('[main.js] Window bounds saved to canbox.json: x={}, y={}, width={}, height={}',
@@ -177,6 +178,7 @@ app.on('before-quit', () => {
 const createWindow = () => {
     // 从 canbox.json 恢复窗口状态
     const canboxStore = getCanboxStore();
+    const isMaximized = canboxStore.get('isMaximized', false);
     const savedBounds = canboxStore.get('windowBounds', {
         x: undefined,
         y: undefined,
@@ -191,21 +193,21 @@ const createWindow = () => {
     let { x, y, width, height } = savedBounds;
 
     // 检查窗口是否在屏幕范围内
-    const isPositionValid = x !== undefined && y !== undefined &&
+    const isPositionValid = !isMaximized && x !== undefined && y !== undefined &&
         x >= 0 && y >= 0 &&
         x + width <= screenWidth &&
         y + height <= screenHeight;
 
     // 如果位置无效，使用默认值（屏幕居中）
-    if (!isPositionValid) {
+    if (!isPositionValid && !isMaximized) {
         x = undefined;
         y = undefined;
         width = 700;
         height = 550;
     }
 
-    logger.info('[main.js] Restoring window state: x={}, y={}, width={}, height={}, isPositionValid={}',
-        x, y, width, height, isPositionValid);
+    logger.info('[main.js] Restoring window state: isMaximized={} x={}, y={}, width={}, height={}, isPositionValid={}',
+        isMaximized, x, y, width, height, isPositionValid);
 
     let config = {
         minWidth: 700,
@@ -232,7 +234,7 @@ const createWindow = () => {
     };
 
     // 只在位置有效时设置 x 和 y
-    if (isPositionValid) {
+    if (isPositionValid && !isMaximized) {
         config.x = x;
         config.y = y;
     }
@@ -250,7 +252,9 @@ const createWindow = () => {
             `--wm-class=canbox-main`
         ];
     }
+    console.info('config: ', config);
     win = new BrowserWindow(config);
+    console.info('win.isMaximized(): ', win.isMaximized());
 
     if (isDev && uatDev?.main) {
         logger.info('[main.js] now load canbox in uatDev: {}', uatDev.main);
@@ -289,11 +293,14 @@ const createWindow = () => {
     }
 
     win.on('ready-to-show', () => {
-        win.show(); // 注释掉这行，即启动最小化到tray
-
         const PackageJson = require('./package.json');
         const devTitle = isDev ? ' - develop' : '';
         win.setTitle(`${PackageJson.description} - v${PackageJson.version}${devTitle}`);
+
+        if (isMaximized) {
+            win.maximize();
+        }
+        win.show(); // 注释掉这行，即启动最小化到tray
 
         // 检查是否传入了 --dev-tools 参数
         let devToolsMode = null;
