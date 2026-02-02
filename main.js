@@ -233,8 +233,8 @@ const createWindow = () => {
         autoHideMenuBar: true
     };
 
-    // 只在位置有效时设置 x 和 y
-    if (isPositionValid && !isMaximized) {
+    // 只在位置有效时设置 x 和 y（即使是最大化状态，也需要先设置位置）
+    if (isPositionValid) {
         config.x = x;
         config.y = y;
     }
@@ -279,6 +279,11 @@ const createWindow = () => {
     win.webContents.on('did-finish-load', () => {
         console.log('Page loaded successfully');
         logger.info('Page loaded successfully');
+
+        // 页面加载完成后、显示之前设置最大化状态（避免闪烁）
+        if (isMaximized) {
+            win.maximize();
+        }
     });
 
     // 添加 console 日志输出到主进程
@@ -297,9 +302,6 @@ const createWindow = () => {
         const devTitle = isDev ? ' - develop' : '';
         win.setTitle(`${PackageJson.description} - v${PackageJson.version}${devTitle}`);
 
-        if (isMaximized) {
-            win.maximize();
-        }
         win.show(); // 注释掉这行，即启动最小化到tray
 
         // 检查是否传入了 --dev-tools 参数
