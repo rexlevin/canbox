@@ -63,7 +63,8 @@ function saveWindowState() {
     const canboxStore = getCanboxStore();
     if (win.isMaximized()) {
         canboxStore.set('isMaximized', true);
-        canboxStore.delete('windowBounds');
+        // 不删除 windowBounds，保留上次的非最大化状态
+        // 这样点击"还原"按钮时可以恢复到上次的非最大化窗口状态
     } else {
         canboxStore.set('isMaximized', false);
         canboxStore.set('windowBounds', win.getBounds());
@@ -192,11 +193,10 @@ const createWindow = () => {
 
     let { x, y, width, height } = savedBounds;
 
-    // 检查窗口是否在屏幕范围内
+    // 检查窗口是否在屏幕范围内（使用更宽松的条件，至少窗口的左上角和部分区域在屏幕内）
     const isPositionValid = !isMaximized && x !== undefined && y !== undefined &&
         x >= 0 && y >= 0 &&
-        x + width <= screenWidth &&
-        y + height <= screenHeight;
+        x < screenWidth && y < screenHeight;
 
     // 如果位置无效，使用默认值（屏幕居中）
     if (!isPositionValid && !isMaximized) {
