@@ -77,6 +77,7 @@ class AppWindowManager {
             // 合并应用自定义窗口选项：如果app.json中配置了窗口选项，则合并到options中
             if (appJson.window) {
                 Object.assign(options, JSON.parse(JSON.stringify(appJson.window)));
+                options.show = false;   // 防止被 app.json 覆盖
 
                 // 设置图标路径
                 if (options.icon) {
@@ -90,7 +91,7 @@ class AppWindowManager {
                     // Windows 下优先使用 ICO 格式，其他系统使用原始格式
                     const iconExt = os.platform() === 'win32' ? '.ico' : logoExt;
                     options.icon = path.resolve(getAppPath(), `${uid}${iconExt}`);
-                    console.info('当前是正式模式，使用 app 目录下的logo: ', options.icon);
+                    console.info('[{%s}] 当前是正式模式，使用 app 目录下的logo: %s', uid, options.icon);
                 }
 
                 // 设置 Web 偏好选项
@@ -131,12 +132,12 @@ class AppWindowManager {
             // 恢复窗口状态并创建窗口
             const state = winState.loadSync(uid);
             // 恢复窗口位置和大小
-            if (state?.restore === 1 && state?.position) {
-                options.x = state.position.x;
-                options.y = state.position.y;
-                options.width = state.position.width;
-                options.height = state.position.height;
-            }
+            // if (state?.restore === 1 && state?.position) {
+            //     options.x = state.position.x;
+            //     options.y = state.position.y;
+            //     options.width = state.position.width;
+            //     options.height = state.position.height;
+            // }
 
             console.info('load app window options===%o', options);
 
@@ -162,6 +163,7 @@ class AppWindowManager {
             // 加载应用内容
             appWin.loadURL(loadUrl).catch(err => {
                 logger.error('[{}] Failed to load URL: {}', uid, err);
+                if (appWin) appWin.close();
             });
 
             // 设置菜单和应用详情
@@ -179,11 +181,14 @@ class AppWindowManager {
             appWin.webContents.on('did-finish-load', () => {
                 logger.info('[{}] did-finish-load', uid);
         
+                appWin.setBounds(state?.position);
                 // 页面加载完成后、显示之前设置最大化状态（避免闪烁）
-                if (state?.isMax && !appWin.isMaximized()) {
-                    logger.info('[{}] did-finish-load need maximize', uid);
+                if (state?.isMax) {
+                    logger.info('[{}] did-finish-load make appWin maximized', uid);
                     appWin.maximize();
                 }
+                logger.info('[{}] did-finish-load completed, now isMaxmized: {}, bounds: {}',
+                    uid, appWin.isMaximized(), JSON.stringify(appWin.getBounds()));
             });
 
             // 准备显示事件
@@ -191,9 +196,11 @@ class AppWindowManager {
                 logger.info('[{}] ready-to-show', uid);
                 appWin.show();
                 // if (state?.isMax && !appWin.isMaximized()) {
-                //     logger.info('[{}] ready-to-show need maximize', uid);
+                //     logger.info('[{}] ready-to-show make appWin maximized', uid);
                 //     appWin.maximize();
                 // }
+                logger.info('[{}] ready-to-show completed, now isMaxmized: {}, bounds: {}',
+                    uid, appWin.isMaximized(), JSON.stringify(appWin.getBounds()));
                 if (devTag && uatDevJson?.devTools) {
                     appWin.webContents.openDevTools({ mode: uatDevJson?.devTools });
                 }

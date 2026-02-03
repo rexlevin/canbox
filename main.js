@@ -71,8 +71,8 @@ function saveWindowState() {
     }
 
     console.log('[main.js] Window bounds saved:', bounds);
-    logger.info('[main.js] Window bounds saved to canbox.json: x={}, y={}, width={}, height={}',
-        bounds.x, bounds.y, bounds.width, bounds.height);
+    logger.info('[main.js] Window state saved to canbox.json, isMaximized: {}, bounds: {}',
+        win.isMaximized(), JSON.stringify(bounds));
 }
 
 const isDev = !app.isPackaged;
