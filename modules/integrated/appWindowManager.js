@@ -207,7 +207,7 @@ class AppWindowManager {
                 }
                 
                 // 保存窗口状态
-                const bounds = appWin.getContentBounds();
+                const bounds = appWin.getBounds();
                 const isMax = appWin.isMaximized();
                 winState.save(uid, {
                     restore: 1,
