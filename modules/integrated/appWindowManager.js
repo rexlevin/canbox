@@ -131,13 +131,11 @@ class AppWindowManager {
             // 恢复窗口状态并创建窗口
             const state = winState.loadSync(uid);
             // 恢复窗口位置和大小
-            if (!state || state.restore !== 0) {
-                if (state?.position) {
-                    options.x = state.position.x;
-                    options.y = state.position.y;
-                    options.width = state.position.width;
-                    options.height = state.position.height;
-                }
+            if (state?.restore === 1 && state?.position) {
+                options.x = state.position.x;
+                options.y = state.position.y;
+                options.width = state.position.width;
+                options.height = state.position.height;
             }
 
             console.info('load app window options===%o', options);
@@ -153,11 +151,6 @@ class AppWindowManager {
                 });
             }
 
-            // 最大化处理
-            if (state?.isMax) {
-                appWin.maximize();
-            }
-
             // 确定加载URL
             const mainFile = devTag && uatDevJson?.main ? uatDevJson.main : appJson.main;
             const loadUrl = mainFile.startsWith('http')
@@ -169,6 +162,41 @@ class AppWindowManager {
             // 加载应用内容
             appWin.loadURL(loadUrl).catch(err => {
                 logger.error('[{}] Failed to load URL: {}', uid, err);
+            });
+
+            // 设置菜单和应用详情
+            appWin.setMenu(null);
+            if (process.platform === 'win') {
+                appWin.setAppDetails({ appId: uid });
+            }
+
+            // 添加错误处理，监控加载失败的情况
+            appWin.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+                logger.error('[{}] Failed to load: {} - {}', uid, errorCode, errorDescription);
+            });
+
+            // 添加页面加载完成后的日志
+            appWin.webContents.on('did-finish-load', () => {
+                logger.info('[{}] did-finish-load', uid);
+        
+                // 页面加载完成后、显示之前设置最大化状态（避免闪烁）
+                if (state?.isMax && !appWin.isMaximized()) {
+                    logger.info('[{}] did-finish-load need maximize', uid);
+                    appWin.maximize();
+                }
+            });
+
+            // 准备显示事件
+            appWin.on('ready-to-show', () => {
+                logger.info('[{}] ready-to-show', uid);
+                appWin.show();
+                // if (state?.isMax && !appWin.isMaximized()) {
+                //     logger.info('[{}] ready-to-show need maximize', uid);
+                //     appWin.maximize();
+                // }
+                if (devTag && uatDevJson?.devTools) {
+                    appWin.webContents.openDevTools({ mode: uatDevJson?.devTools });
+                }
             });
 
             // 设置窗口事件
@@ -184,7 +212,7 @@ class AppWindowManager {
                 winState.save(uid, {
                     restore: 1,
                     isMax,
-                    position: isMax ? null : bounds
+                    position: isMax ? state?.position : bounds
                 }, () => {});
 
                 logger.info('[{}] Window closing', uid);
@@ -221,20 +249,6 @@ class AppWindowManager {
                 this.removeWindow(uid);
                 console.info('All related windows closed');
             });
-
-            // 准备显示事件
-            appWin.on('ready-to-show', () => {
-                appWin.show();
-                if (devTag && uatDevJson?.devTools) {
-                    appWin.webContents.openDevTools({ mode: uatDevJson?.devTools });
-                }
-            });
-
-            // 设置菜单和应用详情
-            appWin.setMenu(null);
-            if (process.platform === 'win') {
-                appWin.setAppDetails({ appId: uid });
-            }
 
             // 注册窗口到两个映射
             this.winMap.set(uid, appWin);  // 应用主窗口映射
