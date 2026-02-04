@@ -36,6 +36,7 @@ Canbox is an open project, and every contribution helps make it better!
 - **App Management**: Supports installation, uninstallation, and updates of applications.
 - **Shortcuts**: Create shortcuts for frequently used applications.
 - **Multi-platform Support**: Based on Electron, supports Linux, Windows (not fully tested), and macOS (I don't have a Mac 😢, waiting for someone with a Mac to do this 😆)
+- **App Import**: Supports importing offline application packages, suitable for scenarios where apps cannot be publicly shared.
 
 # Canbox Usage
 
@@ -46,6 +47,13 @@ Canbox is an open project, and every contribution helps make it better!
 ### Import Existing Apps
 
 Canbox supports importing application packages packaged by developers (ZIP format).
+
+This feature is particularly suitable for scenarios where apps cannot be publicly shared, such as:
+- Internal enterprise tools that should not be made public
+- Apps containing sensitive business logic or proprietary algorithms
+- Personal tools with private data processing requirements
+- Temporary or experimental apps not ready for public release
+- Customized apps for specific organizations or teams
 
 ### Import Steps
 
