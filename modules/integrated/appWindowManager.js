@@ -8,7 +8,7 @@ const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager'
 const { getAppPath } = require('@modules/main/pathManager');
 const winState = require('@modules/main/winState');
 
-const { handleError } = require('@modules/ipc/errorHandler')
+const { handleError } = require('@modules/ipc/errorHandler');
 
 class AppWindowManager {
     constructor() {
@@ -132,12 +132,15 @@ class AppWindowManager {
             // 恢复窗口状态并创建窗口
             const state = winState.loadSync(uid);
             // 恢复窗口位置和大小
-            // if (state?.restore === 1 && state?.position) {
-            //     options.x = state.position.x;
-            //     options.y = state.position.y;
-            //     options.width = state.position.width;
-            //     options.height = state.position.height;
-            // }
+            if (state?.restore === 1 && state?.position) {
+                options.x = state.position.x;
+                options.y = state.position.y;
+                options.width = state.position.width;
+                options.height = state.position.height;
+            }
+            if (state?.isMax) {
+                options.show = true;
+            }
 
             console.info('load app window options===%o', options);
 
@@ -181,12 +184,13 @@ class AppWindowManager {
             appWin.webContents.on('did-finish-load', () => {
                 logger.info('[{}] did-finish-load', uid);
         
-                appWin.setBounds(state?.position);
+                // appWin.setBounds(state?.position);
                 // 页面加载完成后、显示之前设置最大化状态（避免闪烁）
                 if (state?.isMax) {
                     logger.info('[{}] did-finish-load make appWin maximized', uid);
                     appWin.maximize();
                 }
+                // appWin.show();
                 logger.info('[{}] did-finish-load completed, now isMaxmized: {}, bounds: {}',
                     uid, appWin.isMaximized(), JSON.stringify(appWin.getBounds()));
             });
@@ -194,7 +198,9 @@ class AppWindowManager {
             // 准备显示事件
             appWin.on('ready-to-show', () => {
                 logger.info('[{}] ready-to-show', uid);
-                appWin.show();
+                if (!state?.isMax) {
+                    appWin.show();
+                }
                 // if (state?.isMax && !appWin.isMaximized()) {
                 //     logger.info('[{}] ready-to-show make appWin maximized', uid);
                 //     appWin.maximize();
