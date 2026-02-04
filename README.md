@@ -14,6 +14,23 @@
 2. Import application packages packaged by developers
 3. Develop your own apps and package them for sharing with others
 
+---
+
+## 🚧 Project Status
+
+**Canbox is currently in early development stage, and many features are not yet mature or complete.**
+
+As a self-taught developer without formal training, I've created the initial version of Canbox on my own. However, I recognize my technical limitations. Therefore, I warmly welcome and look forward to:
+
+- ✅ Experienced developers submitting Pull Requests to improve the codebase
+- ✅ Collaborating together to enhance features and fix bugs
+- ✅ Sharing development experiences and best practices
+- ✅ Providing constructive issues and suggestions
+
+Canbox is an open project, and every contribution helps make it better!
+
+---
+
 # Features
 
 - **App Management**: Supports installation, uninstallation, and updates of applications.

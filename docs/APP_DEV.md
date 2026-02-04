@@ -1,0 +1,202 @@
+# File Description
+
+- `app.json`: APP description file, contains APP startup window parameters
+- `uat.dev.json`: Development environment configuration, startup URL, open dev tools during development
+- `README.md`: APP description, this file content will be displayed as APP information in canbox
+- `HISTORY.md`: APP version history, this file content will be displayed as APP information in canbox
+- `cb.build.json`: APP build configuration, specifies directories and files to include in the build, and the build output directory
+
+# Canbox API Tips
+
+1. Install `typescript`: `npm i -D typescript`
+2. Create a `types` directory in the project root and place `canbox.d.ts` in the `types` directory
+3. Create a `tsconfig.json` or `jsconfig.json` file in the project root
+
+Example tsconfig.json content:
+
+```json
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "typeRoots": ["./types", "./node_modules/@types"]
+    },
+    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    "exclude": ["node_modules"]
+}
+```
+
+If your project uses `javascript`, the tsconfig.json content is as follows:
+
+```json
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "checkJs": false,
+        "noEmit": true,   // Only type checking, no output file generation (JS projects don't need compilation)
+        "strict": false,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "maxNodeModuleJsDepth": 0,
+        "target": "es6",
+        "module": "commonjs",
+        "forceConsistentCasingInFileNames": true,
+        "typeRoots": ["./types", "./node_modules/@types"]
+    },
+    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    "exclude": ["node_modules"]
+}
+```
+
+Or you can use the `jsconfig.json` file with the following example content:
+
+```json
+{
+    "compilerOptions": {
+        "checkJs": false,
+        "strict": false,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "maxNodeModuleJsDepth": 0,
+        "target": "es6",
+        "module": "commonjs",
+        "forceConsistentCasingInFileNames": true,
+        "typeRoots": ["./types", "./node_modules/@types"]
+    },
+    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+    "exclude": ["node_modules"]
+}
+```
+
+# app.json
+
+```json
+{
+    "name": "Clipboard",
+    "id": "com.github.dev001.clipboard",
+    "description": "A useful clipboard tool",
+    "author": "dev001",
+    "repo": "https://github.com/dev001/clipboard",
+    "homepage": "https://dev001.github.io",
+    "main": "index.html",
+    "logo": "logo.png",
+    "version": "0.0.6",
+    "window": {
+        "minWidth": 800,
+        "minHeight": 400,
+        "width": 900,
+        "height": 500,
+        "icon": "logo.png",
+        "resizable": false,
+        "webPreferences": {
+            "preload": "preload.js"
+        }
+    },
+    "platform": ["windows", "darwin", "linux"],
+    "categories": ["development", "utility"],
+    "tags": ["json", "jsonformatter"]
+}
+```
+
+### Field Descriptions
+
+| Field | Parent | Type | Constraint | Description |
+|-------|--------|------:|:----------:|-------------|
+| id | | string | 1 | App application identifier<br>1. Multi-segment composition, such as: `com.gitee.dev001.clipboard`<br>2. Each segment consists of lowercase letters and numbers, starting with a lowercase letter<br>3. Only the last segment can use the `-` symbol |
+| window | | object | 1 | Same as BrowserWindow parameters in Electron |
+| platform | | array | * | windows, darwin, linux<br>Platforms supported by plugin apps, this is `optional`, **currently defaults to full platform support** |
+| categories | | array | * | App category, at most the first two are taken |
+| tags | | array | * | App tags, used for category display |
+
+#### categories
+
+| Key | Description |
+|-----|-------------|
+| education | Education app |
+| office | Office |
+| audio | Audio app |
+| video | Video app |
+| game | Game app |
+| utility | Utility |
+| development | Developer tools app |
+| graphics | Graphics app |
+| network | Network app |
+
+# uat.dev.json
+
+Development configuration
+
+```json
+{
+    "main": "http://localhost:5173/",
+    "devTools": "detach"
+}
+```
+
+Field descriptions:
+
+| Field | Parent | Type | Constraint | Description |
+|-------|--------|------:|:----------:|-------------|
+| main | development | string | ? | In development environment, `development.main` config will override `main` |
+| devTools | development | string | ? | Open developer tools, left, right, bottom, undocked, detach |
+
+# preload.js
+
+Canbox has context isolation enabled. To use canbox provided APIs, you need to configure a preload script in app.json:
+
+```json
+"window": {
+    "webPreferences": {
+        "preload": "preload.js"
+    }
+}
+```
+
+Use canbox API in the preload script:
+
+```javascript
+# preload.js
+canbox.hello();  # hello, hope you have a nice day
+```
+
+Preload follows the `CommonJS` specification, you can use `require` to import nodejs modules:
+
+# cb.build.json
+
+Canbox uses asar for packaging. Packaging is performed according to `cb.build.json` content:
+
+```json
+{
+    "files": [
+        "build/**/*",
+        "preload.js",
+        "logo.png",
+        "app.json",
+        "README.md"
+    ],
+    "outputDir": "./dist"
+}
+```
+
+Field descriptions:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| files | array | All file lists relative to cb.build.json |
+| outputDir | string | A directory relative to cb.build.json. During packaging, this directory will be cleared, so don't place other needed files here |
+
+# README.md
+
+The README.md file at the same level as app.json will be parsed and displayed as app information in canbox
+
+**Use network URLs for images to display correctly**
+
+# HISTORY.md
+
+Optional file, you can record your APP version history here.
+
+Reverse chronological order is recommended.
