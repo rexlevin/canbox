@@ -1,5 +1,5 @@
 const logger = require('@modules/utils/logger');
-const { getAppExecutionStore } = require('@modules/main/storageManager');
+const { getCanboxStore } = require('@modules/main/storageManager');
 
 class ConfigResolver {
     constructor() {
@@ -7,16 +7,16 @@ class ConfigResolver {
     }
 
     /**
-     * 加载 app-execution 配置
+     * 加载 APP 执行模式配置（从 canbox.json）
      * @returns {Object}
      */
     loadExecutionConfig() {
         try {
-            const store = getAppExecutionStore();
+            const store = getCanboxStore();
 
             // 读取全局模式，默认为 window
-            const globalMode = store.get('globalMode', 'window');
-            const appModes = store.get('appModes', {});
+            const globalMode = store.get('execution.globalMode', 'window');
+            const appModes = store.get('execution.appModes', {});
 
             const config = { globalMode, appModes };
 
@@ -82,8 +82,8 @@ class ConfigResolver {
      */
     setGlobalMode(mode) {
         try {
-            const store = getAppExecutionStore();
-            store.set('globalMode', mode);
+            const store = getCanboxStore();
+            store.set('execution.globalMode', mode);
             this.cachedConfig = null;  // 清除缓存
             logger.info(`Global execution mode set to: ${mode}`);
             return { success: true };
@@ -100,10 +100,10 @@ class ConfigResolver {
      */
     setAppMode(uid, mode) {
         try {
-            const store = getAppExecutionStore();
-            const appModes = store.get('appModes', {});
+            const store = getCanboxStore();
+            const appModes = store.get('execution.appModes', {});
             appModes[uid] = mode;
-            store.set('appModes', appModes);
+            store.set('execution.appModes', appModes);
             this.cachedConfig = null;  // 清除缓存
             logger.info(`App ${uid} execution mode set to: ${mode}`);
             return { success: true };
