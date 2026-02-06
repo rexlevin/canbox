@@ -1,7 +1,7 @@
 {
     "name": "canbox",
     "private": true,
-    "version": "0.1.4",
+    "version": "0.2.0",
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
     "author": "lizl6",
@@ -14,7 +14,7 @@
         "build": "vite build",
         "preview": "vite preview",
         "start": "electron . --no-sandbox",
-        "startExt": "electron . --no-sandbox --app-id=118a8df9bf0f4ea9b98c7733dbc70f7e",
+        "startExt": "electron . --no-sandbox --app-id=1f505b3b625942e79ab1601e82f9c3bb --dev-tag",
         "build-dist": "electron-builder --dir",
         "build-exe": "electron-builder -w",
         "build-appimage": "electron-builder -l"
@@ -25,6 +25,7 @@
         "asar": true,
         "files": [
             "build/**/*",
+            "childprocessEntry.js",
             "docs/**/*",
             "locales/**/*",
             "modules/**/*",

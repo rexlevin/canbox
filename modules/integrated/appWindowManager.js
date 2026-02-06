@@ -26,9 +26,10 @@ class AppWindowManager {
      * 启动 App
      * @param {string} uid - App ID
      * @param {boolean} devTag app开发tag，true：当前是开发app
+     * @param {string} devTools - 开发者工具模式 (right, bottom, undocked, detach)
      * @returns {boolean} - 是否成功
      */
-    startApp(uid, devTag) {
+    startApp(uid, devTag, devTools = null) {
         try {
             // 验证必要参数
             if (!uid) {
@@ -207,7 +208,10 @@ class AppWindowManager {
                 // }
                 logger.info('[{}] ready-to-show completed, now isMaxmized: {}, bounds: {}',
                     uid, appWin.isMaximized(), JSON.stringify(appWin.getBounds()));
-                if (devTag && uatDevJson?.devTools) {
+                // 优先使用命令行参数的 devTools，其次使用 uatDev 配置
+                if (devTools) {
+                    appWin.webContents.openDevTools({ mode: devTools });
+                } else if (devTag && uatDevJson?.devTools) {
                     appWin.webContents.openDevTools({ mode: uatDevJson?.devTools });
                 }
             });

@@ -10,6 +10,7 @@ const initApiIpcHandlers = require('./modules/main/api');
 const logger = require('./modules/utils/logger');
 const i18nModule = require('./locales');
 const { getCanboxStore } = require('./modules/main/storageManager');
+const processBridge = require('./modules/childprocess/processBridge');
 
 // 默认语言为英文
 let currentLanguage = 'en-US';
@@ -102,6 +103,27 @@ function initIpcHandlers() {
         return i18nModule.translate(key, currentLanguage, params);
     });
 
+    // 执行模式相关 IPC 处理
+    ipcMain.handle('execution-get-global-mode', () => {
+        const executionDispatcher = require('./modules/execution/executionDispatcher');
+        return executionDispatcher.getGlobalMode();
+    });
+
+    ipcMain.handle('execution-set-global-mode', async (event, mode) => {
+        const executionDispatcher = require('./modules/execution/executionDispatcher');
+        return executionDispatcher.setGlobalMode(mode);
+    });
+
+    ipcMain.handle('execution-get-all-app-modes', () => {
+        const executionDispatcher = require('./modules/execution/executionDispatcher');
+        return executionDispatcher.getAllAppModes();
+    });
+
+    ipcMain.handle('execution-set-app-mode', async (event, uid, mode) => {
+        const executionDispatcher = require('./modules/execution/executionDispatcher');
+        return executionDispatcher.setAppMode(uid, mode);
+    });
+
     // 字体设置相关 IPC 处理
     ipcMain.handle('font-get', () => {
         try {
@@ -135,13 +157,16 @@ function initIpcHandlers() {
         }
     });
 
-    // 初始化拆分后的 IPC 处理逻辑
+    // 初始化 IPC 处理器
     repoIpcHandler.init(ipcMain);
     shortcutIpcHandler.init(ipcMain);
     appManagerIpcHandler.init(ipcMain);
 
     // 初始化 API 相关的 IPC 处理逻辑
     initApiIpcHandlers();
+
+    // 初始化主进程 IPC 桥接
+    processBridge.initMain();
 
     // 打开文件选择窗口
     ipcMain.on('openAppJson', (event, options) => {

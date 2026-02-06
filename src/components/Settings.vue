@@ -5,7 +5,7 @@
             <el-row>
                 <el-col :span="24">
                     <div class="card">
-                        <el-form label-width="120px">
+                        <el-form label-width="150px">
                             <el-form-item :label="$t('settings.language')" style="margin-bottom: 20px;">
                                 <el-select v-model="currentLanguage" @change="handleLanguageChange" style="width: 200px;">
                                     <el-option
@@ -23,6 +23,16 @@
                                         :key="font.value"
                                         :label="font.label"
                                         :value="font.value"
+                                    />
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item :label="$t('settings.executionMode')" style="margin-bottom: 20px;">
+                                <el-select v-model="currentExecutionMode" @change="handleExecutionModeChange" style="width: 250px;">
+                                    <el-option
+                                        v-for="mode in executionModes"
+                                        :key="mode.value"
+                                        :label="mode.label"
+                                        :value="mode.value"
                                     />
                                 </el-select>
                             </el-form-item>
@@ -54,6 +64,7 @@ const { t, locale } = useI18n();
 const currentLanguage = ref('en-US');
 const availableLanguages = ref([]);
 const currentFont = ref('default');
+const currentExecutionMode = ref('window');
 
 // 常用系统字体列表
 const availableFonts = ref([
@@ -72,6 +83,13 @@ const availableFonts = ref([
     { label: 'Helvetica', value: 'Helvetica, Arial, sans-serif' },
     { label: 'Times New Roman', value: '"Times New Roman", serif' },
     { label: 'Courier New', value: '"Courier New", monospace' }
+]);
+
+// 执行模式选项
+const executionModes = ref([
+    { label: t('settings.executionModeWindow'), value: 'window' },
+    { label: t('settings.executionModeChildprocess'), value: 'childprocess' }
+    // { label: t('settings.executionModeCustom'), value: 'custom' }  // 自定义模式暂时禁用
 ]);
 
 function generateShortcut() {
@@ -125,6 +143,18 @@ async function handleFontChange(fontValue) {
     });
 }
 
+async function handleExecutionModeChange(mode) {
+    const result = await window.api.execution.setGlobalMode(mode);
+    if (!result.success) {
+        ElMessage.error(result.msg || 'Failed to set execution mode');
+        return;
+    }
+    ElMessage({
+        message: t('settings.executionModeSetSuccess'),
+        type: 'success'
+    });
+}
+
 function applyFont(fontValue) {
     // 根据选择应用字体
     if (fontValue === 'default') {
@@ -153,6 +183,10 @@ async function loadSettings() {
     const savedFont = await window.api.font.get();
     currentFont.value = savedFont;
     applyFont(savedFont);
+
+    // 加载执行模式设置
+    const savedExecutionMode = await window.api.execution.getGlobalMode();
+    currentExecutionMode.value = savedExecutionMode || 'window';
 }
 
 onMounted(() => {

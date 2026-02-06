@@ -104,10 +104,22 @@ function getCanboxStore() {
     });
 }
 
+/**
+ * 获取 app-execution 配置存储实例
+ * @returns {Storage}
+ */
+function getAppExecutionStore() {
+    return new Storage({
+        name: 'app-execution',
+        cwd: 'Users'
+    });
+}
+
 module.exports = {
     getWinStateStore,
     getAppsStore,
     getAppsDevStore,
     getReposStore,
-    getCanboxStore
+    getCanboxStore,
+    getAppExecutionStore
 };

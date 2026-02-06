@@ -2,6 +2,13 @@ const { app, BrowserWindow, screen } = require('electron')
 const fs = require('fs');
 const path = require('path')
 
+// 检查是否为子进程模式
+if (process.env.CANBOX_ENTRY === 'childprocess') {
+    // 子进程模式：退出主进程逻辑
+    const childprocessEntry = require('./childprocessEntry');
+    return;
+}
+
 const moduleAlias = require('module-alias');
 
 
@@ -16,6 +23,7 @@ moduleAlias();
 
 const logger = require('@modules/utils/logger');
 const { getCanboxStore } = require('@modules/main/storageManager');
+const ModeDetector = require('@modules/execution/modeDetector');
 
 const tray = require('./tray');
 const uatDev = (() => {
@@ -37,6 +45,8 @@ logger.info('[main.js] uatDev: {}', JSON.stringify(uatDev));
 const RepoMonitorService = require('@modules/services/repoMonitorService');
 
 const appLoader = require('@modules/main/appLoader');
+const executionDispatcher = require('@modules/execution/executionDispatcher');
+const processBridge = require('@modules/childprocess/processBridge');
 
 // 引入 IPC 消息处理模块
 const { initIpcHandlers } = require('./ipcHandlers');
@@ -84,35 +94,85 @@ if (!getTheLock) {
     app.quit()
 } else {
     app.on('second-instance', (event, commandLine, workingDirectory) => {
-        logger.info('commandLine size {}: {}', commandLine.length, JSON.stringify(commandLine));
-        // console.info('workingDirectory===%o', workingDirectory);
-        // 如果app已经启动，那么参数再次启动app或者 app 的参数只能从commandLine里面获得
-        let appId = '';
-        for (let command of commandLine) {
-            if (command.indexOf('--app-id=') === -1) continue;
-            appId = command.substring(command.indexOf('=') + 1);
+        logger.info('second-instance triggered: {}', JSON.stringify(commandLine));
+
+        // 检查是否为子进程触发的 second-instance
+        // 子进程的最后一个参数通常是 childprocessEntry.js 或包含 --app-path
+        const lastArg = commandLine[commandLine.length - 1] || '';
+        const isChildprocessTrigger = commandLine.some(arg => arg.includes('childprocessEntry.js'));
+
+        if (isChildprocessTrigger) {
+            logger.info('Ignoring second-instance triggered by child process');
+            return;
         }
-        if (win && '' === appId) {
+
+        // 解析 --app-id 和 --dev-tools 参数
+        let appId = '';
+        let isDevTag = false;
+        let devTools = null;
+        for (const command of commandLine) {
+            if (command.startsWith('--app-id=')) {
+                appId = command.split('=')[1];
+            } else if (command === '--dev-tag') {
+                isDevTag = true;
+            } else if (command.startsWith('--dev-tools=')) {
+                const value = command.split('=')[1];
+                // 验证 dev-tools 值是否有效，无效则默认为 'detach'
+                const validModes = ['right', 'bottom', 'undocked', 'detach'];
+                devTools = value && validModes.includes(value) ? value : 'detach';
+            } else if (command === '--dev-tools') {
+                // --dev-tools 没有值，默认为 'detach'
+                devTools = 'detach';
+            }
+        }
+
+        if (appId) {
+            logger.info('Loading app {} from second-instance, devTag: {}, devTools: {}', appId, isDevTag, devTools);
+            // 延迟执行，确保主窗口已完全初始化
+            setTimeout(() => {
+                if (!win || win.isDestroyed()) {
+                    logger.warn('Main window not available, retrying...');
+                    // 如果窗口不可用，等待 app.whenReady()
+                    app.whenReady().then(() => {
+                        appLoader.loadApp(appId, isDevTag, devTools);
+                    });
+                } else {
+                    appLoader.loadApp(appId, isDevTag, devTools);
+                }
+            }, 100);
+        } else if (win && !win.isDestroyed()) {
+            // 没有 --app-id 参数，只是激活主窗口
             if (win.isMinimized()) win.restore();
             if (!win.isVisible()) win.show();
             win.focus();
-        }
-        if (win && '' !== appId) {
-            // console.info('now loadAppDirect==%s', appId);
-            appLoader.loadApp(appId, false);
+            // 如果有 --dev-tools 参数，打开主窗口的开发者工具
+            if (devTools) {
+                win.webContents.openDevTools({ mode: devTools });
+            }
         }
     })
 
     app.whenReady().then(() => {
-        // 创建窗口
+        // 初始化执行调度器
+        executionDispatcher.init();
+
+        // 主进程模式：创建主窗口
         createWindow();
         win.setIcon(path.join(__dirname, './logo.png'));
+
+        // 初始化主进程 IPC 桥接
+        processBridge.initMain();
+
         // 将保存函数注入到 tray
         tray.setSaveWindowStateFn(saveWindowState);
+
         // 创建托盘
         tray.createTray(win);
+
         app.on('activate', () => {
-            if (BrowserWindow.getAllWindows().length === 0) createWindow();
+            if (BrowserWindow.getAllWindows().length === 0) {
+                createWindow();
+            }
         });
 
         // 初始化并启动仓库监控服务
@@ -131,19 +191,6 @@ if (!getTheLock) {
             logger.error('启动时仓库检查失败:', error);
         });
 
-        // app第一次启动的时候，启动参数可以从process.argv里面获取到
-        let appId = '';
-        for (let arg of process.argv) {
-            if (arg.indexOf('--app-id=') === -1) continue;
-            appId = arg.substring(arg.indexOf('=') + 1);
-            break;
-        }
-        if ('' !== appId) {
-            console.info('First-time startup with appId:', appId);
-            win.hide();
-            appLoader.loadApp(appId, false);
-        }
-
         // 初始化快捷方式（异步）
         if (!isDev) {
             const shortcutManager = require('./modules/main/shortcutManager');
@@ -158,6 +205,41 @@ if (!getTheLock) {
             }).catch((error) => {
                 logger.error('快捷方式初始化失败:', error);
             });
+        }
+
+        // app第一次启动的时候，启动参数可以从process.argv里面获取到
+        let appId = '';
+        let isDevTag = false;
+        let devTools = null;
+        for (let arg of process.argv) {
+            if (arg.indexOf('--app-id=') !== -1) {
+                appId = arg.substring(arg.indexOf('=') + 1);
+            } else if (arg.indexOf('--dev-tools=') !== -1) {
+                const value = arg.substring(arg.indexOf('=') + 1);
+                // 验证 dev-tools 值是否有效，无效则默认为 'detach'
+                const validModes = ['right', 'bottom', 'undocked', 'detach'];
+                devTools = value && validModes.includes(value) ? value : 'detach';
+            } else if (arg === '--dev-tools') {
+                // --dev-tools 没有值，默认为 'detach'
+                devTools = 'detach';
+            }
+        }
+        if (process.argv.includes('--dev-tag')) {
+            isDevTag = true;
+        }
+
+        if ('' !== appId) {
+            console.info('First-time startup with appId:', appId, 'devTag:', isDevTag, 'devTools:', devTools);
+            logger.info('[main.js] First-time startup with appId: {}, devTag: {}, devTools: {}', appId, isDevTag, devTools);
+            // 延迟执行，确保主窗口已完全初始化
+            setTimeout(() => {
+                if (win && !win.isDestroyed()) {
+                    win.hide();
+                    appLoader.loadApp(appId, isDevTag, devTools);
+                } else {
+                    logger.warn('[main.js] Main window not ready for app loading, skipping');
+                }
+            }, 200);
         }
     })
 }
@@ -174,6 +256,9 @@ app.on('window-all-closed', async () => {
 // 应用退出前保存窗口位置和大小
 app.on('before-quit', () => {
     saveWindowState();
+
+    // 停止所有子进程
+    executionDispatcher.closeAllApps();
 });
 
 const createWindow = () => {
@@ -308,7 +393,14 @@ const createWindow = () => {
         let devToolsMode = null;
         for (const arg of process.argv) {
             if (arg.startsWith('--dev-tools=')) {
-                devToolsMode = arg.split('=')[1];
+                const value = arg.split('=')[1];
+                // 验证 dev-tools 值是否有效，无效则默认为 'detach'
+                const validModes = ['right', 'bottom', 'undocked', 'detach'];
+                devToolsMode = value && validModes.includes(value) ? value : 'detach';
+                break;
+            } else if (arg === '--dev-tools') {
+                // --dev-tools 没有值，默认为 'detach'
+                devToolsMode = 'detach';
                 break;
             }
         }

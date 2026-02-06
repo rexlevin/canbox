@@ -12,6 +12,12 @@ contextBridge.exposeInMainWorld(
             get: () => ipcRenderer.invoke('font-get'),
             set: (fontValue) => ipcRenderer.invoke('font-set', fontValue)
         },
+        execution: {
+            getGlobalMode: () => ipcRenderer.invoke('execution-get-global-mode'),
+            setGlobalMode: (mode) => ipcRenderer.invoke('execution-set-global-mode', mode),
+            getAllAppModes: () => ipcRenderer.invoke('execution-get-all-app-modes'),
+            setAppMode: (uid, mode) => ipcRenderer.invoke('execution-set-app-mode', uid, mode)
+        },
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
         },
