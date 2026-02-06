@@ -188,6 +188,9 @@ function createAppWindow() {
 
         // Linux 系统特殊处理
         if (os.platform() === 'linux') {
+            // 设置进程标题，使进程名显示为 appId
+            process.title = appJson.id || appId;
+
             config.windowClass = `canbox-app-${appId}`;
             config.title = appJson.name || appId;
             config.titleBarStyle = 'default';

@@ -116,6 +116,9 @@ class AppWindowManager {
 
             // Linux 系统特殊处理 - 确保WM_CLASS正确设置，支持Wayland环境
             if (os.platform() === 'linux') {
+                // 设置进程标题，使进程名显示为 appId
+                process.title = appJson.id || uid;
+
                 // 为应用窗口设置唯一的WM_CLASS，避免在Wayland dock中堆叠
                 options.windowClass = `canbox-app-${uid}`;
                 options.title = appJson.name || uid;
