@@ -295,7 +295,7 @@ const createWindow = () => {
         isMaximized, x, y, width, height, isPositionValid);
 
     let config = {
-        minWidth: 700,
+        minWidth: 750,
         minHeight: 550,
         width: width,
         height: height,
