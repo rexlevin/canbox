@@ -6,16 +6,11 @@ const path = require('path');
  * app.getPath('userData') 指向 userData 目录：
  * windows：~\AppData\Roaming\canbox\
  * linux: ~/.config/canbox/
- *
- * 注意：子进程模式下，使用环境变量 CANBOX_USER_DATA 避免主进程退出后 app.getPath() 调用阻塞
+ * mac: ~/Library/Application Support/canbox/
  */
 const PathManager = {
     // 获取 userData 路径
     getUserDataPath: () => {
-        // 优先使用环境变量（子进程模式）
-        if (process.env.CANBOX_USER_DATA) {
-            return process.env.CANBOX_USER_DATA;
-        }
         return app.getPath('userData');
     },
     // 定义常用路径
@@ -30,7 +25,7 @@ const PathManager = {
     },
     // 可以根据需要扩展其他路径
     getAppPath: () => {
-        // 优先使用环境变量 CANBOX_APP_PATH（子进程模式）
+        // 使用环境变量 CANBOX_APP_PATH（子进程模式）
         if (process.env.CANBOX_APP_PATH) {
             return process.env.CANBOX_APP_PATH;
         }
