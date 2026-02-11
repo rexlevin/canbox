@@ -11,6 +11,8 @@ const logger = require('./modules/utils/logger');
 const i18nModule = require('./locales');
 const { getCanboxStore } = require('./modules/main/storageManager');
 const processBridge = require('./modules/childprocess/processBridge');
+const pathManager = require('./modules/main/pathManager');
+const userDataMigration = require('./modules/main/userDataMigration');
 
 // 默认语言为英文
 let currentLanguage = 'en-US';
@@ -228,6 +230,103 @@ function initIpcHandlers() {
             properties: ['openFile'],
             filters: [{ name: 'App Files', extensions: ['zip'] }],
         });
+    });
+
+    // 用户数据路径相关 IPC 处理
+    
+    // 获取当前数据路径
+    ipcMain.handle('userData:getCurrentPath', async () => {
+        try {
+            return {
+                success: true,
+                path: pathManager.getUsersPath(),
+                basePath: pathManager.getUsersBasePath()
+            };
+        } catch (error) {
+            logger.error('Failed to get current data path:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 获取磁盘占用
+    ipcMain.handle('userData:getDiskUsage', async () => {
+        try {
+            const usersPath = pathManager.getUsersPath();
+            const size = await userDataMigration.getDirectorySize(usersPath);
+            return { success: true, size };
+        } catch (error) {
+            logger.error('Failed to get disk usage:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 选择目录
+    ipcMain.handle('userData:selectDirectory', async () => {
+        try {
+            const result = await dialog.showOpenDialog({
+                properties: ['openDirectory', 'createDirectory']
+            });
+
+            if (result.canceled || result.filePaths.length === 0) {
+                return { success: false, error: 'User canceled' };
+            }
+
+            return { success: true, path: result.filePaths[0] };
+        } catch (error) {
+            logger.error('Failed to select directory:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 迁移数据
+    ipcMain.handle('userData:migrate', async (event, newBasePath) => {
+        try {
+            const result = await userDataMigration.migrateUserDataPath(newBasePath);
+
+            // 迁移成功后自动重启（仅在生产模式下）
+            if (result.success) {
+                const isDevMode = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV === '1';
+                if (!isDevMode) {
+                    logger.info('Migration successful, restarting application...');
+                    app.relaunch();
+                    app.exit(0);
+                } else {
+                    logger.info('Migration successful (dev mode - restart manually)');
+                    result.requireManualRestart = true;
+                }
+            }
+
+            return result;
+        } catch (error) {
+            logger.error('Failed to migrate user data:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 重置为默认路径
+    ipcMain.handle('userData:resetToDefault', async () => {
+        try {
+            const defaultBasePath = app.getPath('userData');
+            const result = await userDataMigration.migrateUserDataPath(defaultBasePath);
+
+            // 迁移成功后自动重启（仅在生产模式下）
+            if (result.success) {
+                const isDevMode = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV === '1';
+                if (!isDevMode) {
+                    logger.info('Reset to default successful, restarting application...');
+                    app.relaunch();
+                    app.exit(0);
+                } else {
+                    logger.info('Reset to default successful (dev mode - restart manually)');
+                    result.requireManualRestart = true;
+                }
+            }
+
+            return result;
+        } catch (error) {
+            logger.error('Failed to reset to default path:', error);
+            return { success: false, error: error.message };
+        }
     });
 
 }

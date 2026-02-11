@@ -1,5 +1,5 @@
 const { app } = require('electron');
-const { get } = require('http');
+const Store = require('electron-store');
 const path = require('path');
 
 /**
@@ -8,6 +8,41 @@ const path = require('path');
  * linux: ~/.config/canbox/
  * mac: ~/Library/Application Support/canbox/
  */
+
+/**
+ * 获取自定义数据根路径
+ * @returns {string|null} 返回 customDataRoot 或 null
+ */
+function getCustomDataRoot() {
+    try {
+        const configStore = new Store({
+            name: 'config',
+            cwd: app.getPath('userData')
+        });
+        return configStore.get('customDataRoot'); // 返回 "/data/myfolder" 或 null
+    } catch (error) {
+        console.error('Failed to read customDataRoot:', error);
+        return null;
+    }
+}
+
+/**
+ * 获取 Users 目录的基础路径
+ * @returns {string} 返回自定义数据根路径或默认 userData 路径
+ */
+function getUsersBasePath() {
+    const customRoot = getCustomDataRoot();
+    return customRoot || app.getPath('userData');
+}
+
+/**
+ * 获取完整 Users 路径
+ * @returns {string} Users 目录的完整路径
+ */
+function getUsersPath() {
+    return path.join(getUsersBasePath(), 'Users');
+}
+
 const PathManager = {
     // 获取 userData 路径
     getUserDataPath: () => {
@@ -15,7 +50,7 @@ const PathManager = {
     },
     // 定义常用路径
     getDataPath: () => {
-        return PathManager.getUserDataPath();
+        return getUsersPath();
     },
     getDownloadsPath: () => {
         return app.getPath('downloads');
@@ -29,24 +64,29 @@ const PathManager = {
         if (process.env.CANBOX_APP_PATH) {
             return process.env.CANBOX_APP_PATH;
         }
-        // 默认路径：userData/Users/apps
-        return path.join(PathManager.getUserDataPath(), 'Users', 'apps');
+        // 默认路径：Users/apps
+        return path.join(getUsersPath(), 'apps');
     },
     getAppDataPath: () => {
-        return path.join(PathManager.getUserDataPath(), 'Users', 'data');
+        return path.join(getUsersPath(), 'data');
     },
     getAppIconPath: () => {
-        return path.join(PathManager.getUserDataPath(), 'Users', 'appIcon');
+        return path.join(getUsersPath(), 'appIcon');
     },
     getAppTempPath: () => {
-        return path.join(PathManager.getUserDataPath(), 'Users', 'temp', 'apps');
+        return path.join(getUsersPath(), 'temp', 'apps');
     },
     getReposPath: () => {
-        return path.join(PathManager.getUserDataPath(), 'Users', 'repos');
+        return path.join(getUsersPath(), 'repos');
     },
     getReposTempPath: () => {
-        return path.join(PathManager.getUserDataPath(), 'Users', 'temp', 'repos');
+        return path.join(getUsersPath(), 'temp', 'repos');
     }
 };
 
-module.exports = PathManager;
+module.exports = {
+    ...PathManager,
+    getCustomDataRoot,
+    getUsersBasePath,
+    getUsersPath
+};

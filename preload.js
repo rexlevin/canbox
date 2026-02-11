@@ -18,6 +18,13 @@ contextBridge.exposeInMainWorld(
             getAllAppModes: () => ipcRenderer.invoke('execution-get-all-app-modes'),
             setAppMode: (uid, mode) => ipcRenderer.invoke('execution-set-app-mode', uid, mode)
         },
+        userData: {
+            getCurrentPath: () => ipcRenderer.invoke('userData:getCurrentPath'),
+            getDiskUsage: () => ipcRenderer.invoke('userData:getDiskUsage'),
+            selectDirectory: () => ipcRenderer.invoke('userData:selectDirectory'),
+            migrate: (newBasePath) => ipcRenderer.invoke('userData:migrate', newBasePath),
+            resetToDefault: () => ipcRenderer.invoke('userData:resetToDefault')
+        },
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
         },

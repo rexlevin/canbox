@@ -66,7 +66,20 @@
         "createShortcut": "Create Shortcut",
         "deleteShortcut": "Delete Shortcut",
         "shortcutCreated": "App shortcuts created successfully",
-        "shortcutDeleted": "App shortcuts deleted successfully"
+        "shortcutDeleted": "App shortcuts deleted successfully",
+        "customDataPath": "Custom Data Path",
+        "customDataPathPlaceholder": "Select a directory to store user data",
+        "currentDataPath": "Current Data Path",
+        "diskUsage": "Disk Usage",
+        "customDataPathWarning": "Warning: Existing data will be overwritten",
+        "customDataPathWarningDetail": "The data in {path} will be completely replaced and will not be preserved.",
+        "browse": "Browse",
+        "saveAndMigrate": "Save and Migrate",
+        "migrating": "Migrating...",
+        "resetToDefault": "Reset to Default",
+        "migrationSuccess": "Data migrated successfully. Please restart Canbox to apply changes.",
+        "migrationFailed": "Migration failed: {error}",
+        "resetSuccess": "Reset to default path successful. Please restart Canbox."
     },
     "canbox": {
         "myApps": "My Apps",

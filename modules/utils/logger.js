@@ -1,12 +1,19 @@
 const log4js = require('log4js');
 const path = require('path');
 const { app } = require('electron');
+const pathManager = require('../main/pathManager');
 
-// 日志文件路径
-const logDir = path.join(app.getPath('userData'), 'Users', 'logs');
-const logFile = path.join(logDir, 'app.log');
+// 获取日志目录路径
+function getLogDir() {
+    try {
+        return path.join(pathManager.getUsersPath(), 'logs');
+    } catch (error) {
+        // 如果 pathManager 还没准备好，使用默认路径
+        return path.join(app.getPath('userData'), 'Users', 'logs');
+    }
+}
 
-// 配置 log4js
+// 初始配置：只有 console appender
 log4js.configure({
     appenders: {
         console: {
@@ -15,43 +22,72 @@ log4js.configure({
                 type: 'pattern',
                 pattern: '%[[%d{yyyy-MM-dd hh:mm:ss}] [%p] %m%]'
             }
-        },
-        file: {
-            type: 'file',
-            filename: logFile,
-            maxLogSize: 10485760, // 10MB
-            backups: 5, // 保留5个备份
-            compress: true,
-            keepFileExt: true,
-            layout: {
-                type: 'pattern',
-                pattern: '[%d{yyyy-MM-dd hh:mm:ss}] [%p] %m'
-            }
-        },
-        monitor: {
-            type: 'file',
-            filename: path.join(logDir, 'monitor.log'),
-            maxLogSize: 10485760, // 10MB
-            backups: 5, // 保留5个备份
-            compress: true,
-            keepFileExt: true,
-            layout: {
-                type: 'pattern',
-                pattern: '[%d{yyyy-MM-dd hh:mm:ss}] [%p] %m'
-            }
         }
     },
     categories: {
         default: {
-            appenders: ['console', 'file'],
+            appenders: ['console'],
             level: 'info'
         },
         monitor: {
-            appenders: ['monitor'],
+            appenders: ['console'],
             level: 'info'
         }
     }
 });
+
+// 添加文件 appender（延迟配置）
+function configureFileAppenders() {
+    const logDir = getLogDir();
+    const logFile = path.join(logDir, 'app.log');
+
+    // 重新配置 log4js，添加文件 appender
+    log4js.configure({
+        appenders: {
+            console: {
+                type: 'console',
+                layout: {
+                    type: 'pattern',
+                    pattern: '%[[%d{yyyy-MM-dd hh:mm:ss}] [%p] %m%]'
+                }
+            },
+            file: {
+                type: 'file',
+                filename: logFile,
+                maxLogSize: 10485760, // 10MB
+                backups: 5, // 保留5个备份
+                compress: true,
+                keepFileExt: true,
+                layout: {
+                    type: 'pattern',
+                    pattern: '[%d{yyyy-MM-dd hh:mm:ss}] [%p] %m'
+                }
+            },
+            monitor: {
+                type: 'file',
+                filename: path.join(logDir, 'monitor.log'),
+                maxLogSize: 10485760, // 10MB
+                backups: 5, // 保留5个备份
+                compress: true,
+                keepFileExt: true,
+                layout: {
+                    type: 'pattern',
+                    pattern: '[%d{yyyy-MM-dd hh:mm:ss}] [%p] %m'
+                }
+            }
+        },
+        categories: {
+            default: {
+                appenders: ['console', 'file'],
+                level: 'info'
+            },
+            monitor: {
+                appenders: ['monitor'],
+                level: 'info'
+            }
+        }
+    });
+}
 
 // 创建 logger 实例
 const logger = log4js.getLogger();
@@ -61,7 +97,7 @@ const getCallerInfo = () => {
     const err = new Error();
     Error.captureStackTrace(err);
     const stack = err.stack.split('\n');
-    
+
     // 跳过当前函数和 logger.js 的调用栈
     for (let i = 3; i < stack.length; i++) {
         const callerLine = stack[i] || '';
@@ -72,7 +108,7 @@ const getCallerInfo = () => {
             return { file, line: match[2] };
         }
     }
-    
+
     // 如果无法解析，返回默认值
     return { file: 'unknown', line: '0' };
 };
@@ -117,5 +153,6 @@ const createLoggerMethods = (loggerInstance) => {
 // 导出接口
 module.exports = {
     ...createLoggerMethods(logger),
-    monitor: createLoggerMethods(monitorLogger)
+    monitor: createLoggerMethods(monitorLogger),
+    configureFileAppenders
 };

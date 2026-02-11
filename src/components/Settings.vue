@@ -46,6 +46,62 @@
                                     </el-button>
                                 </div>
                             </el-form-item>
+                            <el-form-item :label="$t('settings.customDataPath')" style="margin-bottom: 20px;">
+                                <div style="width: 100%;">
+                                    <!-- 当前使用路径 -->
+                                    <el-descriptions :column="1" size="small" border style="margin-bottom: 12px;">
+                                        <el-descriptions-item :label="$t('settings.currentDataPath')">
+                                            {{ currentDataPath }}
+                                        </el-descriptions-item>
+                                        <el-descriptions-item :label="$t('settings.diskUsage')">
+                                            {{ diskUsage }}
+                                        </el-descriptions-item>
+                                    </el-descriptions>
+
+                                    <!-- 新路径选择 -->
+                                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                        <el-input
+                                            v-model="newDataPath"
+                                            :placeholder="$t('settings.customDataPathPlaceholder')"
+                                        />
+                                        <el-button @click="selectDirectory">
+                                            {{ $t('settings.browse') }}
+                                        </el-button>
+                                    </div>
+
+                                    <!-- 警告提示 -->
+                                    <el-alert
+                                        v-if="newDataPath"
+                                        type="warning"
+                                        :closable="false"
+                                        style="margin-bottom: 12px;"
+                                    >
+                                        <template #title>
+                                            {{ $t('settings.customDataPathWarning') }}
+                                        </template>
+                                        <div style="font-size: 12px; margin-top: 4px;">
+                                            {{ $t('settings.customDataPathWarningDetail', { path: newDataPath + '/Users' }) }}
+                                        </div>
+                                    </el-alert>
+
+                                    <!-- 操作按钮 -->
+                                    <div style="display: flex; gap: 8px;">
+                                        <el-button
+                                            type="primary"
+                                            @click="saveCustomDataPath"
+                                            :disabled="!newDataPath || isSaving"
+                                        >
+                                            {{ isSaving ? $t('settings.migrating') : $t('settings.saveAndMigrate') }}
+                                        </el-button>
+                                        <el-button
+                                            @click="resetToDefault"
+                                            :disabled="isSaving"
+                                        >
+                                            {{ $t('settings.resetToDefault') }}
+                                        </el-button>
+                                    </div>
+                                </div>
+                            </el-form-item>
                         </el-form>
                     </div>
                 </el-col>
@@ -65,6 +121,12 @@ const currentLanguage = ref('en-US');
 const availableLanguages = ref([]);
 const currentFont = ref('default');
 const currentExecutionMode = ref('window');
+
+// 自定义数据路径相关
+const currentDataPath = ref('');
+const diskUsage = ref('');
+const newDataPath = ref('');
+const isSaving = ref(false);
 
 // 常用系统字体列表
 const availableFonts = ref([
@@ -155,6 +217,60 @@ async function handleExecutionModeChange(mode) {
     });
 }
 
+// 自定义数据路径相关函数
+async function selectDirectory() {
+    const result = await window.api.userData.selectDirectory();
+    if (result.success) {
+        newDataPath.value = result.path;
+    }
+}
+
+async function saveCustomDataPath() {
+    if (!newDataPath.value) {
+        ElMessage.error(t('settings.customDataPathPlaceholder'));
+        return;
+    }
+
+    isSaving.value = true;
+    try {
+        const result = await window.api.userData.migrate(newDataPath.value);
+        if (result.success) {
+            ElMessage({
+                message: t('settings.migrationSuccess'),
+                type: 'success',
+                duration: 5000
+            });
+            newDataPath.value = '';
+        } else {
+            ElMessage.error(t('settings.migrationFailed', { error: result.error }));
+        }
+    } catch (error) {
+        ElMessage.error(t('settings.migrationFailed', { error: error.message }));
+    } finally {
+        isSaving.value = false;
+    }
+}
+
+async function resetToDefault() {
+    isSaving.value = true;
+    try {
+        const result = await window.api.userData.resetToDefault();
+        if (result.success) {
+            ElMessage({
+                message: t('settings.resetSuccess'),
+                type: 'success',
+                duration: 5000
+            });
+        } else {
+            ElMessage.error(t('settings.migrationFailed', { error: result.error }));
+        }
+    } catch (error) {
+        ElMessage.error(t('settings.migrationFailed', { error: error.message }));
+    } finally {
+        isSaving.value = false;
+    }
+}
+
 function applyFont(fontValue) {
     // 根据选择应用字体
     if (fontValue === 'default') {
@@ -187,6 +303,17 @@ async function loadSettings() {
     // 加载执行模式设置
     const savedExecutionMode = await window.api.execution.getGlobalMode();
     currentExecutionMode.value = savedExecutionMode || 'window';
+
+    // 加载自定义数据路径信息
+    const pathResult = await window.api.userData.getCurrentPath();
+    if (pathResult.success) {
+        currentDataPath.value = pathResult.path;
+    }
+
+    const usageResult = await window.api.userData.getDiskUsage();
+    if (usageResult.success) {
+        diskUsage.value = usageResult.size;
+    }
 }
 
 onMounted(() => {

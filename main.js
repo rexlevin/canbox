@@ -153,6 +153,10 @@ if (!getTheLock) {
     })
 
     app.whenReady().then(() => {
+        // 配置日志文件 appenders
+        const { configureFileAppenders } = require('@modules/utils/logger');
+        configureFileAppenders();
+
         // 初始化执行调度器
         executionDispatcher.init();
 
