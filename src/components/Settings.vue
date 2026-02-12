@@ -107,6 +107,13 @@
                 </el-col>
             </el-row>
         </div>
+
+        <!-- 倒计时对话框 -->
+        <RestartCountdownDialog
+            v-model:visible="showRestartDialog"
+            :isAppImage="restartIsAppImage"
+            @restart-now="onRestartNow"
+        />
     </div>
 </template>
 
@@ -114,6 +121,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
+import RestartCountdownDialog from './RestartCountdownDialog.vue';
 
 const { t, locale } = useI18n();
 
@@ -127,6 +135,10 @@ const currentDataPath = ref('');
 const diskUsage = ref('');
 const newDataPath = ref('');
 const isSaving = ref(false);
+
+// 倒计时对话框相关
+const showRestartDialog = ref(false);
+const restartIsAppImage = ref(false);
 
 // 常用系统字体列表
 const availableFonts = ref([
@@ -235,11 +247,9 @@ async function saveCustomDataPath() {
     try {
         const result = await window.api.userData.migrate(newDataPath.value);
         if (result.success) {
-            ElMessage({
-                message: t('settings.migrationSuccess'),
-                type: 'success',
-                duration: 5000
-            });
+            // 显示倒计时对话框
+            restartIsAppImage.value = result.isAppImage;
+            showRestartDialog.value = true;
             newDataPath.value = '';
         } else {
             ElMessage.error(t('settings.migrationFailed', { error: result.error }));
@@ -256,11 +266,9 @@ async function resetToDefault() {
     try {
         const result = await window.api.userData.resetToDefault();
         if (result.success) {
-            ElMessage({
-                message: t('settings.resetSuccess'),
-                type: 'success',
-                duration: 5000
-            });
+            // 显示倒计时对话框
+            restartIsAppImage.value = result.isAppImage;
+            showRestartDialog.value = true;
         } else {
             ElMessage.error(t('settings.migrationFailed', { error: result.error }));
         }
@@ -268,6 +276,18 @@ async function resetToDefault() {
         ElMessage.error(t('settings.migrationFailed', { error: error.message }));
     } finally {
         isSaving.value = false;
+    }
+}
+
+// 立刻重启
+async function onRestartNow() {
+    try {
+        const result = await window.api.userData.restartNow();
+        if (result.success) {
+            showRestartDialog.value = false;
+        }
+    } catch (error) {
+        ElMessage.error(t('settings.migrationFailed', { error: error.message }));
     }
 }
 

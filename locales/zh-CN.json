@@ -77,6 +77,9 @@
         "saveAndMigrate": "保存并迁移",
         "migrating": "迁移中...",
         "resetToDefault": "恢复默认",
+        "restartCountdown": "{count} 秒后自动重启",
+        "restartNow": "立刻重启",
+        "manualRestartHint": "如果应用未自动重启，请手动启动 Canbox",
         "migrationSuccess": "数据迁移成功，请重启 Canbox 以应用更改。",
         "migrationFailed": "迁移失败：{error}",
         "resetSuccess": "恢复默认路径成功，请重启 Canbox。"

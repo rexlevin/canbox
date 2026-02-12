@@ -20,6 +20,27 @@ let currentLanguage = 'en-US';
 // 缓存已创建的临时文件，避免重复创建
 let cachedTempFiles = new Map();
 
+/**
+ * 检测应用是否以 AppImage 方式运行
+ * @returns {boolean} 是否为 AppImage 环境
+ */
+function isAppImage() {
+    // 检查环境变量 APPIMAGE
+    if (process.env.APPIMAGE) {
+        return true;
+    }
+    // 检查可执行文件路径是否包含 .AppImage
+    try {
+        const exePath = app.getPath('exe');
+        if (exePath && exePath.includes('.AppImage')) {
+            return true;
+        }
+    } catch (error) {
+        logger.warn('Failed to get exe path for AppImage detection:', error);
+    }
+    return false;
+}
+
 // 初始化时读取保存的语言设置
 function initLanguage() {
     try {
@@ -283,17 +304,21 @@ function initIpcHandlers() {
         try {
             const result = await userDataMigration.migrateUserDataPath(newBasePath);
 
-            // 迁移成功后自动重启（仅在生产模式下）
+            // 迁移成功后延迟重启
             if (result.success) {
-                const isDevMode = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV === '1';
-                if (!isDevMode) {
-                    logger.info('Migration successful, restarting application...');
+                // 检测 AppImage 环境
+                const isAppImageEnv = isAppImage();
+                logger.info(`Migration successful, AppImage environment: ${isAppImageEnv}`);
+
+                // 添加环境标识到返回结果
+                result.isAppImage = isAppImageEnv;
+
+                // 延迟 5 秒后重启，给前端显示倒计时的机会
+                setTimeout(() => {
+                    logger.info('Restarting application...');
                     app.relaunch();
                     app.exit(0);
-                } else {
-                    logger.info('Migration successful (dev mode - restart manually)');
-                    result.requireManualRestart = true;
-                }
+                }, 5000);
             }
 
             return result;
@@ -309,17 +334,21 @@ function initIpcHandlers() {
             const defaultBasePath = app.getPath('userData');
             const result = await userDataMigration.migrateUserDataPath(defaultBasePath);
 
-            // 迁移成功后自动重启（仅在生产模式下）
+            // 迁移成功后延迟重启
             if (result.success) {
-                const isDevMode = process.env.NODE_ENV === 'development' || process.env.ELECTRON_IS_DEV === '1';
-                if (!isDevMode) {
-                    logger.info('Reset to default successful, restarting application...');
+                // 检测 AppImage 环境
+                const isAppImageEnv = isAppImage();
+                logger.info(`Reset to default successful, AppImage environment: ${isAppImageEnv}`);
+
+                // 添加环境标识到返回结果
+                result.isAppImage = isAppImageEnv;
+
+                // 延迟 5 秒后重启，给前端显示倒计时的机会
+                setTimeout(() => {
+                    logger.info('Restarting application...');
                     app.relaunch();
                     app.exit(0);
-                } else {
-                    logger.info('Reset to default successful (dev mode - restart manually)');
-                    result.requireManualRestart = true;
-                }
+                }, 5000);
             }
 
             return result;
@@ -329,6 +358,18 @@ function initIpcHandlers() {
         }
     });
 
+    // 立刻重启
+    ipcMain.handle('userData:restartNow', () => {
+        try {
+            logger.info('User requested immediate restart');
+            app.relaunch();
+            app.exit(0);
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to restart application:', error);
+            return { success: false, error: error.message };
+        }
+    });
 }
 
 // 初始化语言

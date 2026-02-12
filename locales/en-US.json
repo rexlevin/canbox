@@ -77,6 +77,9 @@
         "saveAndMigrate": "Save and Migrate",
         "migrating": "Migrating...",
         "resetToDefault": "Reset to Default",
+        "restartCountdown": "{count} seconds until automatic restart",
+        "restartNow": "Restart Now",
+        "manualRestartHint": "If the app doesn't restart automatically, please launch Canbox manually",
         "migrationSuccess": "Data migrated successfully. Please restart Canbox to apply changes.",
         "migrationFailed": "Migration failed: {error}",
         "resetSuccess": "Reset to default path successful. Please restart Canbox."
