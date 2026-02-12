@@ -23,7 +23,8 @@ contextBridge.exposeInMainWorld(
             getDiskUsage: () => ipcRenderer.invoke('userData:getDiskUsage'),
             selectDirectory: () => ipcRenderer.invoke('userData:selectDirectory'),
             migrate: (newBasePath) => ipcRenderer.invoke('userData:migrate', newBasePath),
-            resetToDefault: () => ipcRenderer.invoke('userData:resetToDefault')
+            resetToDefault: () => ipcRenderer.invoke('userData:resetToDefault'),
+            restartNow: () => ipcRenderer.invoke('userData:restartNow')
         },
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
