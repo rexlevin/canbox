@@ -1,5 +1,7 @@
 # store
 
+[中文版](API_CN.md) | [English](API.md)
+
 Uses electron-store for data storage
 
 **Storage location**: `{userData}/Users/data/{appId}/store/{name}.json`

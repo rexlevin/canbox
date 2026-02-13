@@ -245,9 +245,9 @@ Please visit the project's GitHub Releases page to download the latest version o
 
 # Development Documentation
 
-[Canbox Development Documentation](./docs/CANBOX_DEV_CN.md)
+[Canbox Development Documentation](./docs/CANBOX_DEV.md)
 
-[App Development Documentation](./docs/APP_DEV_CN.md)
+[App Development Documentation](./docs/APP_DEV.md)
 
 [API Documentation](./docs/API.md)
 

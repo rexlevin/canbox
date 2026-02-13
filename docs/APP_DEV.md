@@ -1,5 +1,7 @@
 # File Description
 
+[中文版](APP_DEV_CN.md) | [English](APP_DEV.md)
+
 - `app.json`: APP description file, contains APP startup window parameters
 - `uat.dev.json`: Development environment configuration, startup URL, open dev tools during development
 - `README.md`: APP description, this file content will be displayed as APP information in canbox

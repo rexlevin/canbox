@@ -1,5 +1,7 @@
 # 文件说明
 
+[中文版](APP_DEV_CN.md) | [English](APP_DEV.md)
+
 - `app.json`: APP描述文件，包含 APP 启动的窗口参数
 - `uat.dev.json`: 开发环境配置，开发时的启动URL、打开开发工具
 - `READMEmd`: APP 说明，这个文件内容会作为 APP 信息在 canbox 展示
