@@ -1,6 +1,6 @@
-# Canbox Development
-
 [中文版](CANBOX_DEV_CN.md) | [English](CANBOX_DEV.md)
+
+# Canbox Development
 
 1. Fork the code
 2. Submit changes

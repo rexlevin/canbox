@@ -1,6 +1,6 @@
-# store
-
 [中文版](API_CN.md) | [English](API.md)
+
+# store
 
 Uses electron-store for data storage
 
@@ -83,6 +83,7 @@ canbox.store.clear('config')
 ```
 
 **Note**: Each `name` corresponds to an independent `.json` file for storing different types of data. For example:
+
 - `config.json` - Application configuration
 - `user.json` - User data
 - `cache.json` - Cache data
@@ -380,6 +381,7 @@ canbox.db.allDocs().then(result => {
 ```
 
 **Parameter Descriptions**:
+
 - `include_docs` - Whether to return full document content (default false)
 - `limit` - Limit the number of documents returned
 - `descending` - Whether to sort in reverse order
@@ -571,6 +573,7 @@ canbox.db.createIndex({
 ```
 
 **Performance Tips**:
+
 - Creating indexes can significantly improve `find` query performance
 - It's recommended to create commonly used indexes during app initialization
 - Index creation is an asynchronous operation, it's recommended to complete it during app startup
@@ -627,10 +630,12 @@ Execute commands that require elevated privileges.
 - Returns `object` - Execution result containing `stdout` and `stderr`
 
 **Parameter Descriptions**:
+
 - `command` - Command to execute (required)
 - `name` - Operation name, used to prompt the user why elevation is needed (required)
 
 **name Parameter Requirements**:
+
 - Can only contain letters, numbers, and spaces (does not support non-ASCII characters like Chinese)
 - Length not exceeding 70 characters
 - Recommended to use English description, for example: `'Apply Hosts Config'`, `'Restart Service'`
@@ -679,10 +684,12 @@ canbox.sudo.exec({
 ```
 
 **Platform Notes**:
+
 - **Linux/macOS** - Uses `sudo-prompt`, will pop up system elevation dialog
 - **Windows** - Uses `electron-sudo`, will pop up UAC elevation dialog
 
 **Parameter Descriptions**:
+
 - `command` - Command to execute (required)
 - `name` - Operation name, used to prompt the user why elevation is needed (required)
 
