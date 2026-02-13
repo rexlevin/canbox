@@ -49,6 +49,7 @@ Canbox is an open project, and every contribution helps make it better!
 Canbox supports importing application packages packaged by developers (ZIP format).
 
 This feature is particularly suitable for scenarios where apps cannot be publicly shared, such as:
+
 - Internal enterprise tools that should not be made public
 - Apps containing sensitive business logic or proprietary algorithms
 - Personal tools with private data processing requirements
@@ -86,8 +87,10 @@ Enter the Repo URL in "App Repository" -> "Add App Source" to add an app source.
 
 | App     | Repo URL                               | Description                                           |
 | ------- | -------------------------------------- | ----------------------------------------------------- |
-| JsonBox | https://gitee.com/lizl6/cb-jsonbox     | JSON formatting, JSON to other formats like xml, yaml |
+| JsonBox | https://github.com/rexlevin/cb-jsonbox | JSON formatting, JSON to other formats like xml, yaml |
 | PassGen | https://github.com/rexlevin/cb-passgen | Generate passwords, random strings, timestamps        |
+
+For more apps, please visit: [Canbox App Center](https://rexlevin.github.io/canbox-pages/apps.html)
 
 ### Export App Source List
 
@@ -132,18 +135,22 @@ Canbox acts as a lightweight runtime, providing a minimal set of core capabiliti
 Canbox provides the following core features for apps:
 
 **Data Persistence**
+
 - `canbox.db` - Local database based on PouchDB (put/get/bulkDocs/remove)
 - `canbox.store` - Key-value storage based on electron-store
 
 **System Interaction**
+
 - `canbox.dialog` - Native file dialogs (open/save/message)
 - `canbox.win.createWindow` - Create child windows
 - `canbox.win.notification` - System notifications
 
 **Lifecycle**
+
 - `registerCloseCallback` - Window close callback
 
 **Design Principles**
+
 - Keep minimal, providing only core capabilities
 - Other features are implemented by apps themselves (e.g., network requests, clipboard operations, etc.)
 - Ensure apps have sufficient freedom

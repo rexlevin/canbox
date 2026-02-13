@@ -86,8 +86,10 @@ Canbox 支持导入开发者打包好的应用包（ZIP 格式）。
 
 | App     | Repo URL                               | Description                                   |
 | ------- | -------------------------------------- | --------------------------------------------- |
-| JsonBox | https://gitee.com/lizl6/cb-jsonbox     | JSON 格式化、JSON 转换其他格式， 如 xml、yaml |
+| JsonBox | https://github.com/rexlevin/cb-jsonbox     | JSON 格式化、JSON 转换其他格式， 如 xml、yaml |
 | PassGen | https://github.com/rexlevin/cb-passgen | 生成密码、随机串、时间戳                      |
+
+更多 APP 请访问：[Canbox APP 中心](https://rexlevin.github.io/canbox-pages/apps.html)
 
 ### 导出 APP 源列表
 
