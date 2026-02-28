@@ -31,6 +31,28 @@ Canbox is an open project, and every contribution helps make it better!
 
 ---
 
+## 🗺️ Planned Features
+
+The following features are planned for future development. Detailed design documents can be found in `openspec/changes/`:
+
+### Matrix Account System
+
+A decentralized account system based on Matrix protocol for cross-device data synchronization and future social features (Chat, Blog).
+
+**Core capabilities:**
+- Matrix authentication with multiple login methods (password, SSO like Mozilla)
+- Cross-device data synchronization (apps list, settings, preferences)
+- Intelligent conflict resolution (version-based merging for apps, latest-first for settings)
+- Offline queue support for continuous operation
+
+**Future extensions:**
+- Matrix Chat integration
+- Blog with ActivityPub bridge to Fediverse
+
+See [openspec/changes/matrix-account-system/](openspec/changes/matrix-account-system/) for detailed planning.
+
+---
+
 # Features
 
 - **App Management**: Supports installation, uninstallation, and updates of applications.
