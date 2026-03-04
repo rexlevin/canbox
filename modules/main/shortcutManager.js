@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const { execSync, exec } = require('child_process');
 const os = require('os');
+const logger = require('@modules/utils/logger');
 
 const { getCanboxStore } = require('@modules/main/storageManager');
 const { getAppPath, getAppIconPath } = require('@modules/main/pathManager');
@@ -99,7 +100,7 @@ StartupWMClass=${uid}
         }
         return { success: true };
     } catch (error) {
-        console.error('生成快捷方式失败:', error);
+        logger.error('生成快捷方式失败 / Failed to generate shortcuts:', error);
         return { success: false, error: error.message };
     }
 }
@@ -142,18 +143,18 @@ function deleteShortcuts(appsData) {
             for (const ext of possibleIconExts) {
                 const iconPath = path.join(getAppIconPath(), `${uid}${ext}`);
                 if (fs.existsSync(iconPath)) {
-                    try {
-                        fs.unlinkSync(iconPath);
-                        console.log(`删除图标文件: ${iconPath}`);
-                    } catch (error) {
-                        console.error(`删除图标文件失败: ${iconPath}`, error);
-                    }
+                        try {
+                            fs.unlinkSync(iconPath);
+                            logger.info(`删除图标文件 / Deleting icon file: ${iconPath}`);
+                        } catch (error) {
+                            logger.error(`删除图标文件失败 / Failed to delete icon file ${iconPath}:`, error);
+                        }
                 }
             }
         });
         return { success: true };
     } catch (error) {
-        console.error('删除快捷方式失败:', error);
+        logger.error('删除快捷方式失败 / Failed to delete shortcuts:', error);
         return { success: false, error: error.message };
     }
 }
@@ -228,7 +229,7 @@ async function initShortcuts(currentVersion, appsData) {
 function createCanboxDesktop() {
     const appImagePath = process.env.APPIMAGE;
     if (!appImagePath) {
-        console.warn('[shortcutManager.js] 未检测到 AppImage 环境，跳过创建 desktop 文件');
+        logger.warn('[shortcutManager.js] 未检测到 AppImage 环境，跳过创建 desktop 文件 / AppImage environment not detected, skipping desktop file creation');
         return;
     }
 
@@ -240,7 +241,7 @@ function createCanboxDesktop() {
         fs.mkdirSync(applicationsPath, { recursive: true });
     }
 
-    console.info('[shortcutManager.js] appImagePath: ', appImagePath);
+    logger.info('[shortcutManager.js] appImagePath: {}', appImagePath);
 
     // 获取 AppImage 所在目录和文件名
     const appImageDir = path.dirname(appImagePath);
@@ -256,9 +257,9 @@ function createCanboxDesktop() {
         try {
             // 将图标复制到 AppImage 文件旁边
             fs.copyFileSync(internalIconPath, externalIconPath);
-            console.log(`图标复制成功: ${internalIconPath} -> ${externalIconPath}`);
+            logger.info(`图标复制成功 / Icon copied successfully: ${internalIconPath} -> ${externalIconPath}`);
         } catch (error) {
-            console.warn('图标复制失败，使用原始路径:', error);
+            logger.warn('图标复制失败，使用原始路径 / Failed to copy icon, using original path:', error);
         }
     }
 
@@ -280,13 +281,13 @@ StartupWMClass=canbox
 
     // 写入 desktop 文件
     fs.writeFileSync(desktopFilePath, desktopContent);
-    console.log(`Canbox desktop 文件创建成功 (AppImage): ${desktopFilePath}`);
+    logger.info(`Canbox desktop 文件创建成功 (AppImage) / Canbox desktop file created successfully (AppImage): ${desktopFilePath}`);
 
     // 设置执行权限
     try {
         fs.chmodSync(desktopFilePath, 0o755);
     } catch (error) {
-        console.warn('设置 desktop 文件权限失败:', error);
+        logger.warn('设置 desktop 文件权限失败 / Failed to set desktop file permissions:', error);
     }
 }
 

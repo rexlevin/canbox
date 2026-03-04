@@ -1,6 +1,7 @@
 const { BrowserWindow, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const logger = require('@modules/utils/logger');
 
 // 初始化 pathManager 模块
 const { getAppPath } = require('@modules/main/pathManager');
@@ -34,12 +35,12 @@ const winFactory = {
         }
 
         if (!options || typeof options !== 'object') {
-            console.error('Invalid options parameter: must be an object');
+            logger.error('Invalid options parameter: must be an object / 无效的 options 参数: 必须是对象');
             options = { width: 800, height: 600 };
         }
 
         if (!options.width || !options.height) {
-            console.warn('Missing required window dimensions, using defaults');
+            logger.warn('Missing required window dimensions, using defaults / 缺少必需的窗口尺寸，使用默认值');
             options = { ...options, width: options.width || 800, height: options.height || 600, show: false };
         }
 
@@ -51,7 +52,7 @@ const winFactory = {
         try {
             // 根据 parentWindowId 判断应用类型并拼接完整路径
             const appDevConfigObj = getAppsDevStore().get('default') || {};
-            console.info('appDevConfigObj: ', appDevConfigObj)
+            logger.debug('appDevConfigObj / appDevConfigObj: {}', JSON.stringify(appDevConfigObj));
             if (appDevConfigObj[parentWindowId]) {
                 const appDevItem = appDevConfigObj[parentWindowId].path;
                 const appJsonPath = path.join(appDevItem, 'app.json');
@@ -67,7 +68,7 @@ const winFactory = {
                 const mainPath = uatDevJson
                     ? uatDevJson.main.startsWith('http') ? uatDevJson.main : `file://${path.join(appDevItem, uatDevJson.main)}`
                     : appJson.main.startsWith('http') ? appJson.main : `file://${path.join(appDevItem, appJson.main)}`;
-                console.info('mainPath: ', mainPath);
+                logger.debug('mainPath / mainPath: {}', mainPath);
                 loadURL = path.join(mainPath, loadURL);
             } else {
                 const appJson = JSON.parse(fs.readFileSync(path.join(APP_PATH, `${parentWindowId}.asar`, 'app.json'), 'utf-8'));
@@ -75,7 +76,7 @@ const winFactory = {
                     ? path.join(appJson.main, loadURL)
                     : `file://${path.join(APP_PATH, `${parentWindowId}.asar`, appJson.main + loadURL)}`;
             }
-            console.info('win.js, loadURL: ', loadURL);
+            logger.info('win.js, loadURL / win.js, loadURL: {}', loadURL);
 
             const win = new BrowserWindow(options);
 
@@ -118,7 +119,7 @@ const winFactory = {
 
             return win.id;
         } catch (err) {
-            console.error('Failed to create window:', err);
+            logger.error('Failed to create window / 创建窗口失败: {}', err.message);
             throw err;
         }
     },

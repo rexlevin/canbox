@@ -58,7 +58,7 @@ class AppWindowManager {
 
             // 创建会话
             const sess = session.fromPartition(uid);
-            console.info('__dirname: ', __dirname);
+            logger.debug('__dirname: {}', __dirname);
             sess.registerPreloadScript({
                 type: 'frame',
                 filePath: path.join(__dirname, '../app.api.js')
@@ -92,7 +92,7 @@ class AppWindowManager {
                     // Windows 下优先使用 ICO 格式，其他系统使用原始格式
                     const iconExt = os.platform() === 'win32' ? '.ico' : logoExt;
                     options.icon = path.resolve(getAppPath(), `${uid}${iconExt}`);
-                    console.info('[{%s}] 当前是正式模式，使用 app 目录下的logo: %s', uid, options.icon);
+                    logger.info('[{}] 当前是正式模式，使用 app 目录下的logo / Production mode: using logo from app directory: {}', uid, options.icon);
                 }
 
                 // 设置 Web 偏好选项
@@ -146,7 +146,7 @@ class AppWindowManager {
                 options.show = true;
             }
 
-            console.info('load app window options===%o', options);
+            logger.debug('load app window options: {}', JSON.stringify(options));
 
             // 创建窗口
             const appWin = new BrowserWindow(options);
@@ -249,7 +249,7 @@ class AppWindowManager {
                                 childWin.close();
                                 this.removeWindow(childId);
                             } catch (e) {
-                                console.error(`Failed to close child window ${childId}:`, e);
+                                logger.error(`关闭子窗口失败 / Failed to close child window ${childId}:`, e);
                             }
                         }
                     }
@@ -263,17 +263,17 @@ class AppWindowManager {
                         appWin.removeAllListeners('close');
                         appWin.close();
                     } catch (e) {
-                        console.error(`Failed to close window ${uid}:`, e);
+                        logger.error(`关闭窗口失败 / Failed to close window ${uid}:`, e);
                     }
                 }
                 this.removeWindow(uid);
-                console.info('All related windows closed');
+                logger.info('所有相关窗口已关闭 / All related windows closed');
             });
 
             // 注册窗口到两个映射
             this.winMap.set(uid, appWin);  // 应用主窗口映射
             this.addWindow(uid, appWin);   // 全局窗口映射
-            console.info('appMap length: %o', this.appMap.size);
+            logger.debug('appMap length: {}', this.appMap.size);
 
             return true;
 

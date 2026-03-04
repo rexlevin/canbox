@@ -17,7 +17,7 @@ ipcRenderer.on('window-close-callback', () => {
         try {
             __closeCallback();
         } catch (e) {
-            console.error('Error executing close callback:', e);
+            console.error('Error executing close callback / 执行关闭回调错误:', e);
         }
     }
 });
@@ -38,7 +38,7 @@ const ipcSendSyncDB = (type, param) => {
         param,
         appId: window.appId
     });
-    console.info('returnValue in app.api==', returnValue);
+    console.info('returnValue in app.api== / app.api 中的返回值:', returnValue);
     if (returnValue instanceof Error) throw returnValue;
     return JSON.parse(returnValue);
 };
@@ -171,8 +171,8 @@ const db = {
      */
     getSync: (param) => {
         const ret = ipcSendSyncDB('get', param);
-        console.log('ret in app.api.js==', ret);
-        console.log('ret in app.api.js==ret.success: ', ret.success);
+        console.log('ret in app.api.js== / app.api.js 中的 ret:', ret);
+        console.log('ret in app.api.js==ret.success: / app.api.js 中的 ret.success:', ret.success);
         return ret.success ? ret.data : null;
     },
     /**
@@ -313,7 +313,7 @@ const win = {
     createWindow: (options, params) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendSyncCreateWindow(options, params);
-            console.info('ret: ', ret);
+            console.info('ret: / 返回值:', ret);
             null !== ret ? resolve(ret) : reject(null);
         });
     },
@@ -325,7 +325,7 @@ const win = {
      * @returns 
      */
     notification: (options) => {
-        console.info('options: ', options);
+        console.info('options: / 选项:', options);
         return new Promise((resolve) => {
             ipcSendNotification(options);
             resolve(); // 直接 resolve，表示通知已发送
@@ -414,8 +414,8 @@ window.appId = null;
 window.canbox = {
     hooks: {},
     hello: () => {
-        console.info('hello, hope you have a nice day');
-        console.info('hello, appId: ', appId);
+        console.info('hello, hope you have a nice day / 你好，祝你有美好的一天');
+        console.info('hello, appId: / appId:', appId);
     },
     db,
     sudo,

@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const fs = require('fs');
+const logger = require('@modules/utils/logger');
 
 /**
  * 校验仓库地址格式
@@ -53,7 +54,7 @@ exports.getFileUrl = function (repoUrl, branch, file) {
             return `${cleanRepoUrl}/raw/branch/${branch}/${file}`;
         }
     } catch (e) {
-        console.error('解析仓库URL失败:', e);
+        logger.error('解析仓库URL失败 / Failed to parse repo URL: {}', e.message);
         // 如果出错，也尝试移除 .git 后缀
         let cleanUrl = repoUrl;
         if (cleanUrl.endsWith('.git')) {
@@ -102,7 +103,7 @@ exports.getDownloadUrl = function (repo, version, fileName) {
             return `${cleanRepo}/archive/${fileName}`;
         }
     } catch (e) {
-        console.error('解析仓库URL失败:', e);
+        logger.error('解析仓库URL失败 / Failed to parse repo URL: {}', e.message);
         // 如果出错，也尝试移除 .git 后缀
         let cleanRepo = repo;
         if (cleanRepo.endsWith('.git')) {
@@ -120,7 +121,7 @@ exports.getDownloadUrl = function (repo, version, fileName) {
  */
 exports.downloadFileFromRepo = async function (fileUrl, filePath) {
     try {
-        console.log(`尝试下载文件: ${fileUrl}`);
+        logger.debug(`尝试下载文件 / Attempting to download file: ${fileUrl}`);
         const response = await axios.get(fileUrl, {
             timeout: 30000, // 30秒超时
             responseType: 'text',
@@ -129,16 +130,16 @@ exports.downloadFileFromRepo = async function (fileUrl, filePath) {
             }
         });
         fs.writeFileSync(filePath, response.data);
-        console.log(`文件下载成功: ${filePath}`);
+        logger.info(`文件下载成功 / File download successful: ${filePath}`);
         return true;
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
-            console.warn(`下载超时: ${fileUrl}`);
+            logger.warn(`下载超时 / Download timeout: ${fileUrl}`);
         } else if (error.response) {
-            console.warn(`下载失败(${error.response.status}): ${fileUrl}`);
-            console.warn(`响应内容: ${JSON.stringify(error.response.data).substring(0, 200)}`);
+            logger.warn(`下载失败({}): {} / Download failed ({}): {}: {}`, error.response.status, fileUrl, error.response.status, fileUrl);
+            logger.warn(`响应内容 / Response content: {}`, JSON.stringify(error.response.data).substring(0, 200));
         } else {
-            console.error(`下载文件错误(${fileUrl}):`, error.message);
+            logger.error(`下载文件错误({}) / Download file error ({}): {}: {}`, fileUrl, fileUrl, fileUrl, error.message);
         }
         return false;
     }
@@ -152,7 +153,7 @@ exports.downloadFileFromRepo = async function (fileUrl, filePath) {
  */
 exports.downloadLogoFromRepo = async function (fileUrl, filePath) {
     try {
-        console.log(`尝试下载文件: ${fileUrl}`);
+        logger.debug(`尝试下载文件 / Attempting to download file: ${fileUrl}`);
         const isBinary = filePath.endsWith('.png') || filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.gif');
         const response = await axios.get(fileUrl, {
             timeout: 30000, // 30秒超时
@@ -166,15 +167,15 @@ exports.downloadLogoFromRepo = async function (fileUrl, filePath) {
         } else {
             fs.writeFileSync(filePath, response.data);
         }
-        console.log(`文件下载成功: ${filePath}`);
+        logger.info(`文件下载成功 / File download successful: ${filePath}`);
         return true;
     } catch (error) {
         if (error.code === 'ECONNABORTED') {
-            console.warn(`下载超时: ${fileUrl}`);
+            logger.warn(`下载超时 / Download timeout: ${fileUrl}`);
         } else if (error.response) {
-            console.warn(`下载失败(${error.response.status}): ${fileUrl}`);
+            logger.warn(`下载失败({}): {} / Download failed ({}): {}: {}`, error.response.status, fileUrl, error.response.status, fileUrl);
         } else {
-            console.error(`下载文件错误(${fileUrl}):`, error.message);
+            logger.error(`下载文件错误({}) / Download file error ({}): {}: {}`, fileUrl, fileUrl, fileUrl, error.message);
         }
         return false;
     }

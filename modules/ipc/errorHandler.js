@@ -1,3 +1,5 @@
+const logger = require('@modules/utils/logger');
+
 /**
  * 通用的错误处理函数
  * @param {Error} error - 错误对象
@@ -5,7 +7,7 @@
  * @returns {Object} - 包含错误信息的对象
  */
 function handleError(error, context) {
-    console.error(`[${context}] Error:`, error);
+    logger.error(`[${context}] Error / 错误: {}`, error.message || 'Unknown error / 未知错误');
     return {
         success: false,
         msg: error.message || '未知错误'

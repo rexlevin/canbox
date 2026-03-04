@@ -1,6 +1,7 @@
 const Store = require('electron-store');
 const path = require('path');
 const { app } = require('electron');
+const logger = require('@modules/utils/logger');
 
 /**
  * 统一管理 electron-store 的配置和操作
@@ -33,7 +34,7 @@ class Storage {
 
         // 调试：记录实际使用的路径
         if (options.name === 'canbox') {
-            console.log('[Storage] canbox.json path:', finalCwd);
+            logger.debug('[Storage] canbox.json path: {} / {}', finalCwd, finalCwd);
         }
     }
 

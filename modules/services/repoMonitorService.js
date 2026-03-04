@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 const { app } = require('electron');
-const logger = require('../utils/logger');
+const logger = require('@modules/utils/logger');
 
 const { handleError } = require('@modules/ipc/errorHandler');
 const repoUtils = require('@modules/utils/repoUtils');
@@ -142,7 +142,7 @@ class RepoMonitorService {
                     logger.monitor.info(`仓库 ${repoInfo.name} 信息已更新`);
                 } catch (error) {
                     logger.monitor.warn(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`, error);
-                    console.info(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`, error);
+                    logger.info(`仓库 ${repoInfo.repo} 扫描失败 / Repo ${repoInfo.repo} scan failed: ${error.message}`);
                 }
             }
             logger.monitor.info('仓库扫描完成');

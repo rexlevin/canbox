@@ -144,7 +144,7 @@ async function handleAddAppRepo(repoUrl) {
                     // }
                     repoUtils.downloadLogoFromRepo(logoUrl, logoPath).then((logoDownloadSuccess) => {
                         if (!logoDownloadSuccess) {
-                            console.warn(`无法下载logo图片: ${logoUrl}`);
+                            logger.warn(`无法下载logo图片 / Failed to download logo image: ${logoUrl}`);
                         }
                     });
                 }
@@ -259,19 +259,19 @@ async function handleImportAppRepos() {
     for (const repo of reposData) {
         const repoUrl = repo.repo;
         if (!repoUrl || typeof repoUrl !== 'string') {
-            console.warn(`跳过无效的仓库数据: %o`, repo);
+            logger.warn(`跳过无效的仓库数据 / Skip invalid repo data: %o`, repo);
             failedRepos.push({ repo: repo, error: 'Missing or invalid repo field' });
             continue;
         }
 
         // 检查是否已存在相同的仓库 URL
         if (existingRepoUrls.includes(repoUrl.toLowerCase())) {
-            console.log(`跳过已存在的仓库: ${repoUrl}`);
+            logger.info(`跳过已存在的仓库 / Skip existing repo: ${repoUrl}`);
             skippedCount++;
             continue;
         }
 
-        console.log(`正在处理仓库: ${repoUrl}`);
+        logger.info(`正在处理仓库 / Processing repo: ${repoUrl}`);
         try {
             await handleAddAppRepo(repoUrl);
             successCount++;
@@ -279,7 +279,7 @@ async function handleImportAppRepos() {
             const updatedRepos = reposStore.get('default') || {};
             existingRepoUrls.push(...Object.values(updatedRepos).map(r => r.repo.toLowerCase()));
         } catch (error) {
-            console.error(`处理仓库 ${repoUrl} 失败: ${error}`);
+            logger.error(`处理仓库 ${repoUrl} 失败 / Failed to process repo ${repoUrl}: {}`, error.message || error);
             failedRepos.push({ repoUrl, error });
         }
     }
@@ -327,7 +327,7 @@ async function getRepoInfo(uid) {
                 }
                 return null;
             } catch (err) {
-                console.error(`文件操作失败: ${err.path}`, err);
+                logger.error(`文件操作失败 / File operation failed: ${err.path}`, err.message || err);
                 return null;
             }
         };

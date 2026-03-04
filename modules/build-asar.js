@@ -97,7 +97,7 @@ const buildAsar = async (uid) => {
 
         return { success: true, msg: '打包成功', asarPath };
     } catch (err) {
-        console.error('打包失败:', err);
+        logger.error('打包失败 / Build failed: {}', err.message);
         return { success: false, msg: err.message };
     }
 };
