@@ -40,16 +40,16 @@ The following features are planned for future development. Detailed design docum
 A decentralized account system based on Matrix protocol for cross-device data synchronization and future social features (Chat, Blog).
 
 **Core capabilities:**
+
 - Matrix authentication with multiple login methods (password, SSO like Mozilla)
 - Cross-device data synchronization (apps list, settings, preferences)
 - Intelligent conflict resolution (version-based merging for apps, latest-first for settings)
 - Offline queue support for continuous operation
 
 **Future extensions:**
+
 - Matrix Chat integration
 - Blog with ActivityPub bridge to Fediverse
-
-See [openspec/changes/matrix-account-system/](openspec/changes/matrix-account-system/) for detailed planning.
 
 ---
 
