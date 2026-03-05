@@ -217,6 +217,101 @@ const createLoggerMethods = (loggerInstance, category = 'default') => {
     };
 };
 
+// 从文件读取日志
+function getLogsFromFile(date, source = 'app') {
+    const logDir = getLogDir();
+    const prefix = source === 'monitor' ? 'monitor' : 'app';
+    const zlib = require('zlib');
+
+    // 确定文件名
+    let filename;
+    const today = new Date().toISOString().split('T')[0];
+
+    console.log(`[getLogsFromFile] date: ${date}, source: ${source}, today: ${today}`);
+
+    if (!date || date === 'today' || date === today) {
+        filename = `${prefix}.log`;
+    } else {
+        filename = `${prefix}.${date}.log.gz`;
+    }
+
+    const filePath = path.join(logDir, filename);
+    console.log(`[getLogsFromFile] logDir: ${logDir}`);
+    console.log(`[getLogsFromFile] filePath: ${filePath}`);
+    console.log(`[getLogsFromFile] filename: ${filename}`);
+
+    const logs = [];
+
+    try {
+        // 检查文件是否存在
+        if (!fs.existsSync(filePath)) {
+            console.log(`[getLogsFromFile] File does not exist: ${filePath}`);
+            return logs;
+        }
+
+        console.log(`[getLogsFromFile] File exists, reading content...`);
+
+        // 读取文件内容
+        let content;
+        if (filename.endsWith('.gz')) {
+            // 解压并读取
+            const compressedData = fs.readFileSync(filePath);
+            content = zlib.gunzipSync(compressedData).toString('utf-8');
+        } else {
+            // 直接读取
+            content = fs.readFileSync(filePath, 'utf-8');
+        }
+
+        console.log(`[getLogsFromFile] Content length: ${content.length}`);
+        const lines = content.split('\n').filter(line => line.trim());
+        console.log(`[getLogsFromFile] Total lines: ${lines.length}`);
+
+            // 解析日志行 - 支持多种格式
+        lines.forEach((line, index) => {
+            // 格式1: [2024-01-15 14:30:45] [INFO] [file.js:123] : message
+            let match = line.match(/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[(\w+)\] (\[.+\]) : (.+)$/);
+            if (match) {
+                const [, timestamp, level, location, message] = match;
+                const now = new Date(timestamp);
+                logs.push({
+                    id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}`,
+                    level: level.toLowerCase(),  // 转换为小写，与前端一致
+                    message: `${location} : ${message}`,
+                    timestamp: now.toISOString(),
+                    category: source
+                });
+                return;
+            }
+
+            // 格式2: [2024-01-15 14:30:45] [INFO] [file.js:123] message (没有冒号)
+            match = line.match(/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[(\w+)\] (\[.+\])\s+(.+)$/);
+            if (match) {
+                const [, timestamp, level, location, message] = match;
+                const now = new Date(timestamp);
+                logs.push({
+                    id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}`,
+                    level: level.toLowerCase(),  // 转换为小写，与前端一致
+                    message: `${location} ${message}`,
+                    timestamp: now.toISOString(),
+                    category: source
+                });
+                return;
+            }
+
+            // 打印未匹配的行（前10行）
+            if (index < 10) {
+                console.log(`[getLogsFromFile] Unmatched line ${index}: ${line}`);
+            }
+        });
+
+        console.log(`[getLogsFromFile] Parsed ${logs.length} log entries`);
+    } catch (error) {
+        console.error(`[getLogsFromFile] Failed to read log file ${filePath}:`, error);
+    }
+
+    return logs;
+}
+
 // 获取所有日志文件列表
 function getLogFiles(source = 'app') {
     const logDir = getLogDir();
@@ -299,6 +394,7 @@ module.exports = {
     configureFileAppenders,
     getRecentLogs: (count) => memoryAppender.getRecentLogs(count),
     getLogsSince: (id) => memoryAppender.getLogsSince(id),
+    getLogsFromFile,
     getLogFiles,
     cleanupOldLogs,
     clearCache: () => memoryAppender.clear()

@@ -1,32 +1,117 @@
 const { ipcMain, dialog } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 const logger = require('@modules/utils/logger');
 
 /**
  * 日志相关的 IPC 处理器
  */
 
+// 解析日志文件内容
+function parseLogContent(content, source) {
+    const lines = content.split('\n').filter(line => line.trim());
+    const logs = [];
+
+    lines.forEach(line => {
+        // 格式1: [2024-01-15 14:30:45] [INFO] [file.js:123] : message
+        let match = line.match(/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[(\w+)\] (\[.+\]) : (.+)$/);
+        if (match) {
+            const [, timestamp, level, location, message] = match;
+            const now = new Date(timestamp);
+            logs.push({
+                id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}`,
+                level: level.toLowerCase(),  // 转换为小写，与前端一致
+                message: `${location} : ${message}`,
+                timestamp: now.toISOString(),
+                category: source
+            });
+            return;
+        }
+
+        // 格式2: [2024-01-15 14:30:45] [INFO] [file.js:123] message (没有冒号)
+        match = line.match(/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[(\w+)\] (\[.+\])\s+(.+)$/);
+        if (match) {
+            const [, timestamp, level, location, message] = match;
+            const now = new Date(timestamp);
+            logs.push({
+                id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}`,
+                level: level.toLowerCase(),  // 转换为小写，与前端一致
+                message: `${location} ${message}`,
+                timestamp: now.toISOString(),
+                category: source
+            });
+        }
+    });
+
+    return logs;
+}
+
 // 获取日志列表
 ipcMain.handle('get-logs', async (event, options = {}) => {
     try {
-        const { source = 'app', count = 100 } = options;
-        const logs = logger.getRecentLogs(count);
+        const { source = 'app', count = 100, date } = options;
+
+        console.log('[get-logs] options:', options);
+
+        let logs;
+
+        if (date && date !== 'today') {
+            // 从文件读取指定日期的日志
+            console.log(`[get-logs] Reading logs from file for date: ${date}, source: ${source}`);
+            logs = logger.getLogsFromFile(date, source);
+            console.log(`[get-logs] Read ${logs.length} logs from file for date: ${date}`);
+        } else {
+            // 今天的日志：合并内存缓存和今日文件
+            console.log(`[get-logs] Reading logs for today, source: ${source}`);
+            const memoryLogs = logger.getRecentLogs(count);
+            console.log(`[get-logs] Memory logs count: ${memoryLogs.length}`);
+
+            const fileLogs = logger.getLogsFromFile('today', source);
+            console.log(`[get-logs] File logs count: ${fileLogs.length}`);
+
+            // 合并并去重（以 id 为准）
+            const allLogs = new Map();
+            fileLogs.forEach(log => allLogs.set(log.id, log));
+            memoryLogs.forEach(log => allLogs.set(log.id, log));
+
+            // 转换为数组并按 id 排序
+            logs = Array.from(allLogs.values()).sort((a, b) => a.id.localeCompare(b.id));
+            console.log(`[get-logs] Total merged logs count: ${logs.length}`);
+        }
+
+        // 按 source 过滤
+        const filteredLogs = logs.filter(log => log.category === source || source === 'all');
+        console.log(`[get-logs] Filtered logs count: ${filteredLogs.length}`);
 
         return {
             success: true,
-            logs: logs.filter(log => log.category === source || source === 'all')
+            logs: filteredLogs
         };
     } catch (error) {
+        console.error('[get-logs] Error:', error);
         logger.error('Failed to get logs: ' + error.message);
         return { success: false, error: error.message };
     }
 });
 
-// 获取最近 N 条日志
-ipcMain.handle('get-recent-logs', async (event, count = 100) => {
+// 获取最近 N 条日志（增量更新）
+ipcMain.handle('get-recent-logs', async (event, count = 100, source = 'app') => {
     try {
-        const logs = logger.getRecentLogs(count);
+        // 从内存缓存和文件都读取
+        const memoryLogs = logger.getRecentLogs(count);
+        const fileLogs = logger.getLogsFromFile('today', source);
+
+        // 合并并去重（以 id 为准）
+        const allLogs = new Map();
+        fileLogs.forEach(log => allLogs.set(log.id, log));
+        memoryLogs.forEach(log => allLogs.set(log.id, log));
+
+        // 转换为数组并按 id 排序，取最后 N 条
+        const logs = Array.from(allLogs.values())
+            .sort((a, b) => a.id.localeCompare(b.id))
+            .slice(-count);
+
         return { success: true, logs };
     } catch (error) {
         logger.error('Failed to get recent logs: ' + error.message);
@@ -90,17 +175,34 @@ ipcMain.handle('export-logs', async (event, format = 'txt', range = {}) => {
         // 读取并合并日志内容
         let content = '';
         for (const file of selectedFiles) {
-            const fileContent = fs.readFileSync(file.path, 'utf-8');
+            let fileContent;
+            if (file.compressed) {
+                // 压缩文件需要使用 zlib 解压
+                const zlib = require('zlib');
+                fileContent = zlib.gunzipSync(fs.readFileSync(file.path)).toString('utf-8');
+            } else {
+                fileContent = fs.readFileSync(file.path, 'utf-8');
+            }
             content += `=== ${file.filename} ===\n${fileContent}\n\n`;
         }
 
         // 根据格式转换
         if (format === 'json') {
-            const logs = logger.getRecentLogs(10000);
-            const filteredLogs = logs.filter(log =>
-                log.category === source || source === 'all'
-            );
-            content = JSON.stringify(filteredLogs, null, 2);
+            // 从文件中读取日志并转换为 JSON
+            const allLogs = [];
+            for (const file of selectedFiles) {
+                if (file.compressed) {
+                    const zlib = require('zlib');
+                    const fileContent = zlib.gunzipSync(fs.readFileSync(file.path)).toString('utf-8');
+                    const logs = parseLogContent(fileContent, source);
+                    allLogs.push(...logs);
+                } else {
+                    const fileContent = fs.readFileSync(file.path, 'utf-8');
+                    const logs = parseLogContent(fileContent, source);
+                    allLogs.push(...logs);
+                }
+            }
+            content = JSON.stringify(allLogs, null, 2);
         }
 
         fs.writeFileSync(filePath, content, 'utf-8');

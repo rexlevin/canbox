@@ -29,7 +29,7 @@ contextBridge.exposeInMainWorld(
         log: {
             openViewer: () => ipcRenderer.invoke('log-viewer:open'),
             getLogs: (options) => ipcRenderer.invoke('get-logs', options),
-            getRecentLogs: (count) => ipcRenderer.invoke('get-recent-logs', count),
+            getRecentLogs: (count, source) => ipcRenderer.invoke('get-recent-logs', count, source),
             getLogsSince: (id) => ipcRenderer.invoke('get-logs-since', id),
             getLogFiles: (source) => ipcRenderer.invoke('get-log-files', source),
             exportLogs: (format, range) => ipcRenderer.invoke('export-logs', format, range),

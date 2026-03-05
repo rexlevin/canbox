@@ -243,11 +243,11 @@ const filteredLogs = computed(() => {
 const getLevelType = (level) => {
     const types = {
         debug: 'info',
-        info: '',
+        info: 'info',
         warn: 'warning',
         error: 'danger'
     }
-    return types[level] || ''
+    return types[level] || 'info'
 }
 
 const formatTime = (timestamp) => {
@@ -288,6 +288,11 @@ const refreshLogs = async () => {
             if (allLogs.value.length > 0) {
                 lastLogId = allLogs.value[allLogs.value.length - 1].id
             }
+            // 加载日志后滚动到底部
+            if (autoScroll.value) {
+                await nextTick()
+                scrollToBottom()
+            }
         }
     } catch (error) {
         ElMessage.error(t('logViewer.loadLogsFailed'))
@@ -301,13 +306,21 @@ const loadRecentLogs = async () => {
     try {
         const result = await window.api.log.getRecentLogs(MAX_LOGS, logSource.value)
         if (result.success) {
-            const newLogs = result.logs.filter(log => !lastLogId || log.id > lastLogId)
+            // 检查是否有新日志（通过 id 比较）
+            const currentLastId = allLogs.value.length > 0
+                ? allLogs.value[allLogs.value.length - 1].id
+                : null
+
+            const newLogs = result.logs.filter(log => !currentLastId || log.id > currentLastId)
+
             if (newLogs.length > 0) {
+                console.log(`[loadRecentLogs] Found ${newLogs.length} new logs`)
+                // 添加新日志
                 logs.value = [...logs.value, ...newLogs]
                 allLogs.value = logs.value.slice(-MAX_LOGS)
-                lastLogId = allLogs.value[allLogs.value.length - 1].id
 
-                if (isScrolledToBottom.value && autoScroll.value) {
+                // 如果开启了自动滚动，自动滚动到底部
+                if (autoScroll.value) {
                     await nextTick()
                     scrollToBottom()
                 }
@@ -606,6 +619,7 @@ onUnmounted(() => {
 .log-message {
     flex: 1;
     word-break: break-all;
+    text-align: left;
 }
 
 .log-debug {
