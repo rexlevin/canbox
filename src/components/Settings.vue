@@ -102,6 +102,28 @@
                                     </div>
                                 </div>
                             </el-form-item>
+                            <el-divider style="margin: 20px 0;">{{ $t('settings.logViewerSettings') }}</el-divider>
+                            <el-form-item :label="$t('settings.logRetentionDays')" style="margin-bottom: 20px;">
+                                <el-input-number
+                                    v-model="logRetentionDays"
+                                    :min="0"
+                                    :max="30"
+                                    :step="1"
+                                    controls-position="right"
+                                    style="width: 200px;"
+                                    @change="saveLogRetentionDays"
+                                />
+                                <span style="margin-left: 10px; color: #909399;">{{ $t('settings.logRetentionDaysHint') }}</span>
+                            </el-form-item>
+                            <el-form-item :label="$t('settings.immediateCleanup')" style="margin-bottom: 20px;">
+                                <el-button type="warning" @click="cleanupLogs" :loading="isCleaningLogs">
+                                    <template #icon>
+                                        <Delete />
+                                    </template>
+                                    {{ $t('settings.immediateCleanup') }}
+                                </el-button>
+                                <span style="margin-left: 10px; color: #909399;">{{ $t('settings.cleanupLogFilesHint') }}</span>
+                            </el-form-item>
                         </el-form>
                     </div>
                 </el-col>
@@ -120,6 +142,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
+import { Delete } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
 import RestartCountdownDialog from './RestartCountdownDialog.vue';
 
@@ -129,6 +152,10 @@ const currentLanguage = ref('en-US');
 const availableLanguages = ref([]);
 const currentFont = ref('default');
 const currentExecutionMode = ref('window');
+
+// 日志查看器配置
+const logRetentionDays = ref(30);
+const isCleaningLogs = ref(false);
 
 // 自定义数据路径相关
 const currentDataPath = ref('');
@@ -291,6 +318,43 @@ async function onRestartNow() {
     }
 }
 
+// 日志查看器相关函数
+async function cleanupLogs() {
+    isCleaningLogs.value = true;
+    try {
+        const result = await window.api.log.cleanupOldLogs(logRetentionDays.value);
+        if (result.success) {
+            if (result.deletedCount > 0) {
+                ElMessage.success(t('settings.cleanupSuccess', { count: result.deletedCount }));
+            } else {
+                ElMessage.info(t('settings.noFilesToCleanup'));
+            }
+        } else {
+            ElMessage.error(t('settings.cleanupFailed'));
+        }
+    } catch (error) {
+        ElMessage.error(t('settings.cleanupFailed'));
+        console.error('Failed to cleanup logs:', error);
+    } finally {
+        isCleaningLogs.value = false;
+    }
+}
+
+async function saveLogRetentionDays() {
+    const days = logRetentionDays.value;
+    if (days < 0 || days > 30) {
+        ElMessage.error(t('settings.retentionDaysError'));
+        logRetentionDays.value = await window.api.logViewer.getRetentionDays();
+        return;
+    }
+    const result = await window.api.logViewer.setRetentionDays(days);
+    if (result.success) {
+        ElMessage.success(t('settings.retentionDaysSaved'));
+    } else {
+        ElMessage.error(result.msg || t('settings.retentionDaysSaveFailed'));
+    }
+}
+
 function applyFont(fontValue) {
     // 根据选择应用字体
     if (fontValue === 'default') {
@@ -334,6 +398,9 @@ async function loadSettings() {
     if (usageResult.success) {
         diskUsage.value = usageResult.size;
     }
+
+    // 加载日志保留天数配置
+    logRetentionDays.value = await window.api.logViewer.getRetentionDays();
 }
 
 onMounted(() => {

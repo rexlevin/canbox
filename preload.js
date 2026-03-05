@@ -38,6 +38,10 @@ contextBridge.exposeInMainWorld(
             cleanupOldLogs: (days) => ipcRenderer.invoke('cleanup-old-logs', days),
             toggleAlwaysOnTop: () => ipcRenderer.invoke('log-viewer:toggle-always-on-top')
         },
+        logViewer: {
+            getRetentionDays: () => ipcRenderer.invoke('logViewer:getRetentionDays'),
+            setRetentionDays: (days) => ipcRenderer.invoke('logViewer:setRetentionDays', days)
+        },
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
         },

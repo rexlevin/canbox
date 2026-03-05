@@ -407,6 +407,35 @@ function initIpcHandlers() {
             return { success: false, error: error.message };
         }
     });
+
+    // 日志查看器配置 - 获取保留天数
+    ipcMain.handle('logViewer:getRetentionDays', () => {
+        try {
+            const canboxStore = getCanboxStore();
+            const retentionDays = canboxStore.get('logRetentionDays', 30);
+            logger.info(`Get log retention days: ${retentionDays}`);
+            return retentionDays;
+        } catch (error) {
+            logger.error('Failed to get log retention days:', error);
+            return 30;
+        }
+    });
+
+    // 日志查看器配置 - 设置保留天数
+    ipcMain.handle('logViewer:setRetentionDays', async (event, days) => {
+        try {
+            if (days < 0 || days > 30) {
+                return { success: false, msg: 'Retention days must be between 0 and 30' };
+            }
+            const canboxStore = getCanboxStore();
+            canboxStore.set('logRetentionDays', days);
+            logger.info(`Log retention days set to: ${days}`);
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to set log retention days:', error);
+            return { success: false, msg: error.message };
+        }
+    });
 }
 
 // 初始化语言
