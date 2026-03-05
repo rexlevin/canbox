@@ -13,6 +13,7 @@ const { getCanboxStore } = require('./modules/main/storageManager');
 const processBridge = require('./modules/childprocess/processBridge');
 const pathManager = require('./modules/main/pathManager');
 const userDataMigration = require('./modules/main/userDataMigration');
+const logIpcHandler = require('./modules/ipc/logIpcHandler');
 
 // 默认语言为英文
 let currentLanguage = 'en-US';
@@ -128,22 +129,22 @@ function initIpcHandlers() {
 
     // 执行模式相关 IPC 处理
     ipcMain.handle('execution-get-global-mode', () => {
-        const executionDispatcher = require('./modules/execution/executionDispatcher');
+        const executionDispatcher = require('@modules/execution/executionDispatcher');
         return executionDispatcher.getGlobalMode();
     });
 
     ipcMain.handle('execution-set-global-mode', async (event, mode) => {
-        const executionDispatcher = require('./modules/execution/executionDispatcher');
+        const executionDispatcher = require('@modules/execution/executionDispatcher');
         return executionDispatcher.setGlobalMode(mode);
     });
 
     ipcMain.handle('execution-get-all-app-modes', () => {
-        const executionDispatcher = require('./modules/execution/executionDispatcher');
+        const executionDispatcher = require('@modules/execution/executionDispatcher');
         return executionDispatcher.getAllAppModes();
     });
 
     ipcMain.handle('execution-set-app-mode', async (event, uid, mode) => {
-        const executionDispatcher = require('./modules/execution/executionDispatcher');
+        const executionDispatcher = require('@modules/execution/executionDispatcher');
         return executionDispatcher.setAppMode(uid, mode);
     });
 
@@ -190,6 +191,8 @@ function initIpcHandlers() {
 
     // 初始化主进程 IPC 桥接
     processBridge.initMain();
+
+    // 日志相关的 IPC 处理器已在 logIpcHandler.js 中注册，无需额外初始化
 
     // 打开文件选择窗口
     ipcMain.on('openAppJson', (event, options) => {
@@ -367,6 +370,40 @@ function initIpcHandlers() {
             return { success: true };
         } catch (error) {
             logger.error('Failed to restart application:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 日志查看器窗口管理
+    ipcMain.handle('log-viewer:open', () => {
+        try {
+            const logWindowManager = require('@modules/main/logWindowManager');
+            logWindowManager.openLogViewer();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to open log viewer:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('log-viewer:close', () => {
+        try {
+            const logWindowManager = require('@modules/main/logWindowManager');
+            logWindowManager.closeLogViewer();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to close log viewer:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('log-viewer:toggle-always-on-top', () => {
+        try {
+            const logWindowManager = require('@modules/main/logWindowManager');
+            const newState = logWindowManager.toggleAlwaysOnTop();
+            return { success: true, alwaysOnTop: newState };
+        } catch (error) {
+            logger.error('Failed to toggle always on top:', error);
             return { success: false, error: error.message };
         }
     });

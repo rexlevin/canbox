@@ -2,6 +2,7 @@ const { app, dialog, Menu, Tray } = require('electron');
 const path = require('path')
 const package = require('./package.json');
 const { translate } = require('./locales');
+const logWindowManager = require('@modules/main/logWindowManager');
 
 // 窗口状态保存函数（由 main.js 注入）
 let saveWindowStateFn = null;
@@ -28,6 +29,16 @@ module.exports = {
             click: function() {
                 win.hide();
             }
+        }, {
+            type: 'separator'
+        }, {
+            label: translate('tray.openLogViewer', currentLang),
+            type: 'normal',
+            click: function() {
+                logWindowManager.openLogViewer();
+            }
+        }, {
+            type: 'separator'
         }, {
             label: translate('tray.toggleDevTools', currentLang),
             type: 'normal',
