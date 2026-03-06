@@ -59,6 +59,7 @@ A decentralized account system based on Matrix protocol for cross-device data sy
 - **Shortcuts**: Create shortcuts for frequently used applications.
 - **Multi-platform Support**: Based on Electron, supports Linux, Windows (not fully tested), and macOS (I don't have a Mac 😢, waiting for someone with a Mac to do this 😆)
 - **App Import**: Supports importing offline application packages, suitable for scenarios where apps cannot be publicly shared.
+- **Log Viewer**: Built-in log viewer with real-time log monitoring, filtering, search, and export capabilities.
 
 # Canbox Usage
 
@@ -235,11 +236,26 @@ For detailed development guides, please refer to:
 
 Canbox provides rich settings options to help you personalize the application configuration.
 
-### General Settings (Not Yet Implemented)
+### General Settings
 
+- **Language**: Choose application language (Chinese, English)
 - **App Path**: Set the app installation directory (default is apps in the application data directory)
 - **Temporary Directory**: Set the app temporary file directory
-- **Log Level**: Adjust the application log output level (info, warn, error)
+- **Log Retention Days**: Configure how many days of log files to keep (1-365 days, default 30)
+- **Immediate Log Cleanup**: Manually clean up old log files immediately
+
+### Log Viewer
+
+Access the log viewer from the system tray menu or use keyboard shortcuts. Features include:
+
+- **Real-time Monitoring**: View logs in real-time with auto-scroll
+- **Log Filtering**: Filter by log level (debug, info, warn, error)
+- **Search**: Search logs with keyword matching or regex
+- **Export**: Export logs in .txt or .json format
+- **Date Navigation**: View historical logs by date
+- **Log Management**: Clear current logs or clean up old log files
+- **Multiple Sources**: Switch between application logs and monitor logs
+- **Always on Top**: Keep the log viewer window on top
 
 ### Shortcuts
 
