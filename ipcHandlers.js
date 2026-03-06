@@ -14,6 +14,7 @@ const processBridge = require('./modules/childprocess/processBridge');
 const pathManager = require('./modules/main/pathManager');
 const userDataMigration = require('./modules/main/userDataMigration');
 const logIpcHandler = require('./modules/ipc/logIpcHandler');
+const { getAutoUpdateManager, IPC_CHANNELS } = require('./modules/auto-update');
 
 // 默认语言为英文
 let currentLanguage = 'en-US';
@@ -437,6 +438,104 @@ function initIpcHandlers() {
         } catch (error) {
             logger.error('Failed to set log retention days:', error);
             return { success: false, msg: error.message };
+        }
+    });
+
+    // ========== 自动更新相关 IPC 处理 ==========
+
+    // 检查更新
+    ipcMain.handle(IPC_CHANNELS.CHECK_FOR_UPDATE, async () => {
+        try {
+            const manager = getAutoUpdateManager();
+            const result = await manager.checkForUpdates();
+            return { success: true, ...result };
+        } catch (error) {
+            logger.error('Failed to check for updates:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 下载更新
+    ipcMain.handle(IPC_CHANNELS.DOWNLOAD_UPDATE, async () => {
+        try {
+            const manager = getAutoUpdateManager();
+            await manager.downloadUpdate();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to download update:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 安装更新
+    ipcMain.handle(IPC_CHANNELS.INSTALL_UPDATE, async () => {
+        try {
+            const manager = getAutoUpdateManager();
+            await manager.installUpdate();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to install update:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 取消下载
+    ipcMain.handle(IPC_CHANNELS.CANCEL_DOWNLOAD, async () => {
+        try {
+            const manager = getAutoUpdateManager();
+            await manager.cancelDownload();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to cancel download:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 获取更新状态
+    ipcMain.handle(IPC_CHANNELS.GET_UPDATE_STATUS, async () => {
+        try {
+            const manager = getAutoUpdateManager();
+            const status = manager.getStatus();
+            return { success: true, status };
+        } catch (error) {
+            logger.error('Failed to get update status:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 获取更新配置
+    ipcMain.handle(IPC_CHANNELS.GET_UPDATE_CONFIG, async () => {
+        try {
+            const { getConfig } = require('./modules/auto-update');
+            const config = await getConfig();
+            return { success: true, config };
+        } catch (error) {
+            logger.error('Failed to get update config:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 保存更新配置
+    ipcMain.handle(IPC_CHANNELS.SAVE_UPDATE_CONFIG, async (event, config) => {
+        try {
+            const { saveConfig } = require('./modules/auto-update');
+            await saveConfig(config);
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to save update config:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 跳过版本
+    ipcMain.handle(IPC_CHANNELS.SKIP_VERSION, async (event, version) => {
+        try {
+            const manager = getAutoUpdateManager();
+            await manager.skipVersion(version);
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to skip version:', error);
+            return { success: false, error: error.message };
         }
     });
 }

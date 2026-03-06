@@ -24,6 +24,7 @@ moduleAlias();
 const logger = require('@modules/utils/logger');
 const { getCanboxStore } = require('@modules/main/storageManager');
 const ModeDetector = require('@modules/execution/modeDetector');
+const { getAutoUpdateManager } = require('@modules/auto-update');
 
 const tray = require('./tray');
 const uatDev = (() => {
@@ -439,6 +440,46 @@ const createWindow = () => {
         console.info('now win closed, and app will quit');
         app.quit();
     });
+
+    // 初始化自动更新管理器
+    initAutoUpdate();
+}
+
+/**
+ * 初始化自动更新功能
+ *
+ * 功能说明：
+ * - 仅在生产环境（打包后）启用自动更新
+ * - 开发环境跳过更新检查，避免干扰开发
+ * - 延迟 5 秒检查更新，避免影响启动速度
+ */
+function initAutoUpdate() {
+    try {
+        // 生产环境检测
+        // app.isPackaged 在打包后返回 true，开发环境返回 false
+        if (!app.isPackaged) {
+            logger.info('[AutoUpdate] 开发环境，跳过自动更新检查');
+            return;
+        }
+
+        // 获取自动更新管理器实例
+        const updateManager = getAutoUpdateManager();
+        updateManager.setMainWindow(win);
+
+        // 延迟检查更新，避免影响启动速度
+        setTimeout(async () => {
+            try {
+                logger.info('[AutoUpdate] 开始启动时更新检查');
+                await updateManager.checkForUpdates();
+            } catch (error) {
+                logger.error('[AutoUpdate] 启动时更新检查失败: {}', error.message);
+            }
+        }, 5000); // 延迟 5 秒
+
+        logger.info('[AutoUpdate] 自动更新管理器已初始化');
+    } catch (error) {
+        logger.error('[AutoUpdate] 初始化自动更新管理器失败: {}', error.message);
+    }
 }
 
 // 初始化 IPC 消息处理（包含语言初始化）

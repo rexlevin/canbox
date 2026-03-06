@@ -39,6 +39,16 @@ contextBridge.exposeInMainWorld(
             getRetentionDays: () => ipcRenderer.invoke('logViewer:getRetentionDays'),
             setRetentionDays: (days) => ipcRenderer.invoke('logViewer:setRetentionDays', days)
         },
+        autoUpdate: {
+            checkForUpdate: () => ipcRenderer.invoke('check-for-update'),
+            downloadUpdate: () => ipcRenderer.invoke('download-update'),
+            installUpdate: () => ipcRenderer.invoke('install-update'),
+            cancelDownload: () => ipcRenderer.invoke('cancel-download'),
+            getStatus: () => ipcRenderer.invoke('get-update-status'),
+            getConfig: () => ipcRenderer.invoke('get-update-config'),
+            saveConfig: (config) => ipcRenderer.invoke('save-update-config', config),
+            skipVersion: (version) => ipcRenderer.invoke('skip-version', version)
+        },
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
         },
