@@ -1,15 +1,41 @@
 const Store = require('electron-store');
+const path = require('path');
+const { app } = require('electron');
+const logger = require('@modules/utils/logger');
 
 /**
  * 统一管理 electron-store 的配置和操作
  */
 class Storage {
     constructor(options = {}) {
+        let cwd = options.cwd || 'Users';
+        const pathManager = require('./pathManager');
+        const customBase = pathManager.getUsersBasePath ? pathManager.getUsersBasePath() : null;
+        const defaultBase = app.getPath('userData');
+
+        // 如果是绝对路径，直接使用
+        if (path.isAbsolute(cwd)) {
+            this.store = new Store({
+                name: options.name || 'default',
+                cwd: cwd,
+                encryptionKey: options.encryptionKey
+            });
+            return;
+        }
+
+        // 否则，使用 customBase 或 defaultBase 作为基准
+        const finalCwd = path.join(customBase || defaultBase, cwd);
+
         this.store = new Store({
             name: options.name || 'default',
-            cwd: options.cwd || 'Users',
+            cwd: finalCwd,
             encryptionKey: options.encryptionKey
         });
+
+        // 调试：记录实际使用的路径
+        if (options.name === 'canbox') {
+            logger.debug('[Storage] canbox.json path: {} / {}', finalCwd, finalCwd);
+        }
     }
 
     /**
@@ -56,7 +82,7 @@ class Storage {
 function getWinStateStore() {
     return new Storage({
         name: 'winState',
-        cwd: 'Users/data'
+        cwd: 'Users'
     });
 }
 
@@ -104,10 +130,37 @@ function getCanboxStore() {
     });
 }
 
+/**
+ * 获取 app-execution 配置存储实例
+ * @returns {Storage}
+ */
+function getAppExecutionStore() {
+    return new Storage({
+        name: 'app-execution',
+        cwd: 'Users'
+    });
+}
+
+/**
+ * 获取 Canbox 系统配置存储实例
+ * 配置文件在 userData 目录下，和 Users/ 平级
+ * 用于存储 customDataRoot 等系统级配置
+ * @returns {Storage}
+ */
+function getSystemConfigStore() {
+    // 系统配置必须存储在默认 userData 目录下，不受 customDataRoot 影响
+    return new Storage({
+        name: 'config',
+        cwd: app.getPath('userData')  // 直接使用默认 userData 路径
+    });
+}
+
 module.exports = {
     getWinStateStore,
     getAppsStore,
     getAppsDevStore,
     getReposStore,
-    getCanboxStore
+    getCanboxStore,
+    getAppExecutionStore,
+    getSystemConfigStore
 };

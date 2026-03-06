@@ -28,7 +28,7 @@ function getSharp() {
             const sharpModule = require('sharp');
             sharpCache = sharpModule;
         } catch (error) {
-            console.warn('sharp 模块加载失败，图标转换功能将不可用:', error.message);
+            logger.warn('sharp 模块加载失败，图标转换功能将不可用 / Sharp module load failed, icon conversion unavailable: {}', error.message);
             sharpCache = false; // 标记为已尝试加载但失败
         }
     }
@@ -44,7 +44,7 @@ function getSharp() {
 async function convertToIco(inputPath, outputPath) {
     const sharp = getSharp();
     if (!sharp) {
-        console.warn('sharp 模块未加载，跳过图标转换');
+        logger.warn('sharp 模块未加载，跳过图标转换 / Sharp module not loaded, skip icon conversion');
         return false;
     }
 
@@ -67,17 +67,17 @@ async function convertToIco(inputPath, outputPath) {
             fs.unlinkSync(tempPngPath);
         }
 
-        console.log(`成功转换图标: ${inputPath} -> ${outputPath}`);
+        logger.debug(`成功转换图标 / Icon conversion successful: ${inputPath} -> ${outputPath}`);
         return true;
     } catch (error) {
-        console.error('转换图标失败:', error);
+        logger.error('转换图标失败 / Icon conversion failed: {}', error.message || error);
         // 清理临时文件
         const tempPngPath = outputPath.replace('.ico', '.temp.png');
         if (fs.existsSync(tempPngPath)) {
             try {
                 fs.unlinkSync(tempPngPath);
             } catch (cleanupError) {
-                console.error('清理临时文件失败:', cleanupError);
+                logger.error('清理临时文件失败 / Failed to cleanup temp file: {}', cleanupError.message || cleanupError);
             }
         }
         return false;
@@ -118,7 +118,7 @@ async function createSimpleIco(pngPath, outputPath) {
             const icoData = Buffer.concat([header, dirEntry, pngData]);
             fs.writeFileSync(outputPath, icoData);
 
-            console.log(`ICO文件创建成功: ${outputPath} (${pngData.length} bytes)`);
+            logger.debug(`ICO文件创建成功 / ICO file created: ${outputPath} (${pngData.length} bytes)`);
             resolve();
         } catch (error) {
             reject(error);
@@ -134,8 +134,7 @@ function getAllApps() {
     try {
         const appsData = getAppsStore().get('default') || {};
         if (!appsData || Object.keys(appsData).length === 0) {
-            // return handleError(new Error('当前没有应用数据'), 'getAllApps');
-            console.info('当前没有应用数据');
+            logger.info('当前没有应用数据 / No application data available');
             return { success: true, data: {}};
         }
         Object.entries(appsData).forEach(([uid, appItem]) => {
@@ -146,7 +145,7 @@ function getAllApps() {
                 appJsonContent = fs.readFileSync(path.join(asarPath, 'app.json'), 'utf8');
                 appJson = JSON.parse(appJsonContent);
             } catch (error) {
-                console.error(`读取 ${uid}.asar/app.json 失败:`, error);
+                logger.error(`读取 ${uid}.asar/app.json 失败 / Failed to read ${uid}.asar/app.json: {}`, error.message || error);
                 return;
             }
             const iconPath = path.join(getAppPath(), uid + '.asar', appJson.logo);
@@ -163,7 +162,7 @@ function getAllApps() {
  * 获取应用信息
  */
 function getAppInfo(uid) {
-    console.info('uid:', uid);
+    logger.debug('getAppInfo uid: {}', uid);
     if (!uid) {
         return handleError(new Error('uid 不能为空'), 'getAppInfo');
     }
@@ -181,7 +180,7 @@ function getAppInfo(uid) {
             }
             return null;
         } catch (err) {
-            console.error(`文件操作失败: ${err.path}`, err);
+            logger.error(`文件操作失败 / File operation failed: ${err.path}: {}`, err.message || err);
             return null;
         }
     };
@@ -199,7 +198,7 @@ function getAppInfo(uid) {
  * 获取开发应用信息（仅用于开发应用）
  */
 function getAppDevInfo(uid) {
-    console.info('appDev uid:', uid);
+    logger.debug('getAppDevInfo uid: {}', uid);
     if (!uid) {
         return handleError(new Error('uid 不能为空'), 'getAppDevInfo');
     }
@@ -220,7 +219,7 @@ function getAppDevInfo(uid) {
             }
             return null;
         } catch (err) {
-            console.error(`文件操作失败: ${err.path}`, err);
+            logger.error(`文件操作失败 / File operation failed: ${err.path}: {}`, err.message || err);
             return null;
         }
     };
@@ -273,7 +272,7 @@ async function handleImportApp(event, zipPath, uid) {
         }
         // 使用 fs.copyFileSync 替代命令行复制
         fs.copyFileSync(absoluteAsarPath, targetPath);
-        console.log('ZIP 文件复制成功！');
+        logger.debug('ZIP 文件复制成功 / ZIP file copied successfully');
 
         // 将 getAppTempPath() 目录下的 zip 文件解压
         if (process.platform === 'win32') {
@@ -281,13 +280,13 @@ async function handleImportApp(event, zipPath, uid) {
         } else {
             execSync(`unzip -o "${targetPath}" -d "${getAppTempPath()}"`, { stdio: 'inherit' });
         }
-        console.info('解压成功:', getAppTempPath());
+        logger.info('解压成功 / Extraction successful: {}', getAppTempPath());
         // 删除 zip 文件
         fs.rmSync(targetPath, { recursive: true, force: true });
         // 重命名文件：检查 getAppTempPath() 下的文件和目录，如果当前存在 xxxx.asar 则改为 ${uuid}.asar，xxxx.asar.unpacked 改为 ${uuid}.asar.unpacked
         const files = fs.readdirSync(getAppTempPath());
         files.forEach(file => {
-            console.info('file:', file);
+            logger.debug('file / 文件:', file);
             if (file.endsWith('.asar')) {
                 fs.renameSync(path.join(getAppTempPath(), file), path.join(getAppTempPath(), `${uuid}.asar`));
             } else if (file.endsWith('.asar.unpacked')) {
@@ -313,8 +312,8 @@ async function handleImportApp(event, zipPath, uid) {
             originalFs.rmSync(getAppTempPath(), { recursive: true, force: true });
         }
 
-        console.info(DateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-        console.info(DateFormat.format(new Date()));
+        logger.debug(DateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
+        logger.debug(DateFormat.format(new Date()));
 
         const asarTargetPath = path.join(getAppPath(), `${uuid}.asar`);
         // 读取 asar 文件内部内容
@@ -344,21 +343,21 @@ async function handleImportApp(event, zipPath, uid) {
 
         try {
             fs.copyFileSync(logoPathInAsar, logoPathInTarget);
-            console.log('Logo 文件复制成功！');
+            logger.debug('Logo 文件复制成功 / Logo file copied successfully');
 
             // Windows 下生成 ICO 格式的图标
             if (process.platform === 'win32' && (logoExt === '.png' || logoExt === '.jpg' || logoExt === '.jpeg')) {
                 const icoPath = path.join(getAppPath(), `${uuid}.ico`);
-                console.log('开始生成 ICO 文件...');
+                logger.debug('开始生成 ICO 文件 / Starting to generate ICO file...');
                 await convertToIco(logoPathInTarget, icoPath);
             }
         } catch (err) {
-            console.error('复制logo文件失败:', err);
+            logger.error('复制logo文件失败 / Failed to copy logo file: {}', err.message || err);
         }
 
         return { success: true, uuid };
     } catch (error) {
-        console.error('导入应用失败:', error);
+        logger.error('导入应用失败 / Failed to import app: {}', error.message || error);
         return handleError(error, 'handleImportApp');
     }
 }

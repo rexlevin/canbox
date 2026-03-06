@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
 const { app } = require('electron');
-const logger = require('../utils/logger');
+const logger = require('@modules/utils/logger');
 
 const { handleError } = require('@modules/ipc/errorHandler');
 const repoUtils = require('@modules/utils/repoUtils');
@@ -14,7 +14,7 @@ const DateFormat = require('@modules/utils/DateFormat');
 // 导入electron-store管理器
 const { getReposStore } =require('@modules/main/storageManager');
 // 导入路径管理器
-const { getReposPath } = require('@modules/main/pathManager');
+const { getReposPath, getReposTempPath } = require('@modules/main/pathManager');
 
 class RepoMonitorService {
     constructor() {
@@ -62,29 +62,23 @@ class RepoMonitorService {
                     for (const file of filesToDownload) {
                         const fileUrl = repoUtils.getFileUrl(repoUrl, branch, file);
                         const filePath = path.join(reposPath, file);
-                        
-                        // 获取远程文件哈希值（或下载到临时目录计算）
-                        let remoteHash = '', tempFilePath, downloadSuccess = false;
-                        try {
-                            remoteHash = await repoUtils.getFileHash(repoUrl, branch, file);
-                        } catch (error) {
-                            logger.monitor.warn(`无法获取 ${file} 的哈希值，将尝试下载文件...${error}`);
-                            const { getReposTempPath } = require('../main/pathManager');
-                            const REPOS_TEMP_PATH = getReposTempPath();
-                            tempFilePath = path.join(REPOS_TEMP_PATH, file);
-                            downloadSuccess = await repoUtils.downloadFileFromRepo(fileUrl, tempFilePath);
-                            if (downloadSuccess) {
-                                remoteHash = await this.calculateFileHash(tempFilePath);
-                            }
-                        }
 
-                        if (!downloadSuccess && file === 'app.json') {
-                            return handleError(new Error('无法下载app.json, 请检查仓库地址是否正确或是否有权限'), 'handleAddAppRepo');
-                        }
+                        // 下载文件到临时目录
+                        let tempFilePath, downloadSuccess = false;
+                        const REPOS_TEMP_PATH = getReposTempPath();
+                        tempFilePath = path.join(REPOS_TEMP_PATH, file);
+                        downloadSuccess = await repoUtils.downloadFileFromRepo(fileUrl, tempFilePath);
+
                         if (!downloadSuccess) {
+                            if (file === 'app.json') {
+                                return handleError(new Error('无法下载app.json, 请检查仓库地址是否正确或是否有权限'), 'handleAddAppRepo');
+                            }
                             logger.monitor.error(`文件 ${file} 下载失败`);
                             continue;
                         }
+
+                        // 计算下载文件的哈希值
+                        const remoteHash = await this.calculateFileHash(tempFilePath);
 
                         // 对比哈希值
                         const storedHash = this.store.get(`default.${uid}.files.${file.replace(/\./g, '_')}`);
@@ -148,7 +142,7 @@ class RepoMonitorService {
                     logger.monitor.info(`仓库 ${repoInfo.name} 信息已更新`);
                 } catch (error) {
                     logger.monitor.warn(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`, error);
-                    console.info(`仓库 ${repoInfo.repo} 扫描失败: ${error.message}`, error);
+                    logger.info(`仓库 ${repoInfo.repo} 扫描失败 / Repo ${repoInfo.repo} scan failed: ${error.message}`);
                 }
             }
             logger.monitor.info('仓库扫描完成');

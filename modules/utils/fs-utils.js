@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const logger = require('@modules/utils/logger');
 
 /**
  * 递归创建目录
@@ -60,7 +61,7 @@ function moveDirectoryContents(sourceDir, targetDir) {
     } catch (err) {
         if (err.code === 'ENOENT') {
             fs.mkdirSync(targetDir, { recursive: true });
-            stdout.write(`创建目标目录: ${targetDir}\n`);
+            logger.info(`创建目标目录: ${targetDir} / Create target directory: ${targetDir}`);
         } else {
             throw err;
         }
@@ -77,9 +78,9 @@ function moveDirectoryContents(sourceDir, targetDir) {
             // 移动前检查目标路径
             handleTargetPath(targetPath, item);
             fs.renameSync(sourcePath, targetPath);
-            console.info(`移动成功: ${item.name}`);
+            logger.info(`移动成功: ${item.name} / Move successful: ${item.name}`);
         } catch (err) {
-            console.error(`移动失败: ${item.name}: ${err.message}`);
+            logger.error(`移动失败: ${item.name}: ${err.message} / Move failed: ${item.name}: ${err.message}`);
         }
     }
 }

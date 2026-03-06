@@ -1,3 +1,5 @@
+[中文版](APP_DEV_CN.md) | [English](APP_DEV.md)
+
 # 文件说明
 
 - `app.json`: APP描述文件，包含 APP 启动的窗口参数

@@ -92,14 +92,27 @@
 
     <CustomDrawer v-model="drawerInfo" :size="580">
         <div class="drawer-container">
-            <el-tabs class="drawer-tabs">
-                <el-tab-pane :label="$t('appList.appIntro')">
-                    <div class="drawer-content" id="divAppInfo" v-html="renderedReadme"></div>
-                </el-tab-pane>
-                <el-tab-pane :label="$t('appList.versionHistory')" v-if="historyFlag">
-                    <div class="drawer-content" v-html="renderedHistory"></div>
-                </el-tab-pane>
-            </el-tabs>
+            <div class="custom-tabs">
+                <div class="custom-tabs-header">
+                    <div
+                        class="custom-tab-item"
+                        :class="{ active: activeTab === 0 }"
+                        @click="activeTab = 0">
+                        {{ $t('appList.appIntro') }}
+                    </div>
+                    <div
+                        class="custom-tab-item"
+                        :class="{ active: activeTab === 1 }"
+                        v-if="historyFlag"
+                        @click="activeTab = 1">
+                        {{ $t('appList.versionHistory') }}
+                    </div>
+                </div>
+                <div class="custom-tabs-content">
+                    <div class="drawer-content" v-show="activeTab === 0" id="divAppInfo" v-html="renderedReadme"></div>
+                    <div class="drawer-content" v-show="activeTab === 1" v-html="renderedHistory"></div>
+                </div>
+            </div>
         </div>
     </CustomDrawer>
 </template>
@@ -121,6 +134,7 @@ const drawerInfo = ref(false);
 const readme = ref(null);
 const history = ref(null);
 const historyFlag = ref(false);
+const activeTab = ref(0);
 
 // 控制loading状态
 let loadingTag = ref({});
@@ -457,15 +471,54 @@ button:hover {
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
 }
 
-.drawer-tabs {
-  flex-shrink: 0;
+/* 自定义 Tabs 样式 */
+.custom-tabs {
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  width: 100%;
 }
 
-.drawer-tabs :deep(.el-tabs__header) {
+.custom-tabs-header {
+  display: flex;
   flex-shrink: 0;
+  border-bottom: 1px solid #e4e7ed;
+  background: #f5f7fa;
+}
+
+.custom-tab-item {
+  flex: 1;
+  padding: 0 20px;
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  color: #606266;
+  transition: all 0.3s;
+  user-select: none;
+}
+
+.custom-tab-item:hover {
+  color: #409eff;
+  background: #ecf5ff;
+}
+
+.custom-tab-item.active {
+  color: #409eff;
+  background: #fff;
+  border-bottom: 2px solid #409eff;
+  font-weight: bold;
+}
+
+.custom-tabs-content {
+  flex: 1;
+  overflow: hidden;
+  overflow-y: auto;
 }
 
 .drawer-tabs :deep(.el-tabs__content) {

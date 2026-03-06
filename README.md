@@ -31,12 +31,19 @@ Canbox is an open project, and every contribution helps make it better!
 
 ---
 
+## 🗺️ Planned Features
+
+The following features are planned for future development. For detailed information, please see [Feature Roadmap](./docs/FEATURE_ROADMAP.md).
+
+---
+
 # Features
 
 - **App Management**: Supports installation, uninstallation, and updates of applications.
 - **Shortcuts**: Create shortcuts for frequently used applications.
 - **Multi-platform Support**: Based on Electron, supports Linux, Windows (not fully tested), and macOS (I don't have a Mac 😢, waiting for someone with a Mac to do this 😆)
 - **App Import**: Supports importing offline application packages, suitable for scenarios where apps cannot be publicly shared.
+- **Log Viewer**: Built-in log viewer with real-time log monitoring, filtering, search, and export capabilities.
 
 # Canbox Usage
 
@@ -49,6 +56,7 @@ Canbox is an open project, and every contribution helps make it better!
 Canbox supports importing application packages packaged by developers (ZIP format).
 
 This feature is particularly suitable for scenarios where apps cannot be publicly shared, such as:
+
 - Internal enterprise tools that should not be made public
 - Apps containing sensitive business logic or proprietary algorithms
 - Personal tools with private data processing requirements
@@ -86,8 +94,10 @@ Enter the Repo URL in "App Repository" -> "Add App Source" to add an app source.
 
 | App     | Repo URL                               | Description                                           |
 | ------- | -------------------------------------- | ----------------------------------------------------- |
-| JsonBox | https://gitee.com/lizl6/cb-jsonbox     | JSON formatting, JSON to other formats like xml, yaml |
+| JsonBox | https://github.com/rexlevin/cb-jsonbox | JSON formatting, JSON to other formats like xml, yaml |
 | PassGen | https://github.com/rexlevin/cb-passgen | Generate passwords, random strings, timestamps        |
+
+For more apps, please visit: [Canbox App Center](https://rexlevin.github.io/canbox-pages/apps.html)
 
 ### Export App Source List
 
@@ -132,18 +142,22 @@ Canbox acts as a lightweight runtime, providing a minimal set of core capabiliti
 Canbox provides the following core features for apps:
 
 **Data Persistence**
+
 - `canbox.db` - Local database based on PouchDB (put/get/bulkDocs/remove)
 - `canbox.store` - Key-value storage based on electron-store
 
 **System Interaction**
+
 - `canbox.dialog` - Native file dialogs (open/save/message)
 - `canbox.win.createWindow` - Create child windows
 - `canbox.win.notification` - System notifications
 
 **Lifecycle**
+
 - `registerCloseCallback` - Window close callback
 
 **Design Principles**
+
 - Keep minimal, providing only core capabilities
 - Other features are implemented by apps themselves (e.g., network requests, clipboard operations, etc.)
 - Ensure apps have sufficient freedom
@@ -202,15 +216,42 @@ For detailed development guides, please refer to:
 
 ## Settings
 
-![screenshot-5](./public/screenshot/screenshot-5.png)
+![screenshot-settings](./public/screenshot/screenshot-settings.png)
 
 Canbox provides rich settings options to help you personalize the application configuration.
 
-### General Settings (Not Yet Implemented)
+### General Settings
 
-- **App Path**: Set the app installation directory (default is apps in the application data directory)
-- **Temporary Directory**: Set the app temporary file directory
-- **Log Level**: Adjust the application log output level (info, warn, error)
+- **Language**: Choose application language (Chinese, English)
+- **Font**: Select application font (supports default and multiple system fonts)
+- **App Execution Mode**: Choose between Window mode or Childprocess mode
+- **Create/Delete Shortcut**: Create desktop shortcuts for Canbox
+
+### Data Management
+
+- **Custom Data Path**: Set a custom directory for all Canbox data
+  - View current data path and disk usage
+  - Migrate to a new path (requires restart)
+  - Reset to default path (requires restart)
+
+### Log Viewer Settings
+
+- **Log Retention Days**: Configure how many days of log files to keep (0-30 days, default 30)
+  - Set to 0 to disable automatic log cleanup
+  - Old logs are cleaned up automatically when opening the log viewer
+
+### Log Viewer
+
+Access the log viewer from the system tray menu or use keyboard shortcuts. Features include:
+
+- **Real-time Monitoring**: View logs in real-time with auto-scroll
+- **Log Filtering**: Filter by log level (debug, info, warn, error)
+- **Search**: Search logs with keyword matching or regex
+- **Export**: Export logs in .txt or .json format
+- **Date Navigation**: View historical logs by date
+- **Log Management**: Clear current logs or clean up old log files
+- **Multiple Sources**: Switch between application logs and monitor logs
+- **Always on Top**: Keep the log viewer window on top
 
 ### Shortcuts
 
@@ -238,9 +279,9 @@ Please visit the project's GitHub Releases page to download the latest version o
 
 # Development Documentation
 
-[Canbox Development Documentation](./docs/CANBOX_DEV_CN.md)
+[Canbox Development Documentation](./docs/CANBOX_DEV.md)
 
-[App Development Documentation](./docs/APP_DEV_CN.md)
+[App Development Documentation](./docs/APP_DEV.md)
 
 [API Documentation](./docs/API.md)
 

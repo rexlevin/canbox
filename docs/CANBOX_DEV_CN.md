@@ -1,3 +1,5 @@
+[中文版](CANBOX_DEV_CN.md) | [English](CANBOX_DEV.md)
+
 # CanBox开发
 
 1. fork 代码

@@ -34,16 +34,16 @@ const buildAsar = async (uid) => {
         }
         // fs.mkdirSync(outputDir, { recursive: true });
         fs.mkdirSync(tmpDir, { recursive: true });
-        console.info('outputDir:', outputDir, '\ntmpDir:', tmpDir);
+        logger.info('outputDir:', outputDir, '\ntmpDir:', tmpDir);
 
         // 复制文件到临时目录
         buildConfig.files.forEach((pattern) => {
-            console.info('partten: ', pattern);
+            logger.info('pattern:', pattern);
             const fullPattern = path.join(appDevItem.path, pattern);
-            console.info('fullPartten: ', fullPattern);
+            logger.info('fullPattern:', fullPattern);
             const matchedFiles = glob.sync(fullPattern, { nodir: true }); // 匹配所有文件（不包括目录）
             if (matchedFiles.length === 0) {
-                console.warn(`Warning: No files matched "${fullPattern}", skipping.`);
+                logger.warn(`No files matched "${fullPattern}", skipping.`);
                 return;
             }
 
@@ -81,7 +81,7 @@ const buildAsar = async (uid) => {
         } else {
             execSync(`cd "${outputDir}" && zip -r "${zipPath}" *`, { stdio: 'inherit' });
         }
-        console.info('zipPath:', zipPath);
+        logger.info('zipPath:', zipPath);
         logger.info(`打包应用: ${appJson.id} 版本: ${appJson.version} 成功`);
 
         // 删除 outputDir 目录下除了 ${appJson.id}-${appJson.version}.zip 之外的所有文件
@@ -91,13 +91,13 @@ const buildAsar = async (uid) => {
             if (file !== zipFileName) {
                 const filePath = path.join(outputDir, file);
                 originalFs.rmSync(filePath, { recursive: true, force: true });
-                console.info(`删除文件: ${filePath}`);
+                logger.info(`Deleted file: ${filePath}`);
             }
         });
 
         return { success: true, msg: '打包成功', asarPath };
     } catch (err) {
-        console.error('打包失败:', err);
+        logger.error('打包失败 / Build failed: {}', err.message);
         return { success: false, msg: err.message };
     }
 };
@@ -105,7 +105,7 @@ const buildAsar = async (uid) => {
 function copyNodeModulesWithoutDevDeps(appDevItem, buildConfig) {
     const workDir = appDevItem.path;
     const tmpDir = path.join(workDir, buildConfig.outputDir, 'tmp');
-    console.info('tmpDir:', tmpDir);
+    logger.info('tmpDir:', tmpDir);
     // const buildConfig = JSON.parse(fs.readFileSync(buildConfigPath, 'utf8'));
     const packageJson = JSON.parse(fs.readFileSync(path.join(workDir, 'package.json'), 'utf8'));
     // path.join(workDir, 'package.json');
@@ -121,15 +121,15 @@ function copyNodeModulesWithoutDevDeps(appDevItem, buildConfig) {
     const nodeModulesDest = path.join(tmpDir, 'node_modules');
 
     if (!fs.existsSync(nodeModulesSrc)) {
-        console.warn('Warning: node_modules not found, skipping.');
+        logger.warn('node_modules not found, skipping.');
         return;
     }
 
-    console.info('dependencies length: ', dependencies.length);
+    logger.info('dependencies count:', dependencies.length);
     // 遍历 dependencies 并复制
     dependencies.forEach((dep) => {
         if (excludedDeps.includes(dep)) {
-            console.log(`⚠️ Skipping devDependency: ${dep}`);
+            logger.info(`Skipping devDependency: ${dep}`);
             return;
         }
 
@@ -139,11 +139,11 @@ function copyNodeModulesWithoutDevDeps(appDevItem, buildConfig) {
         if (fs.existsSync(depSrc)) {
             fse.copySync(depSrc, depDest); // 递归复制整个依赖目录
         } else {
-            console.warn(`Warning: Dependency "${dep}" not found in node_modules.`);
+            logger.warn(`Dependency "${dep}" not found in node_modules.`);
         }
     });
 
-    console.log('✅ node_modules copied (excluding devDependencies).');
+    logger.info('node_modules copied (excluding devDependencies).');
 }
 
 module.exports = { buildAsar };

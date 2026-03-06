@@ -1,3 +1,5 @@
+[中文版](API_CN.md) | [English](API.md)
+
 # store
 
 使用 electron-store 进行数据存储

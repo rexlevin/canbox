@@ -11,6 +11,8 @@ lerna-debug.log*
 /node_modules
 /dist
 /build
+.codebuddy/
+openspec/
 
 # Editor directories and files
 .vscode/*

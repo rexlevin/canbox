@@ -39,6 +39,13 @@
     height: 100%;
 }
 
+/* 左侧标签页自适应宽度，最大宽度 280px */
+.full-height-tabs :deep(.el-tabs__header) {
+    width: 15vw;
+    max-width: 280px;
+    min-width: 180px;
+}
+
 .full-height-pane {
     height: 100%;
     overflow: hidden;

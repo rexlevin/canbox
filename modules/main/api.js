@@ -1,4 +1,5 @@
 const { ipcMain } = require('electron');
+const logger = require('@modules/utils/logger');
 
 const winFactory = require('@modules/core/win');
 const dialogFactory = require('@modules/core/dialog');
@@ -11,13 +12,13 @@ const sudo = require('@modules/core/sudo');
  */
 function initDbIpcHandlers() {
     ipcMain.on('msg-db', (event, args) => {
-        console.info('args: ', args);
+        logger.debug('args / 参数:', JSON.stringify(args));
         DB[args.type](args.appId, args.param, (res, err) => {
             if (err) {
                 event.returnValue = JSON.stringify({ success: false, msg: err.message });
                 return;
             }
-            console.info('api.js: dbHandler res: ', res);
+            logger.debug('api.js: dbHandler res / api.js 数据库处理结果:', JSON.stringify(res));
             event.returnValue = JSON.stringify({ success: true, data: res});
         });
     });
@@ -39,7 +40,7 @@ function initDbIpcHandlers() {
  */
 function initElectronStoreIpcHandlers() {
     ipcMain.on('msg-electronStore', (event, args) => {
-        console.info('args: ', args);
+        logger.debug('args / 参数:', JSON.stringify(args));
         const store = new ElectronStore(args.appId, args.param.name);
         store[args.type](args.param.key, args.param.value)
             .then(result => {
@@ -64,9 +65,9 @@ function initElectronStoreIpcHandlers() {
  */
 function createWindowIpcHandlers() {
     ipcMain.on('msg-createWindow', (event, args) => {
-        console.info('args: ', args);
+        logger.debug('args / 参数:', JSON.stringify(args));
         const result = winFactory.createWindow(args.options, args.params, args.appId);
-        console.info('result: ', result);
+        logger.debug('result / 结果:', JSON.stringify(result));
         event.returnValue = JSON.stringify(result);
     });
 }
@@ -84,7 +85,7 @@ function createWindowIpcHandlers() {
  */
 function notificationHandlers() {
     ipcMain.on('msg-notification', (event, args) => {
-        console.info('args: ', args);
+        logger.debug('args / 参数:', JSON.stringify(args));
         winFactory.showNotification(args.options, args.appId);
         // console.info('result: ', result);
         // event.returnValue = JSON.stringify(result);
@@ -103,7 +104,7 @@ function notificationHandlers() {
  */
 function initDialogIpcHandlers() {
     ipcMain.on('msg-dialog', (event, args) => {
-        console.info('args: ', args);
+        logger.debug('args / 参数:', JSON.stringify(args));
         dialogFactory[args.type](args.options)
             .then(result => {
                 event.returnValue = JSON.stringify({ success: true, data: result });
@@ -161,11 +162,11 @@ function initReadFileIpcHandlers() {
             // 构建完整的文件路径
             const filePath = path.join(appPath, args.filePath);
 
-            console.info('[api.js] 尝试读取文件: ', filePath);
+            logger.debug('[api.js] 尝试读取文件 / Attempting to read file: {}', filePath);
 
             // 检查文件是否存在
             if (!fs.existsSync(filePath)) {
-                console.error('[api.js] 文件不存在: ', filePath);
+                logger.error('[api.js] 文件不存在 / File does not exist: {}', filePath);
                 return {
                     success: false,
                     msg: `文件不存在: ${args.filePath}`
@@ -174,13 +175,13 @@ function initReadFileIpcHandlers() {
 
             // 读取文件内容
             const content = fs.readFileSync(filePath, 'utf8');
-            console.info('[api.js] 文件读取成功: ', args.filePath);
+            logger.debug('[api.js] 文件读取成功 / File read successfully: {}', args.filePath);
             return {
                 success: true,
                 data: content
             };
         } catch (error) {
-            console.error('[api.js] 读取文件失败:', error);
+            logger.error('[api.js] 读取文件失败 / Failed to read file: {}', error.message || error);
             return {
                 success: false,
                 msg: `读取文件失败: ${error.message}`
@@ -272,7 +273,7 @@ function initDownloadCanboxTypesIpcHandlers() {
                 msg: '保存成功'
             };
         } catch (error) {
-            console.error('[api.js] 下载 canbox.d.ts 失败:', error);
+            logger.error('[api.js] 下载 canbox.d.ts 失败 / Failed to download canbox.d.ts: {}', error.message || error);
             return {
                 success: false,
                 msg: `下载失败: ${error.message}`

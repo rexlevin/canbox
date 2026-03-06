@@ -12,6 +12,33 @@ contextBridge.exposeInMainWorld(
             get: () => ipcRenderer.invoke('font-get'),
             set: (fontValue) => ipcRenderer.invoke('font-set', fontValue)
         },
+        execution: {
+            getGlobalMode: () => ipcRenderer.invoke('execution-get-global-mode'),
+            setGlobalMode: (mode) => ipcRenderer.invoke('execution-set-global-mode', mode),
+            getAllAppModes: () => ipcRenderer.invoke('execution-get-all-app-modes'),
+            setAppMode: (uid, mode) => ipcRenderer.invoke('execution-set-app-mode', uid, mode)
+        },
+        userData: {
+            getCurrentPath: () => ipcRenderer.invoke('userData:getCurrentPath'),
+            getDiskUsage: () => ipcRenderer.invoke('userData:getDiskUsage'),
+            selectDirectory: () => ipcRenderer.invoke('userData:selectDirectory'),
+            migrate: (newBasePath) => ipcRenderer.invoke('userData:migrate', newBasePath),
+            resetToDefault: () => ipcRenderer.invoke('userData:resetToDefault'),
+            restartNow: () => ipcRenderer.invoke('userData:restartNow')
+        },
+        log: {
+            openViewer: () => ipcRenderer.invoke('log-viewer:open'),
+            getLogs: (options) => ipcRenderer.invoke('get-logs', options),
+            getLogFiles: (source) => ipcRenderer.invoke('get-log-files', source),
+            exportLogs: (format, range) => ipcRenderer.invoke('export-logs', format, range),
+            clearLogs: (source) => ipcRenderer.invoke('clear-logs', source),
+            cleanupOldLogs: (days) => ipcRenderer.invoke('cleanup-old-logs', days),
+            toggleAlwaysOnTop: () => ipcRenderer.invoke('log-viewer:toggle-always-on-top')
+        },
+        logViewer: {
+            getRetentionDays: () => ipcRenderer.invoke('logViewer:getRetentionDays'),
+            setRetentionDays: (days) => ipcRenderer.invoke('logViewer:setRetentionDays', days)
+        },
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
         },

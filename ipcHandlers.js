@@ -10,12 +10,37 @@ const initApiIpcHandlers = require('./modules/main/api');
 const logger = require('./modules/utils/logger');
 const i18nModule = require('./locales');
 const { getCanboxStore } = require('./modules/main/storageManager');
+const processBridge = require('./modules/childprocess/processBridge');
+const pathManager = require('./modules/main/pathManager');
+const userDataMigration = require('./modules/main/userDataMigration');
+const logIpcHandler = require('./modules/ipc/logIpcHandler');
 
 // 默认语言为英文
 let currentLanguage = 'en-US';
 
 // 缓存已创建的临时文件，避免重复创建
 let cachedTempFiles = new Map();
+
+/**
+ * 检测应用是否以 AppImage 方式运行
+ * @returns {boolean} 是否为 AppImage 环境
+ */
+function isAppImage() {
+    // 检查环境变量 APPIMAGE
+    if (process.env.APPIMAGE) {
+        return true;
+    }
+    // 检查可执行文件路径是否包含 .AppImage
+    try {
+        const exePath = app.getPath('exe');
+        if (exePath && exePath.includes('.AppImage')) {
+            return true;
+        }
+    } catch (error) {
+        logger.warn('Failed to get exe path for AppImage detection:', error);
+    }
+    return false;
+}
 
 // 初始化时读取保存的语言设置
 function initLanguage() {
@@ -87,6 +112,9 @@ function initIpcHandlers() {
                 }
             });
 
+            // 发送主进程语言变化事件（用于托盘菜单更新）
+            app.emit('language-changed', lang);
+
             return { success: true };
         } catch (error) {
             logger.error('Failed to set language:', error);
@@ -100,6 +128,27 @@ function initIpcHandlers() {
 
     ipcMain.handle('i18n-translate', (event, key, params = {}) => {
         return i18nModule.translate(key, currentLanguage, params);
+    });
+
+    // 执行模式相关 IPC 处理
+    ipcMain.handle('execution-get-global-mode', () => {
+        const executionDispatcher = require('@modules/execution/executionDispatcher');
+        return executionDispatcher.getGlobalMode();
+    });
+
+    ipcMain.handle('execution-set-global-mode', async (event, mode) => {
+        const executionDispatcher = require('@modules/execution/executionDispatcher');
+        return executionDispatcher.setGlobalMode(mode);
+    });
+
+    ipcMain.handle('execution-get-all-app-modes', () => {
+        const executionDispatcher = require('@modules/execution/executionDispatcher');
+        return executionDispatcher.getAllAppModes();
+    });
+
+    ipcMain.handle('execution-set-app-mode', async (event, uid, mode) => {
+        const executionDispatcher = require('@modules/execution/executionDispatcher');
+        return executionDispatcher.setAppMode(uid, mode);
     });
 
     // 字体设置相关 IPC 处理
@@ -135,13 +184,18 @@ function initIpcHandlers() {
         }
     });
 
-    // 初始化拆分后的 IPC 处理逻辑
+    // 初始化 IPC 处理器
     repoIpcHandler.init(ipcMain);
     shortcutIpcHandler.init(ipcMain);
     appManagerIpcHandler.init(ipcMain);
 
     // 初始化 API 相关的 IPC 处理逻辑
     initApiIpcHandlers();
+
+    // 初始化主进程 IPC 桥接
+    processBridge.initMain();
+
+    // 日志相关的 IPC 处理器已在 logIpcHandler.js 中注册，无需额外初始化
 
     // 打开文件选择窗口
     ipcMain.on('openAppJson', (event, options) => {
@@ -205,6 +259,186 @@ function initIpcHandlers() {
         });
     });
 
+    // 用户数据路径相关 IPC 处理
+    
+    // 获取当前数据路径
+    ipcMain.handle('userData:getCurrentPath', async () => {
+        try {
+            return {
+                success: true,
+                path: pathManager.getUsersPath(),
+                basePath: pathManager.getUsersBasePath()
+            };
+        } catch (error) {
+            logger.error('Failed to get current data path:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 获取磁盘占用
+    ipcMain.handle('userData:getDiskUsage', async () => {
+        try {
+            const usersPath = pathManager.getUsersPath();
+            const size = await userDataMigration.getDirectorySize(usersPath);
+            return { success: true, size };
+        } catch (error) {
+            logger.error('Failed to get disk usage:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 选择目录
+    ipcMain.handle('userData:selectDirectory', async () => {
+        try {
+            const result = await dialog.showOpenDialog({
+                properties: ['openDirectory', 'createDirectory']
+            });
+
+            if (result.canceled || result.filePaths.length === 0) {
+                return { success: false, error: 'User canceled' };
+            }
+
+            return { success: true, path: result.filePaths[0] };
+        } catch (error) {
+            logger.error('Failed to select directory:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 迁移数据
+    ipcMain.handle('userData:migrate', async (event, newBasePath) => {
+        try {
+            const result = await userDataMigration.migrateUserDataPath(newBasePath);
+
+            // 迁移成功后延迟重启
+            if (result.success) {
+                // 检测 AppImage 环境
+                const isAppImageEnv = isAppImage();
+                logger.info(`Migration successful, AppImage environment: ${isAppImageEnv}`);
+
+                // 添加环境标识到返回结果
+                result.isAppImage = isAppImageEnv;
+
+                // 延迟 5 秒后重启，给前端显示倒计时的机会
+                setTimeout(() => {
+                    logger.info('Restarting application...');
+                    app.relaunch();
+                    app.exit(0);
+                }, 5000);
+            }
+
+            return result;
+        } catch (error) {
+            logger.error('Failed to migrate user data:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 重置为默认路径
+    ipcMain.handle('userData:resetToDefault', async () => {
+        try {
+            const defaultBasePath = app.getPath('userData');
+            const result = await userDataMigration.migrateUserDataPath(defaultBasePath);
+
+            // 迁移成功后延迟重启
+            if (result.success) {
+                // 检测 AppImage 环境
+                const isAppImageEnv = isAppImage();
+                logger.info(`Reset to default successful, AppImage environment: ${isAppImageEnv}`);
+
+                // 添加环境标识到返回结果
+                result.isAppImage = isAppImageEnv;
+
+                // 延迟 5 秒后重启，给前端显示倒计时的机会
+                setTimeout(() => {
+                    logger.info('Restarting application...');
+                    app.relaunch();
+                    app.exit(0);
+                }, 5000);
+            }
+
+            return result;
+        } catch (error) {
+            logger.error('Failed to reset to default path:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 立刻重启
+    ipcMain.handle('userData:restartNow', () => {
+        try {
+            logger.info('User requested immediate restart');
+            app.relaunch();
+            app.exit(0);
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to restart application:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 日志查看器窗口管理
+    ipcMain.handle('log-viewer:open', () => {
+        try {
+            const logWindowManager = require('@modules/main/logWindowManager');
+            logWindowManager.openLogViewer();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to open log viewer:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('log-viewer:close', () => {
+        try {
+            const logWindowManager = require('@modules/main/logWindowManager');
+            logWindowManager.closeLogViewer();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to close log viewer:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('log-viewer:toggle-always-on-top', () => {
+        try {
+            const logWindowManager = require('@modules/main/logWindowManager');
+            const newState = logWindowManager.toggleAlwaysOnTop();
+            return { success: true, alwaysOnTop: newState };
+        } catch (error) {
+            logger.error('Failed to toggle always on top:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 日志查看器配置 - 获取保留天数
+    ipcMain.handle('logViewer:getRetentionDays', () => {
+        try {
+            const canboxStore = getCanboxStore();
+            const retentionDays = canboxStore.get('logRetentionDays', 30);
+            logger.info(`Get log retention days: ${retentionDays}`);
+            return retentionDays;
+        } catch (error) {
+            logger.error('Failed to get log retention days:', error);
+            return 30;
+        }
+    });
+
+    // 日志查看器配置 - 设置保留天数
+    ipcMain.handle('logViewer:setRetentionDays', async (event, days) => {
+        try {
+            if (days < 0 || days > 30) {
+                return { success: false, msg: 'Retention days must be between 0 and 30' };
+            }
+            const canboxStore = getCanboxStore();
+            canboxStore.set('logRetentionDays', days);
+            logger.info(`Log retention days set to: ${days}`);
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to set log retention days:', error);
+            return { success: false, msg: error.message };
+        }
+    });
 }
 
 // 初始化语言

@@ -1,3 +1,5 @@
+[中文版](APP_DEV_CN.md) | [English](APP_DEV.md)
+
 # File Description
 
 - `app.json`: APP description file, contains APP startup window parameters

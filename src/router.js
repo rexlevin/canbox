@@ -5,6 +5,10 @@ const router = createRouter({
         {
             path: '/',
             component: () => import('@/components/CanBox.vue')
+        },
+        {
+            path: '/log-viewer',
+            component: () => import('@/components/LogViewer.vue')
         }
     ],
     history: createWebHashHistory()
