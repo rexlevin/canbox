@@ -7,33 +7,23 @@
                     <div class="card">
                         <el-form label-width="150px">
                             <el-form-item :label="$t('settings.language')" style="margin-bottom: 20px;">
-                                <el-select v-model="currentLanguage" @change="handleLanguageChange" style="width: 200px;">
-                                    <el-option
-                                        v-for="lang in availableLanguages"
-                                        :key="lang.code"
-                                        :label="lang.name"
-                                        :value="lang.code"
-                                    />
+                                <el-select v-model="currentLanguage" @change="handleLanguageChange"
+                                    style="width: 200px;">
+                                    <el-option v-for="lang in availableLanguages" :key="lang.code" :label="lang.name"
+                                        :value="lang.code" />
                                 </el-select>
                             </el-form-item>
                             <el-form-item :label="$t('settings.font')" style="margin-bottom: 20px;">
                                 <el-select v-model="currentFont" @change="handleFontChange" style="width: 250px;">
-                                    <el-option
-                                        v-for="font in availableFonts"
-                                        :key="font.value"
-                                        :label="font.label"
-                                        :value="font.value"
-                                    />
+                                    <el-option v-for="font in availableFonts" :key="font.value" :label="font.label"
+                                        :value="font.value" />
                                 </el-select>
                             </el-form-item>
                             <el-form-item :label="$t('settings.executionMode')" style="margin-bottom: 20px;">
-                                <el-select v-model="currentExecutionMode" @change="handleExecutionModeChange" style="width: 250px;">
-                                    <el-option
-                                        v-for="mode in executionModes"
-                                        :key="mode.value"
-                                        :label="mode.label"
-                                        :value="mode.value"
-                                    />
+                                <el-select v-model="currentExecutionMode" @change="handleExecutionModeChange"
+                                    style="width: 250px;">
+                                    <el-option v-for="mode in executionModes" :key="mode.value" :label="mode.label"
+                                        :value="mode.value" />
                                 </el-select>
                             </el-form-item>
                             <el-form-item :label="$t('settings.shortcutTitle')" style="margin-bottom: 20px;">
@@ -60,43 +50,33 @@
 
                                     <!-- 新路径选择 -->
                                     <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                                        <el-input
-                                            v-model="newDataPath"
-                                            :placeholder="$t('settings.customDataPathPlaceholder')"
-                                        />
+                                        <el-input v-model="newDataPath"
+                                            :placeholder="$t('settings.customDataPathPlaceholder')" />
                                         <el-button @click="selectDirectory">
                                             {{ $t('settings.browse') }}
                                         </el-button>
                                     </div>
 
                                     <!-- 警告提示 -->
-                                    <el-alert
-                                        v-if="newDataPath"
-                                        type="warning"
-                                        :closable="false"
-                                        style="margin-bottom: 12px;"
-                                    >
+                                    <el-alert v-if="newDataPath" type="warning" :closable="false"
+                                        style="margin-bottom: 12px;">
                                         <template #title>
                                             {{ $t('settings.customDataPathWarning') }}
                                         </template>
                                         <div style="font-size: 12px; margin-top: 4px;">
-                                            {{ $t('settings.customDataPathWarningDetail', { path: newDataPath + '/Users' }) }}
+                                            {{ $t('settings.customDataPathWarningDetail', {
+                                                path: newDataPath + '/Users'
+                                            }) }}
                                         </div>
                                     </el-alert>
 
                                     <!-- 操作按钮 -->
                                     <div style="display: flex; gap: 8px;">
-                                        <el-button
-                                            type="primary"
-                                            @click="saveCustomDataPath"
-                                            :disabled="!newDataPath || isSaving"
-                                        >
+                                        <el-button type="primary" @click="saveCustomDataPath"
+                                            :disabled="!newDataPath || isSaving">
                                             {{ isSaving ? $t('settings.migrating') : $t('settings.saveAndMigrate') }}
                                         </el-button>
-                                        <el-button
-                                            @click="resetToDefault"
-                                            :disabled="isSaving"
-                                        >
+                                        <el-button @click="resetToDefault" :disabled="isSaving">
                                             {{ $t('settings.resetToDefault') }}
                                         </el-button>
                                     </div>
@@ -104,25 +84,10 @@
                             </el-form-item>
                             <el-divider style="margin: 20px 0;">{{ $t('settings.logViewerSettings') }}</el-divider>
                             <el-form-item :label="$t('settings.logRetentionDays')" style="margin-bottom: 20px;">
-                                <el-input-number
-                                    v-model="logRetentionDays"
-                                    :min="0"
-                                    :max="30"
-                                    :step="1"
-                                    controls-position="right"
-                                    style="width: 200px;"
-                                    @change="saveLogRetentionDays"
-                                />
-                                <span style="margin-left: 10px; color: #909399;">{{ $t('settings.logRetentionDaysHint') }}</span>
-                            </el-form-item>
-                            <el-form-item :label="$t('settings.immediateCleanup')" style="margin-bottom: 20px;">
-                                <el-button type="warning" @click="cleanupLogs" :loading="isCleaningLogs">
-                                    <template #icon>
-                                        <Delete />
-                                    </template>
-                                    {{ $t('settings.immediateCleanup') }}
-                                </el-button>
-                                <span style="margin-left: 10px; color: #909399;">{{ $t('settings.cleanupLogFilesHint') }}</span>
+                                <el-input-number v-model="logRetentionDays" :min="0" :max="30" :step="1"
+                                    controls-position="right" style="width: 200px;" @change="saveLogRetentionDays" />
+                                <span style="margin-left: 10px; color: #909399;">{{ $t('settings.logRetentionDaysHint')
+                                    }}</span>
                             </el-form-item>
                         </el-form>
                     </div>
@@ -131,18 +96,14 @@
         </div>
 
         <!-- 倒计时对话框 -->
-        <RestartCountdownDialog
-            v-model:visible="showRestartDialog"
-            :isAppImage="restartIsAppImage"
-            @restart-now="onRestartNow"
-        />
+        <RestartCountdownDialog v-model:visible="showRestartDialog" :isAppImage="restartIsAppImage"
+            @restart-now="onRestartNow" />
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
-import { Delete } from '@element-plus/icons-vue';
 import { useI18n } from 'vue-i18n';
 import RestartCountdownDialog from './RestartCountdownDialog.vue';
 
@@ -155,7 +116,6 @@ const currentExecutionMode = ref('window');
 
 // 日志查看器配置
 const logRetentionDays = ref(30);
-const isCleaningLogs = ref(false);
 
 // 自定义数据路径相关
 const currentDataPath = ref('');
@@ -198,7 +158,7 @@ function generateShortcut() {
         if (ret.success) {
             ElMessage({
                 message: t('settings.shortcutCreated'),
-                type:'success'
+                type: 'success'
             });
         } else {
             ElMessage.error(ret.msg);
@@ -210,7 +170,7 @@ function deleteShortcut() {
         if (ret.success) {
             ElMessage({
                 message: t('settings.shortcutDeleted'),
-                type:'success'
+                type: 'success'
             });
         } else {
             ElMessage.error(ret.msg);
@@ -318,28 +278,6 @@ async function onRestartNow() {
     }
 }
 
-// 日志查看器相关函数
-async function cleanupLogs() {
-    isCleaningLogs.value = true;
-    try {
-        const result = await window.api.log.cleanupOldLogs(logRetentionDays.value);
-        if (result.success) {
-            if (result.deletedCount > 0) {
-                ElMessage.success(t('settings.cleanupSuccess', { count: result.deletedCount }));
-            } else {
-                ElMessage.info(t('settings.noFilesToCleanup'));
-            }
-        } else {
-            ElMessage.error(t('settings.cleanupFailed'));
-        }
-    } catch (error) {
-        ElMessage.error(t('settings.cleanupFailed'));
-        console.error('Failed to cleanup logs:', error);
-    } finally {
-        isCleaningLogs.value = false;
-    }
-}
-
 async function saveLogRetentionDays() {
     const days = logRetentionDays.value;
     if (days < 0 || days > 30) {
@@ -427,26 +365,85 @@ onUnmounted(() => {
 .app-list-section {
     height: calc(100vh - 60px);
     overflow-y: auto;
-    margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);
+    margin: 5px 0 0 0;
+    padding: 0;
+    box-shadow: var(--el-box-shadow-lighter);
 }
 
-.card {width: 100%; height: 100%; display: flex; justify-content: flex-start;}
-.img-block {width: 60px; height: 100%; margin: 0; padding: 0;}
-.info-block {line-height: 80px; text-align: left; margin-left: 10px;}
-.info-block div{width: 300px;}
-.info-block .app-name {height: 40px; line-height: 40px; cursor: pointer;}
-.info-block .app-name:hover{color: #409eff; font-weight: bold;}
-.vertical-block {display: table;}
+.card {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: flex-start;
+}
 
-.operate-block {width: 100%; margin-right: 20px;
-    display: flex; flex: 1;
+.img-block {
+    width: 60px;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.info-block {
+    line-height: 80px;
+    text-align: left;
+    margin-left: 10px;
+}
+
+.info-block div {
+    width: 300px;
+}
+
+.info-block .app-name {
+    height: 40px;
+    line-height: 40px;
+    cursor: pointer;
+}
+
+.info-block .app-name:hover {
+    color: #409eff;
+    font-weight: bold;
+}
+
+.vertical-block {
+    display: table;
+}
+
+.operate-block {
+    width: 100%;
+    margin-right: 20px;
+    display: flex;
+    flex: 1;
     align-items: center;
     justify-content: right;
 }
-.operate-block div {display: table-cell;}
-.operate-block div:first-child {text-align: left; padding-left: 10px;}
-.operate-block div:first-child span {color: gray;}
-.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 10px;}
-.operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
-.operate-icon-span:active {background-color: hsl(0, 0%, 70%); }
+
+.operate-block div {
+    display: table-cell;
+}
+
+.operate-block div:first-child {
+    text-align: left;
+    padding-left: 10px;
+}
+
+.operate-block div:first-child span {
+    color: gray;
+}
+
+.operate-icon-span {
+    display: inline-block;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 20px;
+    margin-right: 10px;
+}
+
+.operate-icon-span:hover {
+    background-color: hsl(0, 0%, 80%);
+}
+
+.operate-icon-span:active {
+    background-color: hsl(0, 0%, 70%);
+}
 </style>
