@@ -33,23 +33,7 @@ Canbox is an open project, and every contribution helps make it better!
 
 ## 🗺️ Planned Features
 
-The following features are planned for future development. Detailed design documents can be found in `openspec/changes/`:
-
-### Matrix Account System
-
-A decentralized account system based on Matrix protocol for cross-device data synchronization and future social features (Chat, Blog).
-
-**Core capabilities:**
-
-- Matrix authentication with multiple login methods (password, SSO like Mozilla)
-- Cross-device data synchronization (apps list, settings, preferences)
-- Intelligent conflict resolution (version-based merging for apps, latest-first for settings)
-- Offline queue support for continuous operation
-
-**Future extensions:**
-
-- Matrix Chat integration
-- Blog with ActivityPub bridge to Fediverse
+The following features are planned for future development. For detailed information, please see [Feature Roadmap](./docs/FEATURE_ROADMAP.md).
 
 ---
 
@@ -232,17 +216,29 @@ For detailed development guides, please refer to:
 
 ## Settings
 
-![screenshot-5](./public/screenshot/screenshot-5.png)
+![screenshot-settings](./public/screenshot/screenshot-settings.png)
 
 Canbox provides rich settings options to help you personalize the application configuration.
 
 ### General Settings
 
 - **Language**: Choose application language (Chinese, English)
-- **App Path**: Set the app installation directory (default is apps in the application data directory)
-- **Temporary Directory**: Set the app temporary file directory
-- **Log Retention Days**: Configure how many days of log files to keep (1-365 days, default 30)
-- **Immediate Log Cleanup**: Manually clean up old log files immediately
+- **Font**: Select application font (supports default and multiple system fonts)
+- **App Execution Mode**: Choose between Window mode or Childprocess mode
+- **Create/Delete Shortcut**: Create desktop shortcuts for Canbox
+
+### Data Management
+
+- **Custom Data Path**: Set a custom directory for all Canbox data
+  - View current data path and disk usage
+  - Migrate to a new path (requires restart)
+  - Reset to default path (requires restart)
+
+### Log Viewer Settings
+
+- **Log Retention Days**: Configure how many days of log files to keep (0-30 days, default 30)
+  - Set to 0 to disable automatic log cleanup
+  - Old logs are cleaned up automatically when opening the log viewer
 
 ### Log Viewer
 

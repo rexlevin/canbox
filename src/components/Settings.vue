@@ -102,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import RestartCountdownDialog from './RestartCountdownDialog.vue';
@@ -127,8 +127,8 @@ const isSaving = ref(false);
 const showRestartDialog = ref(false);
 const restartIsAppImage = ref(false);
 
-// 常用系统字体列表
-const availableFonts = ref([
+// 常用系统字体列表（使用 computed 响应语言变化）
+const availableFonts = computed(() => [
     { label: t('settings.defaultFont'), value: 'default' },
     { label: 'Arial', value: 'Arial, sans-serif' },
     { label: 'Microsoft YaHei (微软雅黑)', value: '"Microsoft YaHei", sans-serif' },
@@ -146,8 +146,8 @@ const availableFonts = ref([
     { label: 'Courier New', value: '"Courier New", monospace' }
 ]);
 
-// 执行模式选项
-const executionModes = ref([
+// 执行模式选项（使用 computed 响应语言变化）
+const executionModes = computed(() => [
     { label: t('settings.executionModeWindow'), value: 'window' },
     { label: t('settings.executionModeChildprocess'), value: 'childprocess' }
     // { label: t('settings.executionModeCustom'), value: 'custom' }  // 自定义模式暂时禁用
