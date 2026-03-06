@@ -112,6 +112,9 @@ function initIpcHandlers() {
                 }
             });
 
+            // 发送主进程语言变化事件（用于托盘菜单更新）
+            app.emit('language-changed', lang);
+
             return { success: true };
         } catch (error) {
             logger.error('Failed to set language:', error);

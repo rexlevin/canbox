@@ -188,6 +188,7 @@
         "search": "搜索",
         "regexSearch": "正则表达式",
         "dateSelect": "日期选择",
+        "today": "今天",
         "dateRange": "日期范围",
         "startDate": "开始日期",
         "endDate": "结束日期",

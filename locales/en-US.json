@@ -188,6 +188,7 @@
         "search": "Search",
         "regexSearch": "Regex",
         "dateSelect": "Date Select",
+        "today": "Today",
         "dateRange": "Date Range",
         "startDate": "Start Date",
         "endDate": "End Date",

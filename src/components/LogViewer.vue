@@ -55,7 +55,7 @@
             <div class="filter-item">
                 <span class="filter-label">{{ $t('logViewer.dateSelect') }}:</span>
                 <el-select v-model="selectedDate" @change="onDateChange" style="width: 150px;">
-                    <el-option label="今天" value="today" />
+                    <el-option :label="$t('logViewer.today')" value="today" />
                     <el-option
                         v-for="date in availableDates"
                         :key="date"
