@@ -214,7 +214,6 @@
         "logRetentionDaysHint": "Keep logs from the last N days, range 0-30 days, 0 means current day only",
         "cleanupNow": "Cleanup Now",
         "cleanupPreview": "Cleanup Preview",
-        "willDeleteFiles": "Will delete {count} log files",
         "logCount": "{count} logs total",
         "displayingLogs": "Displaying {count}/{total} logs",
         "showAll": "Show All",

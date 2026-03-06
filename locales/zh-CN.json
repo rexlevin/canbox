@@ -214,7 +214,6 @@
         "logRetentionDaysHint": "保留最近 N 天的日志，范围 0-30 天，0 表示仅保留当天",
         "cleanupNow": "立即清理",
         "cleanupPreview": "清理预览",
-        "willDeleteFiles": "将删除 {count} 个日志文件",
         "logCount": "共 {count} 条日志",
         "displayingLogs": "显示 {count}/{total} 条日志",
         "showAll": "显示全部",
