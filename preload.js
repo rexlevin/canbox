@@ -29,12 +29,9 @@ contextBridge.exposeInMainWorld(
         log: {
             openViewer: () => ipcRenderer.invoke('log-viewer:open'),
             getLogs: (options) => ipcRenderer.invoke('get-logs', options),
-            getRecentLogs: (count, source) => ipcRenderer.invoke('get-recent-logs', count, source),
-            getLogsSince: (id) => ipcRenderer.invoke('get-logs-since', id),
             getLogFiles: (source) => ipcRenderer.invoke('get-log-files', source),
             exportLogs: (format, range) => ipcRenderer.invoke('export-logs', format, range),
             clearLogs: (source) => ipcRenderer.invoke('clear-logs', source),
-            clearCache: () => ipcRenderer.invoke('clear-cache'),
             cleanupOldLogs: (days) => ipcRenderer.invoke('cleanup-old-logs', days),
             toggleAlwaysOnTop: () => ipcRenderer.invoke('log-viewer:toggle-always-on-top')
         },

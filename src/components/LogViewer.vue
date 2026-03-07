@@ -6,7 +6,6 @@
             <div class="toolbar-left">
                 <el-button :icon="Refresh" @click="refreshLogs">{{ $t('logViewer.refresh') }}</el-button>
                 <el-button :icon="Download" @click="showExportDialog">{{ $t('logViewer.export') }}</el-button>
-                <el-button :icon="Delete" @click="confirmClearCache" type="warning">{{ $t('logViewer.clearCache') }}</el-button>
                 <el-button :icon="FolderDelete" @click="confirmClearLogs" type="danger">{{ $t('logViewer.clearLogs') }}</el-button>
                 <el-button :icon="DeleteFilled" @click="showCleanupDialog" type="danger">{{ $t('logViewer.cleanupOldLogs') }}</el-button>
             </div>
@@ -126,15 +125,6 @@
             </template>
         </el-dialog>
 
-        <!-- Clear Cache Confirmation Dialog -->
-        <el-dialog v-model="clearCacheDialogVisible" :title="$t('logViewer.confirmClearCache')" width="400">
-            <p>{{ $t('logViewer.confirmClearCacheDetail') }}</p>
-            <template #footer>
-                <el-button @click="clearCacheDialogVisible = false">{{ $t('common.cancel') }}</el-button>
-                <el-button type="primary" @click="clearCache">{{ $t('common.confirm') }}</el-button>
-            </template>
-        </el-dialog>
-
         <!-- Clear Logs Confirmation Dialog -->
         <el-dialog v-model="clearLogsDialogVisible" :title="$t('logViewer.confirmClearLogs')" width="400">
             <p>{{ $t('logViewer.confirmClearLogsDetail') }}</p>
@@ -188,7 +178,6 @@ const scrollbarRef = ref(null)
 
 // Dialogs
 const exportDialogVisible = ref(false)
-const clearCacheDialogVisible = ref(false)
 const clearLogsDialogVisible = ref(false)
 const cleanupDialogVisible = ref(false)
 
@@ -276,12 +265,15 @@ const escapeRegExp = (string) => {
 const refreshLogs = async () => {
     try {
         loading.value = true
-        const options = {}
+        const options = {
+            source: logSource.value,
+            afterId: null  // 初始加载不传 afterId
+        }
         if (selectedDate.value !== 'today') {
             options.date = selectedDate.value
         }
 
-        const result = await window.api.log.getLogs({ source: logSource.value, ...options })
+        const result = await window.api.log.getLogs(options)
         if (result.success) {
             logs.value = result.logs
             allLogs.value = result.logs.slice(-MAX_LOGS)
@@ -304,20 +296,28 @@ const refreshLogs = async () => {
 
 const loadRecentLogs = async () => {
     try {
-        const result = await window.api.log.getRecentLogs(MAX_LOGS, logSource.value)
+        if (selectedDate.value !== 'today') {
+            // 非今日日期不轮询
+            return
+        }
+
+        const options = {
+            source: logSource.value,
+            afterId: lastLogId  // 传递 lastLogId 获取增量
+        }
+
+        const result = await window.api.log.getLogs(options)
         if (result.success) {
-            // 检查是否有新日志（通过 id 比较）
-            const currentLastId = allLogs.value.length > 0
-                ? allLogs.value[allLogs.value.length - 1].id
-                : null
-
-            const newLogs = result.logs.filter(log => !currentLastId || log.id > currentLastId)
-
-            if (newLogs.length > 0) {
-                console.log(`[loadRecentLogs] Found ${newLogs.length} new logs`)
-                // 添加新日志
-                logs.value = [...logs.value, ...newLogs]
+            if (result.logs.length > 0) {
+                console.log(`[loadRecentLogs] Found ${result.logs.length} new logs`)
+                // 直接追加新日志（后端已过滤）
+                logs.value = [...logs.value, ...result.logs]
                 allLogs.value = logs.value.slice(-MAX_LOGS)
+
+                // 更新 lastLogId
+                if (allLogs.value.length > 0) {
+                    lastLogId = allLogs.value[allLogs.value.length - 1].id
+                }
 
                 // 如果开启了自动滚动，自动滚动到底部
                 if (autoScroll.value) {
@@ -380,28 +380,6 @@ const exportLogs = async () => {
     } catch (error) {
         ElMessage.error(t('logViewer.exportFailed'))
         console.error('Failed to export logs:', error)
-    }
-}
-
-const confirmClearCache = () => {
-    clearCacheDialogVisible.value = true
-}
-
-const clearCache = async () => {
-    try {
-        const result = await window.api.log.clearCache()
-        if (result.success) {
-            logs.value = []
-            allLogs.value = []
-            lastLogId = null
-            ElMessage.success(t('logViewer.clearCacheSuccess'))
-            clearCacheDialogVisible.value = false
-        } else {
-            ElMessage.error(result.message || t('logViewer.clearCacheFailed'))
-        }
-    } catch (error) {
-        ElMessage.error(t('logViewer.clearCacheFailed'))
-        console.error('Failed to clear cache:', error)
     }
 }
 
@@ -597,7 +575,7 @@ onUnmounted(() => {
     margin-bottom: 4px;
     border-radius: 4px;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 13px;
+    font-size: 19px;
     line-height: 1.5;
 }
 
@@ -606,12 +584,12 @@ onUnmounted(() => {
 }
 
 .log-level {
-    width: 60px;
+    width: 80px;
     flex-shrink: 0;
 }
 
 .log-time {
-    width: 100px;
+    width: 160px;
     flex-shrink: 0;
     color: #909399;
 }

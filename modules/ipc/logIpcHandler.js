@@ -50,7 +50,7 @@ function parseLogContent(content, source) {
 // 获取日志列表
 ipcMain.handle('get-logs', async (event, options = {}) => {
     try {
-        const { source = 'app', count = 100, date } = options;
+        const { source = 'app', count = 100, date, afterId } = options;
 
         console.log('[get-logs] options:', options);
 
@@ -62,27 +62,21 @@ ipcMain.handle('get-logs', async (event, options = {}) => {
             logs = logger.getLogsFromFile(date, source);
             console.log(`[get-logs] Read ${logs.length} logs from file for date: ${date}`);
         } else {
-            // 今天的日志：合并内存缓存和今日文件
+            // 今天的日志：从文件读取
             console.log(`[get-logs] Reading logs for today, source: ${source}`);
-            const memoryLogs = logger.getRecentLogs(count);
-            console.log(`[get-logs] Memory logs count: ${memoryLogs.length}`);
-
-            const fileLogs = logger.getLogsFromFile('today', source);
-            console.log(`[get-logs] File logs count: ${fileLogs.length}`);
-
-            // 合并并去重（以 id 为准）
-            const allLogs = new Map();
-            fileLogs.forEach(log => allLogs.set(log.id, log));
-            memoryLogs.forEach(log => allLogs.set(log.id, log));
-
-            // 转换为数组并按 id 排序
-            logs = Array.from(allLogs.values()).sort((a, b) => a.id.localeCompare(b.id));
-            console.log(`[get-logs] Total merged logs count: ${logs.length}`);
+            logs = logger.getLogsFromFile('today', source);
+            console.log(`[get-logs] File logs count: ${logs.length}`);
         }
 
         // 按 source 过滤
-        const filteredLogs = logs.filter(log => log.category === source || source === 'all');
+        let filteredLogs = logs.filter(log => log.category === source || source === 'all');
         console.log(`[get-logs] Filtered logs count: ${filteredLogs.length}`);
+
+        // 如果提供了 afterId，只返回 ID 更大的日志
+        if (afterId) {
+            filteredLogs = filteredLogs.filter(log => log.id > afterId);
+            console.log(`[get-logs] After filtering by afterId (${afterId}): ${filteredLogs.length} logs`);
+        }
 
         return {
             success: true,
@@ -91,41 +85,6 @@ ipcMain.handle('get-logs', async (event, options = {}) => {
     } catch (error) {
         console.error('[get-logs] Error:', error);
         logger.error('Failed to get logs: ' + error.message);
-        return { success: false, error: error.message };
-    }
-});
-
-// 获取最近 N 条日志（增量更新）
-ipcMain.handle('get-recent-logs', async (event, count = 100, source = 'app') => {
-    try {
-        // 从内存缓存和文件都读取
-        const memoryLogs = logger.getRecentLogs(count);
-        const fileLogs = logger.getLogsFromFile('today', source);
-
-        // 合并并去重（以 id 为准）
-        const allLogs = new Map();
-        fileLogs.forEach(log => allLogs.set(log.id, log));
-        memoryLogs.forEach(log => allLogs.set(log.id, log));
-
-        // 转换为数组并按 id 排序，取最后 N 条
-        const logs = Array.from(allLogs.values())
-            .sort((a, b) => a.id.localeCompare(b.id))
-            .slice(-count);
-
-        return { success: true, logs };
-    } catch (error) {
-        logger.error('Failed to get recent logs: ' + error.message);
-        return { success: false, error: error.message };
-    }
-});
-
-// 获取指定 ID 之后的日志
-ipcMain.handle('get-logs-since', async (event, id) => {
-    try {
-        const logs = logger.getLogsSince(id);
-        return { success: true, logs };
-    } catch (error) {
-        logger.error('Failed to get logs since: ' + error.message);
         return { success: false, error: error.message };
     }
 });
@@ -246,18 +205,6 @@ ipcMain.handle('clear-logs', async (event, source = 'app') => {
         return { success: true };
     } catch (error) {
         logger.error('Failed to clear logs: ' + error.message);
-        return { success: false, error: error.message };
-    }
-});
-
-// 清除内存缓存
-ipcMain.handle('clear-cache', async () => {
-    try {
-        logger.clearCache();
-        logger.info('Log cache cleared');
-        return { success: true };
-    } catch (error) {
-        logger.error('Failed to clear cache: ' + error.message);
         return { success: false, error: error.message };
     }
 });

@@ -4,54 +4,6 @@ const fs = require('fs');
 const { app } = require('electron');
 const pathManager = require('@modules/main/pathManager');
 
-// 内存缓存配置
-const MEMORY_CACHE_SIZE = 1000; // 默认缓存 1000 条日志
-
-// 内存缓存 Appender
-class MemoryAppender {
-    constructor() {
-        this.logs = [];
-        this.maxSize = MEMORY_CACHE_SIZE;
-    }
-
-    append(level, message, category) {
-        const now = new Date();
-        const logEntry = {
-            id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}`,
-            level: level,
-            message: message,
-            timestamp: now.toISOString(),
-            category: category
-        };
-
-        this.logs.push(logEntry);
-
-        // 限制缓存大小
-        if (this.logs.length > this.maxSize) {
-            this.logs.shift();
-        }
-    }
-
-    getRecentLogs(count = 100) {
-        return this.logs.slice(-count);
-    }
-
-    getLogsSince(id) {
-        const index = this.logs.findIndex(log => log.id === id);
-        if (index === -1) {
-            return [];
-        }
-        return this.logs.slice(index + 1);
-    }
-
-    clear() {
-        this.logs = [];
-    }
-}
-
-// 创建全局内存 appender 实例
-const memoryAppender = new MemoryAppender();
-
 // 获取日志目录路径
 function getLogDir() {
     try {
@@ -187,32 +139,24 @@ const createLoggerMethods = (loggerInstance, category = 'default') => {
             const formattedMessage = formatMessage(message, ...args);
             const logMessage = `[${file}:${line}] : ${formattedMessage}`;
             loggerInstance.info(logMessage);
-            // 同时记录到内存缓存
-            memoryAppender.append('INFO', logMessage, category);
         },
         error: (message, ...args) => {
             const { file, line } = getCallerInfo();
             const formattedMessage = formatMessage(message, ...args);
             const logMessage = `[${file}:${line}] : ${formattedMessage}`;
             loggerInstance.error(logMessage);
-            // 同时记录到内存缓存
-            memoryAppender.append('ERROR', logMessage, category);
         },
         warn: (message, ...args) => {
             const { file, line } = getCallerInfo();
             const formattedMessage = formatMessage(message, ...args);
             const logMessage = `[${file}:${line}] : ${formattedMessage}`;
             loggerInstance.warn(logMessage);
-            // 同时记录到内存缓存
-            memoryAppender.append('WARN', logMessage, category);
         },
         debug: (message, ...args) => {
             const { file, line } = getCallerInfo();
             const formattedMessage = formatMessage(message, ...args);
             const logMessage = `[${file}:${line}] : ${formattedMessage}`;
             loggerInstance.debug(logMessage);
-            // 同时记录到内存缓存
-            memoryAppender.append('DEBUG', logMessage, category);
         }
     };
 };
@@ -392,10 +336,7 @@ module.exports = {
     ...createLoggerMethods(logger, 'app'),
     monitor: createLoggerMethods(monitorLogger, 'monitor'),
     configureFileAppenders,
-    getRecentLogs: (count) => memoryAppender.getRecentLogs(count),
-    getLogsSince: (id) => memoryAppender.getLogsSince(id),
     getLogsFromFile,
     getLogFiles,
-    cleanupOldLogs,
-    clearCache: () => memoryAppender.clear()
+    cleanupOldLogs
 };
