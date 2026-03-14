@@ -104,7 +104,22 @@
         "myApps": "My Apps",
         "appRepo": "APP Repos",
         "userCenter": "User Center",
-        "devApp": "APP Dev"
+        "devApp": "APP Dev",
+        "about": "About"
+    },
+    "about": {
+        "title": "About",
+        "version": "Version",
+        "description": "Description",
+        "author": "Author",
+        "license": "License",
+        "systemInfo": "System Information",
+        "nodeVersion": "Node.js Version",
+        "chromeVersion": "Chrome Version",
+        "electronVersion": "Electron Version",
+        "githubRepo": "GitHub Repository",
+        "giteeRepo": "Gitee Repository",
+        "viewLicense": "View License"
     },
     "appList": {
         "importApp": "Import App",

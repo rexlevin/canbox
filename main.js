@@ -421,6 +421,7 @@ const createWindow = () => {
         } else if (isDev && uatDev?.devTools) {
             win.webContents.openDevTools({ mode: uatDev?.devTools });
         }
+        // win.webContents.openDevTools({ mode: 'detach' });
     });
 
     // 将app窗口添加到appMap中
@@ -462,9 +463,16 @@ function initAutoUpdate() {
             return;
         }
 
+        // 获取主窗口（第一个窗口）
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (!mainWindow) {
+            logger.warn('[AutoUpdate] 主窗口未找到，跳过自动更新初始化');
+            return;
+        }
+
         // 获取自动更新管理器实例
         const updateManager = getAutoUpdateManager();
-        updateManager.setMainWindow(win);
+        updateManager.setMainWindow(mainWindow);
 
         // 延迟检查更新，避免影响启动速度
         setTimeout(async () => {

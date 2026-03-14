@@ -97,6 +97,12 @@ async function shouldCheckUpdate(config) {
     return false;
   }
 
+  // startup 模式：每次启动都检查
+  if (config.checkFrequency === 'startup') {
+    logger.debug('[AutoUpdate] startup 模式，每次启动都检查');
+    return true;
+  }
+
   // 首次检查
   if (!config.lastCheckTime) {
     logger.debug('[AutoUpdate] 首次检查更新');

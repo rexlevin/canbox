@@ -53,10 +53,13 @@ Canbox 使用 `electron-updater` 实现自动更新功能,支持通过 GitHub Re
 
    - 请求: `https://github.com/owner/repo/releases/latest/download/latest-linux.yml`
    - 解析 `version` 字段获取远程版本号
+   - 注意: `/latest/` 只指向最新的 stable 版本，忽略 pre-release 版本
+
 2. **版本比较**
 
    - 使用 `semver` 比较本地版本和远程版本
    - 判断是否需要更新
+
 3. **下载和安装**
 
    - 从 GitHub Releases 下载 AppImage 文件

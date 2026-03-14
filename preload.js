@@ -226,6 +226,12 @@ contextBridge.exposeInMainWorld(
         },
         downloadCanboxTypes: () => {
             return ipcRenderer.invoke('download-canbox-types');
+        },
+        getVersions: () => {
+            return ipcRenderer.invoke('get-versions');
+        },
+        getAppInfo: () => {
+            return ipcRenderer.invoke('get-app-info');
         }
     }
 );

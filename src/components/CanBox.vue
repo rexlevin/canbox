@@ -10,6 +10,7 @@
                     <!-- <el-tab-pane :label="$t('canbox.userCenter')" class="full-height-pane"><UserCenter/></el-tab-pane> -->
                     <el-tab-pane :label="$t('canbox.devApp')" name="devApp" class="full-height-pane"><AppDev/></el-tab-pane>
                     <el-tab-pane :label="$t('settings.title')" class="full-height-pane"><Settings/></el-tab-pane>
+                    <el-tab-pane :label="$t('canbox.about')" name="about" class="full-height-pane"><About/></el-tab-pane>
                 </el-tabs>
             </el-main>
             <!-- <el-footer class="footer">footer</el-footer> -->
@@ -64,6 +65,7 @@ import AppList from '@/components/AppList.vue';
 import AppRepos from '@/components/AppRepos.vue';
 import UserCenter from '@/components/UserCenter.vue'
 import AppDev from '@/components/AppDev.vue';
+import About from '@/components/About.vue';
 import Settings from '@/components/Settings.vue';
 
 let activeName = ref('myApps');

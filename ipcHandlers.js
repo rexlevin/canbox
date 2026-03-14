@@ -441,6 +441,49 @@ function initIpcHandlers() {
         }
     });
 
+    // ========== 版本信息相关 IPC 处理 ==========
+
+    // 获取应用和系统版本信息
+    ipcMain.handle('get-versions', async () => {
+        try {
+            return {
+                node: process.versions.node,
+                chrome: process.versions.chrome,
+                electron: process.versions.electron
+            };
+        } catch (error) {
+            logger.error('Failed to get versions:', error);
+            return {
+                node: 'Unknown',
+                chrome: 'Unknown',
+                electron: 'Unknown'
+            };
+        }
+    });
+
+    // 获取应用包信息（package.json）
+    ipcMain.handle('get-app-info', async () => {
+        try {
+            const packageJson = require('./package.json');
+            return {
+                success: true,
+                info: {
+                    name: packageJson.name,
+                    version: packageJson.version,
+                    description: packageJson.description,
+                    author: packageJson.author,
+                    license: packageJson.license
+                }
+            };
+        } catch (error) {
+            logger.error('Failed to get app info:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    });
+
     // ========== 自动更新相关 IPC 处理 ==========
 
     // 检查更新

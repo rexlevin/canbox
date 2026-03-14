@@ -243,7 +243,7 @@ class AutoUpdateManager {
     try {
       logger.info('[AutoUpdate] 开始安装更新');
 
-      if (!autoUpdater.isUpdateDownloaded()) {
+      if (this.status.state !== 'ready' || this.status.progress !== 100) {
         throw new Error('更新包未下载，请先下载更新');
       }
 
@@ -321,7 +321,7 @@ class AutoUpdateManager {
       releaseName: info.releaseName || `v${info.version}`,
       releaseDate: info.releaseDate,
       releaseNotes: info.releaseNotes,
-      downloaded: autoUpdater.isUpdateDownloaded(),
+      downloaded: this.status.state === 'ready' && this.status.progress === 100,
       size: info.size
     };
   }
@@ -335,7 +335,6 @@ class AutoUpdateManager {
    */
   _sendEvent(eventName, data) {
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-      logger.debug('[AutoUpdate] 发送事件到渲染进程: {}', eventName);
       this.mainWindow.webContents.send(eventName, data);
     } else {
       logger.warn('[AutoUpdate] 主窗口不可用，无法发送事件: {}', eventName);

@@ -229,6 +229,12 @@ const formatSize = (bytes) => {
 
 const renderReleaseNotes = (notes) => {
   if (!notes) return '';
+  // 检查是否已经是 HTML 格式（包含 < 开头的标签）
+  if (notes.trim().startsWith('<')) {
+    // 已经是 HTML，直接返回
+    return notes;
+  }
+  // Markdown 格式，需要转换
   try {
     const md = new MarkdownIt();
     return md.render(notes);
@@ -260,7 +266,9 @@ const handleCancel = () => {
 };
 
 const handleSkip = () => {
-  emit('skip');
+  if (props.updateInfo?.version) {
+    emit('skip', props.updateInfo.version);
+  }
   handleClose();
 };
 
@@ -381,6 +389,11 @@ export default {
   overflow-y: auto;
   font-size: 14px;
   line-height: 1.6;
+  text-align: left;
+}
+
+.notes-content * {
+  text-align: left !important;
 }
 
 .notes-content :deep(h1),

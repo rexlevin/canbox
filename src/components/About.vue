@@ -1,0 +1,213 @@
+<template>
+    <div class="about-container">
+        <el-card class="about-card">
+            <div class="about-content">
+                <div class="logo-section">
+                    <img :src="logoPath" alt="Canbox Logo" class="logo" />
+                    <h1>{{ t('app.title') }}</h1>
+                    <p class="version">{{ t('about.version') }}: {{ packageVersion }}</p>
+                </div>
+
+                <el-divider />
+
+                <div class="info-section">
+                    <p>{{ t('about.description') }}: {{ packageDescription }}</p>
+                    <p>{{ t('about.author') }}: {{ packageAuthor }}</p>
+                    <p>{{ t('about.license') }}: {{ packageLicense }}</p>
+                </div>
+
+                <el-divider />
+
+                <div class="system-info">
+                    <h3>{{ t('about.systemInfo') }}</h3>
+                    <div class="info-item">
+                        <span class="label">{{ t('about.nodeVersion') }}:</span>
+                        <span class="value">{{ nodeVersion }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">{{ t('about.chromeVersion') }}:</span>
+                        <span class="value">{{ chromeVersion }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">{{ t('about.electronVersion') }}:</span>
+                        <span class="value">{{ electronVersion }}</span>
+                    </div>
+                </div>
+
+                <el-divider />
+
+                <div class="links-section">
+                    <el-button type="primary" @click="openGithub">
+                        <el-icon><Link /></el-icon>
+                        {{ t('about.githubRepo') }}
+                    </el-button>
+                    <!-- <el-button @click="openGitee">
+                        <el-icon><Link /></el-icon>
+                        {{ t('about.giteeRepo') }}
+                    </el-button> -->
+                    <el-button @click="openLicense">
+                        <el-icon><Document /></el-icon>
+                        {{ t('about.viewLicense') }}
+                    </el-button>
+                </div>
+            </div>
+        </el-card>
+        <div class="bottom-spacer"></div>
+    </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { Link, Document } from '@element-plus/icons-vue';
+
+const { t } = useI18n();
+
+const packageVersion = ref('');
+const packageDescription = ref('');
+const packageAuthor = ref('');
+const packageLicense = ref('');
+const logoPath = ref('/logo.png');
+
+// 版本信息
+const nodeVersion = ref('');
+const chromeVersion = ref('');
+const electronVersion = ref('');
+
+onMounted(async () => {
+    // 获取 package.json 信息
+    try {
+        const result = await window.api.getAppInfo();
+        if (result.success) {
+            packageVersion.value = result.info.version;
+            packageDescription.value = result.info.description;
+            packageAuthor.value = result.info.author;
+            packageLicense.value = result.info.license;
+        } else {
+            console.error('Failed to get app info:', result.error);
+        }
+    } catch (error) {
+        console.error('Failed to load package.json:', error);
+    }
+
+    // 获取系统版本信息
+    try {
+        const versions = await window.api.getVersions();
+        nodeVersion.value = versions.node;
+        chromeVersion.value = versions.chrome;
+        electronVersion.value = versions.electron;
+    } catch (error) {
+        console.error('Failed to get versions:', error);
+    }
+});
+
+const openGithub = () => {
+    window.api.openUrl('https://github.com/rexlevin/canbox');
+};
+
+const openGitee = () => {
+    window.api.openUrl('https://gitee.com/lizl6/canbox');
+};
+
+const openLicense = async () => {
+    // 直接打开 GitHub 上的许可证文件
+    window.api.openUrl('https://github.com/rexlevin/canbox/blob/main/LICENSE');
+};
+</script>
+
+<style scoped>
+.about-container {
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.about-card {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.about-content {
+    text-align: center;
+}
+
+.logo-section {
+    margin-bottom: 30px;
+}
+
+.logo {
+    width: 128px;
+    height: 128px;
+    margin-bottom: 20px;
+}
+
+.logo-section h1 {
+    font-size: 32px;
+    margin: 0 0 10px 0;
+    color: #303133;
+}
+
+.version {
+    font-size: 18px;
+    color: #909399;
+    margin: 5px 0;
+}
+
+.info-section {
+    text-align: left;
+    margin: 20px 0;
+}
+
+.info-section p {
+    margin: 10px 0;
+    font-size: 14px;
+    color: #606266;
+}
+
+.system-info {
+    text-align: left;
+    margin: 20px 0;
+}
+
+.system-info h3 {
+    font-size: 16px;
+    margin-bottom: 15px;
+    color: #303133;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+    padding: 8px 0;
+    border-bottom: 1px solid #ebeef5;
+}
+
+.info-item .label {
+    font-weight: 500;
+    color: #606266;
+}
+
+.info-item .value {
+    color: #909399;
+    font-family: monospace;
+}
+
+.links-section {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.links-section .el-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.bottom-spacer {
+    height: 20px;
+}
+</style>
