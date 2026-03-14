@@ -275,6 +275,7 @@ function getLogsFromFile(date, source = 'app') {
 
     const filePath = path.join(logDir, filename);
     const logs = [];
+    let idCounter = 0;  // 用于生成唯一ID
 
     try {
         // 检查文件是否存在
@@ -303,7 +304,7 @@ function getLogsFromFile(date, source = 'app') {
                 const [, timestamp, level, location, message] = match;
                 const now = new Date(timestamp);
                 logs.push({
-                    id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}`,
+                    id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}_${idCounter++}`,
                     level: level.toLowerCase(),  // 转换为小写，与前端一致
                     message: `${location} : ${message}`,
                     timestamp: now.toISOString(),
@@ -318,7 +319,7 @@ function getLogsFromFile(date, source = 'app') {
                 const [, timestamp, level, location, message] = match;
                 const now = new Date(timestamp);
                 logs.push({
-                    id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}`,
+                    id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}_${idCounter++}`,
                     level: level.toLowerCase(),  // 转换为小写，与前端一致
                     message: `${location} ${message}`,
                     timestamp: now.toISOString(),

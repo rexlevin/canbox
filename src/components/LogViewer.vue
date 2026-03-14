@@ -139,15 +139,16 @@
             <p>{{ $t('logViewer.confirmCleanupDetail') }}</p>
             <div v-if="cleanupPreview.files.length > 0" class="cleanup-preview">
                 <p>{{ $t('logViewer.filesToDelete') }}:</p>
-                <el-table :data="cleanupPreview.files" max-height="200">
-                    <el-table-column prop="name" :label="$t('common.name')" />
+                <el-table ref="cleanupTableRef" :data="cleanupPreview.files" max-height="200" @selection-change="onCleanupSelectionChange" @row-click="toggleRowSelection">
+                    <el-table-column type="selection" width="55" />
+                    <el-table-column prop="filename" :label="$t('common.name')" />
                     <el-table-column prop="date" :label="$t('common.date')" />
                 </el-table>
             </div>
             <p v-else>{{ $t('logViewer.noFilesToDelete') }}</p>
             <template #footer>
                 <el-button @click="cleanupDialogVisible = false">{{ $t('common.cancel') }}</el-button>
-                <el-button type="danger" @click="cleanupOldLogs">{{ $t('common.confirm') }}</el-button>
+                <el-button type="danger" @click="cleanupOldLogs" :disabled="selectedCleanupFiles.length === 0">{{ $t('common.confirm') }}</el-button>
             </template>
         </el-dialog>
     </div>
@@ -192,6 +193,8 @@ const exportForm = ref({
 const cleanupPreview = ref({
     files: []
 })
+const selectedCleanupFiles = ref([])
+const cleanupTableRef = ref(null)
 
 // Polling interval
 let pollingInterval = null
@@ -344,6 +347,7 @@ const onScroll = ({ scrollTop, clientHeight, scrollHeight }) => {
 const onLogSourceChange = () => {
     lastLogId = null
     refreshLogs()
+    loadAvailableDates()
 }
 
 const onDateChange = () => {
@@ -410,6 +414,7 @@ const showCleanupDialog = async () => {
         const result = await window.api.log.getLogFiles()
         if (result.success && result.files.length > 0) {
             cleanupPreview.value.files = result.files
+            selectedCleanupFiles.value = []
             cleanupDialogVisible.value = true
         } else {
             ElMessage.info(t('logViewer.noFilesToDelete'))
@@ -420,19 +425,42 @@ const showCleanupDialog = async () => {
     }
 }
 
+const onCleanupSelectionChange = (selection) => {
+    selectedCleanupFiles.value = selection
+}
+
+const toggleRowSelection = (row) => {
+    if (cleanupTableRef.value) {
+        cleanupTableRef.value.toggleRowSelection(row)
+    }
+}
+
 const cleanupOldLogs = async () => {
     try {
-        const result = await window.api.log.cleanupOldLogs()
+        if (selectedCleanupFiles.value.length === 0) {
+            ElMessage.warning(t('logViewer.noFilesToDelete'))
+            return
+        }
+
+        const filePaths = selectedCleanupFiles.value.map(file => file.path)
+        console.log('[cleanupOldLogs] Selected files:', selectedCleanupFiles.value)
+        console.log('[cleanupOldLogs] File paths:', filePaths)
+
+        const result = await window.api.log.cleanupOldLogs(filePaths)
+        console.log('[cleanupOldLogs] Result:', result)
+
         if (result.success) {
             ElMessage.success(t('logViewer.cleanupSuccess', { count: result.deletedCount || 0 }))
             cleanupDialogVisible.value = false
             await refreshLogs()
+            await loadAvailableDates()
         } else {
-            ElMessage.error(result.message || t('logViewer.cleanupFailed'))
+            console.error('[cleanupOldLogs] Cleanup failed:', result.error)
+            ElMessage.error(result.error || t('logViewer.cleanupFailed'))
         }
     } catch (error) {
+        console.error('[cleanupOldLogs] Exception:', error)
         ElMessage.error(t('logViewer.cleanupFailed'))
-        console.error('Failed to cleanup old logs:', error)
     }
 }
 
@@ -449,7 +477,7 @@ const toggleAlwaysOnTop = async () => {
 
 const loadAvailableDates = async () => {
     try {
-        const result = await window.api.log.getLogFiles()
+        const result = await window.api.log.getLogFiles(logSource.value)
         if (result.success && result.files) {
             availableDates.value = result.files
                 .map(file => file.date)

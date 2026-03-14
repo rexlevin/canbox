@@ -50,7 +50,10 @@
         "export": "Export",
         "search": "Search",
         "filter": "Filter",
-        "refresh": "Refresh"
+        "refresh": "Refresh",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "date": "Date"
     },
     "settings": {
         "title": "Settings",
@@ -198,7 +201,8 @@
         "confirmClearLogs": "Confirm clear logs?",
         "confirmClearLogsDetail": "Clearing logs will delete all log files, this action cannot be undone!",
         "confirmCleanup": "Confirm cleanup old logs?",
-        "confirmCleanupDetail": "Log files older than retention days will be deleted, they cannot be recovered after deletion.",
+        "confirmCleanupDetail": "Delete selected log files, they cannot be recovered after deletion.",
+        "willDeleteFiles": "Will delete {count} log files",
         "filesToDelete": "Files to delete",
         "cleanupSuccess": "Cleanup successful, deleted {count} log files",
         "exportSuccess": "Export successful",

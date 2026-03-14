@@ -50,7 +50,10 @@
         "export": "导出",
         "search": "搜索",
         "filter": "筛选",
-        "refresh": "刷新"
+        "refresh": "刷新",
+        "cancel": "取消",
+        "confirm": "确认",
+        "date": "日期"
     },
     "settings": {
         "title": "设置",
@@ -198,7 +201,8 @@
         "confirmClearLogs": "确认清空日志？",
         "confirmClearLogsDetail": "清空日志将删除所有日志文件，此操作无法撤销！",
         "confirmCleanup": "确认清理历史日志？",
-        "confirmCleanupDetail": "将删除超过保留天数的日志文件，删除后将无法恢复。",
+        "confirmCleanupDetail": "删除所选的日志文件，删除后将无法恢复。",
+        "willDeleteFiles": "将删除 {count} 个日志文件",
         "filesToDelete": "将要删除的文件",
         "cleanupSuccess": "清理成功，删除了 {count} 个日志文件",
         "exportSuccess": "导出成功",

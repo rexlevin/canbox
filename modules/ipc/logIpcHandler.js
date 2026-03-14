@@ -3,6 +3,20 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 const logger = require('@modules/utils/logger');
+const i18nModule = require('../../locales');
+const { getCanboxStore } = require('@modules/main/storageManager');
+const pathManager = require('@modules/main/pathManager');
+
+// 获取日志目录路径（与 logger.js 保持一致）
+function getLogDir() {
+    try {
+        return path.join(pathManager.getUsersPath(), 'logs');
+    } catch (error) {
+        // 如果 pathManager 还没准备好，使用默认路径
+        const { app } = require('electron');
+        return path.join(app.getPath('userData'), 'Users', 'logs');
+    }
+}
 
 /**
  * 日志相关的 IPC 处理器
@@ -12,6 +26,7 @@ const logger = require('@modules/utils/logger');
 function parseLogContent(content, source) {
     const lines = content.split('\n').filter(line => line.trim());
     const logs = [];
+    let idCounter = 0;
 
     lines.forEach(line => {
         // 格式1: [2024-01-15 14:30:45] [INFO] [file.js:123] : message
@@ -20,7 +35,7 @@ function parseLogContent(content, source) {
             const [, timestamp, level, location, message] = match;
             const now = new Date(timestamp);
             logs.push({
-                id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}`,
+                id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}_${idCounter++}`,
                 level: level.toLowerCase(),  // 转换为小写，与前端一致
                 message: `${location} : ${message}`,
                 timestamp: now.toISOString(),
@@ -35,7 +50,7 @@ function parseLogContent(content, source) {
             const [, timestamp, level, location, message] = match;
             const now = new Date(timestamp);
             logs.push({
-                id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}`,
+                id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}_${idCounter++}`,
                 level: level.toLowerCase(),  // 转换为小写，与前端一致
                 message: `${location} ${message}`,
                 timestamp: now.toISOString(),
@@ -168,21 +183,41 @@ ipcMain.handle('export-logs', async (event, format = 'txt', range = {}) => {
 // 清空日志文件
 ipcMain.handle('clear-logs', async (event, source = 'app') => {
     try {
-        const { result: confirmed } = await dialog.showMessageBox({
-            type: 'warning',
-            buttons: ['Cancel', 'Clear'],
-            defaultId: 0,
-            title: 'Clear Logs',
-            message: 'Are you sure you want to clear all logs?',
-            detail: 'This action cannot be undone.'
-        });
-
-        if (confirmed !== 1) {
-            return { success: false, error: 'Clear cancelled' };
+        // 获取当前语言
+        let currentLanguage = 'zh-CN';
+        try {
+            const canboxStore = getCanboxStore();
+            currentLanguage = canboxStore.get('language', 'zh-CN');
+        } catch (e) {
+            logger.warn('[clear-logs] Failed to get language, using default: zh-CN');
         }
 
-        const logDir = path.join(process.cwd(), 'logs');
+        // 获取国际化文本
+        const cancelText = i18nModule.translate('common.cancel', currentLanguage);
+        const confirmText = i18nModule.translate('common.confirm', currentLanguage);
+        const titleText = i18nModule.translate('logViewer.confirmClearLogs', currentLanguage);
+        const messageText = i18nModule.translate('logViewer.confirmClearLogsDetail', currentLanguage);
+
+        const dialogResult = await dialog.showMessageBox({
+            type: 'warning',
+            buttons: [cancelText, confirmText],
+            defaultId: 0,
+            title: titleText,
+            message: messageText
+        });
+
+        if (dialogResult.response !== 1) {
+            return { success: false, error: i18nModule.translate('logViewer.cleanupFailed', currentLanguage) };
+        }
+
+        const logDir = getLogDir();
         const prefix = source === 'monitor' ? 'monitor' : 'app';
+
+        // 检查日志目录是否存在
+        if (!fs.existsSync(logDir)) {
+            logger.info(`Log directory does not exist, nothing to clear for: ${source}`);
+            return { success: true };
+        }
 
         const files = fs.readdirSync(logDir).filter(file =>
             file.startsWith(prefix) && file.endsWith('.log')
@@ -200,44 +235,76 @@ ipcMain.handle('clear-logs', async (event, source = 'app') => {
     }
 });
 
-// 清理超过保留天数的日志
-ipcMain.handle('cleanup-old-logs', async (event, days = 30) => {
+// 清理选中的日志文件
+ipcMain.handle('cleanup-old-logs', async (event, filePaths) => {
     try {
-        // 预览将要删除的文件
-        const files = logger.getLogFiles('app').concat(logger.getLogFiles('monitor'));
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - days);
+        logger.info('[cleanup-old-logs] Received request with {} files', filePaths?.length || 0);
 
-        const filesToDelete = files.filter(file => {
-            const fileDate = new Date(file.date);
-            return fileDate < cutoffDate;
-        });
-
-        if (filesToDelete.length === 0) {
-            return { success: true, deletedCount: 0, deletedFiles: [] };
+        if (!Array.isArray(filePaths) || filePaths.length === 0) {
+            logger.warn('[cleanup-old-logs] No files selected or invalid format');
+            return { success: false, error: i18nModule.translate('logViewer.noFilesToDelete', 'zh-CN') };
         }
 
+        logger.info('[cleanup-old-logs] Files to delete: {}', filePaths.join(', '));
+
+        // 获取当前语言
+        let currentLanguage = 'zh-CN';
+        try {
+            const canboxStore = getCanboxStore();
+            currentLanguage = canboxStore.get('language', 'zh-CN');
+        } catch (e) {
+            logger.warn('[cleanup-old-logs] Failed to get language, using default: zh-CN');
+        }
+
+        // 获取国际化文本
+        const cancelText = i18nModule.translate('common.cancel', currentLanguage);
+        const confirmText = i18nModule.translate('common.confirm', currentLanguage);
+        const titleText = i18nModule.translate('logViewer.confirmCleanup', currentLanguage);
+        const messageText = i18nModule.translate('logViewer.willDeleteFiles', currentLanguage, { count: filePaths.length });
+        const cancelledText = i18nModule.translate('logViewer.cleanupFailed', currentLanguage);
+
         // 显示确认对话框
-        const { result: confirmed } = await dialog.showMessageBox({
+        const dialogResult = await dialog.showMessageBox({
             type: 'warning',
-            buttons: ['Cancel', 'Delete'],
+            buttons: [cancelText, confirmText],
             defaultId: 0,
-            title: 'Cleanup Old Logs',
-            message: `Delete ${filesToDelete.length} log files older than ${days} days?`,
-            detail: filesToDelete.map(f => f.filename).join('\n')
+            title: titleText,
+            message: messageText,
+            detail: filePaths.join('\n')
         });
 
-        if (confirmed !== 1) {
-            return { success: false, error: 'Cleanup cancelled' };
+        logger.info('[cleanup-old-logs] Dialog result: {}', JSON.stringify(dialogResult));
+        logger.info('[cleanup-old-logs] Dialog response: {}', dialogResult.response);
+
+        if (dialogResult.response !== 1) {
+            logger.info('[cleanup-old-logs] Cleanup cancelled by user');
+            return { success: false, error: cancelledText };
         }
 
         // 执行清理
-        const result = logger.cleanupOldLogs(days);
-        logger.info(`Cleaned up ${result.deletedCount} old log files`);
+        const deletedFiles = [];
+        let deletedCount = 0;
 
-        return { success: true, ...result };
+        for (const filePath of filePaths) {
+            try {
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                    deletedFiles.push(filePath);
+                    deletedCount++;
+                    logger.info('[cleanup-old-logs] Deleted: {}', filePath);
+                } else {
+                    logger.warn('[cleanup-old-logs] File not found: {}', filePath);
+                }
+            } catch (error) {
+                logger.error('[cleanup-old-logs] Failed to delete {}: {}', filePath, error.message);
+            }
+        }
+
+        logger.info('[cleanup-old-logs] Cleaned up {} old log files: {}', deletedCount, deletedFiles.join(', '));
+
+        return { success: true, deletedCount, deletedFiles };
     } catch (error) {
-        logger.error('Failed to cleanup old logs: ' + error.message);
+        logger.error('[cleanup-old-logs] Failed to cleanup old logs: {}', error.message);
         return { success: false, error: error.message };
     }
 });
