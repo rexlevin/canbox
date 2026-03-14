@@ -52,30 +52,22 @@ ipcMain.handle('get-logs', async (event, options = {}) => {
     try {
         const { source = 'app', count = 100, date, afterId } = options;
 
-        console.log('[get-logs] options:', options);
-
         let logs;
 
         if (date && date !== 'today') {
             // 从文件读取指定日期的日志
-            console.log(`[get-logs] Reading logs from file for date: ${date}, source: ${source}`);
             logs = logger.getLogsFromFile(date, source);
-            console.log(`[get-logs] Read ${logs.length} logs from file for date: ${date}`);
         } else {
             // 今天的日志：从文件读取
-            console.log(`[get-logs] Reading logs for today, source: ${source}`);
             logs = logger.getLogsFromFile('today', source);
-            console.log(`[get-logs] File logs count: ${logs.length}`);
         }
 
         // 按 source 过滤
         let filteredLogs = logs.filter(log => log.category === source || source === 'all');
-        console.log(`[get-logs] Filtered logs count: ${filteredLogs.length}`);
 
         // 如果提供了 afterId，只返回 ID 更大的日志
         if (afterId) {
             filteredLogs = filteredLogs.filter(log => log.id > afterId);
-            console.log(`[get-logs] After filtering by afterId (${afterId}): ${filteredLogs.length} logs`);
         }
 
         return {
@@ -83,8 +75,7 @@ ipcMain.handle('get-logs', async (event, options = {}) => {
             logs: filteredLogs
         };
     } catch (error) {
-        console.error('[get-logs] Error:', error);
-        logger.error('Failed to get logs: ' + error.message);
+        logger.error('Failed to get logs: {}', error.message);
         return { success: false, error: error.message };
     }
 });

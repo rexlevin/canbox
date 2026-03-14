@@ -41,14 +41,108 @@ log4js.configure({
 function configureFileAppenders() {
     const logDir = getLogDir();
     const logFile = path.join(logDir, 'app.log');
+    const monitorLogFile = path.join(logDir, 'monitor.log');
 
     // 确保日志目录存在
     if (!fs.existsSync(logDir)) {
         fs.mkdirSync(logDir, { recursive: true });
     }
 
-    // 执行自动日志清理
-    cleanupOldLogs();
+    // 手动处理日志轮转，避免 log4js 覆盖已存在的归档文件
+    if (fs.existsSync(logFile)) {
+        try {
+            const content = fs.readFileSync(logFile, 'utf-8');
+            const firstLine = content.split('\n')[0];
+            const dateMatch = firstLine.match(/\[(\d{4}-\d{2}-\d{2})/);
+            if (dateMatch) {
+                const logDate = dateMatch[1];
+                const today = new Date().toISOString().split('T')[0];
+
+                // 如果日志日期不是今天，说明需要轮转
+                if (logDate !== today) {
+                    const archiveFile = path.join(logDir, `app.${logDate}.log.gz`);
+                    const tempFile = path.join(logDir, `app.${logDate}.log`);
+
+                    // 如果归档文件已存在，先备份
+                    if (fs.existsSync(archiveFile)) {
+                        const backupFile = path.join(logDir, `app.${logDate}.log.gz.backup`);
+                        if (fs.existsSync(backupFile)) {
+                            fs.unlinkSync(backupFile);
+                        }
+                        fs.copyFileSync(archiveFile, backupFile);
+                    }
+
+                    // 将 app.log 移动到临时文件
+                    fs.renameSync(logFile, tempFile);
+
+                    // 压缩临时文件
+                    const zlib = require('zlib');
+                    const compressed = zlib.gzipSync(fs.readFileSync(tempFile));
+
+                    // 删除已存在的归档文件
+                    if (fs.existsSync(archiveFile)) {
+                        fs.unlinkSync(archiveFile);
+                    }
+
+                    // 写入新的归档文件
+                    fs.writeFileSync(archiveFile, compressed);
+
+                    // 删除临时文件
+                    fs.unlinkSync(tempFile);
+
+                    logger.info('[configureFileAppenders] Rotated app.log to {}', archiveFile);
+                }
+            }
+        } catch (error) {
+            logger.error('[configureFileAppenders] Failed to rotate app.log: {}', error.message);
+        }
+    }
+
+    // 对 monitor.log 执行同样的处理
+    if (fs.existsSync(monitorLogFile)) {
+        try {
+            const content = fs.readFileSync(monitorLogFile, 'utf-8');
+            const firstLine = content.split('\n')[0];
+            const dateMatch = firstLine.match(/\[(\d{4}-\d{2}-\d{2})/);
+            if (dateMatch) {
+                const logDate = dateMatch[1];
+                const today = new Date().toISOString().split('T')[0];
+
+                if (logDate !== today) {
+                    const archiveFile = path.join(logDir, `monitor.${logDate}.log.gz`);
+                    const tempFile = path.join(logDir, `monitor.${logDate}.log`);
+
+                    // 备份已存在的归档文件
+                    if (fs.existsSync(archiveFile)) {
+                        const backupFile = path.join(logDir, `monitor.${logDate}.log.gz.backup`);
+                        if (fs.existsSync(backupFile)) {
+                            fs.unlinkSync(backupFile);
+                        }
+                        fs.copyFileSync(archiveFile, backupFile);
+                    }
+
+                    fs.renameSync(monitorLogFile, tempFile);
+                    const zlib = require('zlib');
+                    const compressed = zlib.gzipSync(fs.readFileSync(tempFile));
+
+                    if (fs.existsSync(archiveFile)) {
+                        fs.unlinkSync(archiveFile);
+                    }
+
+                    fs.writeFileSync(archiveFile, compressed);
+                    fs.unlinkSync(tempFile);
+
+                    logger.info('[configureFileAppenders] Rotated monitor.log to {}', archiveFile);
+                }
+            }
+        } catch (error) {
+            logger.error('[configureFileAppenders] Failed to rotate monitor.log: {}', error.message);
+        }
+    }
+
+    // 注意：日志清理在 configureFileAppenders 之后手动执行
+    // 因为此时 storageManager 可能还未初始化，避免循环依赖
+    // 清理逻辑移到了 main.js 中执行
 
     // 重新配置 log4js，添加 dateFile appender
     log4js.configure({
@@ -66,6 +160,7 @@ function configureFileAppenders() {
                 pattern: 'yyyy-MM-dd',
                 compress: true,
                 keepFileExt: true,
+                alwaysIncludePattern: false,
                 layout: {
                     type: 'pattern',
                     pattern: '[%d{yyyy-MM-dd hh:mm:ss}] [%p] %m'
@@ -77,6 +172,7 @@ function configureFileAppenders() {
                 pattern: 'yyyy-MM-dd',
                 compress: true,
                 keepFileExt: true,
+                alwaysIncludePattern: false,
                 layout: {
                     type: 'pattern',
                     pattern: '[%d{yyyy-MM-dd hh:mm:ss}] [%p] %m'
@@ -171,8 +267,6 @@ function getLogsFromFile(date, source = 'app') {
     let filename;
     const today = new Date().toISOString().split('T')[0];
 
-    console.log(`[getLogsFromFile] date: ${date}, source: ${source}, today: ${today}`);
-
     if (!date || date === 'today' || date === today) {
         filename = `${prefix}.log`;
     } else {
@@ -180,20 +274,13 @@ function getLogsFromFile(date, source = 'app') {
     }
 
     const filePath = path.join(logDir, filename);
-    console.log(`[getLogsFromFile] logDir: ${logDir}`);
-    console.log(`[getLogsFromFile] filePath: ${filePath}`);
-    console.log(`[getLogsFromFile] filename: ${filename}`);
-
     const logs = [];
 
     try {
         // 检查文件是否存在
         if (!fs.existsSync(filePath)) {
-            console.log(`[getLogsFromFile] File does not exist: ${filePath}`);
             return logs;
         }
-
-        console.log(`[getLogsFromFile] File exists, reading content...`);
 
         // 读取文件内容
         let content;
@@ -206,9 +293,7 @@ function getLogsFromFile(date, source = 'app') {
             content = fs.readFileSync(filePath, 'utf-8');
         }
 
-        console.log(`[getLogsFromFile] Content length: ${content.length}`);
         const lines = content.split('\n').filter(line => line.trim());
-        console.log(`[getLogsFromFile] Total lines: ${lines.length}`);
 
             // 解析日志行 - 支持多种格式
         lines.forEach((line, index) => {
@@ -242,15 +327,10 @@ function getLogsFromFile(date, source = 'app') {
                 return;
             }
 
-            // 打印未匹配的行（前10行）
-            if (index < 10) {
-                console.log(`[getLogsFromFile] Unmatched line ${index}: ${line}`);
-            }
         });
 
-        console.log(`[getLogsFromFile] Parsed ${logs.length} log entries`);
     } catch (error) {
-        console.error(`[getLogsFromFile] Failed to read log file ${filePath}:`, error);
+        logger.error('Failed to read log file {}: {}', filePath, error.message);
     }
 
     return logs;
@@ -286,7 +366,7 @@ function getLogFiles(source = 'app') {
             });
         });
     } catch (error) {
-        console.error('Failed to get log files:', error);
+        logger.error('Failed to get log files: {}', error.message);
     }
 
     return files;
@@ -295,37 +375,74 @@ function getLogFiles(source = 'app') {
 // 清理超过保留天数的日志
 function cleanupOldLogs(days = 30) {
     const logDir = getLogDir();
-    const cutoffDate = new Date();
+    const now = new Date();
+    const nowStr = now.toISOString().split('T')[0]; // 格式：2026-03-12
+
+    // 计算截止日期：保留 n 份归档文件，所以删除 (now - n - 1) 天之前的文件
+    // 例如：保留8天，删除 2026-03-03 之前的文件（即保留 2026-03-04 到 2026-03-11）
+    const cutoffDate = new Date(now);
     cutoffDate.setDate(cutoffDate.getDate() - days);
+    const cutoffDateStr = cutoffDate.toISOString().split('T')[0];
+
+    logger.info('[cleanupOldLogs] Cleaning logs older than {} days, cutoff date: {}', days, cutoffDateStr);
 
     let deletedCount = 0;
     const deletedFiles = [];
+    const checkedFiles = [];
 
     try {
+        if (!fs.existsSync(logDir)) {
+            return { deletedCount: 0, deletedFiles: [] };
+        }
+
         const files = fs.readdirSync(logDir);
 
         files.forEach(file => {
-            // 只处理日志文件
-            if (!file.match(/^(app|monitor)\.?\d{4}-\d{2}-\d{2}\.log(\.gz)?$/)) {
+            // 只处理日志文件（带日期的归档文件）
+            // 匹配格式：app.2024-03-08.log.gz 或 app.2024-03-08.log
+            const match = file.match(/^(app|monitor)\.(\d{4}-\d{2}-\d{2})\.log(\.gz)?$/);
+            if (!match) {
+                // 跳过当天正在写入的日志文件（app.log, monitor.log）和其他文件
                 return;
             }
 
-            const filePath = path.join(logDir, file);
-            const stats = fs.statSync(filePath);
-            const fileDate = stats.mtime;
+            const [, prefix, dateStr] = match;
+            const fileDate = new Date(dateStr);
 
-            if (fileDate < cutoffDate) {
-                fs.unlinkSync(filePath);
-                deletedCount++;
-                deletedFiles.push(file);
+            // 检查日期是否有效
+            if (isNaN(fileDate.getTime())) {
+                logger.warn('[cleanupOldLogs] Invalid date in filename: {}', file);
+                return;
+            }
+
+            checkedFiles.push({
+                file,
+                dateStr,
+                fileDate: fileDate.toISOString(),
+                daysOld: Math.floor((now - fileDate) / (1000 * 60 * 60 * 24))
+            });
+
+            // 直接比较日期字符串，避免时区问题
+            // 删除截止日期之前的文件（严格小于）
+            const shouldDelete = dateStr < cutoffDateStr;
+
+            if (shouldDelete) {
+                const filePath = path.join(logDir, file);
+                try {
+                    fs.unlinkSync(filePath);
+                    deletedCount++;
+                    deletedFiles.push(file);
+                } catch (deleteError) {
+                    logger.error('[cleanupOldLogs] Failed to delete {}: {}', file, deleteError.message);
+                }
             }
         });
 
         if (deletedCount > 0) {
-            console.log(`Cleaned up ${deletedCount} old log files:`, deletedFiles);
+            logger.info('[cleanupOldLogs] Deleted {} log files: {}', deletedCount, deletedFiles.join(', '));
         }
     } catch (error) {
-        console.error('Failed to cleanup old logs:', error);
+        logger.error('[cleanupOldLogs] Failed to cleanup old logs: {}', error.message);
     }
 
     return { deletedCount, deletedFiles };

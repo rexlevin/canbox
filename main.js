@@ -154,8 +154,14 @@ if (!getTheLock) {
 
     app.whenReady().then(() => {
         // 配置日志文件 appenders
-        const { configureFileAppenders } = require('@modules/utils/logger');
+        const { configureFileAppenders, cleanupOldLogs } = require('@modules/utils/logger');
         configureFileAppenders();
+
+        // 执行日志清理（使用配置的保留天数）
+        const store = getCanboxStore();
+        const retentionDays = store.get('logRetentionDays', 30);
+        cleanupOldLogs(retentionDays);
+        logger.info('[main.js] Log cleanup executed with retention days: {}', retentionDays);
 
         // 初始化执行调度器
         executionDispatcher.init();
