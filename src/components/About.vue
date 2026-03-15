@@ -1,57 +1,51 @@
 <template>
     <div class="about-container">
-        <el-card class="about-card">
-            <div class="about-content">
-                <div class="logo-section">
-                    <img :src="logoPath" alt="Canbox Logo" class="logo" />
-                    <h1>{{ t('app.title') }}</h1>
-                    <p class="version">{{ t('about.version') }}: {{ packageVersion }}</p>
+        <div class="about-content">
+            <div class="logo-section">
+                <!-- <img :src="logoPath" alt="Canbox Logo" class="logo" /> -->
+                <h1>{{ t('app.title') }}</h1>
+                <p class="version">{{ t('about.version') }}: {{ packageVersion }}</p>
+            </div>
+
+            <el-divider />
+
+            <div class="info-section">
+                <p>{{ t('about.description') }}: {{ packageDescription }}</p>
+                <p>{{ t('about.author') }}: {{ packageAuthor }}</p>
+                <p>{{ t('about.license') }}: {{ packageLicense }}</p>
+            </div>
+
+            <el-divider />
+
+            <div class="system-info">
+                <h3>{{ t('about.systemInfo') }}</h3>
+                <div class="info-item">
+                    <span class="label">{{ t('about.nodeVersion') }}:</span>
+                    <span class="value">{{ nodeVersion }}</span>
                 </div>
-
-                <el-divider />
-
-                <div class="info-section">
-                    <p>{{ t('about.description') }}: {{ packageDescription }}</p>
-                    <p>{{ t('about.author') }}: {{ packageAuthor }}</p>
-                    <p>{{ t('about.license') }}: {{ packageLicense }}</p>
+                <div class="info-item">
+                    <span class="label">{{ t('about.chromeVersion') }}:</span>
+                    <span class="value">{{ chromeVersion }}</span>
                 </div>
-
-                <el-divider />
-
-                <div class="system-info">
-                    <h3>{{ t('about.systemInfo') }}</h3>
-                    <div class="info-item">
-                        <span class="label">{{ t('about.nodeVersion') }}:</span>
-                        <span class="value">{{ nodeVersion }}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="label">{{ t('about.chromeVersion') }}:</span>
-                        <span class="value">{{ chromeVersion }}</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="label">{{ t('about.electronVersion') }}:</span>
-                        <span class="value">{{ electronVersion }}</span>
-                    </div>
-                </div>
-
-                <el-divider />
-
-                <div class="links-section">
-                    <el-button type="primary" @click="openGithub">
-                        <el-icon><Link /></el-icon>
-                        {{ t('about.githubRepo') }}
-                    </el-button>
-                    <!-- <el-button @click="openGitee">
-                        <el-icon><Link /></el-icon>
-                        {{ t('about.giteeRepo') }}
-                    </el-button> -->
-                    <el-button @click="openLicense">
-                        <el-icon><Document /></el-icon>
-                        {{ t('about.viewLicense') }}
-                    </el-button>
+                <div class="info-item">
+                    <span class="label">{{ t('about.electronVersion') }}:</span>
+                    <span class="value">{{ electronVersion }}</span>
                 </div>
             </div>
-        </el-card>
+
+            <el-divider />
+
+            <div class="links-section">
+                <el-button type="primary" @click="openGithub">
+                    <el-icon><Link /></el-icon>
+                    {{ t('about.githubRepo') }}
+                </el-button>
+                <el-button @click="openLicense">
+                    <el-icon><Document /></el-icon>
+                    {{ t('about.viewLicense') }}
+                </el-button>
+            </div>
+        </div>
         <div class="bottom-spacer"></div>
     </div>
 </template>
@@ -117,17 +111,15 @@ const openLicense = async () => {
 
 <style scoped>
 .about-container {
-    height: 100%;
-    overflow-y: auto;
-    padding: 20px;
-}
-
-.about-card {
-    max-width: 800px;
-    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
 .about-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
     text-align: center;
 }
 
