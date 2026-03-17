@@ -61,6 +61,14 @@ class AutoUpdateManager {
     // 不允许降级更新
     autoUpdater.allowDowngrade = false;
 
+    // 检测当前平台
+    const { platform } = process;
+    logger.info('[AutoUpdate] 当前平台: {}, 已打包: {}', platform, process.windowsStore);
+
+    // 输出 feedURL 用于调试
+    const feedUrl = autoUpdater.getFeedURL();
+    logger.info('[AutoUpdate] Feed URL: {}', feedUrl || '未设置（将使用 package.json 配置）');
+
     // 设置更新事件监听器
     this._setupUpdateEventListeners();
 
@@ -247,13 +255,21 @@ class AutoUpdateManager {
         throw new Error('更新包未下载，请先下载更新');
       }
 
-      this.status.state = 'installing';
+      // 注意：不要设置 this.status.state = 'installing'
+      // 因为 quitAndInstall() 会立即退出应用，渲染进程无法清除"正在安装"状态
+      // 这会导致应用重启后（如果自动重启的话）UI 仍然显示"正在安装"
+      // 而实际上应用已经更新完成并重启了
 
-      // 退出应用并安装更新
-      logger.info('[AutoUpdate] 应用将退出并安装更新');
+      // 检测当前平台
+      const { platform } = process;
+
+      logger.info('[AutoUpdate] 当前平台: {}, 调用 quitAndInstall() 退出应用并更新', platform);
+      // quitAndInstall() 会：
+      // 1. 退出当前应用
+      // 2. 在 Linux 上：用新的 AppImage 替换旧的 AppImage 文件，然后尝试重启
+      // 3. 在 macOS/Windows 上：安装新版本并重启应用
+      // 注意：应用会立即退出，后续代码不会执行
       autoUpdater.quitAndInstall();
-
-      // 注意：quitAndInstall() 后应用会立即退出，后续代码不会执行
     } catch (error) {
       logger.error('[AutoUpdate] 安装更新失败: {}', error.message);
       this.status.state = 'error';

@@ -26,7 +26,9 @@ const UPDATE_EVENTS = {
   // 安装进度更新（预留）
   INSTALL_PROGRESS: 'install-progress',
   // 更新被取消
-  UPDATE_CANCELLED: 'update-cancelled'
+  UPDATE_CANCELLED: 'update-cancelled',
+  // 安装完成（Linux 上需要手动重启）
+  UPDATE_INSTALL_COMPLETE: 'update-install-complete'
 };
 
 /**
@@ -49,7 +51,9 @@ const IPC_CHANNELS = {
   // 保存更新配置
   SAVE_UPDATE_CONFIG: 'save-update-config',
   // 跳过指定版本
-  SKIP_VERSION: 'skip-version'
+  SKIP_VERSION: 'skip-version',
+  // 显示更新对话框（由 About.vue 触发，转发给 App.vue）
+  SHOW_UPDATE_DIALOG: 'show-update-dialog'
 };
 
 module.exports = {

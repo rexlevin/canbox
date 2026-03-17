@@ -2,9 +2,21 @@
     <div class="about-container">
         <div class="about-content">
             <div class="logo-section">
-                <!-- <img :src="logoPath" alt="Canbox Logo" class="logo" /> -->
+                <img :src="logoPath" alt="Canbox Logo" class="logo" />
                 <h1>{{ t('app.title') }}</h1>
-                <p class="version">{{ t('about.version') }}: {{ packageVersion }}</p>
+                <div class="version-wrapper">
+                    <p class="version">{{ t('about.version') }}: {{ packageVersion }}</p>
+                    <el-button
+                        v-if="hasUpdate"
+                        type="primary"
+                        size="small"
+                        @click="handleUpgrade"
+                        class="upgrade-button"
+                    >
+                        <el-icon><Top /></el-icon>
+                        {{ t('autoUpdate.upgrade') }}
+                    </el-button>
+                </div>
             </div>
 
             <el-divider />
@@ -51,11 +63,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Link, Document } from '@element-plus/icons-vue';
+import { Link, Document, Top } from '@element-plus/icons-vue';
+import { useUpdateStore } from '@/stores/updateStore';
 
 const { t } = useI18n();
+const updateStore = useUpdateStore();
+
+// 检查是否有更新
+const hasUpdate = computed(() => updateStore.hasUpdate);
 
 const packageVersion = ref('');
 const packageDescription = ref('');
@@ -107,6 +124,14 @@ const openLicense = async () => {
     // 直接打开 GitHub 上的许可证文件
     window.api.openUrl('https://github.com/rexlevin/canbox/blob/main/LICENSE');
 };
+
+// 处理升级按钮点击
+const handleUpgrade = () => {
+    // 发送事件给主进程，触发更新对话框
+    if (window.api) {
+        window.api.send('show-update-dialog');
+    }
+};
 </script>
 
 <style scoped>
@@ -143,6 +168,19 @@ const openLicense = async () => {
     font-size: 18px;
     color: #909399;
     margin: 5px 0;
+}
+
+.version-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.upgrade-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .info-section {

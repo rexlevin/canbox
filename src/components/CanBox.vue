@@ -10,7 +10,9 @@
                     <!-- <el-tab-pane :label="$t('canbox.userCenter')" class="full-height-pane"><UserCenter/></el-tab-pane> -->
                     <el-tab-pane :label="$t('canbox.devApp')" name="devApp" class="full-height-pane"><AppDev/></el-tab-pane>
                     <el-tab-pane :label="$t('settings.title')" class="full-height-pane"><Settings/></el-tab-pane>
-                    <el-tab-pane :label="$t('canbox.about')" name="about" class="full-height-pane"><About/></el-tab-pane>
+                    <el-tab-pane :label="aboutLabel" :name="'about'" class="full-height-pane">
+                        <About/>
+                    </el-tab-pane>
                 </el-tabs>
             </el-main>
             <!-- <el-footer class="footer">footer</el-footer> -->
@@ -60,15 +62,28 @@
 </style>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppList from '@/components/AppList.vue';
 import AppRepos from '@/components/AppRepos.vue';
 import UserCenter from '@/components/UserCenter.vue'
 import AppDev from '@/components/AppDev.vue';
 import About from '@/components/About.vue';
 import Settings from '@/components/Settings.vue';
+import { useUpdateStore } from '@/stores/updateStore';
 
+const { t } = useI18n();
+const updateStore = useUpdateStore();
 let activeName = ref('myApps');
+
+// 关于标签的 label - 有更新时显示图标
+const aboutLabel = computed(() => {
+    if (updateStore.hasUpdate) {
+        return `🔔 ${t('canbox.about')}`;
+    }
+    return t('canbox.about');
+});
+
 const changeActiveTab = (name) => {
     console.info('name: ', name)
     activeName.value = name;

@@ -27,8 +27,8 @@
           <div class="notes-content" v-html="renderReleaseNotes(updateInfo.releaseNotes)"></div>
           <a
             v-if="updateInfo.releaseName"
-            :href="releaseUrl"
-            target="_blank"
+            href="#"
+            @click.prevent="openReleaseUrl"
             class="view-details-link"
           >
             {{ t('autoUpdate.viewDetails') }}
@@ -90,11 +90,11 @@
 
         <!-- 发现更新 - 显示下载按钮 -->
         <el-button
-          v-if="hasUpdate && !isDownloading && !isInstalling"
+          v-if="hasUpdate && !isUpdateReady && !isDownloading && !isInstalling"
           type="primary"
           @click="handleDownload"
         >
-          {{ t('autoUpdate.immediateUpdate') }}
+          {{ t('autoUpdate.immediateDownload') }}
         </el-button>
 
         <!-- 跳过按钮 -->
@@ -243,6 +243,13 @@ const renderReleaseNotes = (notes) => {
   }
 };
 
+const openReleaseUrl = () => {
+  if (props.updateInfo?.releaseName && window.api?.openUrl) {
+    const url = `https://github.com/rexlevin/canbox/releases/tag/${props.updateInfo.releaseName}`;
+    window.api.openUrl(url);
+  }
+};
+
 const handleDownload = () => {
   error.value = null;
   downloadProgress.value.show = true;
@@ -253,10 +260,12 @@ const handleDownload = () => {
 
 const handleInstall = () => {
   error.value = null;
-  installProgress.value.show = true;
-  installProgress.value.percent = 0;
-  installProgress.value.text = t('autoUpdate.installing');
+  // 不要显示"正在安装"进度条，因为 quitAndInstall() 会立即退出应用
+  // 渲染进程没有机会清除这个状态，导致应用重启后 UI 状态不正确
+  // 直接触发安装，应用会立即退出并更新
   emit('install');
+  // 立即关闭对话框，避免用户看到 UI 卡住
+  handleClose();
 };
 
 const handleCancel = () => {

@@ -581,6 +581,20 @@ function initIpcHandlers() {
             return { success: false, error: error.message };
         }
     });
+
+    // 显示更新对话框（由 About.vue 触发，转发给 App.vue）
+    ipcMain.on(IPC_CHANNELS.SHOW_UPDATE_DIALOG, (event) => {
+        logger.info('show-update-dialog 事件收到，转发给渲染进程');
+        // 向渲染进程发送事件，让 App.vue 监听到并打开对话框
+        event.sender.send(IPC_CHANNELS.SHOW_UPDATE_DIALOG);
+    });
+
+    // 重启应用（Linux AppImage 更新后使用）
+    ipcMain.on('restart-app', () => {
+        logger.info('收到重启应用请求');
+        app.relaunch();
+        app.quit();
+    });
 }
 
 // 初始化语言

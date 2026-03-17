@@ -1,6 +1,12 @@
 <script setup>
 import { onMounted, ref, nextTick } from 'vue';
 import UpdateDialog from '@/components/UpdateDialog.vue';
+import { useUpdateStore } from '@/stores/updateStore';
+
+/**
+ * 使用更新状态管理
+ */
+const updateStore = useUpdateStore();
 
 /**
  * 自动更新对话框可见性
@@ -49,6 +55,7 @@ const handleCancelDownload = async () => {
         if (!result.success) {
             console.error('[App.vue] 取消下载失败:', result.error);
         }
+        updateStore.resetDownloadState();
     } catch (error) {
         console.error('[App.vue] 取消下载异常:', error);
     }
@@ -63,6 +70,7 @@ const handleSkipVersion = async (version) => {
         if (!result.success) {
             console.error('[App.vue] 跳过版本失败:', result.error);
         }
+        updateStore.clearUpdateStatus();
     } catch (error) {
         console.error('[App.vue] 跳过版本异常:', error);
     }
@@ -72,6 +80,7 @@ const handleSkipVersion = async (version) => {
  * 处理重试
  */
 const handleRetry = async () => {
+    updateStore.resetDownloadState();
     await handleDownloadUpdate();
 };
 
@@ -88,17 +97,42 @@ onMounted(() => {
             return;
         }
 
-        // 监听发现新版本事件
+        // 监听发现新版本事件 - 静默通知，不弹出对话框
         window.api.on('update-available', (event, info) => {
             console.log('[App.vue] 发现新版本:', info.version);
-            updateInfo.value = info;
+            updateStore.setUpdateAvailable(info);
+        });
+
+        // 监听显示更新对话框事件 - 由用户点击"关于"页面的升级按钮触发
+        window.api.on('show-update-dialog', (event) => {
+            console.log('[App.vue] 显示更新对话框');
+            updateInfo.value = updateStore.updateInfo;
             updateDialogVisible.value = true;
         });
 
-        // 监听更新错误事件
+        // 监听更新不可用事件
+        window.api.on('update-not-available', (event, version) => {
+            console.log('[App.vue] 当前已是最新版本:', version);
+            updateStore.clearUpdateStatus();
+        });
+
+        // 监听下载完成事件
+        window.api.on('update-downloaded', (event, info) => {
+            console.log('[App.vue] 更新下载完成:', info.version);
+            updateStore.setDownloaded(info);
+            updateInfo.value = info;
+        });
+
+        // 监听下载进度事件
+        window.api.on('download-progress', (event, progress) => {
+            console.log('[App.vue] 下载进度:', progress.percent);
+            updateStore.setDownloadInfo(progress);
+        });
+
+        // 监听更新错误事件 - 错误仍需要弹出对话框
         window.api.on('update-error', (event, error) => {
             console.error('[App.vue] 更新错误:', error);
-            updateInfo.value = null;
+            updateInfo.value = error;
             updateDialogVisible.value = true;
         });
 

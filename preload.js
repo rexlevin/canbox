@@ -52,6 +52,9 @@ contextBridge.exposeInMainWorld(
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
         },
+        send: (eventName, ...args) => {
+            ipcRenderer.send(eventName, ...args);
+        },
         generateShortcut: (fn) => {
             ipcRenderer.invoke('generate-shortcut').then(result => {
                 fn(result);
