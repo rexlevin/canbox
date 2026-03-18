@@ -47,6 +47,20 @@ const handleInstallUpdate = async () => {
 };
 
 /**
+ * 处理退出（AppImage 模式）
+ */
+const handleExitApp = async () => {
+    try {
+        const result = await window.api.quit();
+        if (!result.success) {
+            console.error('[App.vue] 退出应用失败:', result.error);
+        }
+    } catch (error) {
+        console.error('[App.vue] 退出应用异常:', error);
+    }
+};
+
+/**
  * 处理取消下载
  */
 const handleCancelDownload = async () => {
@@ -116,9 +130,16 @@ onMounted(() => {
             updateStore.clearUpdateStatus();
         });
 
-        // 监听下载完成事件
+        // 监听下载完成事件（通用平台）
         window.api.on('update-downloaded', (event, info) => {
-            console.log('[App.vue] 更新下载完成:', info.version);
+            console.log('[App.vue] 更新下载完成（通用平台）:', info.version);
+            updateStore.setDownloaded(info);
+            updateInfo.value = info;
+        });
+
+        // 监听下载完成事件（Linux AppImage - 需要手动重启）
+        window.api.on('update-downloaded-restart', (event, info) => {
+            console.log('[App.vue] 更新下载完成（Linux AppImage）:', info.version);
             updateStore.setDownloaded(info);
             updateInfo.value = info;
         });
@@ -148,6 +169,7 @@ onMounted(() => {
         :updateInfo="updateInfo"
         @download="handleDownloadUpdate"
         @install="handleInstallUpdate"
+        @exit="handleExitApp"
         @cancel="handleCancelDownload"
         @skip="handleSkipVersion"
         @retry="handleRetry"

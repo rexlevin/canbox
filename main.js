@@ -55,7 +55,8 @@ const { initIpcHandlers } = require('./ipcHandlers');
 // 清除启动时控制台的"Electron Security Warning (Insecure Content-Security-Policy)"报错信息
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
-
+// 强制退出标志位：用于更新时绕过窗口关闭拦截
+let isForceQuit = false;
 
 // 禁用当前应用程序的硬件加速
 app.disableHardwareAcceleration();
@@ -270,6 +271,9 @@ app.on('before-quit', () => {
 
     // 停止所有子进程
     executionDispatcher.closeAllApps();
+
+    // 设置强制退出标志，允许窗口真正关闭
+    isForceQuit = true;
 });
 
 const createWindow = () => {
@@ -429,6 +433,12 @@ const createWindow = () => {
 
     // 关闭主窗口事件，最小化到托盘，同时保存窗口状态
     win.on('close', (e) => {
+        // 强制退出时，允许窗口关闭
+        if (isForceQuit) {
+            return;
+        }
+
+        // 正常关闭时，隐藏窗口到托盘
         saveWindowState();
         win.hide();
         win.setSkipTaskbar(true);
@@ -439,6 +449,8 @@ const createWindow = () => {
     win.on('closed', async () => {
         // 注意：close 事件已经保存过了，这里不需要重复保存
         console.info('now win closed, and app will quit');
+        // 清除强制退出标志位，防止下次关闭也被当作强制退出
+        isForceQuit = false;
         app.quit();
     });
 

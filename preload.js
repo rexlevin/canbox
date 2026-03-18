@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld(
             resetToDefault: () => ipcRenderer.invoke('userData:resetToDefault'),
             restartNow: () => ipcRenderer.invoke('userData:restartNow')
         },
+        quit: () => ipcRenderer.invoke('app:quit'),
         log: {
             openViewer: () => ipcRenderer.invoke('log-viewer:open'),
             getLogs: (options) => ipcRenderer.invoke('get-logs', options),

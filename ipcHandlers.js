@@ -378,6 +378,18 @@ function initIpcHandlers() {
         }
     });
 
+    // 退出应用（用于 AppImage 更新模式）
+    ipcMain.handle('app:quit', () => {
+        try {
+            logger.info('User requested to quit application');
+            app.quit();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to quit application:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     // 日志查看器窗口管理
     ipcMain.handle('log-viewer:open', () => {
         try {

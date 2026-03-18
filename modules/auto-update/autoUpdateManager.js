@@ -56,8 +56,6 @@ class AutoUpdateManager {
   _initAutoUpdater() {
     // 不自动下载更新包，由用户手动触发
     autoUpdater.autoDownload = false;
-    // 不在退出时自动安装，由用户手动触发
-    autoUpdater.autoInstallOnAppQuit = false;
     // 不允许降级更新
     autoUpdater.allowDowngrade = false;
 
@@ -65,9 +63,25 @@ class AutoUpdateManager {
     const { platform } = process;
     logger.info('[AutoUpdate] 当前平台: {}, 已打包: {}', platform, process.windowsStore);
 
+    // AppImage 平台需要在退出时自动安装更新
+    const isAppImage = platform === 'linux' && process.env.APPIMAGE !== undefined;
+    autoUpdater.autoInstallOnAppQuit = isAppImage;
+    logger.info('[AutoUpdate] autoInstallOnAppQuit: {} (AppImage: {})', autoUpdater.autoInstallOnAppQuit, isAppImage);
+
+    // 输出 App 路径用于调试
+    const appPath = process.argv[0];
+    const appPathResolved = require('path').resolve(appPath);
+    logger.info('[AutoUpdate] 应用路径: {}', appPath);
+    logger.info('[AutoUpdate] 应用路径（绝对）: {}', appPathResolved);
+
     // 输出 feedURL 用于调试
     const feedUrl = autoUpdater.getFeedURL();
     logger.info('[AutoUpdate] Feed URL: {}', feedUrl || '未设置（将使用 package.json 配置）');
+
+    // 输出缓存目录
+    const { app } = require('electron');
+    logger.info('[AutoUpdate] 用户数据目录: {}', app.getPath('userData'));
+    logger.info('[AutoUpdate] 临时目录: {}', app.getPath('temp'));
 
     // 设置更新事件监听器
     this._setupUpdateEventListeners();
@@ -124,8 +138,23 @@ class AutoUpdateManager {
       this.status.state = 'ready';
       this.status.progress = 100;
 
-      // 通知渲染进程可以安装了
-      this._sendEvent(UPDATE_EVENTS.UPDATE_DOWNLOADED, this._formatUpdateInfo(info));
+      // 检测是否为 Linux AppImage 平台
+      const isAppImage = process.platform === 'linux' && process.env.APPIMAGE !== undefined;
+      logger.info('[AutoUpdate] 平台检测: {}, 是否为 AppImage: {}', process.platform, isAppImage);
+
+      // 根据 platform 发送不同事件
+      if (isAppImage) {
+        // Linux AppImage：发送特殊事件，提示用户退出并手动重启
+        logger.info('[AutoUpdate] Linux AppImage 检测到，发送 UPDATE_DOWNLOADED_RESTART 事件');
+        this._sendEvent(UPDATE_EVENTS.UPDATE_DOWNLOADED_RESTART, {
+          ...this._formatUpdateInfo(info),
+          isAppImage: true
+        });
+      } else {
+        // 其他平台：发送普通事件，可以自动更新并重启
+        logger.info('[AutoUpdate] 发送 UPDATE_DOWNLOADED 事件');
+        this._sendEvent(UPDATE_EVENTS.UPDATE_DOWNLOADED, this._formatUpdateInfo(info));
+      }
     });
 
     // 更新错误
@@ -255,21 +284,24 @@ class AutoUpdateManager {
         throw new Error('更新包未下载，请先下载更新');
       }
 
-      // 注意：不要设置 this.status.state = 'installing'
-      // 因为 quitAndInstall() 会立即退出应用，渲染进程无法清除"正在安装"状态
-      // 这会导致应用重启后（如果自动重启的话）UI 仍然显示"正在安装"
-      // 而实际上应用已经更新完成并重启了
-
-      // 检测当前平台
+      // 检测当前平台和是否为 AppImage
       const { platform } = process;
+      const isAppImage = platform === 'linux' && process.env.APPIMAGE !== undefined;
 
-      logger.info('[AutoUpdate] 当前平台: {}, 调用 quitAndInstall() 退出应用并更新', platform);
-      // quitAndInstall() 会：
-      // 1. 退出当前应用
-      // 2. 在 Linux 上：用新的 AppImage 替换旧的 AppImage 文件，然后尝试重启
-      // 3. 在 macOS/Windows 上：安装新版本并重启应用
-      // 注意：应用会立即退出，后续代码不会执行
-      autoUpdater.quitAndInstall();
+      logger.info('[AutoUpdate] 当前平台: {}, 是否为 AppImage: {}', platform, isAppImage);
+
+      if (isAppImage) {
+        // Linux AppImage：正常退出，让 electron-updater 的 autoInstallOnAppQuit 处理文件替换
+        const { app } = require('electron');
+        logger.info('[AutoUpdate] Linux AppImage 检测到，调用 app.quit() 退出应用');
+        logger.info('[AutoUpdate] electron-updater 将在应用退出后自动替换文件');
+        app.quit();
+      } else {
+        // 其他平台：调用 quitAndInstall() 自动更新并重启
+        logger.info('[AutoUpdate] 调用 quitAndInstall() 退出应用并更新');
+        // 注意：应用会立即退出，后续代码不会执行
+        autoUpdater.quitAndInstall();
+      }
     } catch (error) {
       logger.error('[AutoUpdate] 安装更新失败: {}', error.message);
       this.status.state = 'error';

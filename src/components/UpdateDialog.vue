@@ -9,8 +9,26 @@
     @close="handleClose"
   >
     <div class="update-dialog-content">
-      <!-- 更新信息 -->
-      <div v-if="updateInfo" class="update-info">
+      <!-- Linux AppImage 特殊模式 -->
+      <div v-if="updateInfo?.isAppImage" class="appimage-only-mode">
+        <div class="mode-header">
+          <div class="mode-icon">⚠️</div>
+          <h3>{{ t('autoUpdate.appImageUpdateMode') }}</h3>
+        </div>
+        <div class="mode-description">
+          {{ t('autoUpdate.appImageNotice') }}
+        </div>
+        <div class="mode-tips">
+          <h4>{{ t('autoUpdate.appImageTipsTitle') }}</h4>
+          <ul>
+            <li>{{ t('autoUpdate.appImageTip1') }}</li>
+            <li>{{ t('autoUpdate.appImageTip2') }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 其他平台标准模式 -->
+      <div v-else-if="updateInfo" class="update-info">
         <div class="update-header">
           <h3>{{ t('autoUpdate.updateAvailable', { version: updateInfo.version }) }}</h3>
           <div class="update-meta">
@@ -79,14 +97,23 @@
           {{ t('common.cancel') }}
         </el-button>
 
-        <!-- 下载完成 - 显示立即更新按钮 -->
-        <el-button
-          v-if="isUpdateReady && !isInstalling"
-          type="primary"
-          @click="handleInstall"
-        >
-          {{ t('autoUpdate.immediateUpdate') }}
-        </el-button>
+<!-- AppImage 模式：仅显示退出按钮 -->
+<el-button
+  v-if="updateInfo?.isAppImage && isUpdateReady"
+  type="primary"
+  @click="handleInstall"
+>
+  {{ t('autoUpdate.exitToRestart') }}
+</el-button>
+
+<!-- 其他平台：显示立即更新按钮 -->
+<el-button
+  v-if="isUpdateReady && !isInstalling && !updateInfo?.isAppImage"
+  type="primary"
+  @click="handleInstall"
+>
+  {{ t('autoUpdate.restartToUpdate') }}
+</el-button>
 
         <!-- 发现更新 - 显示下载按钮 -->
         <el-button
@@ -97,9 +124,9 @@
           {{ t('autoUpdate.immediateDownload') }}
         </el-button>
 
-        <!-- 跳过按钮 -->
+        <!-- 跳过按钮（仅在未下载完成时显示） -->
         <el-button
-          v-if="hasUpdate && !isDownloading && !isInstalling"
+          v-if="hasUpdate && !isUpdateReady && !isDownloading && !isInstalling"
           @click="handleSkip"
         >
           {{ t('autoUpdate.skipVersion') }}
@@ -154,7 +181,7 @@ const props = defineProps({
 });
 
 // Emits
-const emit = defineEmits(['update:modelValue', 'download', 'install', 'cancel', 'skip', 'remind-later', 'retry']);
+const emit = defineEmits(['update:modelValue', 'download', 'install', 'exit', 'cancel', 'skip', 'remind-later', 'retry']);
 
 // State
 const dialogVisible = ref(props.modelValue);
@@ -175,6 +202,7 @@ const dialogTitle = computed(() => {
   if (error.value) return t('autoUpdate.updateFailed');
   if (installProgress.value.show) return t('autoUpdate.installing');
   if (downloadProgress.value.show) return t('autoUpdate.downloading');
+  if (props.updateInfo?.isAppImage && isUpdateReady.value) return t('autoUpdate.appImageUpdateMode');
   if (hasUpdate.value) return t('autoUpdate.newVersionAvailable');
   return t('autoUpdate.newVersionAvailable');
 });
@@ -260,12 +288,15 @@ const handleDownload = () => {
 
 const handleInstall = () => {
   error.value = null;
-  // 不要显示"正在安装"进度条，因为 quitAndInstall() 会立即退出应用
-  // 渲染进程没有机会清除这个状态，导致应用重启后 UI 状态不正确
-  // 直接触发安装，应用会立即退出并更新
-  emit('install');
-  // 立即关闭对话框，避免用户看到 UI 卡住
-  handleClose();
+  // AppImage 模式：仅退出，不调用 quitAndInstall
+  if (props.updateInfo?.isAppImage) {
+    emit('exit');
+    handleClose();
+  } else {
+    // 其他平台：调用 quitAndInstall 自动重启更新
+    emit('install');
+    handleClose();
+  }
 };
 
 const handleCancel = () => {
@@ -313,8 +344,13 @@ const setupEventListeners = () => {
     }
   });
 
-  // 监听更新下载完成
+  // 监听更新下载完成（通用平台）
   window.api.on('update-downloaded', (event, info) => {
+    downloadProgress.value.show = false;
+  });
+
+  // 监听更新下载完成（Linux AppImage）
+  window.api.on('update-downloaded-restart', (event, info) => {
     downloadProgress.value.show = false;
   });
 
@@ -329,6 +365,7 @@ const setupEventListeners = () => {
 const removeEventListeners = () => {
   window.api.off('download-progress');
   window.api.off('update-downloaded');
+  window.api.off('update-downloaded-restart');
   window.api.off('update-error');
 };
 
@@ -349,7 +386,6 @@ watch(() => props.modelValue, (newVal) => {
 
 <script>
 import { watch } from 'vue';
-import markdownIt from 'markdown-it';
 
 export default {
   name: 'UpdateDialog'
@@ -359,6 +395,60 @@ export default {
 <style scoped>
 .update-dialog-content {
   padding: 10px 0;
+}
+
+.appimage-only-mode {
+  padding: 20px;
+  text-align: center;
+}
+
+.mode-header {
+  margin-bottom: 30px;
+}
+
+.mode-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.mode-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #e6a23c;
+}
+
+.mode-description {
+  margin-bottom: 30px;
+  padding: 15px;
+  background-color: #fdf6ec;
+  border: 1px solid #faecd8;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #606266;
+  text-align: left;
+}
+
+.mode-tips {
+  text-align: left;
+}
+
+.mode-tips h4 {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+  color: #909399;
+}
+
+.mode-tips ul {
+  margin: 0;
+  padding-left: 25px;
+}
+
+.mode-tips li {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.5;
 }
 
 .update-info {
@@ -425,6 +515,27 @@ export default {
 
 .notes-content :deep(li) {
   margin: 3px 0;
+}
+
+.appimage-notice {
+  margin-bottom: 20px;
+}
+
+.appimage-notice-content {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.notice-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.notice-text {
+  flex: 1;
+  white-space: pre-wrap;
+  line-height: 1.6;
 }
 
 .notes-content :deep(code) {

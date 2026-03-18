@@ -67,6 +67,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Link, Document, Top } from '@element-plus/icons-vue';
 import { useUpdateStore } from '@/stores/updateStore';
+import logo from '/logo.png';
 
 const { t } = useI18n();
 const updateStore = useUpdateStore();
@@ -78,7 +79,7 @@ const packageVersion = ref('');
 const packageDescription = ref('');
 const packageAuthor = ref('');
 const packageLicense = ref('');
-const logoPath = ref('/logo.png');
+const logoPath = ref(logo);
 
 // 版本信息
 const nodeVersion = ref('');

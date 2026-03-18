@@ -19,8 +19,10 @@ const UPDATE_EVENTS = {
   UPDATE_NOT_AVAILABLE: 'update-not-available',
   // 下载进度更新
   DOWNLOAD_PROGRESS: 'download-progress',
-  // 更新包下载完成
+  // 更新包下载完成（通用平台，可以自动更新并重启）
   UPDATE_DOWNLOADED: 'update-downloaded',
+  // 更新包下载完成（Linux AppImage，需要用户退出并手动重启）
+  UPDATE_DOWNLOADED_RESTART: 'update-downloaded-restart',
   // 更新错误
   UPDATE_ERROR: 'update-error',
   // 安装进度更新（预留）
