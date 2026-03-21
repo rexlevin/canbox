@@ -320,7 +320,52 @@
         "errors": {
             "networkErrorHint": "Check your network connection",
             "downloadFailedHint": "Click 'Retry' to try again",
-            "installFailedHint": "Please download and install manually"
+            "installFailedHint": "Please download and install manually",
+            "networkError": {
+                "title": "Network Connection Failed",
+                "message": "Unable to connect to update server",
+                "hint": "Please check your network connection"
+            },
+            "downloadFailed": {
+                "title": "Download Failed",
+                "message": "An error occurred while downloading",
+                "hint": "Please click retry to try again"
+            },
+            "serverError": {
+                "title": "Server Error",
+                "message": "Update server is temporarily unavailable",
+                "hint": "Please try again later or contact support"
+            },
+            "permissionError": {
+                "title": "Permission Denied",
+                "message": "Insufficient permissions to install update",
+                "hint": "Please run as administrator"
+            },
+            "diskSpaceError": {
+                "title": "Insufficient Disk Space",
+                "message": "Not enough disk space for update",
+                "hint": "Please free up disk space and retry"
+            },
+            "checksumFailed": {
+                "title": "Checksum Verification Failed",
+                "message": "Downloaded file checksum mismatch",
+                "hint": "Please re-download the update package"
+            },
+            "installFailed": {
+                "title": "Installation Failed",
+                "message": "An error occurred during installation",
+                "hint": "Please manually download and install the latest version"
+            },
+            "versionParseError": {
+                "title": "Version Parse Error",
+                "message": "Unable to parse update version",
+                "hint": "Please contact developer for support"
+            },
+            "default": {
+                "title": "Update Failed",
+                "message": "An unknown error occurred",
+                "hint": "Please view details or download manually"
+            }
         }
     }
 }

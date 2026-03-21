@@ -44,6 +44,9 @@ class AutoUpdateManager {
     // 主窗口引用（用于发送事件）
     this.mainWindow = null;
 
+    // 标记是否为启动时检查
+    this.isStartupCheck = false;
+
     // 初始化 autoUpdater
     this._initAutoUpdater();
   }
@@ -97,7 +100,7 @@ class AutoUpdateManager {
   _setupUpdateEventListeners() {
     // 发现新版本
     autoUpdater.on('update-available', (info) => {
-      logger.info('[AutoUpdate] 发现新版本: v{}', info.version);
+      logger.info('[AutoUpdate] ✅ 事件触发: update-available - 发现新版本: v{}', info.version);
       this.updateInfo = info;
       this.status.updateInfo = info;
       this.status.state = 'ready';
@@ -108,7 +111,7 @@ class AutoUpdateManager {
 
     // 无可用更新
     autoUpdater.on('update-not-available', (info) => {
-      logger.info('[AutoUpdate] 已是最新版本: v{}', info.version);
+      logger.info('[AutoUpdate] ✅ 事件触发: update-not-available - 已是最新版本: v{}', info.version);
       this.status.state = 'idle';
 
       // 通知渲染进程（可选）
@@ -159,15 +162,22 @@ class AutoUpdateManager {
 
     // 更新错误
     autoUpdater.on('error', (error) => {
-      logger.error('[AutoUpdate] 更新错误: {} (代码: {})', error.message, error.code || 'UNKNOWN');
+      logger.error('[AutoUpdate] ❌ 事件触发: error - 更新错误: {} (代码: {})', error.message, error.code || 'UNKNOWN');
+      logger.error('[AutoUpdate] ❌ 错误堆栈: {}', error.stack);
       this.status.state = 'error';
       this.status.error = error;
 
-      // 通知渲染进程显示错误信息
-      this._sendEvent(UPDATE_EVENTS.UPDATE_ERROR, {
+      // 根据是否为启动时检查决定事件内容
+      const errorData = {
         message: error.message,
-        code: error.code || 'UNKNOWN_ERROR'
-      });
+        code: error.code || 'UNKNOWN_ERROR',
+        isStartupCheck: this.isStartupCheck  // 标记是否为启动时检查
+      };
+
+      logger.info('[AutoUpdate] 发送错误事件，启动时检查: {}', this.isStartupCheck);
+
+      // 通知渲染进程显示错误信息
+      this._sendEvent(UPDATE_EVENTS.UPDATE_ERROR, errorData);
     });
   }
 
@@ -179,6 +189,16 @@ class AutoUpdateManager {
   setMainWindow(win) {
     this.mainWindow = win;
     logger.debug('[AutoUpdate] 主窗口引用已设置');
+  }
+
+  /**
+   * 设置启动时检查标志
+   * 用于区分启动时错误和手动检查错误
+   * @param {boolean} isStartup - 是否为启动时检查
+   */
+  setStartupCheck(isStartup) {
+    this.isStartupCheck = isStartup;
+    logger.debug('[AutoUpdate] 设置启动时检查标志: {}', isStartup);
   }
 
   /**
@@ -205,9 +225,31 @@ class AutoUpdateManager {
 
       this.status.state = 'checking';
 
-      // 调用 electron-updater 检查更新
-      logger.debug('[AutoUpdate] 调用 electron-updater 检查更新');
-      const updateCheckResult = await autoUpdater.checkForUpdates();
+      // 调用 electron-updater 检查更新，添加 30 秒超时保护
+      logger.debug('[AutoUpdate] 调用 electron-updater 检查更新（30秒超时）');
+      const checkPromise = autoUpdater.checkForUpdates();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          logger.warn('[AutoUpdate] 更新检查超时（30秒）');
+          reject(new Error('net::ERR_CONNECTION_TIMED_OUT'));
+        }, 30000);
+      });
+
+      const updateCheckResult = await Promise.race([checkPromise, timeoutPromise]);
+
+      logger.info('[AutoUpdate] electron-updater 检查完成，结果: {}', JSON.stringify(updateCheckResult ? {
+        updateInfo: updateCheckResult.updateInfo ? {
+          version: updateCheckResult.updateInfo.version,
+          releaseDate: updateCheckResult.updateInfo.releaseDate
+        } : null,
+        downloadPromise: updateCheckResult.downloadPromise ? 'exists' : 'none',
+        cancellationToken: updateCheckResult.cancellationToken ? 'exists' : 'none'
+      } : 'null'));
+
+      // 获取当前应用版本
+      const { app } = require('electron');
+      const currentVersion = app.getVersion();
+      logger.info('[AutoUpdate] 当前版本: {}', currentVersion);
 
       // 检查更新结果
       if (!updateCheckResult || !updateCheckResult.updateInfo) {
@@ -216,6 +258,14 @@ class AutoUpdateManager {
       }
 
       const updateInfo = updateCheckResult.updateInfo;
+
+      // 比较版本号，只有新版本才继续处理
+      if (!semver.gt(updateInfo.version, currentVersion)) {
+        logger.info('[AutoUpdate] 检查结果: 当前版本 {} 已是最新（服务器版本: {}）', currentVersion, updateInfo.version);
+        return { available: false, reason: 'up-to-date', currentVersion, serverVersion: updateInfo.version };
+      }
+
+      logger.info('[AutoUpdate] 检测到新版本: {} (当前版本: {})', updateInfo.version, currentVersion);
 
       // 检查该版本是否被用户跳过
       if (updateInfo.version && (await isVersionSkipped(updateInfo.version))) {

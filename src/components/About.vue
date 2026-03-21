@@ -21,6 +21,36 @@
 
             <el-divider />
 
+            <!-- 错误提示区域 -->
+            <el-alert
+                v-if="hasError && consecutiveFailures >= 3"
+                type="warning"
+                :title="errorDisplay.title"
+                :description="errorDisplay.message"
+                show-icon
+                :closable="false"
+                class="error-alert"
+            >
+                <template #default>
+                    <p class="error-hint">{{ errorDisplay.hint }}</p>
+                    <div class="error-actions">
+                        <el-button
+                            type="primary"
+                            size="small"
+                            @click="handleRetryUpdate"
+                        >
+                            {{ t('autoUpdate.retry') }}
+                        </el-button>
+                        <el-button
+                            size="small"
+                            @click="handleManualDownload"
+                        >
+                            {{ t('autoUpdate.manualDownload') }}
+                        </el-button>
+                    </div>
+                </template>
+            </el-alert>
+
             <div class="info-section">
                 <p>{{ t('about.description') }}: {{ packageDescription }}</p>
                 <p>{{ t('about.author') }}: {{ packageAuthor }}</p>
@@ -67,6 +97,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Link, Document, Top } from '@element-plus/icons-vue';
 import { useUpdateStore } from '@/stores/updateStore';
+import { formatErrorForDisplay } from '@/utils/errorMessages';
 import logo from '/logo.png';
 
 const { t } = useI18n();
@@ -74,6 +105,22 @@ const updateStore = useUpdateStore();
 
 // 检查是否有更新
 const hasUpdate = computed(() => updateStore.hasUpdate);
+
+// 检查是否有错误且连续失败次数 >= 3
+const hasError = computed(() => updateStore.hasError);
+const consecutiveFailures = computed(() => updateStore.consecutiveFailures);
+
+// 格式化错误信息用于显示
+const errorDisplay = computed(() => {
+    if (!updateStore.errorInfo) {
+        return {
+            title: t('autoUpdate.errors.default.title'),
+            message: '',
+            hint: ''
+        };
+    }
+    return formatErrorForDisplay(updateStore.errorInfo, t.locale);
+});
 
 const packageVersion = ref('');
 const packageDescription = ref('');
@@ -132,6 +179,30 @@ const handleUpgrade = () => {
     if (window.api) {
         window.api.send('show-update-dialog');
     }
+};
+
+// 处理重试更新
+const handleRetryUpdate = async () => {
+    try {
+        // 清除错误状态
+        updateStore.clearError();
+
+        // 重新触发更新检查
+        if (window.api && window.api.autoUpdate) {
+            const result = await window.api.autoUpdate.checkForUpdate();
+            if (!result.success) {
+                console.error('[About.vue] 重试更新检查失败:', result.error);
+            }
+        }
+    } catch (error) {
+        console.error('[About.vue] 重试更新异常:', error);
+    }
+};
+
+// 处理手动下载
+const handleManualDownload = () => {
+    // 跳转到 GitHub Releases latest
+    window.api.openUrl('https://github.com/rexlevin/canbox/releases/latest');
 };
 </script>
 
@@ -240,5 +311,26 @@ const handleUpgrade = () => {
 
 .bottom-spacer {
     height: 20px;
+}
+
+.error-alert {
+    margin: 20px 0;
+    text-align: left;
+}
+
+.error-alert .el-alert__description {
+    font-size: 14px;
+}
+
+.error-hint {
+    margin: 10px 0;
+    color: #E6A23C;
+    font-size: 13px;
+}
+
+.error-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
 }
 </style>

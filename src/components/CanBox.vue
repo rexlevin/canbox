@@ -76,10 +76,17 @@ const { t } = useI18n();
 const updateStore = useUpdateStore();
 let activeName = ref('myApps');
 
-// 关于标签的 label - 有更新时显示图标
+// 关于标签的 label - 有更新或错误时显示图标
 const aboutLabel = computed(() => {
-    if (updateStore.hasUpdate) {
+    const hasUpdate = updateStore.hasUpdate;
+    const hasError = updateStore.hasError && updateStore.consecutiveFailures >= 3;
+
+    if (hasUpdate && hasError) {
+        return `🔔 ⚠️ ${t('canbox.about')}`;
+    } else if (hasUpdate) {
         return `🔔 ${t('canbox.about')}`;
+    } else if (hasError) {
+        return `⚠️ ${t('canbox.about')}`;
     }
     return t('canbox.about');
 });

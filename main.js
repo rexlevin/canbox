@@ -490,9 +490,26 @@ function initAutoUpdate() {
         setTimeout(async () => {
             try {
                 logger.info('[AutoUpdate] 开始启动时更新检查');
-                await updateManager.checkForUpdates();
+                // 设置启动时检查标志
+                updateManager.setStartupCheck(true);
+
+                // 添加 30 秒超时包装
+                const checkPromise = updateManager.checkForUpdates();
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => {
+                        reject(new Error('Update check timeout (30s)'));
+                    }, 30000); // 30 秒超时
+                });
+
+                const result = await Promise.race([checkPromise, timeoutPromise]);
+                logger.info('[AutoUpdate] 启动时更新检查完成，结果: {}', JSON.stringify(result));
+                // 检查完成后重置标志
+                updateManager.setStartupCheck(false);
             } catch (error) {
                 logger.error('[AutoUpdate] 启动时更新检查失败: {}', error.message);
+                logger.error('[AutoUpdate] 错误堆栈: {}', error.stack);
+                // 确保重置标志
+                updateManager.setStartupCheck(false);
             }
         }, 5000); // 延迟 5 秒
 

@@ -12,6 +12,9 @@ export const useUpdateStore = defineStore('update', {
         downloadTotal: 0,           // 总字节数
         lastCheckTime: null,        // 上次检查时间
         lastCheckVersion: null,     // 上次检查的版本
+        hasError: false,           // 是否有错误
+        errorInfo: null,           // 错误信息对象 { code, message, details, timestamp }
+        consecutiveFailures: 0,     // 连续失败次数
     }),
 
     getters: {
@@ -92,6 +95,25 @@ export const useUpdateStore = defineStore('update', {
             this.downloadSpeed = 0;
             this.downloadTransferred = 0;
             this.downloadTotal = 0;
+        },
+
+        // 设置错误信息
+        setError(error) {
+            this.hasError = true;
+            this.errorInfo = {
+                code: error.code || 'UNKNOWN_ERROR',
+                message: error.message || 'Unknown error',
+                details: error.details || null,
+                timestamp: new Date().toISOString()
+            };
+            this.consecutiveFailures++;
+        },
+
+        // 清除错误信息
+        clearError() {
+            this.hasError = false;
+            this.errorInfo = null;
+            this.consecutiveFailures = 0;
         }
     }
 });
