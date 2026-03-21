@@ -84,7 +84,9 @@ let activeName = ref('myApps');
 // 关于标签的 label - 有更新或错误时显示图标
 const aboutLabel = computed(() => {
     const hasUpdate = updateStore.hasUpdate;
-    const hasError = updateStore.hasError && updateStore.consecutiveFailures >= 3;
+    const hasError = updateStore.hasError;
+
+    console.log('[CanBox.vue] aboutLabel 计算 - hasUpdate:', hasUpdate, 'hasError:', hasError);
 
     if (hasUpdate && hasError) {
         return `🔔 ⚠️ ${t('canbox.about')}`;
@@ -99,8 +101,10 @@ const aboutLabel = computed(() => {
 // 关于标签的 Tooltip - 显示更新或错误详情
 const aboutTooltip = computed(() => {
     const hasUpdate = updateStore.hasUpdate;
-    const hasError = updateStore.hasError && updateStore.consecutiveFailures >= 3;
+    const hasError = updateStore.hasError;
     const version = updateStore.updateInfo?.version;
+
+    console.log('[CanBox.vue] aboutTooltip 计算 - hasUpdate:', hasUpdate, 'hasError:', hasError, 'version:', version);
 
     if (hasUpdate && hasError) {
         return t('autoUpdate.newVersionAvailable', { version }) + ' | ' + t('autoUpdate.updateError');

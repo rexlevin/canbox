@@ -51,7 +51,7 @@ async function getConfig() {
   try {
     const store = getCanboxStore();
     const config = store.get('autoUpdate', DEFAULT_CONFIG);
-    logger.debug('[AutoUpdate] 配置已读取: {}', JSON.stringify(config));
+    logger.info('[AutoUpdate] 读取配置，enabled: {}, checkFrequency: {}', config.enabled, config.checkFrequency);
     return config;
   } catch (error) {
     logger.error('[AutoUpdate] 读取配置失败: {}', error.message);
@@ -70,8 +70,11 @@ async function getConfig() {
 async function saveConfig(config) {
   try {
     const store = getCanboxStore();
+    logger.info('[AutoUpdate] 保存配置，enabled: {}', config.enabled);
     store.set('autoUpdate', config);
-    logger.debug('[AutoUpdate] 配置已保存: {}', JSON.stringify(config));
+    // 验证保存是否成功
+    const savedConfig = store.get('autoUpdate');
+    logger.info('[AutoUpdate] 验证保存结果，enabled: {}', savedConfig?.enabled);
   } catch (error) {
     logger.error('[AutoUpdate] 保存配置失败: {}', error.message);
     throw error;

@@ -6,8 +6,9 @@
                 <h1>{{ t('app.title') }}</h1>
                 <div class="version-wrapper">
                     <p class="version">{{ t('about.version') }}: {{ packageVersion }}</p>
+                    <!-- 有更新：显示升级按钮 -->
                     <el-button
-                        v-if="hasUpdate"
+                        v-if="hasUpdate && !hasError"
                         type="primary"
                         size="small"
                         @click="handleUpgrade"
@@ -16,6 +17,17 @@
                         <el-icon><Top /></el-icon>
                         {{ t('autoUpdate.upgrade') }}
                     </el-button>
+                    <!-- 有错误或正常状态：显示检查更新按钮 -->
+                    <el-button
+                        v-if="!hasUpdate || hasError"
+                        :loading="isCheckingUpdate"
+                        size="small"
+                        @click="handleCheckUpdate"
+                        class="check-button"
+                    >
+                        <el-icon><Refresh /></el-icon>
+                        {{ isCheckingUpdate ? t('autoUpdate.checkingForUpdates') : t('autoUpdate.checkForUpdates') }}
+                    </el-button>
                 </div>
             </div>
 
@@ -23,7 +35,7 @@
 
             <!-- 错误提示区域 -->
             <el-alert
-                v-if="hasError && consecutiveFailures >= 3"
+                v-if="hasError"
                 type="warning"
                 :title="errorDisplay.title"
                 :description="errorDisplay.message"
@@ -95,7 +107,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Link, Document, Top } from '@element-plus/icons-vue';
+import { Link, Document, Top, Refresh } from '@element-plus/icons-vue';
 import { useUpdateStore } from '@/stores/updateStore';
 import { formatErrorForDisplay } from '@/utils/errorMessages';
 import logo from '/logo.png';
@@ -103,12 +115,14 @@ import logo from '/logo.png';
 const { t } = useI18n();
 const updateStore = useUpdateStore();
 
+// 检查更新的加载状态
+const isCheckingUpdate = ref(false);
+
 // 检查是否有更新
 const hasUpdate = computed(() => updateStore.hasUpdate);
 
-// 检查是否有错误且连续失败次数 >= 3
+// 检查是否有错误
 const hasError = computed(() => updateStore.hasError);
-const consecutiveFailures = computed(() => updateStore.consecutiveFailures);
 
 // 格式化错误信息用于显示
 const errorDisplay = computed(() => {
@@ -181,6 +195,39 @@ const handleUpgrade = () => {
     }
 };
 
+// 处理检查更新按钮点击
+const handleCheckUpdate = async () => {
+    try {
+        isCheckingUpdate.value = true;
+        
+        // 清除之前的错误状态
+        updateStore.clearError();
+
+        // 重新触发更新检查
+        if (window.api && window.api.autoUpdate) {
+            const result = await window.api.autoUpdate.checkForUpdate();
+            
+            if (result.success) {
+                // 检查成功，根据结果显示提示
+                if (updateStore.hasUpdate) {
+                    // 有新版本，不显示提示，"升级"按钮会自动显示
+                } else {
+                    // 已经是最新版本
+                    ElMessage.info(t('autoUpdate.noUpdateAvailable'));
+                }
+            } else {
+                console.error('[About.vue] 检查更新失败:', result.error);
+                ElMessage.error(result.error?.message || t('autoUpdate.updateError'));
+            }
+        }
+    } catch (error) {
+        console.error('[About.vue] 检查更新异常:', error);
+        ElMessage.error(t('autoUpdate.updateError'));
+    } finally {
+        isCheckingUpdate.value = false;
+    }
+};
+
 // 处理重试更新
 const handleRetryUpdate = async () => {
     try {
@@ -250,6 +297,12 @@ const handleManualDownload = () => {
 }
 
 .upgrade-button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.check-button {
     display: flex;
     align-items: center;
     gap: 5px;

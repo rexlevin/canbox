@@ -502,6 +502,8 @@ function initIpcHandlers() {
     ipcMain.handle(IPC_CHANNELS.CHECK_FOR_UPDATE, async () => {
         try {
             const manager = getAutoUpdateManager();
+            // 设置为非启动时检查，确保错误能正确弹窗
+            manager.setStartupCheck(false);
             const result = await manager.checkForUpdates();
             return { success: true, ...result };
         } catch (error) {

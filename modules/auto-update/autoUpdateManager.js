@@ -207,6 +207,10 @@ class AutoUpdateManager {
    * @returns {Promise<Object>} 检查结果
    */
   async checkForUpdates() {
+    // 保存当前的 isStartupCheck 状态，避免竞态条件
+    const isStartupCheck = this.isStartupCheck;
+    logger.debug('[AutoUpdate] checkForUpdates 开始，isStartupCheck: {}', isStartupCheck);
+
     try {
       logger.info('[AutoUpdate] 开始检查更新');
 
@@ -290,6 +294,16 @@ class AutoUpdateManager {
       logger.error('[AutoUpdate] 检查结果: 失败 - {}', error.message);
       this.status.state = 'error';
       this.status.error = error;
+
+      // 手动发送错误事件（超时等同步错误不会触发 autoUpdater.on('error')）
+      const errorData = {
+        message: error.message,
+        code: error.code || error.message.replace('net::', '') || 'UNKNOWN_ERROR',
+        isStartupCheck: isStartupCheck  // 使用保存的值，避免竞态条件
+      };
+      logger.info('[AutoUpdate] 手动发送错误事件，启动时检查: {}', isStartupCheck);
+      this._sendEvent(UPDATE_EVENTS.UPDATE_ERROR, errorData);
+
       throw error;
     }
   }
@@ -433,9 +447,11 @@ class AutoUpdateManager {
    */
   _sendEvent(eventName, data) {
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      logger.info('[AutoUpdate] ✅ 发送事件: {}', eventName);
       this.mainWindow.webContents.send(eventName, data);
     } else {
-      logger.warn('[AutoUpdate] 主窗口不可用，无法发送事件: {}', eventName);
+      logger.warn('[AutoUpdate] ❌ 主窗口不可用，无法发送事件: {}', eventName);
+      logger.warn('[AutoUpdate] mainWindow = {}, isDestroyed = {}', this.mainWindow, this.mainWindow ? this.mainWindow.isDestroyed() : 'N/A');
     }
   }
 }

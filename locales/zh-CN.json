@@ -315,7 +315,9 @@
             "lastCheckTime": "上次检查",
             "manualCheckButton": "手动检查更新",
             "skippedVersions": "跳过的版本",
-            "clearSkipped": "清除跳过的版本"
+            "clearSkipped": "清除跳过的版本",
+            "clearSkippedConfirm": "确定要清除以下跳过的版本吗？",
+            "skippedVersionsList": "跳过的版本：{versions}"
         },
         "errors": {
             "networkErrorHint": "检查网络连接",

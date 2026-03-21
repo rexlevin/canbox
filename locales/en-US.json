@@ -315,7 +315,9 @@
             "lastCheckTime": "Last checked",
             "manualCheckButton": "Check for Updates",
             "skippedVersions": "Skipped versions",
-            "clearSkipped": "Clear skipped versions"
+            "clearSkipped": "Clear skipped versions",
+            "clearSkippedConfirm": "Are you sure you want to clear the following skipped versions?",
+            "skippedVersionsList": "Skipped versions: {versions}"
         },
         "errors": {
             "networkErrorHint": "Check your network connection",

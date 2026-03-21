@@ -150,23 +150,21 @@ onMounted(() => {
             updateStore.setDownloadInfo(progress);
         });
 
-        // 监听更新错误事件 - 启动时错误静默处理，手动检查错误弹窗
+        // 监听更新错误事件 - 所有错误都静默处理，在 About 页面显示
         window.api.on('update-error', (event, error) => {
-            console.error('[App.vue] 更新错误:', error);
+            console.error('[App.vue] ✅ 收到 update-error 事件:', error);
 
             // 判断是否为启动时错误
             const isStartupError = error.isStartupCheck || false;
+            console.log('[App.vue] isStartupError:', isStartupError);
 
-            if (isStartupError) {
-                // 启动时错误：静默处理，只更新 store 状态
-                console.log('[App.vue] 启动时错误，静默处理');
-                updateStore.setError(error);
-            } else {
-                // 手动检查错误：显示对话框
-                console.log('[App.vue] 手动检查错误，显示对话框');
-                updateInfo.value = error;
-                updateDialogVisible.value = true;
-            }
+            // 静默处理：只更新 store 状态，不在 App.vue 中弹窗
+            // 错误信息会在 About 页面通过 el-alert 显示
+            console.log('[App.vue] 静默处理错误');
+            console.log('[App.vue] 调用 updateStore.setError(error)');
+            updateStore.setError(error);
+            console.log('[App.vue] updateStore.hasError:', updateStore.hasError);
+            console.log('[App.vue] updateStore.errorInfo:', updateStore.errorInfo);
         });
 
         console.log('[App.vue] 自动更新事件监听器已注册');

@@ -14,7 +14,6 @@ export const useUpdateStore = defineStore('update', {
         lastCheckVersion: null,     // 上次检查的版本
         hasError: false,           // 是否有错误
         errorInfo: null,           // 错误信息对象 { code, message, details, timestamp }
-        consecutiveFailures: 0,     // 连续失败次数
     }),
 
     getters: {
@@ -106,14 +105,12 @@ export const useUpdateStore = defineStore('update', {
                 details: error.details || null,
                 timestamp: new Date().toISOString()
             };
-            this.consecutiveFailures++;
         },
 
         // 清除错误信息
         clearError() {
             this.hasError = false;
             this.errorInfo = null;
-            this.consecutiveFailures = 0;
         }
     }
 });
