@@ -10,7 +10,12 @@
                     <!-- <el-tab-pane :label="$t('canbox.userCenter')" class="full-height-pane"><UserCenter/></el-tab-pane> -->
                     <el-tab-pane :label="$t('canbox.devApp')" name="devApp" class="full-height-pane"><AppDev/></el-tab-pane>
                     <el-tab-pane :label="$t('settings.title')" class="full-height-pane"><Settings/></el-tab-pane>
-                    <el-tab-pane :label="aboutLabel" :name="'about'" class="full-height-pane">
+                    <el-tab-pane :name="'about'" class="full-height-pane">
+                        <template #label>
+                            <el-tooltip :content="aboutTooltip" placement="right" :disabled="!aboutTooltip">
+                                <span>{{ aboutLabel }}</span>
+                            </el-tooltip>
+                        </template>
                         <About/>
                     </el-tab-pane>
                 </el-tabs>
@@ -89,6 +94,22 @@ const aboutLabel = computed(() => {
         return `⚠️ ${t('canbox.about')}`;
     }
     return t('canbox.about');
+});
+
+// 关于标签的 Tooltip - 显示更新或错误详情
+const aboutTooltip = computed(() => {
+    const hasUpdate = updateStore.hasUpdate;
+    const hasError = updateStore.hasError && updateStore.consecutiveFailures >= 3;
+    const version = updateStore.updateInfo?.version;
+
+    if (hasUpdate && hasError) {
+        return t('autoUpdate.newVersionAvailable', { version }) + ' | ' + t('autoUpdate.updateError');
+    } else if (hasUpdate) {
+        return t('autoUpdate.newVersionAvailable', { version });
+    } else if (hasError) {
+        return t('autoUpdate.updateError');
+    }
+    return ''; // 无更新和错误时不显示 tooltip
 });
 
 const changeActiveTab = (name) => {
