@@ -164,6 +164,26 @@ class AutoUpdateManager {
     autoUpdater.on('error', (error) => {
       logger.error('[AutoUpdate] ❌ 事件触发: error - 更新错误: {} (代码: {})', error.message, error.code || 'UNKNOWN');
       logger.error('[AutoUpdate] ❌ 错误堆栈: {}', error.stack);
+
+      // 检查是否为"平台文件不存在"的错误（404）
+      // 这种情况下，说明当前平台没有可用的更新包，应该当作"无可用更新"处理
+      // Windows: latest.yml, macOS: latest-mac.yml, Linux: latest-linux.yml
+      const isPlatformNotAvailable = error.message && error.message.includes('404') &&
+        error.message.includes('latest') && error.message.includes('.yml');
+
+      if (isPlatformNotAvailable) {
+        logger.info('[AutoUpdate] 当前平台没有可用的更新包，当作无可用更新处理');
+        this.status.state = 'idle';
+        this.status.error = null;
+
+        // 通知渲染进程无可用更新
+        this._sendEvent(UPDATE_EVENTS.UPDATE_NOT_AVAILABLE, {
+          version: 'unknown',
+          reason: 'platform-not-available'
+        });
+        return;
+      }
+
       this.status.state = 'error';
       this.status.error = error;
 
@@ -292,6 +312,19 @@ class AutoUpdateManager {
       return result;
     } catch (error) {
       logger.error('[AutoUpdate] 检查结果: 失败 - {}', error.message);
+
+      // 检查是否为"平台文件不存在"的错误（404）
+      // 这种情况下，说明当前平台没有可用的更新包，应该当作"无可用更新"处理
+      // Windows: latest.yml, macOS: latest-mac.yml, Linux: latest-linux.yml
+      const isPlatformNotAvailable = error.message && error.message.includes('404') &&
+        error.message.includes('latest') && error.message.includes('.yml');
+
+      if (isPlatformNotAvailable) {
+        logger.info('[AutoUpdate] 当前平台没有可用的更新包，当作无可用更新处理');
+        this.status.state = 'idle';
+        return { available: false, reason: 'platform-not-available' };
+      }
+
       this.status.state = 'error';
       this.status.error = error;
 
