@@ -107,7 +107,10 @@ class LogWindowManager {
         }
         this.logWindow.loadURL(loadUrl);
 
-        this.logWindow.webContents.openDevTools({ mode: 'detach' });
+        this.logWindow.setMenu(null);
+
+        // 打开开发者工具
+        // this.logWindow.webContents.openDevTools({ mode: 'detach' });
 
         // 窗口准备显示时
         this.logWindow.on('ready-to-show', () => {

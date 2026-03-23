@@ -24,6 +24,7 @@ moduleAlias();
 const logger = require('@modules/utils/logger');
 const { getCanboxStore } = require('@modules/main/storageManager');
 const ModeDetector = require('@modules/execution/modeDetector');
+const { getAutoUpdateManager } = require('@modules/auto-update');
 
 const tray = require('./tray');
 const uatDev = (() => {
@@ -54,7 +55,8 @@ const { initIpcHandlers } = require('./ipcHandlers');
 // 清除启动时控制台的"Electron Security Warning (Insecure Content-Security-Policy)"报错信息
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
-
+// 强制退出标志位：用于更新时绕过窗口关闭拦截
+let isForceQuit = false;
 
 // 禁用当前应用程序的硬件加速
 app.disableHardwareAcceleration();
@@ -269,6 +271,9 @@ app.on('before-quit', () => {
 
     // 停止所有子进程
     executionDispatcher.closeAllApps();
+
+    // 设置强制退出标志，允许窗口真正关闭
+    isForceQuit = true;
 });
 
 const createWindow = () => {
@@ -420,6 +425,7 @@ const createWindow = () => {
         } else if (isDev && uatDev?.devTools) {
             win.webContents.openDevTools({ mode: uatDev?.devTools });
         }
+        // win.webContents.openDevTools({ mode: 'detach' });
     });
 
     // 将app窗口添加到appMap中
@@ -427,6 +433,12 @@ const createWindow = () => {
 
     // 关闭主窗口事件，最小化到托盘，同时保存窗口状态
     win.on('close', (e) => {
+        // 强制退出时，允许窗口关闭
+        if (isForceQuit) {
+            return;
+        }
+
+        // 正常关闭时，隐藏窗口到托盘
         saveWindowState();
         win.hide();
         win.setSkipTaskbar(true);
@@ -437,8 +449,74 @@ const createWindow = () => {
     win.on('closed', async () => {
         // 注意：close 事件已经保存过了，这里不需要重复保存
         console.info('now win closed, and app will quit');
+        // 清除强制退出标志位，防止下次关闭也被当作强制退出
+        isForceQuit = false;
         app.quit();
     });
+
+    // 初始化自动更新管理器
+    initAutoUpdate();
+}
+
+/**
+ * 初始化自动更新功能
+ *
+ * 功能说明：
+ * - 仅在生产环境（打包后）启用自动更新
+ * - 开发环境跳过更新检查，避免干扰开发
+ * - 延迟 5 秒检查更新，避免影响启动速度
+ */
+function initAutoUpdate() {
+    try {
+        // 生产环境检测
+        // app.isPackaged 在打包后返回 true，开发环境返回 false
+        if (!app.isPackaged) {
+            logger.info('[AutoUpdate] 开发环境，跳过自动更新检查');
+            return;
+        }
+
+        // 获取主窗口（第一个窗口）
+        const mainWindow = BrowserWindow.getAllWindows()[0];
+        if (!mainWindow) {
+            logger.warn('[AutoUpdate] 主窗口未找到，跳过自动更新初始化');
+            return;
+        }
+
+        // 获取自动更新管理器实例
+        const updateManager = getAutoUpdateManager();
+        updateManager.setMainWindow(mainWindow);
+
+        // 延迟检查更新，避免影响启动速度
+        setTimeout(async () => {
+            try {
+                logger.info('[AutoUpdate] 开始启动时更新检查');
+                // 设置启动时检查标志
+                updateManager.setStartupCheck(true);
+
+                // 添加 30 秒超时包装
+                const checkPromise = updateManager.checkForUpdates();
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => {
+                        reject(new Error('Update check timeout (30s)'));
+                    }, 30000); // 30 秒超时
+                });
+
+                const result = await Promise.race([checkPromise, timeoutPromise]);
+                logger.info('[AutoUpdate] 启动时更新检查完成，结果: {}', JSON.stringify(result));
+                // 检查完成后重置标志
+                updateManager.setStartupCheck(false);
+            } catch (error) {
+                logger.error('[AutoUpdate] 启动时更新检查失败: {}', error.message);
+                logger.error('[AutoUpdate] 错误堆栈: {}', error.stack);
+                // 确保重置标志
+                updateManager.setStartupCheck(false);
+            }
+        }, 5000); // 延迟 5 秒
+
+        logger.info('[AutoUpdate] 自动更新管理器已初始化');
+    } catch (error) {
+        logger.error('[AutoUpdate] 初始化自动更新管理器失败: {}', error.message);
+    }
 }
 
 // 初始化 IPC 消息处理（包含语言初始化）

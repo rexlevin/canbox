@@ -104,7 +104,22 @@
         "myApps": "我的app",
         "appRepo": "APP 仓库",
         "userCenter": "用户中心",
-        "devApp": "APP 开发"
+        "devApp": "APP 开发",
+        "about": "关于"
+    },
+    "about": {
+        "title": "关于",
+        "version": "版本",
+        "description": "描述",
+        "author": "作者",
+        "license": "许可证",
+        "systemInfo": "系统信息",
+        "nodeVersion": "Node.js 版本",
+        "chromeVersion": "Chrome 版本",
+        "electronVersion": "Electron 版本",
+        "githubRepo": "GitHub 仓库",
+        "giteeRepo": "Gitee 仓库",
+        "viewLicense": "查看许可证"
     },
     "appList": {
         "importApp": "导入已有app",
@@ -230,5 +245,129 @@
         "cleanupFailed": "清理失败",
         "loadLogsFailed": "加载日志失败",
         "exportFailed": "导出失败"
+    },
+    "autoUpdate": {
+        "newVersionAvailable": "发现新版本",
+        "upgrade": "升级",
+        "updateAvailable": "Canbox {version} 已发布！",
+        "updateSize": "更新大小",
+        "releaseDate": "发布日期",
+        "releaseNotes": "更新内容",
+        "viewDetails": "查看详细更新日志",
+        "immediateUpdate": "立即更新",
+        "immediateDownload": "立即下载",
+        "exitToUpdate": "退出以更新",
+        "exitToRestart": "退出以重启",
+        "restartToUpdate": "重启以更新",
+        "remindLater": "稍后提醒",
+        "skipVersion": "跳过此版本",
+        "appImageUpdateMode": "AppImage 更新模式",
+        "appImageNotice": "由于 AppImage 格式的限制，无法在运行时自动更新。新版本已下载完成，需要您手动重启应用来完成更新。",
+        "appImageTipsTitle": "更新步骤：",
+        "appImageTip1": "点击下方\"退出以重启\"按钮退出 Canbox",
+        "appImageTip2": "重新启动 Canbox，系统将自动应用更新",
+        "downloading": "正在下载...",
+        "downloadProgress": "下载进度",
+        "installing": "正在安装...",
+        "installProgress": "安装进度",
+        "installComplete": "更新已下载",
+        "installCompleteTitle": "更新已准备就绪",
+        "installCompleteMessage": "更新已下载完成，请重启应用以完成更新。",
+        "restartApp": "重启应用",
+        "updateFailed": "更新失败",
+        "updateError": "更新过程中遇到错误",
+        "errorMessage": "错误信息",
+        "errorCode": "错误代码",
+        "retry": "重试",
+        "tryAgainLater": "稍后再试",
+        "manualDownload": "手动下载",
+        "updateSuccess": "更新成功",
+        "restartRequired": "请重启应用以完成更新",
+        "restartNow": "立即重启",
+        "close": "关闭",
+        "checkForUpdates": "检查更新",
+        "checkingForUpdates": "正在检查更新...",
+        "currentVersion": "当前版本",
+        "latestVersion": "最新版本",
+        "noUpdateAvailable": "已是最新版本",
+        "downloadFailed": "下载失败",
+        "installFailed": "安装失败",
+        "networkError": "网络错误",
+        "networkTimeout": "网络连接超时",
+        "checksumFailed": "文件校验失败",
+        "versionParseError": "版本解析错误",
+        "updaterDisabled": "自动更新已禁用",
+        "updateCancelled": "更新已取消",
+        "settings": {
+            "title": "更新设置",
+            "enableAutoUpdate": "启用自动更新",
+            "checkFrequency": "更新频率",
+            "startup": "每次启动",
+            "daily": "每天一次",
+            "weekly": "每周一次",
+            "manual": "手动检查",
+            "autoDownload": "自动下载更新包",
+            "autoDownloadHint": "启用后会在后台自动下载更新包",
+            "autoInstall": "更新后安装",
+            "askMe": "询问我",
+            "autoInstallOption": "自动安装",
+            "notInstall": "不安装",
+            "lastCheckTime": "上次检查",
+            "manualCheckButton": "手动检查更新",
+            "skippedVersions": "跳过的版本",
+            "clearSkipped": "清除跳过的版本",
+            "clearSkippedConfirm": "确定要清除以下跳过的版本吗？",
+            "skippedVersionsList": "跳过的版本：{versions}"
+        },
+        "errors": {
+            "networkErrorHint": "检查网络连接",
+            "downloadFailedHint": "点击\"重试\"再次尝试",
+            "installFailedHint": "请手动下载并安装",
+            "networkError": {
+                "title": "网络连接失败",
+                "message": "无法连接到更新服务器",
+                "hint": "请检查网络连接或稍后重试"
+            },
+            "downloadFailed": {
+                "title": "下载失败",
+                "message": "更新包下载过程中发生错误",
+                "hint": "请点击重试按钮再次尝试"
+            },
+            "serverError": {
+                "title": "服务器错误",
+                "message": "更新服务器暂时不可用",
+                "hint": "请稍后重试或联系支持"
+            },
+            "permissionError": {
+                "title": "权限不足",
+                "message": "没有足够的权限安装更新",
+                "hint": "请以管理员身份运行应用"
+            },
+            "diskSpaceError": {
+                "title": "磁盘空间不足",
+                "message": "磁盘空间不足以安装更新",
+                "hint": "请清理磁盘空间后重试"
+            },
+            "checksumFailed": {
+                "title": "文件校验失败",
+                "message": "下载的文件校验和不匹配",
+                "hint": "请重新下载更新包"
+            },
+            "installFailed": {
+                "title": "安装失败",
+                "message": "更新安装过程中发生错误",
+                "hint": "请手动下载并安装最新版本"
+            },
+            "versionParseError": {
+                "title": "版本解析错误",
+                "message": "无法解析更新版本号",
+                "hint": "请联系开发者获取支持"
+            },
+            "default": {
+                "title": "更新失败",
+                "message": "更新过程中发生未知错误",
+                "hint": "请查看详情或手动下载安装"
+            }
+        }
     }
 }

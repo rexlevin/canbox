@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld(
             resetToDefault: () => ipcRenderer.invoke('userData:resetToDefault'),
             restartNow: () => ipcRenderer.invoke('userData:restartNow')
         },
+        quit: () => ipcRenderer.invoke('app:quit'),
         log: {
             openViewer: () => ipcRenderer.invoke('log-viewer:open'),
             getLogs: (options) => ipcRenderer.invoke('get-logs', options),
@@ -39,8 +40,21 @@ contextBridge.exposeInMainWorld(
             getRetentionDays: () => ipcRenderer.invoke('logViewer:getRetentionDays'),
             setRetentionDays: (days) => ipcRenderer.invoke('logViewer:setRetentionDays', days)
         },
+        autoUpdate: {
+            checkForUpdate: () => ipcRenderer.invoke('check-for-update'),
+            downloadUpdate: () => ipcRenderer.invoke('download-update'),
+            installUpdate: () => ipcRenderer.invoke('install-update'),
+            cancelDownload: () => ipcRenderer.invoke('cancel-download'),
+            getStatus: () => ipcRenderer.invoke('get-update-status'),
+            getConfig: () => ipcRenderer.invoke('get-update-config'),
+            saveConfig: (config) => ipcRenderer.invoke('save-update-config', config),
+            skipVersion: (version) => ipcRenderer.invoke('skip-version', version)
+        },
         on: (eventName, callback) => {
             ipcRenderer.on(eventName, callback);
+        },
+        send: (eventName, ...args) => {
+            ipcRenderer.send(eventName, ...args);
         },
         generateShortcut: (fn) => {
             ipcRenderer.invoke('generate-shortcut').then(result => {
@@ -216,6 +230,12 @@ contextBridge.exposeInMainWorld(
         },
         downloadCanboxTypes: () => {
             return ipcRenderer.invoke('download-canbox-types');
+        },
+        getVersions: () => {
+            return ipcRenderer.invoke('get-versions');
+        },
+        getAppInfo: () => {
+            return ipcRenderer.invoke('get-app-info');
         }
     }
 );

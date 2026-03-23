@@ -14,6 +14,7 @@ const processBridge = require('./modules/childprocess/processBridge');
 const pathManager = require('./modules/main/pathManager');
 const userDataMigration = require('./modules/main/userDataMigration');
 const logIpcHandler = require('./modules/ipc/logIpcHandler');
+const { getAutoUpdateManager, IPC_CHANNELS } = require('./modules/auto-update');
 
 // 默认语言为英文
 let currentLanguage = 'en-US';
@@ -377,6 +378,18 @@ function initIpcHandlers() {
         }
     });
 
+    // 退出应用（用于 AppImage 更新模式）
+    ipcMain.handle('app:quit', () => {
+        try {
+            logger.info('User requested to quit application');
+            app.quit();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to quit application:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     // 日志查看器窗口管理
     ipcMain.handle('log-viewer:open', () => {
         try {
@@ -438,6 +451,163 @@ function initIpcHandlers() {
             logger.error('Failed to set log retention days:', error);
             return { success: false, msg: error.message };
         }
+    });
+
+    // ========== 版本信息相关 IPC 处理 ==========
+
+    // 获取应用和系统版本信息
+    ipcMain.handle('get-versions', async () => {
+        try {
+            return {
+                node: process.versions.node,
+                chrome: process.versions.chrome,
+                electron: process.versions.electron
+            };
+        } catch (error) {
+            logger.error('Failed to get versions:', error);
+            return {
+                node: 'Unknown',
+                chrome: 'Unknown',
+                electron: 'Unknown'
+            };
+        }
+    });
+
+    // 获取应用包信息（package.json）
+    ipcMain.handle('get-app-info', async () => {
+        try {
+            const packageJson = require('./package.json');
+            return {
+                success: true,
+                info: {
+                    name: packageJson.name,
+                    version: packageJson.version,
+                    description: packageJson.description,
+                    author: packageJson.author,
+                    license: packageJson.license
+                }
+            };
+        } catch (error) {
+            logger.error('Failed to get app info:', error);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    });
+
+    // ========== 自动更新相关 IPC 处理 ==========
+
+    // 检查更新
+    ipcMain.handle(IPC_CHANNELS.CHECK_FOR_UPDATE, async () => {
+        try {
+            const manager = getAutoUpdateManager();
+            // 设置为非启动时检查，确保错误能正确弹窗
+            manager.setStartupCheck(false);
+            const result = await manager.checkForUpdates();
+            return { success: true, ...result };
+        } catch (error) {
+            logger.error('Failed to check for updates:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 下载更新
+    ipcMain.handle(IPC_CHANNELS.DOWNLOAD_UPDATE, async () => {
+        try {
+            const manager = getAutoUpdateManager();
+            await manager.downloadUpdate();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to download update:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 安装更新
+    ipcMain.handle(IPC_CHANNELS.INSTALL_UPDATE, async () => {
+        try {
+            const manager = getAutoUpdateManager();
+            await manager.installUpdate();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to install update:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 取消下载
+    ipcMain.handle(IPC_CHANNELS.CANCEL_DOWNLOAD, async () => {
+        try {
+            const manager = getAutoUpdateManager();
+            await manager.cancelDownload();
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to cancel download:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 获取更新状态
+    ipcMain.handle(IPC_CHANNELS.GET_UPDATE_STATUS, async () => {
+        try {
+            const manager = getAutoUpdateManager();
+            const status = manager.getStatus();
+            return { success: true, status };
+        } catch (error) {
+            logger.error('Failed to get update status:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 获取更新配置
+    ipcMain.handle(IPC_CHANNELS.GET_UPDATE_CONFIG, async () => {
+        try {
+            const { getConfig } = require('./modules/auto-update');
+            const config = await getConfig();
+            return { success: true, config };
+        } catch (error) {
+            logger.error('Failed to get update config:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 保存更新配置
+    ipcMain.handle(IPC_CHANNELS.SAVE_UPDATE_CONFIG, async (event, config) => {
+        try {
+            const { saveConfig } = require('./modules/auto-update');
+            await saveConfig(config);
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to save update config:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 跳过版本
+    ipcMain.handle(IPC_CHANNELS.SKIP_VERSION, async (event, version) => {
+        try {
+            const manager = getAutoUpdateManager();
+            await manager.skipVersion(version);
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to skip version:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 显示更新对话框（由 About.vue 触发，转发给 App.vue）
+    ipcMain.on(IPC_CHANNELS.SHOW_UPDATE_DIALOG, (event) => {
+        logger.info('show-update-dialog 事件收到，转发给渲染进程');
+        // 向渲染进程发送事件，让 App.vue 监听到并打开对话框
+        event.sender.send(IPC_CHANNELS.SHOW_UPDATE_DIALOG);
+    });
+
+    // 重启应用（Linux AppImage 更新后使用）
+    ipcMain.on('restart-app', () => {
+        logger.info('收到重启应用请求');
+        app.relaunch();
+        app.quit();
     });
 }
 

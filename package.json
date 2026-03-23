@@ -1,7 +1,7 @@
 {
     "name": "canbox",
     "private": true,
-    "version": "0.2.3",
+    "version": "0.2.7",
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
     "author": "lizl6",
@@ -21,8 +21,13 @@
     },
     "build": {
         "appId": "com.github.lizl6.canbox",
-        "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+        "artifactName": "${productName}-${os}-${arch}.${ext}",
         "asar": true,
+        "publish": {
+            "provider": "github",
+            "owner": "rexlevin",
+            "repo": "canbox"
+        },
         "files": [
             "build/**/*",
             "childprocessEntry.js",
@@ -87,6 +92,7 @@
         "axios": "^1.11.0",
         "electron-store": "^8.2.0",
         "electron-sudo": "^4.0.12",
+        "electron-updater": "^6.8.3",
         "element-plus": "^2.8.3",
         "fs-extra": "^11.3.0",
         "glob": "^11.0.3",
@@ -101,6 +107,7 @@
         "pouchdb": "^9.0.0",
         "pouchdb-find": "^9.0.0",
         "rimraf": "^6.0.1",
+        "semver": "^7.7.4",
         "sharp": "^0.33.5",
         "sudo-prompt": "^9.2.1",
         "uuid": "^10.0.0",

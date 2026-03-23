@@ -14,6 +14,9 @@ lerna-debug.log*
 .codebuddy/
 openspec/
 
+# Auto-updater cache
+.update-cache
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

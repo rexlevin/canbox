@@ -294,9 +294,11 @@ function getLogsFromFile(date, source = 'app') {
             content = fs.readFileSync(filePath, 'utf-8');
         }
 
+        // 统一换行符为 \n，兼容 Windows 的 \r\n
+        content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         const lines = content.split('\n').filter(line => line.trim());
 
-            // 解析日志行 - 支持多种格式
+        // 解析日志行 - 支持多种格式
         lines.forEach((line, index) => {
             // 格式1: [2024-01-15 14:30:45] [INFO] [file.js:123] : message
             let match = line.match(/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[(\w+)\] (\[.+\]) : (.+)$/);
@@ -328,6 +330,20 @@ function getLogsFromFile(date, source = 'app') {
                 return;
             }
 
+            // 格式3: [2024-01-15 14:30:45] [INFO] message (没有位置信息，用于非代码日志)
+            match = line.match(/^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[(\w+)\] (.+)$/);
+            if (match) {
+                const [, timestamp, level, message] = match;
+                const now = new Date(timestamp);
+                logs.push({
+                    id: `${now.getTime()}${now.getMilliseconds().toString().padStart(3, '0')}_${idCounter++}`,
+                    level: level.toLowerCase(),
+                    message: message,
+                    timestamp: now.toISOString(),
+                    category: source
+                });
+                return;
+            }
         });
 
     } catch (error) {

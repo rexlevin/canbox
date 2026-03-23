@@ -10,6 +10,14 @@
                     <!-- <el-tab-pane :label="$t('canbox.userCenter')" class="full-height-pane"><UserCenter/></el-tab-pane> -->
                     <el-tab-pane :label="$t('canbox.devApp')" name="devApp" class="full-height-pane"><AppDev/></el-tab-pane>
                     <el-tab-pane :label="$t('settings.title')" class="full-height-pane"><Settings/></el-tab-pane>
+                    <el-tab-pane :name="'about'" class="full-height-pane">
+                        <template #label>
+                            <el-tooltip :content="aboutTooltip" placement="right" :disabled="!aboutTooltip">
+                                <span>{{ aboutLabel }}</span>
+                            </el-tooltip>
+                        </template>
+                        <About/>
+                    </el-tab-pane>
                 </el-tabs>
             </el-main>
             <!-- <el-footer class="footer">footer</el-footer> -->
@@ -59,14 +67,55 @@
 </style>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppList from '@/components/AppList.vue';
 import AppRepos from '@/components/AppRepos.vue';
 import UserCenter from '@/components/UserCenter.vue'
 import AppDev from '@/components/AppDev.vue';
+import About from '@/components/About.vue';
 import Settings from '@/components/Settings.vue';
+import { useUpdateStore } from '@/stores/updateStore';
 
+const { t } = useI18n();
+const updateStore = useUpdateStore();
 let activeName = ref('myApps');
+
+// 关于标签的 label - 有更新或错误时显示图标
+const aboutLabel = computed(() => {
+    const hasUpdate = updateStore.hasUpdate;
+    const hasError = updateStore.hasError;
+
+    console.log('[CanBox.vue] aboutLabel 计算 - hasUpdate:', hasUpdate, 'hasError:', hasError);
+
+    if (hasUpdate && hasError) {
+        return `🔔 ⚠️ ${t('canbox.about')}`;
+    } else if (hasUpdate) {
+        return `🔔 ${t('canbox.about')}`;
+    } else if (hasError) {
+        return `⚠️ ${t('canbox.about')}`;
+    }
+    return t('canbox.about');
+});
+
+// 关于标签的 Tooltip - 显示更新或错误详情
+const aboutTooltip = computed(() => {
+    const hasUpdate = updateStore.hasUpdate;
+    const hasError = updateStore.hasError;
+    const version = updateStore.updateInfo?.version;
+
+    console.log('[CanBox.vue] aboutTooltip 计算 - hasUpdate:', hasUpdate, 'hasError:', hasError, 'version:', version);
+
+    if (hasUpdate && hasError) {
+        return t('autoUpdate.newVersionAvailable', { version }) + ' | ' + t('autoUpdate.updateError');
+    } else if (hasUpdate) {
+        return t('autoUpdate.newVersionAvailable', { version });
+    } else if (hasError) {
+        return t('autoUpdate.updateError');
+    }
+    return ''; // 无更新和错误时不显示 tooltip
+});
+
 const changeActiveTab = (name) => {
     console.info('name: ', name)
     activeName.value = name;

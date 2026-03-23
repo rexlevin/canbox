@@ -104,7 +104,22 @@
         "myApps": "My Apps",
         "appRepo": "APP Repos",
         "userCenter": "User Center",
-        "devApp": "APP Dev"
+        "devApp": "APP Dev",
+        "about": "About"
+    },
+    "about": {
+        "title": "About",
+        "version": "Version",
+        "description": "Description",
+        "author": "Author",
+        "license": "License",
+        "systemInfo": "System Information",
+        "nodeVersion": "Node.js Version",
+        "chromeVersion": "Chrome Version",
+        "electronVersion": "Electron Version",
+        "githubRepo": "GitHub Repository",
+        "giteeRepo": "Gitee Repository",
+        "viewLicense": "View License"
     },
     "appList": {
         "importApp": "Import App",
@@ -230,5 +245,129 @@
         "cleanupFailed": "Cleanup failed",
         "loadLogsFailed": "Failed to load logs",
         "exportFailed": "Export failed"
+    },
+    "autoUpdate": {
+        "newVersionAvailable": "New Version Available",
+        "upgrade": "Upgrade",
+        "updateAvailable": "Canbox {version} is now available!",
+        "updateSize": "Update size",
+        "releaseDate": "Release date",
+        "releaseNotes": "What's new",
+        "viewDetails": "View release notes",
+        "immediateUpdate": "Update Now",
+        "immediateDownload": "Download Now",
+        "exitToUpdate": "Exit to Update",
+        "exitToRestart": "Exit to Restart",
+        "restartToUpdate": "Restart to Update",
+        "remindLater": "Remind Later",
+        "skipVersion": "Skip This Version",
+        "appImageUpdateMode": "AppImage Update Mode",
+        "appImageNotice": "Due to AppImage format limitations, automatic updates during runtime are not possible. The new version has been downloaded, and you need to manually restart the application to complete the update.",
+        "appImageTipsTitle": "Update Steps:",
+        "appImageTip1": "Click \"Exit to Restart\" button below to exit Canbox",
+        "appImageTip2": "Restart Canbox, and the update will be applied automatically",
+        "downloading": "Downloading...",
+        "downloadProgress": "Download progress",
+        "installing": "Installing...",
+        "installProgress": "Install progress",
+        "installComplete": "Update Downloaded",
+        "installCompleteTitle": "Update Ready",
+        "installCompleteMessage": "Update has been downloaded. Please restart the app to complete the update.",
+        "restartApp": "Restart App",
+        "updateFailed": "Update Failed",
+        "updateError": "An error occurred during the update",
+        "errorMessage": "Error message",
+        "errorCode": "Error code",
+        "retry": "Retry",
+        "tryAgainLater": "Try Again Later",
+        "manualDownload": "Manual Download",
+        "updateSuccess": "Update successful",
+        "restartRequired": "Please restart the application to complete the update",
+        "restartNow": "Restart Now",
+        "close": "Close",
+        "checkForUpdates": "Check for Updates",
+        "checkingForUpdates": "Checking for updates...",
+        "currentVersion": "Current version",
+        "latestVersion": "Latest version",
+        "noUpdateAvailable": "You're already up to date",
+        "downloadFailed": "Download failed",
+        "installFailed": "Installation failed",
+        "networkError": "Network error",
+        "networkTimeout": "Network connection timeout",
+        "checksumFailed": "File checksum failed",
+        "versionParseError": "Version parse error",
+        "updaterDisabled": "Auto-update disabled",
+        "updateCancelled": "Update cancelled",
+        "settings": {
+            "title": "Update Settings",
+            "enableAutoUpdate": "Enable auto-update",
+            "checkFrequency": "Check for updates",
+            "startup": "On startup",
+            "daily": "Once a day",
+            "weekly": "Once a week",
+            "manual": "Manual check",
+            "autoDownload": "Auto-download updates",
+            "autoDownloadHint": "Automatically download updates in the background",
+            "autoInstall": "Install updates",
+            "askMe": "Ask me",
+            "autoInstallOption": "Auto install",
+            "notInstall": "Don't install",
+            "lastCheckTime": "Last checked",
+            "manualCheckButton": "Check for Updates",
+            "skippedVersions": "Skipped versions",
+            "clearSkipped": "Clear skipped versions",
+            "clearSkippedConfirm": "Are you sure you want to clear the following skipped versions?",
+            "skippedVersionsList": "Skipped versions: {versions}"
+        },
+        "errors": {
+            "networkErrorHint": "Check your network connection",
+            "downloadFailedHint": "Click 'Retry' to try again",
+            "installFailedHint": "Please download and install manually",
+            "networkError": {
+                "title": "Network Connection Failed",
+                "message": "Unable to connect to update server",
+                "hint": "Please check your network connection"
+            },
+            "downloadFailed": {
+                "title": "Download Failed",
+                "message": "An error occurred while downloading",
+                "hint": "Please click retry to try again"
+            },
+            "serverError": {
+                "title": "Server Error",
+                "message": "Update server is temporarily unavailable",
+                "hint": "Please try again later or contact support"
+            },
+            "permissionError": {
+                "title": "Permission Denied",
+                "message": "Insufficient permissions to install update",
+                "hint": "Please run as administrator"
+            },
+            "diskSpaceError": {
+                "title": "Insufficient Disk Space",
+                "message": "Not enough disk space for update",
+                "hint": "Please free up disk space and retry"
+            },
+            "checksumFailed": {
+                "title": "Checksum Verification Failed",
+                "message": "Downloaded file checksum mismatch",
+                "hint": "Please re-download the update package"
+            },
+            "installFailed": {
+                "title": "Installation Failed",
+                "message": "An error occurred during installation",
+                "hint": "Please manually download and install the latest version"
+            },
+            "versionParseError": {
+                "title": "Version Parse Error",
+                "message": "Unable to parse update version",
+                "hint": "Please contact developer for support"
+            },
+            "default": {
+                "title": "Update Failed",
+                "message": "An unknown error occurred",
+                "hint": "Please view details or download manually"
+            }
+        }
     }
 }

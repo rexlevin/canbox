@@ -89,6 +89,32 @@
                                 <span style="margin-left: 10px; color: #909399;">{{ $t('settings.logRetentionDaysHint')
                                     }}</span>
                             </el-form-item>
+                            <el-divider style="margin: 20px 0;">{{ $t('autoUpdate.settings.title') }}</el-divider>
+                            <el-form-item :label="$t('autoUpdate.settings.enableAutoUpdate')" style="margin-bottom: 20px;">
+                                <el-switch v-model="updateConfig.enabled" @change="saveUpdateConfig" />
+                            </el-form-item>
+                            <el-form-item :label="$t('autoUpdate.settings.checkFrequency')" style="margin-bottom: 20px;">
+                                <el-select v-model="updateConfig.checkFrequency" @change="saveUpdateConfig" style="width: 200px;">
+                                    <el-option :label="$t('autoUpdate.settings.startup')" value="startup" />
+                                    <el-option :label="$t('autoUpdate.settings.daily')" value="daily" />
+                                    <el-option :label="$t('autoUpdate.settings.weekly')" value="weekly" />
+                                    <el-option :label="$t('autoUpdate.settings.manual')" value="manual" />
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item :label="$t('autoUpdate.settings.lastCheckTime')" style="margin-bottom: 20px;">
+                                <span style="color: #909399;">{{ formatLastCheckTime }}</span>
+                            </el-form-item>
+                            <el-form-item style="margin-bottom: 20px;">
+                                <div style="display: flex; gap: 10px;">
+                                    <el-button :loading="isCheckingUpdate" @click="handleManualCheckUpdate">
+                                        {{ isCheckingUpdate ? $t('autoUpdate.checkingForUpdates') : $t('autoUpdate.settings.manualCheckButton') }}
+                                    </el-button>
+                                    <el-button v-if="updateConfig.skippedVersions && updateConfig.skippedVersions.length > 0"
+                                        @click="handleClearSkipped">
+                                        {{ $t('autoUpdate.settings.clearSkipped') }} ({{ updateConfig.skippedVersions.length }})
+                                    </el-button>
+                                </div>
+                            </el-form-item>
                         </el-form>
                     </div>
                 </el-col>
@@ -103,11 +129,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { useI18n } from 'vue-i18n';
 import RestartCountdownDialog from './RestartCountdownDialog.vue';
+import { useUpdateStore } from '@/stores/updateStore';
 
 const { t, locale } = useI18n();
+const updateStore = useUpdateStore();
 
 const currentLanguage = ref('en-US');
 const availableLanguages = ref([]);
@@ -116,6 +144,17 @@ const currentExecutionMode = ref('window');
 
 // 日志查看器配置
 const logRetentionDays = ref(30);
+
+// 自动更新配置
+const updateConfig = ref({
+    enabled: true,
+    checkOnStartup: true,
+    checkFrequency: 'startup',
+    autoDownload: false,
+    autoInstall: 'ask',
+    skippedVersions: []
+});
+const isCheckingUpdate = ref(false);
 
 // 自定义数据路径相关
 const currentDataPath = ref('');
@@ -152,6 +191,22 @@ const executionModes = computed(() => [
     { label: t('settings.executionModeChildprocess'), value: 'childprocess' }
     // { label: t('settings.executionModeCustom'), value: 'custom' }  // 自定义模式暂时禁用
 ]);
+
+// 格式化最后检查时间
+const formatLastCheckTime = computed(() => {
+    // 从配置中读取 lastCheckTime，而不是从 store 中
+    const lastCheck = updateConfig.value.lastCheckTime;
+    if (!lastCheck) return '-';
+
+    const date = new Date(lastCheck);
+    return date.toLocaleString(locale.value === 'zh-CN' ? 'zh-CN' : 'en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+});
 
 function generateShortcut() {
     window.api.generateShortcut(ret => {
@@ -293,6 +348,115 @@ async function saveLogRetentionDays() {
     }
 }
 
+// 自动更新配置相关函数
+async function loadUpdateConfig() {
+    if (window.api && window.api.autoUpdate) {
+        const result = await window.api.autoUpdate.getConfig();
+        if (result.success && result.config) {
+            updateConfig.value = {
+                enabled: result.config.enabled ?? true,
+                checkOnStartup: result.config.checkOnStartup ?? true,
+                checkFrequency: result.config.checkFrequency ?? 'startup',
+                autoDownload: result.config.autoDownload ?? false,
+                autoInstall: result.config.autoInstall ?? 'ask',
+                skippedVersions: result.config.skippedVersions ?? [],
+                lastCheckTime: result.config.lastCheckTime ?? null
+            };
+        }
+    }
+}
+
+async function saveUpdateConfig() {
+    if (window.api && window.api.autoUpdate) {
+        console.log('[Settings.vue] 保存自动更新配置:', updateConfig.value);
+        // 使用 JSON.parse(JSON.stringify()) 将响应式对象转换为普通对象
+        const configToSave = JSON.parse(JSON.stringify(updateConfig.value));
+        const result = await window.api.autoUpdate.saveConfig(configToSave);
+        console.log('[Settings.vue] 保存结果:', result);
+        if (result.success) {
+            ElMessage.success(t('common.success'));
+        } else {
+            console.error('[Settings.vue] 保存失败:', result.error);
+            ElMessage.error(result.error || t('common.error'));
+        }
+    }
+}
+
+async function handleManualCheckUpdate() {
+    try {
+        isCheckingUpdate.value = true;
+        
+        // 清除之前的错误状态
+        updateStore.clearError();
+
+        // 重新触发更新检查
+        if (window.api && window.api.autoUpdate) {
+            const result = await window.api.autoUpdate.checkForUpdate();
+            
+            if (result.success) {
+                // 检查成功，根据结果显示提示
+                if (updateStore.hasUpdate) {
+                    // 有新版本
+                    ElMessage.success(t('autoUpdate.updateAvailable', { version: updateStore.updateInfo.version }));
+                } else {
+                    // 已经是最新版本
+                    ElMessage.info(t('autoUpdate.noUpdateAvailable'));
+                }
+            } else {
+                console.error('[Settings.vue] 检查更新失败:', result.error);
+                ElMessage.error(result.error?.message || t('autoUpdate.updateError'));
+            }
+        }
+    } catch (error) {
+        console.error('[Settings.vue] 检查更新异常:', error);
+        ElMessage.error(t('autoUpdate.updateError'));
+    } finally {
+        isCheckingUpdate.value = false;
+    }
+}
+
+async function handleClearSkipped() {
+    try {
+        // 构建确认消息，使用 HTML 实现换行
+        const title = t('autoUpdate.settings.clearSkipped');
+        const versionsList = updateConfig.value.skippedVersions.join('<br>');
+        const message = `${t('autoUpdate.settings.clearSkippedConfirm')}<br><br><div style="font-family: monospace; line-height: 1.6;">${versionsList}</div>`;
+
+        await ElMessageBox.confirm(
+            message,
+            title,
+            {
+                confirmButtonText: '确认',
+                cancelButtonText: '取消',
+                type: 'warning',
+                dangerouslyUseHTMLString: true,
+                closeOnClickModal: false,
+                closeOnPressEscape: false
+            }
+        );
+
+        // 只更新 skippedVersions 字段，保持其他字段不变
+        const configToSave = JSON.parse(JSON.stringify({
+            ...updateConfig.value,
+            skippedVersions: []
+        }));
+
+        const result = await window.api.autoUpdate.saveConfig(configToSave);
+
+        if (result.success) {
+            // 保存成功，更新本地状态
+            updateConfig.value.skippedVersions = [];
+            ElMessage.success(t('common.success'));
+        } else {
+            ElMessage.error(result.error || t('common.error'));
+            // 保存失败，重新加载配置
+            await loadUpdateConfig();
+        }
+    } catch (error) {
+        // 用户取消，不做任何操作
+    }
+}
+
 function applyFont(fontValue) {
     // 根据选择应用字体
     if (fontValue === 'default') {
@@ -339,6 +503,9 @@ async function loadSettings() {
 
     // 加载日志保留天数配置
     logRetentionDays.value = await window.api.logViewer.getRetentionDays();
+
+    // 加载自动更新配置
+    await loadUpdateConfig();
 }
 
 onMounted(() => {
@@ -445,5 +612,15 @@ onUnmounted(() => {
 
 .operate-icon-span:active {
     background-color: hsl(0, 0%, 70%);
+}
+
+/* 清除跳过版本对话框样式 */
+:deep(.clear-skipped-dialog) {
+    .el-message-box__message {
+        white-space: pre-wrap;
+        line-height: 1.8;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 14px;
+    }
 }
 </style>
