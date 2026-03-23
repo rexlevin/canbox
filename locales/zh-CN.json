@@ -102,6 +102,7 @@
     },
     "canbox": {
         "myApps": "我的app",
+        "myAppsPreview": "我的app 预览",
         "appRepo": "APP 仓库",
         "userCenter": "用户中心",
         "devApp": "APP 开发",
@@ -137,7 +138,14 @@
         "removeSuccess": "APP 删除成功",
         "selectFile": "选择应用文件",
         "importSuccess": "应用导入成功！",
-        "importFailed": "导入应用失败："
+        "importFailed": "导入应用失败：",
+        "run": "运行",
+        "delete": "删除",
+        "pack": "打包",
+        "copy": "复制链接",
+        "download": "下载",
+        "update": "更新",
+        "downloaded": "已下载"
     },
     "appRepo": {
         "addSource": "添加 APP 源",

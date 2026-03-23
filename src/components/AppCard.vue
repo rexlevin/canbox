@@ -1,0 +1,399 @@
+<template>
+    <div class="app-card">
+        <!-- Logo -->
+        <div class="logo-section">
+            <img :src="logoUrl" @click="$emit('show-info', uid)" :alt="app.name" />
+        </div>
+
+        <!-- 信息区域 -->
+        <div class="info-section">
+            <div class="name-row">
+                <span class="app-name" @click="$emit('show-info', uid)">{{ app.name }}</span>
+                <span class="app-version">{{ app.version }}</span>
+                <span v-if="app.author" class="author">
+                    <span class="author-icon">👤</span>
+                    <span class="author-name">{{ app.author }}</span>
+                </span>
+                <!-- 平台 - 靠右排列 -->
+                <span v-if="platforms.length > 0" class="platforms-in-name">
+                    <el-tooltip v-for="plat in platforms" :key="plat" :content="getPlatformName(plat)" placement="top">
+                        <span class="platform-icon">{{ getPlatformIcon(plat) }}</span>
+                    </el-tooltip>
+                </span>
+            </div>
+            <div class="description">{{ app.description }}</div>
+            <div class="bottom-row">
+                <div class="meta-row">
+                    <!-- 分类 -->
+                    <template v-if="categories.length > 0">
+                        <el-tooltip v-for="cat in categories" :key="cat" :content="getCategoryName(cat)"
+                            placement="top">
+                            <span class="meta-icon category-icon">{{ getCategoryIcon(cat) }}</span>
+                        </el-tooltip>
+                    </template>
+
+                    <!-- 标签 -->
+                    <el-tooltip v-if="allTagsTooltip" :content="allTagsTooltip" placement="top">
+                        <span class="tags">{{ displayTags }}</span>
+                    </el-tooltip>
+                    <span v-else-if="displayTags" class="tags">{{ displayTags }}</span>
+                </div>
+
+                <!-- 功能按钮 - 靠右排列 -->
+                <div class="actions-row">
+                    <!-- 运行按钮 -->
+                    <el-tooltip :content="$t('appList.run')" placement="top">
+                        <button class="icon-btn run-btn" @click="$emit('run', uid)">
+                            {{ getActionIcon('run') }}
+                        </button>
+                    </el-tooltip>
+
+                    <!-- 删除按钮 -->
+                    <el-tooltip :content="$t('appList.delete')" placement="top">
+                        <button class="icon-btn delete-btn" @click="$emit('delete', uid)">
+                            {{ getActionIcon('delete') }}
+                        </button>
+                    </el-tooltip>
+
+                    <!-- 清空数据按钮 -->
+                    <el-tooltip :content="$t('appList.clearData')" placement="top">
+                        <button class="icon-btn clear-btn" @click="$emit('clear', uid)">
+                            {{ getActionIcon('clear') }}
+                        </button>
+                    </el-tooltip>
+
+                    <!-- 打包按钮（开发模式） -->
+                    <el-tooltip v-if="showPack" :content="$t('appList.pack')" placement="top">
+                        <button class="icon-btn pack-btn" @click="$emit('pack', uid)">
+                            {{ getActionIcon('pack') }}
+                        </button>
+                    </el-tooltip>
+
+                    <!-- 复制按钮（仓库） -->
+                    <el-tooltip v-if="showCopy" :content="$t('appList.copy')" placement="top">
+                        <button class="icon-btn copy-btn" @click="$emit('copy', uid)">
+                            {{ getActionIcon('copy') }}
+                        </button>
+                    </el-tooltip>
+
+                    <!-- 下载按钮（仓库） -->
+                    <el-tooltip v-if="showDownload" :content="$t('appList.download')" placement="top">
+                        <button class="icon-btn download-btn" @click="$emit('download', uid)">
+                            {{ getActionIcon('download') }}
+                        </button>
+                    </el-tooltip>
+
+                    <!-- 更新按钮（仓库） -->
+                    <el-tooltip v-if="showUpdate" :content="$t('appList.update')" placement="top">
+                        <button class="icon-btn update-btn" @click="$emit('update', uid)">
+                            {{ getActionIcon('update') }}
+                        </button>
+                    </el-tooltip>
+
+                    <!-- 已下载状态（仓库） -->
+                    <el-tooltip v-if="showDownloaded" :content="$t('appList.downloaded')" placement="top">
+                        <span class="icon-btn disabled">{{ getActionIcon('downloaded') }}</span>
+                    </el-tooltip>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import {
+    getCategoryIcon,
+    getCategoryName,
+    getPlatformIcon,
+    getPlatformName,
+    getActionIcon
+} from '@/utils/appIcons.js'
+
+const { t: $t } = useI18n()
+
+const props = defineProps({
+    app: {
+        type: Object,
+        required: true,
+        default: () => ({
+            name: '',
+            version: '',
+            description: '',
+            logo: '',
+            platform: [],
+            categories: [],
+            tags: [],
+            author: ''
+        })
+    },
+    uid: {
+        type: String,
+        required: true
+    },
+    // 控制显示哪些按钮
+    showPack: {
+        type: Boolean,
+        default: false
+    },
+    showCopy: {
+        type: Boolean,
+        default: false
+    },
+    showDownload: {
+        type: Boolean,
+        default: false
+    },
+    showUpdate: {
+        type: Boolean,
+        default: false
+    },
+    showDownloaded: {
+        type: Boolean,
+        default: false
+    }
+})
+
+defineEmits(['run', 'delete', 'clear', 'pack', 'copy', 'download', 'update', 'show-info'])
+
+// Logo URL
+const logoUrl = computed(() => {
+    if (!props.app.logo) return ''
+    return props.app.logo.startsWith('file://')
+        ? props.app.logo
+        : `file://${props.app.logo}`
+})
+
+// 分类列表
+const categories = computed(() => {
+    return props.app.categories || []
+})
+
+// 平台列表
+const platforms = computed(() => {
+    return props.app.platform || []
+})
+
+// 显示前2个标签，更多用...表示
+const displayTags = computed(() => {
+    const tags = props.app.tags
+    if (!tags || tags.length === 0) return ''
+
+    if (tags.length <= 2) {
+        return tags.map(t => `#${t}`).join(' ')
+    }
+
+    return tags.slice(0, 2).map(t => `#${t}`).join(' ') + ' ...'
+})
+
+// tooltip显示全部标签
+const allTagsTooltip = computed(() => {
+    const tags = props.app.tags
+    if (!tags || tags.length <= 2) return ''
+    return tags.map(t => `#${t}`).join(' ')
+})
+</script>
+
+<style scoped>
+.app-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    transition: box-shadow 0.2s;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.app-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Logo 区域 */
+.logo-section {
+    flex-shrink: 0;
+}
+
+.logo-section img {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    cursor: pointer;
+    object-fit: cover;
+}
+
+/* 信息区域 */
+.info-section {
+    flex: 1;
+    margin-left: 16px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.name-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.name-row .platforms-in-name {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.name-row .platform-icon {
+    font-size: 19px;
+    opacity: 0.8;
+    cursor: help;
+}
+
+.app-name {
+    font-size: 23px;
+    font-weight: 600;
+    color: #303133;
+    cursor: pointer;
+}
+
+.app-name:hover {
+    color: #409eff;
+}
+
+.app-version {
+    color: #606266;
+    font-size: 16px;
+}
+
+.author {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #303133;
+    font-size: 15px;
+}
+
+.author-icon {
+    font-size: 15px;
+}
+
+.author-name {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.description {
+    color: #303133;
+    font-size: 16px;
+    margin-top: 6px;
+    line-height: 1.5;
+    text-align: left;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+}
+
+/* 底部行 - 包含meta和按钮 */
+.bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.meta-icon {
+    font-size: 19px;
+    cursor: help;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.category-icon {
+    background: #f5f7fa;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+.tags {
+    color: #303133;
+    font-size: 16px;
+    cursor: help;
+}
+
+/* 功能按钮行 - 靠右排列 */
+.actions-row {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #f5f7fa;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    line-height: 1;
+}
+
+.icon-btn:hover {
+    background: #e4e7ed;
+    transform: translateY(-1px);
+}
+
+.icon-btn:active {
+    transform: translateY(0);
+}
+
+.icon-btn.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background: #f0f2f5;
+}
+
+/* 按钮类型样式 */
+.run-btn:hover {
+    background: #e8f5e9;
+}
+
+.delete-btn:hover {
+    background: #ffebee;
+}
+
+.clear-btn:hover {
+    background: #fff3e0;
+}
+
+.pack-btn:hover {
+    background: #e3f2fd;
+}
+
+.download-btn:hover {
+    background: #e8f5e9;
+}
+
+.update-btn:hover {
+    background: #e3f2fd;
+}
+</style>

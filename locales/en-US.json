@@ -102,6 +102,7 @@
     },
     "canbox": {
         "myApps": "My Apps",
+        "myAppsPreview": "My Apps Preview",
         "appRepo": "APP Repos",
         "userCenter": "User Center",
         "devApp": "APP Dev",
@@ -137,7 +138,14 @@
         "removeSuccess": "APP removed successfully",
         "selectFile": "Select app file",
         "importSuccess": "App imported successfully!",
-        "importFailed": "Import failed: "
+        "importFailed": "Import failed: ",
+        "run": "Run",
+        "delete": "Delete",
+        "pack": "Pack",
+        "copy": "Copy Link",
+        "download": "Download",
+        "update": "Update",
+        "downloaded": "Downloaded"
     },
     "appRepo": {
         "addSource": "Add Source",

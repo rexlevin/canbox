@@ -6,6 +6,9 @@
                     <el-tab-pane :label="$t('canbox.myApps')" name="myApps" class="full-height-pane">
                         <AppList @switchTab="changeActiveTab"/>
                     </el-tab-pane>
+                    <el-tab-pane :label="$t('canbox.myAppsPreview')" name="myAppsPreview" class="full-height-pane">
+                        <AppListNew @switchTab="changeActiveTab"/>
+                    </el-tab-pane>
                     <el-tab-pane :label="$t('canbox.appRepo')" name="appRepos" class="full-height-pane"><AppRepos /></el-tab-pane>
                     <!-- <el-tab-pane :label="$t('canbox.userCenter')" class="full-height-pane"><UserCenter/></el-tab-pane> -->
                     <el-tab-pane :label="$t('canbox.devApp')" name="devApp" class="full-height-pane"><AppDev/></el-tab-pane>
@@ -70,6 +73,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppList from '@/components/AppList.vue';
+import AppListNew from '@/components/AppListNew.vue';
 import AppRepos from '@/components/AppRepos.vue';
 import UserCenter from '@/components/UserCenter.vue'
 import AppDev from '@/components/AppDev.vue';
