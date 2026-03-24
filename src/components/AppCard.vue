@@ -68,13 +68,6 @@
                             </button>
                         </el-tooltip>
 
-                        <!-- 删除按钮 -->
-                        <el-tooltip v-if="showDelete" :content="$t('appList.removeApp')" placement="top" popper-class="app-card-tooltip">
-                            <button class="icon-btn delete-btn" @click="$emit('delete', uid)">
-                                {{ getActionIcon('delete') }}
-                            </button>
-                        </el-tooltip>
-
                         <!-- 复制按钮（仓库） -->
                         <el-tooltip v-if="showCopy" :content="$t('appList.copy')" placement="top" popper-class="app-card-tooltip">
                             <button class="icon-btn copy-btn" @click="$emit('copy', uid)">
@@ -99,6 +92,13 @@
                         <!-- 已下载状态（仓库） -->
                         <el-tooltip v-if="showDownloaded" :content="$t('appList.downloaded')" placement="top" popper-class="app-card-tooltip">
                             <span class="icon-btn disabled">{{ getActionIcon('downloaded') }}</span>
+                        </el-tooltip>
+
+                        <!-- 删除按钮 -->
+                        <el-tooltip v-if="showDelete" :content="$t('appList.removeApp')" placement="top" popper-class="app-card-tooltip">
+                            <button class="icon-btn delete-btn" @click="$emit('delete', uid)">
+                                {{ getActionIcon('delete') }}
+                            </button>
                         </el-tooltip>
                     </slot>
                 </div>

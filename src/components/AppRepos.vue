@@ -71,84 +71,17 @@
         :uid="uid"
         :show-run="false"
         :show-clear="false"
-        :show-delete="false"
+        :show-delete="true"
+        :show-copy="true"
+        :show-download="!repo.downloaded"
+        :show-update="repo.downloaded && repo.toUpdate"
+        :show-downloaded="repo.downloaded && !repo.toUpdate"
         @show-info="showRepoInfo"
-      >
-        <!-- 自定义操作按钮 -->
-        <template #actions="{ app: repoApp, uid: repoUid }">
-          <!-- 复制链接 -->
-          <el-tooltip
-            :content="$t('appRepo.copySource')"
-            placement="top"
-            :show-after="400"
-            popper-class="custom-tooltip">
-            <el-button
-              class="action-btn"
-              @click="copyRepoURL(repoUid)">
-              <el-icon :size="20"><CopyDocument /></el-icon>
-            </el-button>
-          </el-tooltip>
-
-          <!-- 下载 -->
-          <el-tooltip
-            v-if="!repo.downloaded"
-            :content="$t('appRepo.downloadApp')"
-            placement="top"
-            :show-after="400"
-            popper-class="custom-tooltip">
-            <el-button
-              class="action-btn"
-              type="primary"
-              :loading="loadingTag[repoUid]"
-              @click="downloadAppsFromRepo(repoUid)">
-              <el-icon :size="20"><Download /></el-icon>
-            </el-button>
-          </el-tooltip>
-
-          <!-- 已下载 -->
-          <el-tooltip
-            v-else-if="repo.downloaded && !repo.toUpdate"
-            :content="$t('appRepo.appDownloaded')"
-            placement="top"
-            :show-after="400"
-            popper-class="custom-tooltip">
-            <el-button
-              class="action-btn downloaded-btn"
-              disabled>
-              <el-icon :size="20" color="#67c23a"><CircleCheck /></el-icon>
-            </el-button>
-          </el-tooltip>
-
-          <!-- 更新 -->
-          <el-tooltip
-            v-else-if="repo.downloaded && repo.toUpdate"
-            :content="$t('appRepo.updateApp')"
-            placement="top"
-            :show-after="400"
-            popper-class="custom-tooltip">
-            <el-button
-              class="action-btn update-btn"
-              type="warning"
-              :loading="loadingTag[repoUid]"
-              @click="downloadAppsFromRepo(repoUid)">
-              <el-icon :size="20"><Refresh /></el-icon>
-            </el-button>
-          </el-tooltip>
-
-          <!-- 删除 -->
-          <el-tooltip
-            :content="$t('appRepo.removeSource')"
-            placement="top"
-            :show-after="400"
-            popper-class="custom-tooltip">
-            <el-button
-              class="action-btn delete-btn"
-              @click="removeRepo(repoUid)">
-              <el-icon :size="20"><Delete /></el-icon>
-            </el-button>
-          </el-tooltip>
-        </template>
-      </AppCard>
+        @copy="copyRepoURL"
+        @download="downloadAppsFromRepo"
+        @update="downloadAppsFromRepo"
+        @delete="removeRepo"
+      />
     </div>
 
     <!-- 空状态提示 -->
@@ -192,7 +125,6 @@ import { useAppStore } from '@/stores/appStore'
 import { md } from '@/utils/markdownRenderer'
 import CustomDrawer from './CustomDrawer.vue'
 import AppCard from './AppCard.vue'
-import { CopyDocument, Download, CircleCheck, Refresh, Delete } from '@element-plus/icons-vue'
 
 const appStore = useAppStore()
 const { t } = useI18n()
@@ -518,41 +450,7 @@ onMounted(() => {
   font-size: 14px;
 }
 
-/* 自定义操作按钮样式 */
-.action-btn {
-  width: 36px !important;
-  height: 36px !important;
-  padding: 0 !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 
-.action-btn.delete-btn {
-  color: #f56c6c;
-}
-
-.action-btn.delete-btn:hover {
-  color: #f56c6c;
-  background-color: #fef0f0;
-}
-
-.action-btn.update-btn {
-  background-color: #e6a23c;
-  border-color: #e6a23c;
-  color: #fff;
-}
-
-.action-btn.update-btn:hover {
-  background-color: #ebb563;
-  border-color: #ebb563;
-}
-
-.action-btn.downloaded-btn {
-  cursor: not-allowed;
-  background-color: #f0f9ff;
-  border-color: #67c23a;
-}
 
 /* 抽屉样式 */
 .drawer-container {
