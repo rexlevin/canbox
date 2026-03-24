@@ -331,8 +331,9 @@ onUpdated(() => {
 .app-dev-new-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   padding: 0 6px;
+  overflow: hidden;
 }
 
 /* 按钮区域 */
@@ -347,11 +348,13 @@ onUpdated(() => {
 .app-list-section {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
   gap: 12px;
   align-content: start;
+  min-width: 0;
 }
 
 /* 当窗口较窄时，单列显示 */
@@ -373,9 +376,7 @@ onUpdated(() => {
 
 /* 文档链接 */
 .doc-links {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
+  flex-shrink: 0;
   text-align: center;
   padding: 10px 0;
   border-top: 1px solid #eee;
