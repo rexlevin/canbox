@@ -102,8 +102,7 @@
         "retentionDaysSaveFailed": "保存保留天数失败"
     },
     "canbox": {
-        "myApps": "我的app",
-        "myAppsPreview": "我的app 预览",
+        "myApps": "我的 APP",
         "appRepo": "APP 仓库",
         "userCenter": "用户中心",
         "devApp": "APP 开发",
@@ -124,9 +123,9 @@
         "viewLicense": "查看许可证"
     },
     "appList": {
-        "importApp": "导入已有app",
+        "importApp": "导入已有 APP",
         "goToRepo": "去仓库下载",
-        "goToDev": "去开发自己的app",
+        "goToDev": "去开发自己的 APP",
         "empty": "暂无应用",
         "importTag": "导入",
         "importTagTitle": "这是一个导入的app",
