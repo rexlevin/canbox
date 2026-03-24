@@ -26,7 +26,8 @@
           platform: appItem.appJson?.platform || [],
           categories: appItem.appJson?.categories || [],
           tags: appItem.appJson?.tags || [],
-          author: appItem.appJson?.author || appItem.author
+          author: appItem.appJson?.author || appItem.author,
+          sourceTag: appItem.sourceTag
         }"
         :uid="uid"
         @run="loadApp"

@@ -9,6 +9,10 @@
         <div class="info-section">
             <div class="name-row">
                 <span class="app-name" @click="$emit('show-info', uid)">{{ app.name }}</span>
+                <!-- 导入标记 -->
+                <el-tag v-if="app.sourceTag === 'import'" size="small" type="info" effect="dark" class="import-tag">
+                    {{ $t('appList.importTag') }}
+                </el-tag>
                 <span class="app-version">{{ app.version }}</span>
                 <span v-if="app.author" class="author">
                     <span class="author-icon">👤</span>
@@ -246,6 +250,11 @@ const allTagsTooltip = computed(() => {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.name-row .import-tag {
+    flex-shrink: 0;
+    font-size: 12px;
 }
 
 .name-row .platform-icon {
