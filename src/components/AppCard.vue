@@ -16,8 +16,8 @@
                 </span>
                 <!-- 平台 - 靠右排列 -->
                 <span v-if="platforms.length > 0" class="platforms-in-name">
-                    <el-tooltip v-for="plat in platforms" :key="plat" :content="getPlatformName(plat)" placement="top">
-                        <span class="platform-icon">{{ getPlatformIcon(plat) }}</span>
+                    <el-tooltip v-for="plat in platforms" :key="plat" :content="getPlatformName(plat)" placement="top" popper-class="app-card-tooltip">
+                        <span class="platform-icon" v-html="getPlatformIconSvg(plat)"></span>
                     </el-tooltip>
                 </span>
             </div>
@@ -27,13 +27,13 @@
                     <!-- 分类 -->
                     <template v-if="categories.length > 0">
                         <el-tooltip v-for="cat in categories" :key="cat" :content="getCategoryName(cat)"
-                            placement="top">
+                            placement="top" popper-class="app-card-tooltip">
                             <span class="meta-icon category-icon">{{ getCategoryIcon(cat) }}</span>
                         </el-tooltip>
                     </template>
 
                     <!-- 标签 -->
-                    <el-tooltip v-if="allTagsTooltip" :content="allTagsTooltip" placement="top">
+                    <el-tooltip v-if="allTagsTooltip" :content="allTagsTooltip" placement="top" popper-class="app-card-tooltip">
                         <span class="tags">{{ displayTags }}</span>
                     </el-tooltip>
                     <span v-else-if="displayTags" class="tags">{{ displayTags }}</span>
@@ -41,57 +41,57 @@
 
                 <!-- 功能按钮 - 靠右排列 -->
                 <div class="actions-row">
-                    <!-- 运行按钮 -->
-                    <el-tooltip :content="$t('appList.run')" placement="top">
-                        <button class="icon-btn run-btn" @click="$emit('run', uid)">
-                            {{ getActionIcon('run') }}
-                        </button>
-                    </el-tooltip>
-
-                    <!-- 删除按钮 -->
-                    <el-tooltip :content="$t('appList.delete')" placement="top">
-                        <button class="icon-btn delete-btn" @click="$emit('delete', uid)">
-                            {{ getActionIcon('delete') }}
-                        </button>
-                    </el-tooltip>
-
-                    <!-- 清空数据按钮 -->
-                    <el-tooltip :content="$t('appList.clearData')" placement="top">
-                        <button class="icon-btn clear-btn" @click="$emit('clear', uid)">
-                            {{ getActionIcon('clear') }}
-                        </button>
-                    </el-tooltip>
-
                     <!-- 打包按钮（开发模式） -->
-                    <el-tooltip v-if="showPack" :content="$t('appList.pack')" placement="top">
+                    <el-tooltip v-if="showPack" :content="$t('appList.pack')" placement="top" popper-class="app-card-tooltip">
                         <button class="icon-btn pack-btn" @click="$emit('pack', uid)">
                             {{ getActionIcon('pack') }}
                         </button>
                     </el-tooltip>
 
+                    <!-- 运行按钮 -->
+                    <el-tooltip :content="$t('appList.run')" placement="top" popper-class="app-card-tooltip">
+                        <button class="icon-btn run-btn" @click="$emit('run', uid)">
+                            {{ getActionIcon('run') }}
+                        </button>
+                    </el-tooltip>
+
+                    <!-- 清空数据按钮 -->
+                    <el-tooltip :content="$t('appList.clearData')" placement="top" popper-class="app-card-tooltip">
+                        <button class="icon-btn clear-btn" @click="$emit('clear', uid)">
+                            {{ getActionIcon('clear') }}
+                        </button>
+                    </el-tooltip>
+
+                    <!-- 删除按钮 -->
+                    <el-tooltip :content="$t('appList.removeApp')" placement="top" popper-class="app-card-tooltip">
+                        <button class="icon-btn delete-btn" @click="$emit('delete', uid)">
+                            {{ getActionIcon('delete') }}
+                        </button>
+                    </el-tooltip>
+
                     <!-- 复制按钮（仓库） -->
-                    <el-tooltip v-if="showCopy" :content="$t('appList.copy')" placement="top">
+                    <el-tooltip v-if="showCopy" :content="$t('appList.copy')" placement="top" popper-class="app-card-tooltip">
                         <button class="icon-btn copy-btn" @click="$emit('copy', uid)">
                             {{ getActionIcon('copy') }}
                         </button>
                     </el-tooltip>
 
                     <!-- 下载按钮（仓库） -->
-                    <el-tooltip v-if="showDownload" :content="$t('appList.download')" placement="top">
+                    <el-tooltip v-if="showDownload" :content="$t('appList.download')" placement="top" popper-class="app-card-tooltip">
                         <button class="icon-btn download-btn" @click="$emit('download', uid)">
                             {{ getActionIcon('download') }}
                         </button>
                     </el-tooltip>
 
                     <!-- 更新按钮（仓库） -->
-                    <el-tooltip v-if="showUpdate" :content="$t('appList.update')" placement="top">
+                    <el-tooltip v-if="showUpdate" :content="$t('appList.update')" placement="top" popper-class="app-card-tooltip">
                         <button class="icon-btn update-btn" @click="$emit('update', uid)">
                             {{ getActionIcon('update') }}
                         </button>
                     </el-tooltip>
 
                     <!-- 已下载状态（仓库） -->
-                    <el-tooltip v-if="showDownloaded" :content="$t('appList.downloaded')" placement="top">
+                    <el-tooltip v-if="showDownloaded" :content="$t('appList.downloaded')" placement="top" popper-class="app-card-tooltip">
                         <span class="icon-btn disabled">{{ getActionIcon('downloaded') }}</span>
                     </el-tooltip>
                 </div>
@@ -108,6 +108,7 @@ import {
     getCategoryName,
     getPlatformIcon,
     getPlatformName,
+    getPlatformIconSvg,
     getActionIcon
 } from '@/utils/appIcons.js'
 
@@ -197,7 +198,7 @@ const allTagsTooltip = computed(() => {
 
 <style scoped>
 .app-card {
-    background: #ffffff;
+    background: #f5f7fa;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 16px;
@@ -248,9 +249,19 @@ const allTagsTooltip = computed(() => {
 }
 
 .name-row .platform-icon {
-    font-size: 19px;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     opacity: 0.8;
     cursor: help;
+    color: #606266;
+}
+
+.name-row .platform-icon :deep(svg) {
+    width: 100%;
+    height: 100%;
 }
 
 .app-name {
@@ -395,5 +406,14 @@ const allTagsTooltip = computed(() => {
 
 .update-btn:hover {
     background: #e3f2fd;
+}
+
+/* Tooltip 字体大小调整 */
+:global(.app-card-tooltip) {
+    font-size: 14px !important;
+}
+
+:global(.app-card-tooltip .el-popper__arrow::before) {
+    font-size: 14px !important;
 }
 </style>
