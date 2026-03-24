@@ -609,6 +609,64 @@ function initIpcHandlers() {
         app.relaunch();
         app.quit();
     });
+
+    // ========== 全局缩放功能 ==========
+    // 获取当前缩放比例
+    ipcMain.handle('zoom-get', () => {
+        try {
+            const canboxStore = getCanboxStore();
+            const zoomFactor = canboxStore.get('zoomFactor', 1.0);
+            return { success: true, factor: zoomFactor };
+        } catch (error) {
+            logger.error('Failed to get zoom factor:', error);
+            return { success: false, factor: 1.0 };
+        }
+    });
+
+    // 设置缩放比例
+    ipcMain.handle('zoom-set', (event, factor) => {
+        try {
+            // 限制缩放范围 0.5 - 2.0
+            const clampedFactor = Math.max(0.5, Math.min(2.0, factor));
+            
+            // 保存到配置
+            const canboxStore = getCanboxStore();
+            canboxStore.set('zoomFactor', clampedFactor);
+            
+            // 应用到所有窗口
+            BrowserWindow.getAllWindows().forEach(win => {
+                if (!win.isDestroyed()) {
+                    win.webContents.setZoomFactor(clampedFactor);
+                }
+            });
+            
+            logger.info('Zoom factor set to: {}', clampedFactor);
+            return { success: true, factor: clampedFactor };
+        } catch (error) {
+            logger.error('Failed to set zoom factor:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // 重置缩放比例
+    ipcMain.handle('zoom-reset', () => {
+        try {
+            const canboxStore = getCanboxStore();
+            canboxStore.set('zoomFactor', 1.0);
+            
+            BrowserWindow.getAllWindows().forEach(win => {
+                if (!win.isDestroyed()) {
+                    win.webContents.setZoomFactor(1.0);
+                }
+            });
+            
+            logger.info('Zoom factor reset to 1.0');
+            return { success: true, factor: 1.0 };
+        } catch (error) {
+            logger.error('Failed to reset zoom factor:', error);
+            return { success: false, error: error.message };
+        }
+    });
 }
 
 // 初始化语言
