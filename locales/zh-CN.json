@@ -114,7 +114,6 @@
         "description": "描述",
         "author": "作者",
         "license": "许可证",
-        "systemInfo": "系统信息",
         "nodeVersion": "Node.js 版本",
         "chromeVersion": "Chrome 版本",
         "electronVersion": "Electron 版本",

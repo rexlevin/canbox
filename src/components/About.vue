@@ -1,37 +1,44 @@
 <template>
     <div class="about-container">
         <div class="about-content">
-            <div class="logo-section">
-                <img :src="logoPath" alt="Canbox Logo" class="logo" />
-                <h1>{{ t('app.title') }}</h1>
-                <div class="version-wrapper">
-                    <p class="version">{{ t('about.version') }}: {{ packageVersion }}</p>
-                    <!-- 有更新：显示升级按钮 -->
-                    <el-button
-                        v-if="hasUpdate && !hasError"
-                        type="primary"
-                        size="small"
-                        @click="handleUpgrade"
-                        class="upgrade-button"
-                    >
-                        <el-icon><Top /></el-icon>
-                        {{ t('autoUpdate.upgrade') }}
-                    </el-button>
-                    <!-- 有错误或正常状态：显示检查更新按钮 -->
-                    <el-button
-                        v-if="!hasUpdate || hasError"
-                        :loading="isCheckingUpdate"
-                        size="small"
-                        @click="handleCheckUpdate"
-                        class="check-button"
-                    >
-                        <el-icon><Refresh /></el-icon>
-                        {{ isCheckingUpdate ? t('autoUpdate.checkingForUpdates') : t('autoUpdate.checkForUpdates') }}
-                    </el-button>
+            <!-- 顶部区域：Logo 和 信息并列 -->
+            <div class="top-section">
+                <div class="logo-section">
+                    <img :src="logoPath" alt="Canbox Logo" class="logo" />
+                    <h1>{{ t('app.title') }}</h1>
+                </div>
+
+                <div class="info-section">
+                    <p><strong>{{ t('about.description') }}:</strong> {{ packageDescription }}</p>
+                    <p><strong>{{ t('about.author') }}:</strong> {{ packageAuthor }}</p>
+                    <p><strong>{{ t('about.license') }}:</strong> {{ packageLicense }}</p>
+                    <div class="version-line">
+                        <span><strong>{{ t('about.version') }}:</strong> {{ packageVersion }}</span>
+                        <!-- 有更新：显示升级按钮 -->
+                        <el-button
+                            v-if="hasUpdate && !hasError"
+                            type="primary"
+                            size="small"
+                            @click="handleUpgrade"
+                            class="upgrade-button"
+                        >
+                            <el-icon><Top /></el-icon>
+                            {{ t('autoUpdate.upgrade') }}
+                        </el-button>
+                        <!-- 有错误或正常状态：显示检查更新按钮 -->
+                        <el-button
+                            v-if="!hasUpdate || hasError"
+                            :loading="isCheckingUpdate"
+                            size="small"
+                            @click="handleCheckUpdate"
+                            class="check-button"
+                        >
+                            <el-icon><Refresh /></el-icon>
+                            {{ isCheckingUpdate ? t('autoUpdate.checkingForUpdates') : t('autoUpdate.checkForUpdates') }}
+                        </el-button>
+                    </div>
                 </div>
             </div>
-
-            <el-divider />
 
             <!-- 错误提示区域 -->
             <el-alert
@@ -63,28 +70,14 @@
                 </template>
             </el-alert>
 
-            <div class="info-section">
-                <p>{{ t('about.description') }}: {{ packageDescription }}</p>
-                <p>{{ t('about.author') }}: {{ packageAuthor }}</p>
-                <p>{{ t('about.license') }}: {{ packageLicense }}</p>
-            </div>
-
             <el-divider />
 
             <div class="system-info">
-                <h3>{{ t('about.systemInfo') }}</h3>
-                <div class="info-item">
-                    <span class="label">{{ t('about.nodeVersion') }}:</span>
-                    <span class="value">{{ nodeVersion }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">{{ t('about.chromeVersion') }}:</span>
-                    <span class="value">{{ chromeVersion }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">{{ t('about.electronVersion') }}:</span>
-                    <span class="value">{{ electronVersion }}</span>
-                </div>
+                <span class="system-value">Node {{ nodeVersion }}</span>
+                <span class="system-separator">|</span>
+                <span class="system-value">Chrome {{ chromeVersion }}</span>
+                <span class="system-separator">|</span>
+                <span class="system-value">Electron {{ electronVersion }}</span>
             </div>
 
             <el-divider />
@@ -267,33 +260,36 @@ const handleManualDownload = () => {
     text-align: center;
 }
 
+/* 顶部并列区域 */
+.top-section {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
 .logo-section {
-    margin-bottom: 30px;
+    text-align: center;
 }
 
 .logo {
     width: 128px;
     height: 128px;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
 }
 
 .logo-section h1 {
-    font-size: 32px;
-    margin: 0 0 10px 0;
+    font-size: 28px;
+    margin: 0 0 8px 0;
     color: #303133;
 }
 
 .version {
-    font-size: 18px;
+    font-size: 16px;
     color: #909399;
     margin: 5px 0;
-}
-
-.version-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
 }
 
 .upgrade-button {
@@ -310,42 +306,52 @@ const handleManualDownload = () => {
 
 .info-section {
     text-align: left;
-    margin: 20px 0;
+    min-width: 320px;
+    padding-top: 8px;
 }
 
 .info-section p {
-    margin: 10px 0;
-    font-size: 14px;
+    margin: 12px 0;
+    font-size: 18px;
     color: #606266;
 }
 
-.system-info {
-    text-align: left;
-    margin: 20px 0;
-}
-
-.system-info h3 {
-    font-size: 16px;
-    margin-bottom: 15px;
+.info-section strong {
     color: #303133;
 }
 
-.info-item {
+.version-line {
     display: flex;
-    justify-content: space-between;
-    margin: 10px 0;
-    padding: 8px 0;
-    border-bottom: 1px solid #ebeef5;
-}
-
-.info-item .label {
-    font-weight: 500;
+    align-items: center;
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 18px;
     color: #606266;
 }
 
-.info-item .value {
+.version-line .el-button {
+    font-size: 15px;
+    padding: 8px 16px;
+    height: auto;
+}
+
+.system-info {
+    text-align: center;
+    margin: 15px 0;
+    padding: 14px;
+    background: #f5f7fa;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+.system-value {
     color: #909399;
     font-family: monospace;
+}
+
+.system-separator {
+    color: #dcdfe6;
+    margin: 0 8px;
 }
 
 .links-section {

@@ -113,7 +113,6 @@
         "description": "Description",
         "author": "Author",
         "license": "License",
-        "systemInfo": "System Information",
         "nodeVersion": "Node.js Version",
         "chromeVersion": "Chrome Version",
         "electronVersion": "Electron Version",
