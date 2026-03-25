@@ -57,6 +57,9 @@
     },
     "settings": {
         "title": "Settings",
+        "basicGroup": "Basic Settings",
+        "dataPathGroup": "Data Path",
+        "logGroup": "Log Settings",
         "language": "Language",
         "font": "Font",
         "defaultFont": "Default Font",

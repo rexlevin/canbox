@@ -1,124 +1,201 @@
 <template>
-    <div class="app-list-container">
-        <!-- 第一部分：设置列表区域 -->
-        <div class="app-list-section">
-            <el-row>
-                <el-col :span="24">
-                    <div class="card">
-                        <el-form label-width="150px">
-                            <el-form-item :label="$t('settings.language')" style="margin-bottom: 20px;">
-                                <el-select v-model="currentLanguage" @change="handleLanguageChange"
-                                    style="width: 200px;">
-                                    <el-option v-for="lang in availableLanguages" :key="lang.code" :label="lang.name"
-                                        :value="lang.code" />
-                                </el-select>
-                            </el-form-item>
-                            <el-form-item :label="$t('settings.font')" style="margin-bottom: 20px;">
-                                <el-select v-model="currentFont" @change="handleFontChange" style="width: 250px;">
-                                    <el-option v-for="font in availableFonts" :key="font.value" :label="font.label"
-                                        :value="font.value" />
-                                </el-select>
-                            </el-form-item>
-                            <el-form-item :label="$t('settings.executionMode')" style="margin-bottom: 20px;">
-                                <el-select v-model="currentExecutionMode" @change="handleExecutionModeChange"
-                                    style="width: 250px;">
-                                    <el-option v-for="mode in executionModes" :key="mode.value" :label="mode.label"
-                                        :value="mode.value" />
-                                </el-select>
-                            </el-form-item>
-                            <el-form-item :label="$t('settings.shortcutTitle')" style="margin-bottom: 20px;">
-                                <div style="display: flex; gap: 10px;">
-                                    <el-button type="primary" size="" @click="generateShortcut">
-                                        {{ $t('settings.createShortcut') }}
-                                    </el-button>
-                                    <el-button type="danger" size="" @click="deleteShortcut">
-                                        {{ $t('settings.deleteShortcut') }}
-                                    </el-button>
-                                </div>
-                            </el-form-item>
-                            <el-form-item :label="$t('settings.customDataPath')" style="margin-bottom: 20px;">
-                                <div style="width: 100%;">
-                                    <!-- 当前使用路径 -->
-                                    <el-descriptions :column="1" size="small" border style="margin-bottom: 12px;">
-                                        <el-descriptions-item :label="$t('settings.currentDataPath')">
-                                            {{ currentDataPath }}
-                                        </el-descriptions-item>
-                                        <el-descriptions-item :label="$t('settings.diskUsage')">
-                                            {{ diskUsage }}
-                                        </el-descriptions-item>
-                                    </el-descriptions>
+    <div class="settings-container">
+        <!-- 基本设置 -->
+        <div class="settings-group">
+            <div class="group-title">
+                <span class="group-icon">⚙️</span>
+                <span>{{ $t('settings.basicGroup') || '基本设置' }}</span>
+            </div>
 
-                                    <!-- 新路径选择 -->
-                                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                                        <el-input v-model="newDataPath"
-                                            :placeholder="$t('settings.customDataPathPlaceholder')" />
-                                        <el-button @click="selectDirectory">
-                                            {{ $t('settings.browse') }}
-                                        </el-button>
-                                    </div>
+            <!-- 语言 -->
+            <div class="setting-item">
+                <label class="setting-label">
+                    <span class="setting-icon">🌐</span>
+                    {{ $t('settings.language') }}
+                </label>
+                <div class="setting-control">
+                    <el-select v-model="currentLanguage" @change="handleLanguageChange" class="setting-select">
+                        <el-option v-for="lang in availableLanguages" :key="lang.code" :label="lang.name"
+                            :value="lang.code" style="font-size: 16px;" />
+                    </el-select>
+                </div>
+            </div>
 
-                                    <!-- 警告提示 -->
-                                    <el-alert v-if="newDataPath" type="warning" :closable="false"
-                                        style="margin-bottom: 12px;">
-                                        <template #title>
-                                            {{ $t('settings.customDataPathWarning') }}
-                                        </template>
-                                        <div style="font-size: 12px; margin-top: 4px;">
-                                            {{ $t('settings.customDataPathWarningDetail', {
-                                                path: newDataPath + '/Users'
-                                            }) }}
-                                        </div>
-                                    </el-alert>
+            <!-- 字体 -->
+            <div class="setting-item">
+                <label class="setting-label">
+                    <span class="setting-icon">🔤</span>
+                    {{ $t('settings.font') }}
+                </label>
+                <div class="setting-control">
+                    <el-select v-model="currentFont" @change="handleFontChange" class="setting-select">
+                        <el-option v-for="font in availableFonts" :key="font.value" :label="font.label"
+                            :value="font.value" style="font-size: 16px;" />
+                    </el-select>
+                </div>
+            </div>
 
-                                    <!-- 操作按钮 -->
-                                    <div style="display: flex; gap: 8px;">
-                                        <el-button type="primary" @click="saveCustomDataPath"
-                                            :disabled="!newDataPath || isSaving">
-                                            {{ isSaving ? $t('settings.migrating') : $t('settings.saveAndMigrate') }}
-                                        </el-button>
-                                        <el-button @click="resetToDefault" :disabled="isSaving">
-                                            {{ $t('settings.resetToDefault') }}
-                                        </el-button>
-                                    </div>
-                                </div>
-                            </el-form-item>
-                            <el-divider style="margin: 20px 0;">{{ $t('settings.logViewerSettings') }}</el-divider>
-                            <el-form-item :label="$t('settings.logRetentionDays')" style="margin-bottom: 20px;">
-                                <el-input-number v-model="logRetentionDays" :min="0" :max="30" :step="1"
-                                    controls-position="right" style="width: 200px;" @change="saveLogRetentionDays" />
-                                <span style="margin-left: 10px; color: #909399;">{{ $t('settings.logRetentionDaysHint')
-                                    }}</span>
-                            </el-form-item>
-                            <el-divider style="margin: 20px 0;">{{ $t('autoUpdate.settings.title') }}</el-divider>
-                            <el-form-item :label="$t('autoUpdate.settings.enableAutoUpdate')" style="margin-bottom: 20px;">
-                                <el-switch v-model="updateConfig.enabled" @change="saveUpdateConfig" />
-                            </el-form-item>
-                            <el-form-item :label="$t('autoUpdate.settings.checkFrequency')" style="margin-bottom: 20px;">
-                                <el-select v-model="updateConfig.checkFrequency" @change="saveUpdateConfig" style="width: 200px;">
-                                    <el-option :label="$t('autoUpdate.settings.startup')" value="startup" />
-                                    <el-option :label="$t('autoUpdate.settings.daily')" value="daily" />
-                                    <el-option :label="$t('autoUpdate.settings.weekly')" value="weekly" />
-                                    <el-option :label="$t('autoUpdate.settings.manual')" value="manual" />
-                                </el-select>
-                            </el-form-item>
-                            <el-form-item :label="$t('autoUpdate.settings.lastCheckTime')" style="margin-bottom: 20px;">
-                                <span style="color: #909399;">{{ formatLastCheckTime }}</span>
-                            </el-form-item>
-                            <el-form-item style="margin-bottom: 20px;">
-                                <div style="display: flex; gap: 10px;">
-                                    <el-button :loading="isCheckingUpdate" @click="handleManualCheckUpdate">
-                                        {{ isCheckingUpdate ? $t('autoUpdate.checkingForUpdates') : $t('autoUpdate.settings.manualCheckButton') }}
-                                    </el-button>
-                                    <el-button v-if="updateConfig.skippedVersions && updateConfig.skippedVersions.length > 0"
-                                        @click="handleClearSkipped">
-                                        {{ $t('autoUpdate.settings.clearSkipped') }} ({{ updateConfig.skippedVersions.length }})
-                                    </el-button>
-                                </div>
-                            </el-form-item>
-                        </el-form>
+            <!-- 执行模式 -->
+            <div class="setting-item">
+                <label class="setting-label">
+                    <span class="setting-icon">▶️</span>
+                    {{ $t('settings.executionMode') }}
+                </label>
+                <div class="setting-control">
+                    <el-select v-model="currentExecutionMode" @change="handleExecutionModeChange" class="setting-select">
+                        <el-option v-for="mode in executionModes" :key="mode.value" :label="mode.label"
+                            :value="mode.value" style="font-size: 16px;" />
+                    </el-select>
+                </div>
+            </div>
+
+            <!-- 快捷方式 -->
+            <div class="setting-item">
+                <label class="setting-label">
+                    <span class="setting-icon">🔗</span>
+                    {{ $t('settings.shortcutTitle') }}
+                </label>
+                <div class="setting-control">
+                    <div class="button-group">
+                        <el-button type="primary" @click="generateShortcut">
+                            {{ $t('settings.createShortcut') }}
+                        </el-button>
+                        <el-button type="danger" @click="deleteShortcut">
+                            {{ $t('settings.deleteShortcut') }}
+                        </el-button>
                     </div>
-                </el-col>
-            </el-row>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据路径 -->
+        <div class="settings-group">
+            <div class="group-title">
+                <span class="group-icon">💾</span>
+                <span>{{ $t('settings.dataPathGroup') || '数据路径' }}</span>
+            </div>
+
+            <!-- 当前路径信息 -->
+            <div class="setting-item full-width">
+                <el-descriptions :column="1" size="default" border class="path-descriptions">
+                    <el-descriptions-item :label="$t('settings.currentDataPath')">
+                        {{ currentDataPath }}
+                    </el-descriptions-item>
+                    <el-descriptions-item :label="$t('settings.diskUsage')">
+                        {{ diskUsage }}
+                    </el-descriptions-item>
+                </el-descriptions>
+            </div>
+
+            <!-- 新路径选择 -->
+            <div class="setting-item full-width">
+                <div class="path-select-row">
+                    <el-input v-model="newDataPath" :placeholder="$t('settings.customDataPathPlaceholder')"
+                        style="flex: 1;" />
+                    <el-button @click="selectDirectory">
+                        {{ $t('settings.browse') }}
+                    </el-button>
+                </div>
+            </div>
+
+            <!-- 警告提示 -->
+            <div class="setting-item full-width" v-if="newDataPath">
+                <el-alert type="warning" :closable="false">
+                    <template #title>
+                        {{ $t('settings.customDataPathWarning') }}
+                    </template>
+                    <div class="warning-detail">
+                        {{ $t('settings.customDataPathWarningDetail', { path: newDataPath + '/Users' }) }}
+                    </div>
+                </el-alert>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="setting-item full-width">
+                <div class="button-group">
+                    <el-button type="primary" @click="saveCustomDataPath" :disabled="!newDataPath || isSaving"
+                        :loading="isSaving">
+                        {{ isSaving ? $t('settings.migrating') : $t('settings.saveAndMigrate') }}
+                    </el-button>
+                    <el-button @click="resetToDefault" :disabled="isSaving">
+                        {{ $t('settings.resetToDefault') }}
+                    </el-button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 日志设置 -->
+        <div class="settings-group">
+            <div class="group-title">
+                <span class="group-icon">📝</span>
+                <span>{{ $t('settings.logGroup') || '日志设置' }}</span>
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">
+                    {{ $t('settings.logRetentionDays') }}
+                </label>
+                <div class="setting-control">
+                    <el-input-number v-model="logRetentionDays" :min="0" :max="30" :step="1" controls-position="right"
+                        style="width: 200px;" @change="saveLogRetentionDays" />
+                    <el-tooltip :content="$t('settings.logRetentionDaysHint')" placement="top">
+                        <span class="help-icon">?</span>
+                    </el-tooltip>
+                </div>
+            </div>
+        </div>
+
+        <!-- 自动更新 -->
+        <div class="settings-group">
+            <div class="group-title">
+                <span class="group-icon">🔄</span>
+                <span>{{ $t('autoUpdate.settings.title') }}</span>
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">
+                    {{ $t('autoUpdate.settings.enableAutoUpdate') }}
+                </label>
+                <div class="setting-control">
+                    <el-switch v-model="updateConfig.enabled" @change="saveUpdateConfig" />
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">
+                    {{ $t('autoUpdate.settings.checkFrequency') }}
+                </label>
+                <div class="setting-control">
+                    <el-select v-model="updateConfig.checkFrequency" @change="saveUpdateConfig" class="setting-select">
+                        <el-option :label="$t('autoUpdate.settings.startup')" value="startup" style="font-size: 16px;" />
+                        <el-option :label="$t('autoUpdate.settings.daily')" value="daily" style="font-size: 16px;" />
+                        <el-option :label="$t('autoUpdate.settings.weekly')" value="weekly" style="font-size: 16px;" />
+                        <el-option :label="$t('autoUpdate.settings.manual')" value="manual" style="font-size: 16px;" />
+                    </el-select>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">
+                    {{ $t('autoUpdate.settings.lastCheckTime') }}
+                </label>
+                <div class="setting-control">
+                    <span class="info-text">{{ formatLastCheckTime }}</span>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="button-group">
+                    <el-button :loading="isCheckingUpdate" @click="handleManualCheckUpdate">
+                        {{ isCheckingUpdate ? $t('autoUpdate.checkingForUpdates') :
+                            $t('autoUpdate.settings.manualCheckButton') }}
+                    </el-button>
+                    <el-button v-if="updateConfig.skippedVersions && updateConfig.skippedVersions.length > 0"
+                        @click="handleClearSkipped">
+                        {{ $t('autoUpdate.settings.clearSkipped') }} ({{ updateConfig.skippedVersions.length }})
+                    </el-button>
+                </div>
+            </div>
         </div>
 
         <!-- 倒计时对话框 -->
@@ -189,12 +266,10 @@ const availableFonts = computed(() => [
 const executionModes = computed(() => [
     { label: t('settings.executionModeWindow'), value: 'window' },
     { label: t('settings.executionModeChildprocess'), value: 'childprocess' }
-    // { label: t('settings.executionModeCustom'), value: 'custom' }  // 自定义模式暂时禁用
 ]);
 
 // 格式化最后检查时间
 const formatLastCheckTime = computed(() => {
-    // 从配置中读取 lastCheckTime，而不是从 store 中
     const lastCheck = updateConfig.value.lastCheckTime;
     if (!lastCheck) return '-';
 
@@ -220,6 +295,7 @@ function generateShortcut() {
         }
     });
 }
+
 function deleteShortcut() {
     window.api.deleteShortcut(ret => {
         if (ret.success) {
@@ -242,7 +318,6 @@ async function handleLanguageChange(lang) {
 }
 
 async function handleFontChange(fontValue) {
-    // 通过 IPC 保存字体设置到 canbox.json
     const result = await window.api.font.set(fontValue);
 
     if (!result.success) {
@@ -250,7 +325,6 @@ async function handleFontChange(fontValue) {
         return;
     }
 
-    // 应用字体到整个应用
     applyFont(fontValue);
 
     ElMessage({
@@ -271,7 +345,6 @@ async function handleExecutionModeChange(mode) {
     });
 }
 
-// 自定义数据路径相关函数
 async function selectDirectory() {
     const result = await window.api.userData.selectDirectory();
     if (result.success) {
@@ -289,7 +362,6 @@ async function saveCustomDataPath() {
     try {
         const result = await window.api.userData.migrate(newDataPath.value);
         if (result.success) {
-            // 显示倒计时对话框
             restartIsAppImage.value = result.isAppImage;
             showRestartDialog.value = true;
             newDataPath.value = '';
@@ -308,7 +380,6 @@ async function resetToDefault() {
     try {
         const result = await window.api.userData.resetToDefault();
         if (result.success) {
-            // 显示倒计时对话框
             restartIsAppImage.value = result.isAppImage;
             showRestartDialog.value = true;
         } else {
@@ -321,7 +392,6 @@ async function resetToDefault() {
     }
 }
 
-// 立刻重启
 async function onRestartNow() {
     try {
         const result = await window.api.userData.restartNow();
@@ -348,7 +418,6 @@ async function saveLogRetentionDays() {
     }
 }
 
-// 自动更新配置相关函数
 async function loadUpdateConfig() {
     if (window.api && window.api.autoUpdate) {
         const result = await window.api.autoUpdate.getConfig();
@@ -368,15 +437,11 @@ async function loadUpdateConfig() {
 
 async function saveUpdateConfig() {
     if (window.api && window.api.autoUpdate) {
-        console.log('[Settings.vue] 保存自动更新配置:', updateConfig.value);
-        // 使用 JSON.parse(JSON.stringify()) 将响应式对象转换为普通对象
         const configToSave = JSON.parse(JSON.stringify(updateConfig.value));
         const result = await window.api.autoUpdate.saveConfig(configToSave);
-        console.log('[Settings.vue] 保存结果:', result);
         if (result.success) {
             ElMessage.success(t('common.success'));
         } else {
-            console.error('[Settings.vue] 保存失败:', result.error);
             ElMessage.error(result.error || t('common.error'));
         }
     }
@@ -385,30 +450,22 @@ async function saveUpdateConfig() {
 async function handleManualCheckUpdate() {
     try {
         isCheckingUpdate.value = true;
-        
-        // 清除之前的错误状态
         updateStore.clearError();
 
-        // 重新触发更新检查
         if (window.api && window.api.autoUpdate) {
             const result = await window.api.autoUpdate.checkForUpdate();
-            
+
             if (result.success) {
-                // 检查成功，根据结果显示提示
                 if (updateStore.hasUpdate) {
-                    // 有新版本
                     ElMessage.success(t('autoUpdate.updateAvailable', { version: updateStore.updateInfo.version }));
                 } else {
-                    // 已经是最新版本
                     ElMessage.info(t('autoUpdate.noUpdateAvailable'));
                 }
             } else {
-                console.error('[Settings.vue] 检查更新失败:', result.error);
                 ElMessage.error(result.error?.message || t('autoUpdate.updateError'));
             }
         }
     } catch (error) {
-        console.error('[Settings.vue] 检查更新异常:', error);
         ElMessage.error(t('autoUpdate.updateError'));
     } finally {
         isCheckingUpdate.value = false;
@@ -417,7 +474,6 @@ async function handleManualCheckUpdate() {
 
 async function handleClearSkipped() {
     try {
-        // 构建确认消息，使用 HTML 实现换行
         const title = t('autoUpdate.settings.clearSkipped');
         const versionsList = updateConfig.value.skippedVersions.join('<br>');
         const message = `${t('autoUpdate.settings.clearSkippedConfirm')}<br><br><div style="font-family: monospace; line-height: 1.6;">${versionsList}</div>`;
@@ -435,7 +491,6 @@ async function handleClearSkipped() {
             }
         );
 
-        // 只更新 skippedVersions 字段，保持其他字段不变
         const configToSave = JSON.parse(JSON.stringify({
             ...updateConfig.value,
             skippedVersions: []
@@ -444,12 +499,10 @@ async function handleClearSkipped() {
         const result = await window.api.autoUpdate.saveConfig(configToSave);
 
         if (result.success) {
-            // 保存成功，更新本地状态
             updateConfig.value.skippedVersions = [];
             ElMessage.success(t('common.success'));
         } else {
             ElMessage.error(result.error || t('common.error'));
-            // 保存失败，重新加载配置
             await loadUpdateConfig();
         }
     } catch (error) {
@@ -458,39 +511,29 @@ async function handleClearSkipped() {
 }
 
 function applyFont(fontValue) {
-    // 根据选择应用字体
     if (fontValue === 'default') {
-        // 移除自定义字体，使用浏览器默认
         document.documentElement.style.fontFamily = '';
     } else {
-        // 应用用户选择的字体
         document.documentElement.style.fontFamily = fontValue;
     }
 }
 
-// 监听字体更改事件（从其他窗口同步）
 function onFontChanged(event, fontValue) {
     currentFont.value = fontValue;
     applyFont(fontValue);
 }
 
 async function loadSettings() {
-    // 加载语言设置
     currentLanguage.value = await window.api.i18n.getLanguage();
     availableLanguages.value = await window.api.i18n.getAvailableLanguages();
-    console.info('Current language:', currentLanguage.value);
-    console.info('Available languages:', availableLanguages.value);
 
-    // 通过 IPC 加载字体设置
     const savedFont = await window.api.font.get();
     currentFont.value = savedFont;
     applyFont(savedFont);
 
-    // 加载执行模式设置
     const savedExecutionMode = await window.api.execution.getGlobalMode();
     currentExecutionMode.value = savedExecutionMode || 'window';
 
-    // 加载自定义数据路径信息
     const pathResult = await window.api.userData.getCurrentPath();
     if (pathResult.success) {
         currentDataPath.value = pathResult.path;
@@ -501,116 +544,176 @@ async function loadSettings() {
         diskUsage.value = usageResult.size;
     }
 
-    // 加载日志保留天数配置
     logRetentionDays.value = await window.api.logViewer.getRetentionDays();
 
-    // 加载自动更新配置
     await loadUpdateConfig();
 }
 
 onMounted(() => {
     loadSettings();
-
-    // 监听字体更改事件
     window.api.on('font-changed', onFontChanged);
 });
 
 onUnmounted(() => {
-    // 清理事件监听
     window.api.off?.('font-changed', onFontChanged);
 });
 </script>
 
 <style scoped>
-.app-list-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.app-list-section {
+/* 设置容器 */
+.settings-container {
+    padding: 10px;
     height: 100%;
     overflow-y: auto;
-    padding: 0;
-    box-shadow: var(--el-box-shadow-lighter);
-    padding: 20px 0;
 }
 
-.card {
-    width: 100%;
-    height: 100%;
+/* 分组卡片 */
+.settings-group {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.settings-group:last-child {
+    margin-bottom: 0;
+}
+
+/* 分组标题 */
+.group-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
     display: flex;
-    justify-content: flex-start;
-}
-
-.img-block {
-    width: 60px;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
-
-.info-block {
-    line-height: 80px;
-    text-align: left;
-    margin-left: 10px;
-}
-
-.info-block div {
-    width: 300px;
-}
-
-.info-block .app-name {
-    height: 40px;
-    line-height: 40px;
-    cursor: pointer;
-}
-
-.info-block .app-name:hover {
-    color: #409eff;
-    font-weight: bold;
-}
-
-.vertical-block {
-    display: table;
-}
-
-.operate-block {
-    width: 100%;
-    margin-right: 20px;
-    display: flex;
-    flex: 1;
     align-items: center;
-    justify-content: right;
+    gap: 10px;
+    color: #303133;
 }
 
-.operate-block div {
-    display: table-cell;
+.group-icon {
+    font-size: 24px;
 }
 
-.operate-block div:first-child {
+/* 设置项 - 水平布局 */
+.setting-item {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.setting-item:last-child {
+    margin-bottom: 0;
+}
+
+/* 全宽设置项（无标签） */
+.setting-item.full-width {
+    display: block;
+}
+
+/* 标签 */
+.setting-label {
+    font-size: 18px;
+    color: #606266;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 120px;
+    flex-shrink: 0;
+}
+
+.setting-icon {
+    font-size: 18px;
+}
+
+/* 控件容器 */
+.setting-control {
+    flex: 1;
+    min-width: 0;
     text-align: left;
-    padding-left: 10px;
 }
 
-.operate-block div:first-child span {
-    color: gray;
+/* 下拉框统一宽度 */
+.setting-select {
+    width: 200px;
 }
 
-.operate-icon-span {
-    display: inline-block;
-    cursor: pointer;
-    text-align: center;
-    border-radius: 20px;
-    margin-right: 10px;
+/* 下拉框字体大小 */
+:deep(.el-select__selection) {
+    font-size: 16px;
 }
 
-.operate-icon-span:hover {
-    background-color: hsl(0, 0%, 80%);
+:deep(.el-select-dropdown__item) {
+    font-size: 16px;
 }
 
-.operate-icon-span:active {
-    background-color: hsl(0, 0%, 70%);
+/* 基本设置组 - 语言、字体、执行模式控件宽度一致 */
+.settings-group:nth-child(1) .setting-control {
+    width: 200px;
+    flex-shrink: 0;
+}
+
+/* 数据路径描述 */
+.path-descriptions :deep(.el-descriptions__label) {
+    font-size: 18px;
+}
+
+.path-descriptions :deep(.el-descriptions__content) {
+    font-size: 18px;
+}
+
+/* 日志保留天数数字 */
+.log-days-input {
+    width: 80px;
+}
+
+/* 帮助问号图标 */
+.help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    margin-left: 8px;
+    background: #909399;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: help;
+}
+
+/* 按钮组 */
+.button-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+}
+
+/* 路径选择行 */
+.path-select-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* 提示文字 */
+.setting-hint {
+    margin-left: 10px;
+    color: #909399;
+    font-size: 15px;
+}
+
+/* 信息文字 */
+.info-text {
+    color: #909399;
+    font-size: 16px;
+}
+
+/* 警告详情 */
+.warning-detail {
+    font-size: 14px;
+    margin-top: 4px;
 }
 
 /* 清除跳过版本对话框样式 */

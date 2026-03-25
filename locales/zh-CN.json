@@ -58,6 +58,9 @@
     },
     "settings": {
         "title": "设置",
+        "basicGroup": "基本设置",
+        "dataPathGroup": "数据路径",
+        "logGroup": "日志设置",
         "language": "语言",
         "font": "字体",
         "defaultFont": "默认字体",
