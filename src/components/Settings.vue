@@ -525,16 +525,15 @@ onUnmounted(() => {
 .app-list-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    padding: 20px 0;
+    height: 100%;
 }
 
 .app-list-section {
-    height: calc(100vh - 60px);
+    height: 100%;
     overflow-y: auto;
-    margin: 5px 0 0 0;
     padding: 0;
     box-shadow: var(--el-box-shadow-lighter);
+    padding: 20px 0;
 }
 
 .card {
