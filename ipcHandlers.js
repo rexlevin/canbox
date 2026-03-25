@@ -667,6 +667,33 @@ function initIpcHandlers() {
             return { success: false, error: error.message };
         }
     });
+
+    // ========== 最后选中菜单功能 ==========
+    // 获取最后选中的菜单
+    ipcMain.handle('menu-get-last', () => {
+        try {
+            const canboxStore = getCanboxStore();
+            const lastMenu = canboxStore.get('lastMenu', 'myApps');
+            logger.info(`Get last menu: ${lastMenu}`);
+            return { success: true, menu: lastMenu };
+        } catch (error) {
+            logger.error('Failed to get last menu:', error);
+            return { success: false, menu: 'myApps' };
+        }
+    });
+
+    // 设置最后选中的菜单
+    ipcMain.handle('menu-set-last', (event, menuName) => {
+        try {
+            const canboxStore = getCanboxStore();
+            canboxStore.set('lastMenu', menuName);
+            logger.info(`Last menu set to: ${menuName}`);
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to set last menu:', error);
+            return { success: false, error: error.message };
+        }
+    });
 }
 
 // 初始化语言

@@ -145,7 +145,7 @@
 </style>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppList from '@/components/AppList.vue';
 import AppRepos from '@/components/AppRepos.vue';
@@ -158,6 +158,27 @@ import { useUpdateStore } from '@/stores/updateStore';
 const { t } = useI18n();
 const updateStore = useUpdateStore();
 let activeName = ref('myApps');
+
+// 页面加载时读取上次选中的菜单
+onMounted(async () => {
+    try {
+        const result = await window.api.menu.getLast();
+        if (result.success && result.menu) {
+            activeName.value = result.menu;
+        }
+    } catch (error) {
+        console.error('Failed to get last menu:', error);
+    }
+});
+
+// 页面关闭前保存当前选中的菜单
+onBeforeUnmount(async () => {
+    try {
+        await window.api.menu.setLast(activeName.value);
+    } catch (error) {
+        console.error('Failed to save last menu:', error);
+    }
+});
 
 // 关于标签的 label - 有更新或错误时显示图标
 const hasUpdate = computed(() => updateStore.hasUpdate);
@@ -202,8 +223,14 @@ const menuItems = computed(() => [
     { name: 'about', icon: aboutIcon.value, label: t('canbox.about') },
 ]);
 
-const changeActiveTab = (name) => {
+const changeActiveTab = async (name) => {
     console.info('name: ', name)
     activeName.value = name;
+    // 保存到配置
+    try {
+        await window.api.menu.setLast(name);
+    } catch (error) {
+        console.error('Failed to save menu:', error);
+    }
 }
 </script>
