@@ -161,12 +161,12 @@
                 </div>
             </div>
 
-            <div class="setting-item">
+            <div class="setting-item" :class="{ disabled: !updateConfig.enabled }">
                 <label class="setting-label">
                     {{ $t('autoUpdate.settings.checkFrequency') }}
                 </label>
                 <div class="setting-control">
-                    <el-select v-model="updateConfig.checkFrequency" @change="saveUpdateConfig" class="setting-select">
+                    <el-select v-model="updateConfig.checkFrequency" @change="saveUpdateConfig" class="setting-select" :disabled="!updateConfig.enabled">
                         <el-option :label="$t('autoUpdate.settings.startup')" value="startup" style="font-size: 16px;" />
                         <el-option :label="$t('autoUpdate.settings.daily')" value="daily" style="font-size: 16px;" />
                         <el-option :label="$t('autoUpdate.settings.weekly')" value="weekly" style="font-size: 16px;" />
@@ -175,7 +175,7 @@
                 </div>
             </div>
 
-            <div class="setting-item">
+            <div class="setting-item" :class="{ disabled: !updateConfig.enabled }">
                 <label class="setting-label">
                     {{ $t('autoUpdate.settings.lastCheckTime') }}
                 </label>
@@ -186,12 +186,12 @@
 
             <div class="setting-item">
                 <div class="button-group">
-                    <el-button :loading="isCheckingUpdate" @click="handleManualCheckUpdate">
+                    <el-button :loading="isCheckingUpdate" @click="handleManualCheckUpdate" :disabled="!updateConfig.enabled">
                         {{ isCheckingUpdate ? $t('autoUpdate.checkingForUpdates') :
                             $t('autoUpdate.settings.manualCheckButton') }}
                     </el-button>
                     <el-button v-if="updateConfig.skippedVersions && updateConfig.skippedVersions.length > 0"
-                        @click="handleClearSkipped">
+                        @click="handleClearSkipped" :disabled="!updateConfig.enabled">
                         {{ $t('autoUpdate.settings.clearSkipped') }} ({{ updateConfig.skippedVersions.length }})
                     </el-button>
                 </div>
@@ -610,6 +610,12 @@ onUnmounted(() => {
 /* 全宽设置项（无标签） */
 .setting-item.full-width {
     display: block;
+}
+
+/* 禁用状态的设置项 */
+.setting-item.disabled {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 /* 标签 */
