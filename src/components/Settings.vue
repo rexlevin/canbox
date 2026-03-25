@@ -683,6 +683,11 @@ onUnmounted(() => {
     cursor: help;
 }
 
+/* Tooltip 字体大小 - 与 AppList 页面一致 */
+:global(.el-tooltip__popper) {
+    font-size: 14px !important;
+}
+
 /* 按钮组 */
 .button-group {
     display: flex;
