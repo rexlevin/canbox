@@ -5,6 +5,17 @@
       <el-button type="primary" @click="addAppDev">
         {{ $t('devApp.addApp') }}
       </el-button>
+      <div class="secondary-actions">
+        <el-link type="primary" @click="openAppDevDoc">
+          {{ $t('devApp.viewDevDoc') }}
+        </el-link>
+        <el-link type="primary" @click="openApiDoc">
+          {{ $t('devApp.viewApiDoc') }}
+        </el-link>
+        <el-link type="primary" @click="downloadCanboxTS">
+          {{ $t('devApp.downloadCanboxTypes') }}
+        </el-link>
+      </div>
     </div>
 
     <!-- APP列表区域 -->
@@ -38,13 +49,6 @@
     <!-- 空状态提示 -->
     <div class="empty-section" v-show="Object.keys(appDevData).length == 0">
       <p>{{ $t('devApp.empty') }}</p>
-    </div>
-
-    <!-- 文档链接 -->
-    <div class="doc-links">
-      <el-link type="primary" @click="openAppDevDoc">{{ $t('devApp.viewDevDoc') }}</el-link>
-      <el-link type="primary" @click="openApiDoc">{{ $t('devApp.viewApiDoc') }}</el-link>
-      <el-link type="primary" @click="downloadCanboxTS">{{ $t('devApp.downloadCanboxTypes') }}</el-link>
     </div>
 
     <!-- 警告对话框 -->
@@ -339,9 +343,19 @@ onUpdated(() => {
 /* 按钮区域 */
 .button-section {
   height: 60px;
-  padding: 10px 0;
+  padding: 10px 8px;
   line-height: 60px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 次要操作链接 */
+.secondary-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
 }
 
 /* APP列表区域 - 响应式网格布局 */
@@ -372,23 +386,6 @@ onUpdated(() => {
   align-items: center;
   color: #909399;
   font-size: 14px;
-}
-
-/* 文档链接 */
-.doc-links {
-  flex-shrink: 0;
-  text-align: center;
-  padding: 10px 0;
-  border-top: 1px solid #eee;
-  background: #fff;
-}
-
-.doc-links .el-link {
-  margin-right: 20px;
-}
-
-.doc-links .el-link:last-child {
-  margin-right: 0;
 }
 
 /* 抽屉样式 */

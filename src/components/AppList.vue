@@ -5,12 +5,14 @@
       <el-button type="primary" @click="importApp">
         {{ $t('appList.importApp') }}
       </el-button>
-      <el-button type="primary" @click="toAnotherTab('appRepos')">
-        {{ $t('appList.goToRepo') }}
-      </el-button>
-      <el-button type="primary" @click.prevent="toAnotherTab('devApp')">
-        {{ $t('appList.goToDev') }}
-      </el-button>
+      <div class="secondary-actions">
+        <el-link type="primary" @click="toAnotherTab('appRepos')">
+          {{ $t('appList.goToRepo') }}
+        </el-link>
+        <el-link type="primary" @click.prevent="toAnotherTab('devApp')">
+          {{ $t('appList.goToDev') }}
+        </el-link>
+      </div>
     </div>
 
     <!-- APP列表区域 -->
@@ -289,9 +291,19 @@ async function importApp() {
 /* 按钮区域 */
 .button-section {
   height: 60px;
-  padding: 10px 0;
+  padding: 10px 8px;
   line-height: 60px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 次要操作链接 */
+.secondary-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
 }
 
 /* APP列表区域 - 响应式网格布局 */

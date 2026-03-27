@@ -5,12 +5,14 @@
       <el-button type="primary" @click="showDialog">
         {{ $t('appRepo.addSource') }}
       </el-button>
-      <el-button type="primary" @click="importAppRepos">
-        {{ $t('appRepo.importSources') }}
-      </el-button>
-      <el-button type="primary" @click="exportAppRepos">
-        {{ $t('appRepo.exportSources') }}
-      </el-button>
+      <div class="secondary-actions">
+        <el-link type="primary" @click="importAppRepos">
+          {{ $t('appRepo.importSources') }}
+        </el-link>
+        <el-link type="primary" @click="exportAppRepos">
+          {{ $t('appRepo.exportSources') }}
+        </el-link>
+      </div>
     </div>
 
     <!-- 添加仓库对话框 -->
@@ -417,9 +419,19 @@ onMounted(() => {
 /* 按钮区域 */
 .button-section {
   height: 60px;
-  padding: 10px 0;
+  padding: 10px 8px;
   line-height: 60px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 次要操作链接 */
+.secondary-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
 }
 
 /* APP列表区域 - 响应式网格布局 */
