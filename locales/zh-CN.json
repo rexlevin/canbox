@@ -44,6 +44,7 @@
         "loading": "加载中...",
         "save": "保存",
         "delete": "删除",
+    "removeApp": "移除这个 APP",
         "edit": "编辑",
         "add": "添加",
         "import": "导入",
@@ -57,6 +58,9 @@
     },
     "settings": {
         "title": "设置",
+        "basicGroup": "基本设置",
+        "dataPathGroup": "数据路径",
+        "logGroup": "日志设置",
         "language": "语言",
         "font": "字体",
         "defaultFont": "默认字体",
@@ -101,7 +105,7 @@
         "retentionDaysSaveFailed": "保存保留天数失败"
     },
     "canbox": {
-        "myApps": "我的app",
+        "myApps": "我的 APP",
         "appRepo": "APP 仓库",
         "userCenter": "用户中心",
         "devApp": "APP 开发",
@@ -113,7 +117,6 @@
         "description": "描述",
         "author": "作者",
         "license": "许可证",
-        "systemInfo": "系统信息",
         "nodeVersion": "Node.js 版本",
         "chromeVersion": "Chrome 版本",
         "electronVersion": "Electron 版本",
@@ -122,9 +125,9 @@
         "viewLicense": "查看许可证"
     },
     "appList": {
-        "importApp": "导入已有app",
+        "importApp": "导入已有 APP",
         "goToRepo": "去仓库下载",
-        "goToDev": "去开发自己的app",
+        "goToDev": "去开发自己的 APP",
         "empty": "暂无应用",
         "importTag": "导入",
         "importTagTitle": "这是一个导入的app",
@@ -137,7 +140,14 @@
         "removeSuccess": "APP 删除成功",
         "selectFile": "选择应用文件",
         "importSuccess": "应用导入成功！",
-        "importFailed": "导入应用失败："
+        "importFailed": "导入应用失败：",
+        "run": "运行",
+        "delete": "删除",
+        "pack": "打包",
+        "copy": "复制链接",
+        "download": "下载",
+        "update": "更新",
+        "downloaded": "已下载"
     },
     "appRepo": {
         "addSource": "添加 APP 源",

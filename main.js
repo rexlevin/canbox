@@ -384,6 +384,16 @@ const createWindow = () => {
         if (isMaximized) {
             win.maximize();
         }
+
+        // 应用保存的缩放比例
+        try {
+            const canboxStore = getCanboxStore();
+            const zoomFactor = canboxStore.get('zoomFactor', 1.0);
+            win.webContents.setZoomFactor(zoomFactor);
+            logger.info('Applied zoom factor: {}', zoomFactor);
+        } catch (error) {
+            logger.error('Failed to apply zoom factor:', error);
+        }
     });
 
     // 添加 console 日志输出到主进程

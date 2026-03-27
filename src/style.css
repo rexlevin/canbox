@@ -49,3 +49,27 @@ img {
     height: 100%;
     text-align: center;
 }
+
+/* 全局细线滚动条样式 */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.4);
+}
+
+/* 滚动条角落 */
+::-webkit-scrollbar-corner {
+    background: transparent;
+}

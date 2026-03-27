@@ -1,186 +1,337 @@
 <template>
-    <div class="app-list-container">
-        <!-- 第一部分：按钮区域 -->
-        <div class="button-section">
-            <el-button type="primary" @click="importApp">{{ $t('appList.importApp') }}</el-button>
-            <el-button type="primary" @click="toAnotherTab('appRepos')">{{ $t('appList.goToRepo') }}</el-button>
-            <el-button type="primary" @click.prevent="toAnotherTab('devApp')">{{ $t('appList.goToDev') }}</el-button>
-        </div>
-
-        <!-- 第二部分：应用列表区域 -->
-        <div class="app-list-section" v-show="Object.keys(appsData).length > 0">
-            <el-row v-for="(appItem, uid) in appsData" :key="uid">
-                <el-col :span="24">
-                     <div class="card">
-                         <div class="img-block">
-                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="showAppInfo(uid)" :src="'file://' + appItem.appJson.logo" alt="" />
-                            <span v-if="appItem.sourceTag === 'import'" class="import-tag" :title="$t('appList.importTagTitle')"><el-tag type="info" effect="dark">{{ $t('appList.importTag') }}</el-tag></span>
-                        </div>
-                        <div class="info-block vertical-block">
-                            <div class="app-name" @click="showAppInfo(uid)">
-                                <span style="font-weight: bold; font-size: 24px;">{{ appItem.name }}</span>
-                                <span style="padding-left: 20px; color: gray;">{{ appItem.version }}</span>
-                            </div>
-                            <div style="height: 30px; line-height: 13px; font-size: 15px;">{{ appItem.description }}</div>
-                        </div>
-                        <div class="operate-block">
-                            <div>
-                                <span class="operate-icon-span" @click="loadApp(uid)" :title="$t('appList.runApp')">
-                                    <el-icon :size="33" color="#228b22"><VideoPlay /></el-icon>
-                                </span>
-                                <span class="operate-icon-span" @click="clearData(uid)" :title="$t('appList.clearData')">
-                                    <el-icon :size="33" color=""><Delete /></el-icon>
-                                </span>
-                                <span class="operate-icon-span" @click="removeApp(uid)" :title="$t('appList.removeApp')">
-                                    <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
-                                </span>
-                            </div>
-                        </div>
-                     </div>
-                </el-col>
-            </el-row>
-        </div>
-
-        <!-- 空状态提示 -->
-        <div class="empty-section" v-show="Object.keys(appsData).length == 0">
-            <p>{{ $t('appList.empty') }}</p>
-        </div>
+  <div class="app-list-new-container">
+    <!-- 按钮区域 -->
+    <div class="button-section">
+      <el-button type="primary" @click="importApp">
+        {{ $t('appList.importApp') }}
+      </el-button>
+      <div class="secondary-actions">
+        <el-link type="primary" @click="toAnotherTab('appRepos')">
+          {{ $t('appList.goToRepo') }}
+        </el-link>
+        <el-link type="primary" @click.prevent="toAnotherTab('devApp')">
+          {{ $t('appList.goToDev') }}
+        </el-link>
+      </div>
     </div>
 
-    <CustomDrawer v-model="drawerInfo" :size="580">
-        <div class="drawer-container">
-            <div class="custom-tabs">
-                <div class="custom-tabs-header">
-                    <div
-                        class="custom-tab-item"
-                        :class="{ active: activeTab === 0 }"
-                        @click="activeTab = 0">
-                        {{ $t('appList.appIntro') }}
-                    </div>
-                    <div
-                        class="custom-tab-item"
-                        :class="{ active: activeTab === 1 }"
-                        v-if="historyFlag"
-                        @click="activeTab = 1">
-                        {{ $t('appList.versionHistory') }}
-                    </div>
-                </div>
-                <div class="custom-tabs-content">
-                    <div class="drawer-content" v-show="activeTab === 0" id="divAppInfo" v-html="renderedReadme"></div>
-                    <div class="drawer-content" v-show="activeTab === 1" v-html="renderedHistory"></div>
-                </div>
-            </div>
+    <!-- APP列表区域 -->
+    <div class="app-list-section" v-show="Object.keys(appsData).length > 0">
+      <AppCard
+        v-for="(appItem, uid) in appsData"
+        :key="uid"
+        :app="{
+          name: appItem.name,
+          version: appItem.version,
+          description: appItem.description,
+          logo: appItem.appJson?.logo || appItem.logo,
+          platform: appItem.appJson?.platform || [],
+          categories: appItem.appJson?.categories || [],
+          tags: appItem.appJson?.tags || [],
+          author: appItem.appJson?.author || appItem.author,
+          sourceTag: appItem.sourceTag
+        }"
+        :uid="uid"
+        @run="loadApp"
+        @delete="removeApp"
+        @clear="clearData"
+        @show-info="showAppInfo"
+      />
+    </div>
+
+    <!-- 空状态提示 -->
+    <div class="empty-section" v-show="Object.keys(appsData).length == 0">
+      <p>{{ $t('appList.empty') }}</p>
+    </div>
+  </div>
+
+  <CustomDrawer v-model="drawerInfo" :size="580">
+    <div class="drawer-container">
+      <div class="custom-tabs">
+        <div class="custom-tabs-header">
+          <div
+            class="custom-tab-item"
+            :class="{ active: activeTab === 0 }"
+            @click="activeTab = 0"
+          >
+            {{ $t('appList.appIntro') }}
+          </div>
+          <div
+            class="custom-tab-item"
+            :class="{ active: activeTab === 1 }"
+            v-if="historyFlag"
+            @click="activeTab = 1"
+          >
+            {{ $t('appList.versionHistory') }}
+          </div>
         </div>
-    </CustomDrawer>
+        <div class="custom-tabs-content">
+          <div class="drawer-content" v-show="activeTab === 0" id="divAppInfo" v-html="renderedReadme"></div>
+          <div class="drawer-content" v-show="activeTab === 1" v-html="renderedHistory"></div>
+        </div>
+      </div>
+    </div>
+  </CustomDrawer>
 </template>
 
+<script setup>
+import { onBeforeMount, ref, watch, computed } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+import { useAppStore } from '@/stores/appStore'
+import { md } from '@/utils/markdownRenderer'
+import CustomDrawer from './CustomDrawer.vue'
+import AppCard from './AppCard.vue'
+
+const { t } = useI18n()
+const activeTab = ref(0)
+
+// 定义触发的自定义事件
+const emit = defineEmits(['switchTab'])
+const toAnotherTab = (name) => {
+  emit('switchTab', name)
+}
+
+let appsData = ref({})
+const appStore = useAppStore()
+const drawerInfo = ref(false)
+const readme = ref(null)
+const history = ref(null)
+const historyFlag = ref(false)
+
+onBeforeMount(() => {
+  loadAppsData()
+})
+
+watch(
+  () => appStore.appListUpdated,
+  () => {
+    loadAppsData()
+  }
+)
+
+/**
+ * 并行获取所有应用的详细信息（readme/history）
+ */
+function fetchAppsDetails(apps) {
+  const promises = Object.keys(apps).map(uid => {
+    return new Promise((resolve) => {
+      window.api.app.info(uid, (infoResult) => {
+        if (infoResult.success) {
+          resolve({ uid, data: infoResult.data })
+        } else {
+          console.error(`获取应用 ${uid} 信息失败:`, infoResult.msg)
+          resolve(null)
+        }
+      })
+    })
+  })
+
+  // 等待所有应用信息加载完成
+  Promise.all(promises).then(results => {
+    results.forEach(item => {
+      if (item && item.data) {
+        const existingApp = appsData.value[item.uid]
+        if (existingApp) {
+          appsData.value[item.uid] = {
+            ...existingApp,
+            readme: item.data.readme,
+            history: item.data.history
+          }
+        }
+      }
+    })
+  })
+}
+
+/**
+ * 导入已有app
+ */
+function loadAppsData() {
+  window.api.app.all(result => {
+    if (result.success) {
+      // 初始化加载状态
+      appsData.value = result.data
+      // 并行获取详细信息
+      fetchAppsDetails(result.data)
+    } else {
+      console.info(result.msg || '获取APP列表失败')
+    }
+  })
+}
+
+// 显示应用信息（点击 logo 或名称时）
+function showAppInfo(uid) {
+  const appData = appsData.value[uid]
+  if (!appData) {
+    console.error('应用数据不存在:', uid)
+    return
+  }
+
+  // 设置 readme 和 history
+  readme.value = appData.readme || ''
+  history.value = appData.history || ''
+  historyFlag.value = !!appData.history
+
+  // 打开 drawer
+  drawerInfo.value = true
+}
+
+// 渲染后的 readme HTML
+const renderedReadme = computed(() => {
+  if (!readme.value) return ''
+  try {
+    return md.render(readme.value)
+  } catch (error) {
+    console.error('渲染 README 失败:', error)
+    return readme.value
+  }
+})
+
+// 渲染后的 history HTML
+const renderedHistory = computed(() => {
+  if (!history.value) return ''
+  try {
+    return md.render(history.value)
+  } catch (error) {
+    console.error('渲染 HISTORY 失败:', error)
+    return history.value
+  }
+})
+
+// 运行app
+function loadApp(uid) {
+  window.api.app.load(uid)
+}
+
+// 删除app数据
+function clearData(uid) {
+  window.api.app.clearData(uid, (result) => {
+    console.info('clearData result=', result)
+    if (!result.success) {
+      ElMessage.error(result.msg)
+      return
+    }
+    ElMessage({
+      message: t('appList.clearDataSuccess'),
+      type: 'success'
+    })
+  })
+}
+
+// 移除app
+function removeApp(uid) {
+  // 这里增加一个确认弹框
+  window.api.app.remove({
+    id: uid,
+    devTag: false
+  }, (result) => {
+    console.info('remove result=', result)
+    if (!result.success) {
+      ElMessage.error(result.msg)
+      return
+    }
+    // 触发删除当前应用的事件
+    delete appsData.value[uid]
+    appStore.setRemovedAppId(uid)
+    ElMessage({
+      message: t('appList.removeSuccess'),
+      type: 'success'
+    })
+  })
+}
+
+// 从zip压缩文件导入app
+async function importApp() {
+  try {
+    // 1. 选择 .zip 文件
+    const { canceled, filePaths } = await window.api.selectFile({
+      title: t('appList.selectFile'),
+      properties: ['openFile'],
+      filters: [{ name: 'App Files', extensions: ['zip'] }],
+    })
+    if (canceled || !filePaths?.[0]) return
+
+    const zipPath = filePaths[0]
+
+    // 2. 导入文件：复制文件并重命名
+    const { success, error } = await window.api.importApp(zipPath)
+    if (!success) {
+      throw new Error(error)
+    }
+
+    window.api.app.all(result => {
+      if (!result.success) {
+        return
+      }
+      appsData.value = result.data
+      // 并行获取详细信息
+      fetchAppsDetails(result.data)
+    })
+
+    ElMessage({
+      message: t('appList.importSuccess'),
+      type: 'success',
+    })
+  } catch (error) {
+    console.error('导入应用失败:', error)
+    ElMessage.error(t('appList.importFailed') + error.message)
+  }
+}
+</script>
+
 <style scoped>
-.app-list-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-}
-
-/* 抽屉样式 */
-.drawer-container {
+.app-list-new-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  width: 100%;
+  height: 100vh;
+  padding: 0 6px;
 }
 
-/* 自定义 Tabs 样式 */
-.custom-tabs {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-}
-
-.custom-tabs-header {
-  display: flex;
-  flex-shrink: 0;
-  border-bottom: 1px solid #e4e7ed;
-  background: #f5f7fa;
-}
-
-.custom-tab-item {
-  flex: 1;
-  padding: 0 20px;
-  height: 40px;
-  line-height: 40px;
-  text-align: center;
-  cursor: pointer;
-  font-size: 18px;
-  font-weight: bold;
-  color: #606266;
-  transition: all 0.3s;
-  user-select: none;
-}
-
-.custom-tab-item:hover {
-  color: #409eff;
-  background: #ecf5ff;
-}
-
-.custom-tab-item.active {
-  color: #409eff;
-  background: #fff;
-  border-bottom: 2px solid #409eff;
-  font-weight: bold;
-}
-
-.custom-tabs-content {
-  flex: 1;
-  overflow: hidden;
-  overflow-y: auto;
-}
-
+/* 按钮区域 */
 .button-section {
-    height: 60px;
-    padding: 10px 0;
-    line-height: 60px;
+  height: 60px;
+  padding: 10px 8px;
+  line-height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
+/* 次要操作链接 */
+.secondary-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+/* APP列表区域 - 响应式网格布局 */
 .app-list-section {
-    height: calc(100vh - 60px);
-    overflow-y: auto;
-    margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+  gap: 12px;
+  align-content: start;
 }
 
-.card {width: 100%; height: 60px; display: flex; justify-content: flex-start;}
-.img-block {width: 60px; height: 100%; margin: 0; padding: 0;}
-.info-block {line-height: 60px; text-align: left; margin-left: 10px;}
-.info-block div{width: 300px;}
-.info-block .app-name {height: 30px; line-height: 30px; cursor: pointer;}
-.info-block .app-name:hover{color: #409eff; font-weight: bold;}
-.vertical-block {display: table;}
-
-.operate-block {width: 100%; margin-right: 20px;
-    display: flex; flex: 1;
-    align-items: center;
-    justify-content: right;
+/* 当窗口较窄时，单列显示 */
+@media (max-width: 560px) {
+  .app-list-section {
+    grid-template-columns: 1fr;
+  }
 }
-.operate-block div {display: table-cell;}
-.operate-block div:first-child {text-align: left; padding-left: 10px;}
-.operate-block div:first-child span {color: gray;}
-.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 10px;}
-.operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
-.operate-icon-span:active {background-color: hsl(0, 0%, 70%); }
 
+/* 空状态 */
 .empty-section {
-    height: calc(100vh - 60px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.import-tag {
-  position: absolute;
-  left: 300px;
-  top: 5px;
-  /* width: 30px;
-  right: 5px; */
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #909399;
+  font-size: 14px;
 }
 
 /* 抽屉样式 */
@@ -236,16 +387,6 @@
   flex: 1;
   overflow: hidden;
   overflow-y: auto;
-}
-
-.drawer-tabs :deep(.el-tabs__content) {
-  flex: 1;
-  overflow: hidden;
-  height: calc(100% - 55px);
-}
-
-.drawer-tabs :deep(.el-tab-pane) {
-  height: 100%;
 }
 
 .drawer-content {
@@ -332,209 +473,3 @@
   font-weight: bold;
 }
 </style>
-
-<script setup>
-import { onBeforeMount, onMounted, ref, watch, computed } from 'vue';
-import { ElMessage } from 'element-plus';
-import { useI18n } from 'vue-i18n';
-import { useAppStore } from '@/stores/appStore';
-import { md } from '@/utils/markdownRenderer';
-import CustomDrawer from './CustomDrawer.vue';
-
-const { t } = useI18n();
-const activeTab = ref(0);
-
-// 定义触发的自定义事件
-const emit = defineEmits(['switchTab']);
-const toAnotherTab = (name) => {
-    emit('switchTab', name);
-}
-
-let appsData = ref({});
-const appStore = useAppStore();
-const drawerInfo = ref(false);
-const readme = ref(null);
-const history = ref(null);
-const historyFlag = ref(false);
-
-onBeforeMount(() => {
-    loadAppsData();
-});
-
-watch(
-    () => appStore.appListUpdated,
-    () => {
-        loadAppsData();
-    }
-);
-
-/**
- * 并行获取所有应用的详细信息（readme/history）
- */
-function fetchAppsDetails(apps) {
-    const promises = Object.keys(apps).map(uid => {
-        console.info('uid: ', uid);
-        return new Promise((resolve) => {
-            window.api.app.info(uid, (infoResult) => {
-                if (infoResult.success) {
-                    resolve({ uid, data: infoResult.data });
-                } else {
-                    console.error(`获取应用 ${uid} 信息失败:`, infoResult.msg);
-                    resolve(null);
-                }
-            });
-        });
-    });
-
-    // 等待所有应用信息加载完成
-    Promise.all(promises).then(results => {
-        results.forEach(item => {
-            if (item && item.data) {
-                const existingApp = appsData.value[item.uid];
-                if (existingApp) {
-                    appsData.value[item.uid] = {
-                        ...existingApp,
-                        readme: item.data.readme,
-                        history: item.data.history
-                    };
-                }
-            }
-        });
-    });
-}
-
-/**
- * 导入已有app
- */
-function loadAppsData() {
-    window.api.app.all(result => {
-        if (result.success) {
-            // 初始化加载状态
-            appsData.value = result.data;
-            // 并行获取详细信息
-            fetchAppsDetails(result.data);
-        } else {
-            console.info(result.msg || '获取APP列表失败');
-        }
-    });
-}
-
-// 显示应用信息（点击 logo 或名称时）
-function showAppInfo(uid) {
-    const appData = appsData.value[uid];
-    if (!appData) {
-        console.error('应用数据不存在:', uid);
-        return;
-    }
-
-    // 设置 readme 和 history
-    readme.value = appData.readme || '';
-    history.value = appData.history || '';
-    historyFlag.value = !!appData.history;
-
-    // 打开 drawer
-    drawerInfo.value = true;
-}
-
-// 渲染后的 readme HTML
-const renderedReadme = computed(() => {
-    if (!readme.value) return '';
-    try {
-        return md.render(readme.value);
-    } catch (error) {
-        console.error('渲染 README 失败:', error);
-        return readme.value;
-    }
-});
-
-// 渲染后的 history HTML
-const renderedHistory = computed(() => {
-    if (!history.value) return '';
-    try {
-        return md.render(history.value);
-    } catch (error) {
-        console.error('渲染 HISTORY 失败:', error);
-        return history.value;
-    }
-});
-
-// 运行app
-function loadApp(uid) {
-    window.api.app.load(uid);
-}
-
-// 删除app数据
-function clearData(uid) {
-    window.api.app.clearData(uid, (result) => {
-        console.info('clearData result=', result);
-        if(!result.success) {
-            ElMessage.error(result.msg);
-            return;
-        }
-        ElMessage({
-            message: t('appList.clearDataSuccess'),
-            type:'success'
-        });
-    });
-}
-
-// 移除app
-function removeApp(uid) {
-    // 这里增加一个确认弹框
-    window.api.app.remove({
-        id: uid,
-        devTag: false
-    }, (result) => {
-        console.info('remove result=', result);
-        if(!result.success) {
-            ElMessage.error(result.msg);
-            return;
-        }
-        // 触发删除当前应用的事件
-        delete appsData.value[uid];
-        appStore.setRemovedAppId(uid);
-        ElMessage({
-            message: t('appList.removeSuccess'),
-            type:'success'
-        });
-    });
-}
-
-// 从zip压缩文件导入app
-async function importApp() {
-    try {
-        // 1. 选择 .zip 文件
-        const { canceled, filePaths } = await window.api.selectFile({
-            title: t('appList.selectFile'),
-            properties: ['openFile'],
-            filters: [{ name: 'App Files', extensions: ['zip'] }],
-        });
-        if (canceled || !filePaths?.[0]) return;
-
-        const zipPath = filePaths[0];
-
-        // 2. 导入文件：复制文件并重命名
-        const { success, error } = await window.api.importApp(zipPath);
-        if (!success) {
-            throw new Error(error);
-        }
-
-        window.api.app.all(result => {
-            if (!result.success) {
-                return;
-            }
-            appsData.value = result.data;
-            // 并行获取详细信息
-            fetchAppsDetails(result.data);
-        });
-
-        ElMessage({
-            message: t('appList.importSuccess'),
-            type: 'success',
-        });
-    } catch (error) {
-        console.error('导入应用失败:', error);
-        ElMessage.error(t('appList.importFailed') + error.message)
-    }
-}
-</script>

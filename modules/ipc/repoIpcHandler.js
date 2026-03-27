@@ -163,6 +163,9 @@ async function handleAddAppRepo(repoUrl) {
             version: appJson.version || '',
             description: appJson.description || '',
             logo: logoPath,
+            platform: appJson.platform || [],
+            categories: appJson.categories || [],
+            tags: appJson.tags || [],
             files: {},
             createTime: Date.now(),
             downloaded: false

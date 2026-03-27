@@ -49,7 +49,7 @@ The following features are planned for future development. For detailed informat
 
 ## My Apps
 
-![screenshot-1](./public/screenshot/screenshot-1.png)
+![MyApps](./public/screenshot/MyApps.png)
 
 ### Import Existing Apps
 
@@ -84,9 +84,9 @@ After importing, the app will appear in the "My Apps" list and can be used direc
 
 ## App Repository
 
-![screenshot-2](./public/screenshot/screenshot-2.png)
+![AppRepos](./public/screenshot/AppRepos.png)
 
-![screenshot-3](./public/screenshot/screenshot-3.png)
+![AddAppSource](./public/screenshot/AddAppSource.png)
 
 ### Add App Source
 
@@ -133,7 +133,7 @@ For more apps, please visit: [Canbox App Center](https://rexlevin.github.io/canb
 
 ## App Development
 
-![screenshot-4](./public/screenshot/screenshot-4.png)
+![AppDev](./public/screenshot/AppDev.png)
 
 Canbox acts as a lightweight runtime, providing a minimal set of core capabilities to give apps the freedom to implement their own business logic.
 
@@ -240,6 +240,13 @@ Canbox provides rich settings options to help you personalize the application co
   - Set to 0 to disable automatic log cleanup
   - Old logs are cleaned up automatically when opening the log viewer
 
+### Auto Update
+
+- **Enable Auto Update**: Automatically check for new versions when the application starts
+- **Check Frequency**: Choose how often to check for updates (on startup, daily, weekly, or manual)
+- **Manual Check**: Click the "Check for Updates Now" button to manually trigger a version check
+- **Skipped Versions**: View and clear versions that were previously skipped
+
 ### Log Viewer
 
 Access the log viewer from the system tray menu or use keyboard shortcuts. Features include:
@@ -262,6 +269,17 @@ Canbox supports creating shortcuts for frequently used applications:
 - Application menu shortcuts (macOS)
 
 Shortcuts automatically sync with the application. When an app is deleted, corresponding shortcuts are automatically cleaned up.
+
+## About
+
+![About](./public/screenshot/About.png)
+
+View Canbox version information, official links, and open-source acknowledgments.
+
+- **Version Info**: Current Canbox version number
+- **Official Links**: GitHub repository, official website
+- **License**: Apache 2.0 open source license
+- **Acknowledgments**: Thanks to all open source projects and contributors
 
 # Installation
 

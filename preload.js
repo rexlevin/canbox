@@ -236,6 +236,15 @@ contextBridge.exposeInMainWorld(
         },
         getAppInfo: () => {
             return ipcRenderer.invoke('get-app-info');
+        },
+        zoom: {
+            get: () => ipcRenderer.invoke('zoom-get'),
+            set: (factor) => ipcRenderer.invoke('zoom-set', factor),
+            reset: () => ipcRenderer.invoke('zoom-reset')
+        },
+        menu: {
+            getLast: () => ipcRenderer.invoke('menu-get-last'),
+            setLast: (menuName) => ipcRenderer.invoke('menu-set-last', menuName)
         }
     }
 );

@@ -1,470 +1,468 @@
 <template>
-    <div class="app-repos" v-loading="loading">
-        <div class="button-section">
-            <el-button type="primary" @click="showDialog">{{ $t('appRepo.addSource') }}</el-button>
-            <el-button type="primary" @click="importAppRepos">{{ $t('appRepo.importSources') }}</el-button>
-            <el-button type="primary" @click="exportAppRepos">{{ $t('appRepo.exportSources') }}</el-button>
-        </div>
-
-        <el-dialog
-            v-model="dialogVisible"
-            :title="$t('appRepo.addSourceTitle')"
-            width="600px"
-            :before-close="handleClose">
-            <el-form
-                ref="formRef"
-                :model="{ repoUrl }"
-                label-width="120px"
-                label-position="top"
-                @submit.prevent="addAppRepo">
-                <el-form-item
-                    :label="$t('appRepo.repoUrl')"
-                    prop="repoUrl"
-                    :rules="[
-                        { required: true, message: $t('appRepo.repoUrlRequired'), trigger: 'blur' },
-                        {
-                            pattern: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
-                            message: $t('appRepo.repoUrlInvalid'),
-                            trigger: ['blur', 'change']
-                        }
-                    ]">
-                    <el-input
-                        v-model="repoUrl"
-                        :placeholder="$t('appRepo.repoUrlPlaceholder')"
-                        clearable
-                        @input="formRef?.clearValidate('repoUrl')"/>
-                </el-form-item>
-            </el-form>
-            <template #footer>
-                <div class="dialog-footer">
-                    <el-button @click="dialogVisible = false">{{ $t('appRepo.cancel') }}</el-button>
-                    <el-button type="primary" @click="formRef?.validate().then(() => addAppRepo())">
-                        {{ $t('appRepo.confirm') }}
-                    </el-button>
-                </div>
-            </template>
-        </el-dialog>
-
-        <!-- 第二部分：应用列表区域 -->
-        <div class="app-list-section" v-show="Object.keys(reposData).length > 0">
-            <el-row v-for="(repo, uid) in reposData" :key="uid">
-                <el-col :span="24">
-                    <div class="card" v-loading="loadingTag[uid]">
-                        <div class="img-block">
-                            <img style="width: 58px; height: 58px; cursor: pointer;" @click="showRepoInfo(uid)" :src="'file://' + repo.logo" alt="" />
-                        </div>
-                        <div class="info-block vertical-block">
-                            <div class="app-name" @click="showRepoInfo(uid)">
-                                <span style="font-weight: bold; font-size: 24px;">{{ repo.name }}</span>
-                                <span style="padding-left: 20px; color: gray;">{{ repo.version }}</span>
-                            </div>
-                            <div style="height: 30px; line-height: 13px; font-size: 15px;">{{ repo.description }}</div>
-                        </div>
-                        <div class="operate-block">
-                            <div>
-                                <span class="operate-icon-span" @click="copyRepoURL(uid)" :title="$t('appRepo.copySource')">
-                                    <el-icon :size="33"><CopyDocument /></el-icon>
-                                </span>
-                                <span class="operate-icon-span" v-show="!repo.downloaded" @click="downloadAppsFromRepo(uid)" :title="$t('appRepo.downloadApp')">
-                                    <el-icon :size="33" color="#228b22"><Download /></el-icon>
-                                </span>
-                                <span class="operate-icon-span" v-show="repo.downloaded && !repo.toUpdate" style="cursor: not-allowed;" :title="$t('appRepo.appDownloaded')">
-                                    <el-icon :size="33" color="#228b22"><CircleCheck /></el-icon>
-                                </span>
-                                <span class="operate-icon-span" v-show="repo.downloaded && repo.toUpdate" @click="downloadAppsFromRepo(uid)" :title="$t('appRepo.updateApp')">
-                                    <el-icon :size="33" color="#228b22"><Refresh /></el-icon>
-                                </span>
-                                <span class="operate-icon-span" @click="removeRepo(uid)" :title="$t('appRepo.removeSource')">
-                                    <el-icon :size="33" color="#ab4e52"><Remove /></el-icon>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </el-col>
-            </el-row>
-        </div>
-
-        <!-- 空状态提示 -->
-        <div class="empty-section" v-show="Object.keys(reposData).length == 0">
-            <p>{{ $t('appRepo.empty') }}</p>
-        </div>
+  <div class="app-repos-container" v-loading="loading">
+    <!-- 按钮区域 -->
+    <div class="button-section">
+      <el-button type="primary" @click="showDialog">
+        {{ $t('appRepo.addSource') }}
+      </el-button>
+      <div class="secondary-actions">
+        <el-link type="primary" @click="importAppRepos">
+          {{ $t('appRepo.importSources') }}
+        </el-link>
+        <el-link type="primary" @click="exportAppRepos">
+          {{ $t('appRepo.exportSources') }}
+        </el-link>
+      </div>
     </div>
 
-    <CustomDrawer v-model="drawerInfo" :size="580">
-        <div class="drawer-container">
-            <div class="custom-tabs">
-                <div class="custom-tabs-header">
-                    <div
-                        class="custom-tab-item"
-                        :class="{ active: activeTab === 0 }"
-                        @click="activeTab = 0">
-                        {{ $t('appList.appIntro') }}
-                    </div>
-                    <div
-                        class="custom-tab-item"
-                        :class="{ active: activeTab === 1 }"
-                        v-if="historyFlag"
-                        @click="activeTab = 1">
-                        {{ $t('appList.versionHistory') }}
-                    </div>
-                </div>
-                <div class="custom-tabs-content">
-                    <div class="drawer-content" v-show="activeTab === 0" id="divAppInfo" v-html="renderedReadme"></div>
-                    <div class="drawer-content" v-show="activeTab === 1" v-html="renderedHistory"></div>
-                </div>
-            </div>
+    <!-- 添加仓库对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="$t('appRepo.addSourceTitle')"
+      width="600px"
+      :before-close="handleClose">
+      <el-form
+        ref="formRef"
+        :model="{ repoUrl }"
+        label-width="120px"
+        label-position="top"
+        @submit.prevent="addAppRepo">
+        <el-form-item
+          :label="$t('appRepo.repoUrl')"
+          prop="repoUrl"
+          :rules="[
+            { required: true, message: $t('appRepo.repoUrlRequired'), trigger: 'blur' },
+            {
+              pattern: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+              message: $t('appRepo.repoUrlInvalid'),
+              trigger: ['blur', 'change']
+            }
+          ]">
+          <el-input
+            v-model="repoUrl"
+            :placeholder="$t('appRepo.repoUrlPlaceholder')"
+            clearable
+            @input="formRef?.clearValidate('repoUrl')"/>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">{{ $t('appRepo.cancel') }}</el-button>
+          <el-button type="primary" @click="formRef?.validate().then(() => addAppRepo())">
+            {{ $t('appRepo.confirm') }}
+          </el-button>
         </div>
-    </CustomDrawer>
+      </template>
+    </el-dialog>
+
+    <!-- APP列表区域 -->
+    <div class="app-list-section" v-show="Object.keys(reposData).length > 0">
+      <AppCard
+        v-for="(repo, uid) in reposData"
+        :key="uid"
+        :app="{
+          name: repo.name,
+          version: repo.version,
+          description: repo.description,
+          logo: repo.logo,
+          platform: repo.platform || [],
+          categories: repo.categories || [],
+          tags: repo.tags || [],
+          author: repo.author || ''
+        }"
+        :uid="uid"
+        :show-run="false"
+        :show-clear="false"
+        :show-delete="true"
+        :show-copy="true"
+        :show-download="!repo.downloaded"
+        :show-update="repo.downloaded && repo.toUpdate"
+        :show-downloaded="repo.downloaded && !repo.toUpdate"
+        @show-info="showRepoInfo"
+        @copy="copyRepoURL"
+        @download="downloadAppsFromRepo"
+        @update="downloadAppsFromRepo"
+        @delete="removeRepo"
+      />
+    </div>
+
+    <!-- 空状态提示 -->
+    <div class="empty-section" v-show="Object.keys(reposData).length == 0">
+      <p>{{ $t('appRepo.empty') }}</p>
+    </div>
+  </div>
+
+  <CustomDrawer v-model="drawerInfo" :size="580">
+    <div class="drawer-container">
+      <div class="custom-tabs">
+        <div class="custom-tabs-header">
+          <div
+            class="custom-tab-item"
+            :class="{ active: activeTab === 0 }"
+            @click="activeTab = 0">
+            {{ $t('appList.appIntro') }}
+          </div>
+          <div
+            class="custom-tab-item"
+            :class="{ active: activeTab === 1 }"
+            v-if="historyFlag"
+            @click="activeTab = 1">
+            {{ $t('appList.versionHistory') }}
+          </div>
+        </div>
+        <div class="custom-tabs-content">
+          <div class="drawer-content" v-show="activeTab === 0" id="divAppInfo" v-html="renderedReadme"></div>
+          <div class="drawer-content" v-show="activeTab === 1" v-html="renderedHistory"></div>
+        </div>
+      </div>
+    </div>
+  </CustomDrawer>
 </template>
 
 <script setup>
-import { onBeforeMount, ref, reactive, watch, computed, onMounted } from 'vue';
-import { ElMessage } from 'element-plus';
-import { useI18n } from 'vue-i18n';
-import { useAppStore } from '@/stores/appStore';
-import { md } from '@/utils/markdownRenderer';
-import CustomDrawer from './CustomDrawer.vue';
+import { onBeforeMount, ref, watch, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+import { useAppStore } from '@/stores/appStore'
+import { md } from '@/utils/markdownRenderer'
+import CustomDrawer from './CustomDrawer.vue'
+import AppCard from './AppCard.vue'
 
-const appStore = useAppStore();
-const { t } = useI18n();
+const appStore = useAppStore()
+const { t } = useI18n()
 
-const dialogVisible = ref(false);
-const repoUrl = ref('');
-const drawerInfo = ref(false);
-const readme = ref(null);
-const history = ref(null);
-const historyFlag = ref(false);
-const activeTab = ref(0);
+const dialogVisible = ref(false)
+const repoUrl = ref('')
+const drawerInfo = ref(false)
+const readme = ref(null)
+const history = ref(null)
+const historyFlag = ref(false)
+const activeTab = ref(0)
 
 // 控制loading状态
-let loadingTag = ref({});
+let loadingTag = ref({})
 
 const showDialog = () => {
-    dialogVisible.value = true;
-};
+  dialogVisible.value = true
+}
 
 const handleClose = (done) => {
-    repoUrl.value = '';
-    done();
-};
+  repoUrl.value = ''
+  done()
+}
 
-const formRef = ref();
-const loading = ref(false);
-let reposData = ref({});
-let reposInfoData = ref({});
+const formRef = ref()
+const loading = ref(false)
+let reposData = ref({})
+let reposInfoData = ref({})
 
 watch(() => appStore.removedAppId, (newAppId) => {
-    if (newAppId) {
-        window.api.updateReposStatus(newAppId, (result) => {
-            console.log('Repos status %s updated: %o', newAppId, result);
-            appStore.setRemovedAppId(null);
-            fetchReposData();
-        });
-    }
-});
+  if (newAppId) {
+    window.api.updateReposStatus(newAppId, (result) => {
+      console.log('Repos status %s updated: %o', newAppId, result)
+      appStore.setRemovedAppId(null)
+      fetchReposData()
+    })
+  }
+})
 
 onBeforeMount(() => {
-    fetchReposData();
-    // 监听仓库数据更新事件
-    window.api.on('repo-data-updated', () => {
-        fetchReposData();
-    });
-});
+  fetchReposData()
+  // 监听仓库数据更新事件
+  window.api.on('repo-data-updated', () => {
+    fetchReposData()
+  })
+})
 
 // 获取仓库列表
 const fetchReposData = async () => {
-    loading.value = true;
-    window.api.getReposData(result => {
-        if (result.success) {
-            // 清空对象并重新赋值，确保响应式更新
-            reposData.value = result.data;
-            // 并行获取每个仓库的详细信息
-            const promises = Object.keys(result.data).map(uid => {
-                return new Promise((resolve) => {
-                    window.api.repo.info(uid, (infoResult) => {
-                        if (infoResult.success) {
-                            resolve({ uid, data: infoResult.data });
-                        } else {
-                            console.error(`获取仓库 ${uid} 信息失败:`, infoResult.msg);
-                            resolve(null);
-                        }
-                    });
-                });
-            });
+  loading.value = true
+  window.api.getReposData(result => {
+    if (result.success) {
+      // 清空对象并重新赋值，确保响应式更新
+      reposData.value = result.data
+      // 并行获取每个仓库的详细信息
+      const promises = Object.keys(result.data).map(uid => {
+        return new Promise((resolve) => {
+          window.api.repo.info(uid, (infoResult) => {
+            if (infoResult.success) {
+              resolve({ uid, data: infoResult.data })
+            } else {
+              console.error(`获取仓库 ${uid} 信息失败:`, infoResult.msg)
+              resolve(null)
+            }
+          })
+        })
+      })
 
-            // 等待所有仓库信息加载完成
-            Promise.all(promises).then(results => {
-                results.forEach(item => {
-                    if (item && item.data) {
-                        reposInfoData.value[item.uid] = {
-                            readme: item.data.readme,
-                            history: item.data.history
-                        };
-                    }
-                });
-            });
-        } else {
-            ElMessage.error(result.msg || t('appRepo.fetchFailed'));
-        }
-        loading.value = false;
-    });
-};
+      // 等待所有仓库信息加载完成
+      Promise.all(promises).then(results => {
+        results.forEach(item => {
+          if (item && item.data) {
+            reposInfoData.value[item.uid] = {
+              readme: item.data.readme,
+              history: item.data.history
+            }
+          }
+        })
+      })
+    } else {
+      ElMessage.error(result.msg || t('appRepo.fetchFailed'))
+    }
+    loading.value = false
+  })
+}
 
 // 显示仓库信息（点击 logo 或名称时）
 function showRepoInfo(uid) {
-    const repoInfo = reposInfoData.value[uid];
-    if (!repoInfo) {
-        console.error('仓库信息不存在:', uid);
-        return;
-    }
+  const repoInfo = reposInfoData.value[uid]
+  if (!repoInfo) {
+    console.error('仓库信息不存在:', uid)
+    return
+  }
 
-    // 设置 readme 和 history
-    readme.value = repoInfo.readme || '';
-    history.value = repoInfo.history || '';
-    historyFlag.value = !!repoInfo.history;
+  // 设置 readme 和 history
+  readme.value = repoInfo.readme || ''
+  history.value = repoInfo.history || ''
+  historyFlag.value = !!repoInfo.history
 
-    // 打开 drawer
-    drawerInfo.value = true;
+  // 打开 drawer
+  drawerInfo.value = true
 }
 
 // 渲染后的 readme HTML
 const renderedReadme = computed(() => {
-    if (!readme.value) return '';
-    try {
-        return md.render(readme.value);
-    } catch (error) {
-        console.error('渲染 README 失败:', error);
-        return readme.value;
-    }
-});
+  if (!readme.value) return ''
+  try {
+    return md.render(readme.value)
+  } catch (error) {
+    console.error('渲染 README 失败:', error)
+    return readme.value
+  }
+})
 
 // 渲染后的 history HTML
 const renderedHistory = computed(() => {
-    if (!history.value) return '';
-    try {
-        return md.render(history.value);
-    } catch (error) {
-        console.error('渲染 HISTORY 失败:', error);
-        return history.value;
-    }
-});
+  if (!history.value) return ''
+  try {
+    return md.render(history.value)
+  } catch (error) {
+    console.error('渲染 HISTORY 失败:', error)
+    return history.value
+  }
+})
 
 // 下载仓库中的应用
 const downloadAppsFromRepo = (uid) => {
-    loadingTag.value[uid] = true;
-    window.api.downloadAppsFromRepo(uid, result => {
-        console.info('downloadAppsFromRepo result: %o', result);
-        if (result.success) {
-            ElMessage.success(t('appRepo.downloadSuccess'));
-            const appStore = useAppStore();
-            appStore.triggerAppListUpdate();
-            fetchReposData();   // 更新仓库列表
-        } else {
-            ElMessage.error(result.msg || t('appRepo.downloadFailed'));
-        }
-        loadingTag.value[uid] = false;
-    });
-};
+  loadingTag.value[uid] = true
+  window.api.downloadAppsFromRepo(uid, result => {
+    console.info('downloadAppsFromRepo result: %o', result)
+    if (result.success) {
+      ElMessage.success(t('appRepo.downloadSuccess'))
+      const appStore = useAppStore()
+      appStore.triggerAppListUpdate()
+      fetchReposData()   // 更新仓库列表
+    } else {
+      ElMessage.error(result.msg || t('appRepo.downloadFailed'))
+    }
+    loadingTag.value[uid] = false
+  })
+}
 
 // 删除仓库
 const removeRepo = (uid) => {
-    window.api.removeRepo(uid, result => {
-        if (result.success) {
-            ElMessage.success(t('appRepo.removeSuccess'));
-            fetchReposData();
-        } else {
-            ElMessage.error(result.msg || t('appRepo.removeFailed'));
-        }
-    });
-};
+  window.api.removeRepo(uid, result => {
+    if (result.success) {
+      ElMessage.success(t('appRepo.removeSuccess'))
+      fetchReposData()
+    } else {
+      ElMessage.error(result.msg || t('appRepo.removeFailed'))
+    }
+  })
+}
 
 // 添加app源
 const addAppRepo = async () => {
-    loading.value = true;
+  loading.value = true
 
-    // 验证表单
-    await formRef.value?.validate();
+  // 验证表单
+  await formRef.value?.validate()
 
-    dialogVisible.value = false;
+  dialogVisible.value = false
 
-    // 调用IPC接口
-    window.api.addAppRepo(repoUrl.value, result => {
-        if (result.success) {
-            ElMessage.success(t('appRepo.addSuccess'));
-            dialogVisible.value = false;
-            repoUrl.value = '';
-            fetchReposData();
-        } else {
-            // 根据错误类型显示对应的国际化消息
-            let errorMsg = result.msg || t('appRepo.addFailed');
-            const errorKey = {
-                'NoGitRepo': 'noGitRepo',
-                'InvalidGitRepo': 'invalidGitRepo',
-                'UnableToAccessRepo': 'unableToAccessRepo',
-                'NetworkTimeout': 'networkTimeout',
-                'CannotDownloadAppJson': 'cannotDownloadAppJson'
-            }[errorMsg];
+  // 调用IPC接口
+  window.api.addAppRepo(repoUrl.value, result => {
+    if (result.success) {
+      ElMessage.success(t('appRepo.addSuccess'))
+      dialogVisible.value = false
+      repoUrl.value = ''
+      fetchReposData()
+    } else {
+      // 根据错误类型显示对应的国际化消息
+      let errorMsg = result.msg || t('appRepo.addFailed')
+      const errorKey = {
+        'NoGitRepo': 'noGitRepo',
+        'InvalidGitRepo': 'invalidGitRepo',
+        'UnableToAccessRepo': 'unableToAccessRepo',
+        'NetworkTimeout': 'networkTimeout',
+        'CannotDownloadAppJson': 'cannotDownloadAppJson'
+      }[errorMsg]
 
-            if (errorKey) {
-                errorMsg = t(`appRepo.${errorKey}`);
-            }
-            ElMessage.error(errorMsg);
-        }
-        loading.value = false;
-    });
-};
+      if (errorKey) {
+        errorMsg = t(`appRepo.${errorKey}`)
+      }
+      ElMessage.error(errorMsg)
+    }
+    loading.value = false
+  })
+}
 
 const importAppRepos = () => {
-    window.api.importAppRepos(ret => {
-        console.log('importAppRepos ret: %o', ret);
-        if (ret.success && ret.msg === 'NoFileSelected') {
-            // 用户取消操作，不显示任何提示
-            return;
-        } else if (!ret.success && 'Invalid JSON format' === ret.msg) {
-            ElMessage({
-                type: 'error',
-                message: t('appRepo.invalidJson')
-            });
-        } else if (!ret.success && 'Invalid format: expected an array of repos' === ret.msg) {
-            ElMessage({
-                type: 'error',
-                message: t('appRepo.invalidFormat')
-            });
-        } else if (!ret.success) {
-            ElMessage({
-                type: 'error',
-                message: t('appRepo.importFailedPrefix') + ret.msg
-            });
-        } else {
-            const { successCount, failedRepos, skippedCount } = ret.data || {};
-            const failedCount = failedRepos ? failedRepos.length : 0;
-            if (failedCount > 0 || skippedCount > 0) {
-                let message = t('appRepo.importSuccessMsg', { count: successCount });
-                if (skippedCount > 0) {
-                    message = t('appRepo.importSuccessWithSkipped', { success: successCount, skipped: skippedCount });
-                }
-                if (failedCount > 0) {
-                    message = t('appRepo.importSuccessWithFailed', { success: successCount, failed: failedCount });
-                }
-                ElMessage({
-                    type: failedCount > 0 ? 'warning' : 'success',
-                    message
-                });
-            } else {
-                ElMessage({
-                    type: 'success',
-                    message: t('appRepo.importSuccessAll', { success: successCount })
-                });
-            }
+  window.api.importAppRepos(ret => {
+    console.log('importAppRepos ret: %o', ret)
+    if (ret.success && ret.msg === 'NoFileSelected') {
+      // 用户取消操作，不显示任何提示
+      return
+    } else if (!ret.success && 'Invalid JSON format' === ret.msg) {
+      ElMessage({
+        type: 'error',
+        message: t('appRepo.invalidJson')
+      })
+    } else if (!ret.success && 'Invalid format: expected an array of repos' === ret.msg) {
+      ElMessage({
+        type: 'error',
+        message: t('appRepo.invalidFormat')
+      })
+    } else if (!ret.success) {
+      ElMessage({
+        type: 'error',
+        message: t('appRepo.importFailedPrefix') + ret.msg
+      })
+    } else {
+      const { successCount, failedRepos, skippedCount } = ret.data || {}
+      const failedCount = failedRepos ? failedRepos.length : 0
+      if (failedCount > 0 || skippedCount > 0) {
+        let message = t('appRepo.importSuccessMsg', { count: successCount })
+        if (skippedCount > 0) {
+          message = t('appRepo.importSuccessWithSkipped', { success: successCount, skipped: skippedCount })
         }
-    });
-};
+        if (failedCount > 0) {
+          message = t('appRepo.importSuccessWithFailed', { success: successCount, failed: failedCount })
+        }
+        ElMessage({
+          type: failedCount > 0 ? 'warning' : 'success',
+          message
+        })
+      } else {
+        ElMessage({
+          type: 'success',
+          message: t('appRepo.importSuccessAll', { success: successCount })
+        })
+      }
+    }
+  })
+}
 
 const exportAppRepos = () => {
-    window.api.exportReposData(ret => {
-        console.log('exportAppRepos ret: %s', JSON.stringify(ret));
-        if (!ret.success) {
-            ElMessage({
-                type: 'error',
-                message: t('appRepo.exportFailed') + ret.msg
-            });
-        } else if (ret.msg === '已取消导出') {
-            // 用户取消操作，不显示任何提示
-            return;
-        } else {
-            ElMessage({
-                type: 'success',
-                message: t('appRepo.exportSuccess')
-            });
-        }
-    });
+  window.api.exportReposData(ret => {
+    console.log('exportAppRepos ret: %s', JSON.stringify(ret))
+    if (!ret.success) {
+      ElMessage({
+        type: 'error',
+        message: t('appRepo.exportFailed') + ret.msg
+      })
+    } else if (ret.msg === '已取消导出') {
+      // 用户取消操作，不显示任何提示
+      return
+    } else {
+      ElMessage({
+        type: 'success',
+        message: t('appRepo.exportSuccess')
+      })
+    }
+  })
 }
 
 // 复制仓库 URL 到剪贴板
 const copyRepoURL = (uid) => {
-    const repo = reposData.value[uid];
-    if (repo && repo.repo) {
-        navigator.clipboard.writeText(repo.repo).then(() => {
-            ElMessage.success(t('appRepo.copySuccess'));
-        }).catch(() => {
-            ElMessage.error(t('appRepo.copyFailed'));
-        });
-    }
+  const repo = reposData.value[uid]
+  if (repo && repo.repo) {
+    navigator.clipboard.writeText(repo.repo).then(() => {
+      ElMessage.success(t('appRepo.copySuccess'))
+    }).catch(() => {
+      ElMessage.error(t('appRepo.copyFailed'))
+    })
+  }
 }
 
 onMounted(() => {
-    // 拦截app介绍中的a标签链接跳转，使其使用外部浏览器打开
-    const links = document.querySelectorAll('#divAppInfo a[href]');
-    links.forEach(link => {
-        link.addEventListener('click', e => {
-            const url = link.getAttribute('href');
-            e.preventDefault();
-            window.api.openUrl(url);
-        });
-    });
-});
+  // 拦截app介绍中的a标签链接跳转，使其使用外部浏览器打开
+  const links = document.querySelectorAll('#divAppInfo a[href]')
+  links.forEach(link => {
+    link.addEventListener('click', e => {
+      const url = link.getAttribute('href')
+      e.preventDefault()
+      window.api.openUrl(url)
+    })
+  })
+})
 </script>
 
 <style scoped>
-.app-repos {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
+.app-repos-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 0 6px;
 }
 
+/* 按钮区域 */
 .button-section {
-    height: 60px;
-    padding: 10px 0;
-    line-height: 60px;
+  height: 60px;
+  padding: 10px 8px;
+  line-height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-button {
-    padding: 10px 15px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
+/* 次要操作链接 */
+.secondary-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
 }
 
-button:hover {
-    background-color: #45a049;
-}
-
-/* 仓库列表样式 */
+/* APP列表区域 - 响应式网格布局 */
 .app-list-section {
-    height: calc(100vh - 60px);
-    overflow-y: auto;
-    margin: 5px 0 0 0; padding: 0; box-shadow: var(--el-box-shadow-lighter);
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(520px, 1fr));
+  gap: 12px;
+  align-content: start;
 }
 
-.card {width: 100%; height: 60px; display: flex; justify-content: flex-start;}
-.img-block {width: 60px; height: 100%; margin: 0; padding: 0;}
-.info-block {line-height: 60px; text-align: left; margin-left: 10px;}
-.info-block div{width: 300px;}
-.info-block .app-name {height: 30px; line-height: 30px; cursor: pointer;}
-.info-block .app-name:hover{color: #409eff; font-weight: bold;}
-.vertical-block {display: table;}
-
-.operate-block {width: 100%; margin-right: 20px;
-    display: flex; flex: 1;
-    align-items: center;
-    justify-content: right;
+/* 当窗口较窄时，单列显示 */
+@media (max-width: 560px) {
+  .app-list-section {
+    grid-template-columns: 1fr;
+  }
 }
-.operate-block div {display: table-cell;}
-.operate-block div:first-child {text-align: left; padding-left: 10px;}
-.operate-block div:first-child span {color: gray;}
-.operate-icon-span {display:inline-block; cursor: pointer; text-align: center; border-radius: 20px; margin-right: 10px;}
-.operate-icon-span:hover { background-color: hsl(0, 0%, 80%); }
-.operate-icon-span:active {background-color: hsl(0, 0%, 70%); }
 
+/* 空状态 */
 .empty-section {
-    height: calc(100vh - 60px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #909399;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #909399;
+  font-size: 14px;
 }
+
+
 
 /* 抽屉样式 */
 .drawer-container {
@@ -519,16 +517,6 @@ button:hover {
   flex: 1;
   overflow: hidden;
   overflow-y: auto;
-}
-
-.drawer-tabs :deep(.el-tabs__content) {
-  flex: 1;
-  overflow: hidden;
-  height: calc(100% - 55px);
-}
-
-.drawer-tabs :deep(.el-tab-pane) {
-  height: 100%;
 }
 
 .drawer-content {
