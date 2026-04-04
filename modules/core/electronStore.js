@@ -1,5 +1,6 @@
 const Store = require('electron-store');
 const path = require('path');
+const { getUsersBasePath } = require('@modules/main/pathManager');
 
 class ElectronStore {
     /**
@@ -8,9 +9,10 @@ class ElectronStore {
      * @param {string} key 存储的键
      */
     constructor(appId, key) {
+        const basePath = getUsersBasePath();
         this.store = new Store({
             name: key,
-            cwd: path.join('Users', 'data', `${appId}`, 'store')
+            cwd: path.join(basePath, 'Users', 'data', `${appId}`, 'store')
         });
     }
 
