@@ -48,7 +48,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">{{ $t('appRepo.cancel') }}</el-button>
-          <el-button type="primary" @click="formRef?.validate().then(() => addAppRepo())">
+          <el-button type="primary" :loading="loading" @click="formRef?.validate().then(() => addAppRepo())">
             {{ $t('appRepo.confirm') }}
           </el-button>
         </div>
@@ -78,6 +78,8 @@
         :show-download="!repo.downloaded"
         :show-update="repo.downloaded && repo.toUpdate"
         :show-downloaded="repo.downloaded && !repo.toUpdate"
+        :loading="loadingTag[uid]"
+        :loading-text="loadingTag[uid] ? t('appRepo.downloading') : ''"
         @show-info="showRepoInfo"
         @copy="copyRepoURL"
         @download="downloadAppsFromRepo"
@@ -253,9 +255,14 @@ const renderedHistory = computed(() => {
 })
 
 // 下载仓库中的应用
-const downloadAppsFromRepo = (uid) => {
+const downloadAppsFromRepo = async (uid) => {
   loadingTag.value[uid] = true
-  window.api.downloadAppsFromRepo(uid, result => {
+
+  try {
+    const result = await new Promise((resolve) => {
+      window.api.downloadAppsFromRepo(uid, resolve)
+    })
+
     console.info('downloadAppsFromRepo result: %o', result)
     if (result.success) {
       ElMessage.success(t('appRepo.downloadSuccess'))
@@ -265,8 +272,11 @@ const downloadAppsFromRepo = (uid) => {
     } else {
       ElMessage.error(result.msg || t('appRepo.downloadFailed'))
     }
+  } catch (err) {
+    ElMessage.error(err.message || t('appRepo.downloadFailed'))
+  } finally {
     loadingTag.value[uid] = false
-  })
+  }
 }
 
 // 删除仓库
@@ -285,13 +295,17 @@ const removeRepo = (uid) => {
 const addAppRepo = async () => {
   loading.value = true
 
-  // 验证表单
-  await formRef.value?.validate()
+  try {
+    // 验证表单
+    await formRef.value?.validate()
 
-  dialogVisible.value = false
+    dialogVisible.value = false
 
-  // 调用IPC接口
-  window.api.addAppRepo(repoUrl.value, result => {
+    // 调用IPC接口
+    const result = await new Promise((resolve) => {
+      window.api.addAppRepo(repoUrl.value, resolve)
+    })
+
     if (result.success) {
       ElMessage.success(t('appRepo.addSuccess'))
       dialogVisible.value = false
@@ -313,8 +327,13 @@ const addAppRepo = async () => {
       }
       ElMessage.error(errorMsg)
     }
+  } catch (err) {
+    // 表单验证失败不显示错误消息（组件已处理）
+    // 其他错误也不需要额外处理，因为 new Promise 已经捕获
+    console.debug('addAppRepo error:', err)
+  } finally {
     loading.value = false
-  })
+  }
 }
 
 const importAppRepos = () => {

@@ -202,7 +202,9 @@ const aboutTooltip = computed(() => {
     const hasError = updateStore.hasError;
     const version = updateStore.updateInfo?.version;
 
-    console.log('[CanBox.vue] aboutTooltip 计算 - hasUpdate:', hasUpdate, 'hasError:', hasError, 'version:', version);
+    if (hasUpdate) {
+        console.log('[CanBox.vue] aboutTooltip 计算 - hasUpdate:', hasUpdate, 'version:', version);
+    }
 
     if (hasUpdate && hasError) {
         return t('autoUpdate.newVersionAvailable', { version }) + ' | ' + t('autoUpdate.updateError');

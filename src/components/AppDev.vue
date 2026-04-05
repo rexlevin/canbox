@@ -38,6 +38,8 @@
         :show-run="true"
         :show-clear="true"
         :show-delete="true"
+        :loading="exportAppFlag[uid]"
+        :loading-text="exportAppFlag[uid] ? t('devApp.packing') : ''"
         @pack="packApp"
         @run="loadApp"
         @clear="clearData"
@@ -156,27 +158,20 @@ let exportAppFlag = ref({})
 // 打包app
 async function packApp(uid) {
   exportAppFlag.value[uid] = true
-  const result = window.api.packToAsar(uid)
-  result.then((result) => {
+
+  try {
+    const result = await window.api.packToAsar(uid)
+
     if (!result.success) {
-      ElMessage({
-        type: 'error',
-        message: result.msg,
-      })
+      ElMessage.error(result.msg || t('devApp.packFailed'))
       return
     }
-    ElMessage({
-      message: t('devApp.packSuccess'),
-      type: 'success',
-    })
-  }).catch((err) => {
-    ElMessage({
-      type: 'error',
-      message: err,
-    })
-  }).finally(() => {
+    ElMessage.success(t('devApp.packSuccess'))
+  } catch (err) {
+    ElMessage.error(err.message || t('devApp.packFailed'))
+  } finally {
     exportAppFlag.value[uid] = false
-  })
+  }
 }
 
 // 运行app

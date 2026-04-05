@@ -104,12 +104,22 @@
                 </div>
             </div>
         </div>
+
+        <!-- Loading 遮罩层 -->
+        <div v-if="loading" class="loading-overlay">
+            <el-icon class="is-loading" :size="32">
+                <Loading />
+            </el-icon>
+            <span class="loading-text">{{ loadingText || $t('common.loading') }}</span>
+        </div>
     </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElIcon } from 'element-plus'
+import { Loading } from '@element-plus/icons-vue'
 import {
     getCategoryIcon,
     getCategoryName,
@@ -172,6 +182,15 @@ const props = defineProps({
     showDownloaded: {
         type: Boolean,
         default: false
+    },
+    // 加载状态
+    loading: {
+        type: Boolean,
+        default: false
+    },
+    loadingText: {
+        type: String,
+        default: ''
     }
 })
 
@@ -226,6 +245,7 @@ const allTagsTooltip = computed(() => {
     transition: box-shadow 0.2s;
     height: 100%;
     box-sizing: border-box;
+    position: relative;
 }
 
 .app-card:hover {
@@ -439,5 +459,27 @@ const allTagsTooltip = computed(() => {
 
 :global(.app-card-tooltip .el-popper__arrow::before) {
     font-size: 14px !important;
+}
+
+/* Loading 遮罩层 */
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(2px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 10;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.loading-text {
+    font-size: 14px;
+    color: #606266;
+    font-weight: 500;
 }
 </style>
