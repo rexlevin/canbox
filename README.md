@@ -210,9 +210,9 @@ Configuration description:
 
 For detailed development guides, please refer to:
 
-- [Canbox Development Documentation](./docs/CANBOX_DEV_CN.md)
-- [App Development Documentation](./docs/APP_DEV_CN.md)
-- [API Documentation](./docs/API.md)
+- [Canbox Development Documentation](./docs/development/CANBOX_DEV.md)
+- [App Development Documentation](./docs/development/APP_DEV.md)
+- [API Documentation](./docs/development/API.md)
 
 ## Settings
 
@@ -297,11 +297,11 @@ Please visit the project's GitHub Releases page to download the latest version o
 
 # Development Documentation
 
-[Canbox Development Documentation](./docs/CANBOX_DEV.md)
+[Canbox Development Documentation](./docs/development/CANBOX_DEV.md)
 
-[App Development Documentation](./docs/APP_DEV.md)
+[App Development Documentation](./docs/development/APP_DEV.md)
 
-[API Documentation](./docs/API.md)
+[API Documentation](./docs/development/API.md)
 
 # License
 

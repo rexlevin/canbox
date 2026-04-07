@@ -279,12 +279,12 @@ const renderedHistory = computed(() => {
 
 // 打开APP开发文档
 async function openAppDevDoc() {
-  await renderAndOpenMarkdown('docs/APP_DEV_CN.md', 'APP 开发文档', { maxContentWidth: 1100 })
+  await renderAndOpenMarkdown('docs/development/APP_DEV_CN.md', 'APP 开发文档', { maxContentWidth: 1100 })
 }
 
 // 打开API文档
 async function openApiDoc() {
-  await renderAndOpenMarkdown('docs/API_CN.md', 'API 文档')
+  await renderAndOpenMarkdown('docs/development/API_CN.md', 'API 文档')
 }
 
 // 下载 canbox.d.ts 类型定义文件

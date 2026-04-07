@@ -210,9 +210,9 @@ Canbox 为 APP 提供以下核心功能：
 
 详细的开发指南请参考：
 
-- [Canbox 开发文档](./docs/CANBOX_DEV_CN.md)
-- [APP 开发文档](./docs/APP_DEV_CN.md)
-- [API 文档](./docs/API.md)
+- [Canbox 开发文档](./docs/development/CANBOX_DEV_CN.md)
+- [APP 开发文档](./docs/development/APP_DEV_CN.md)
+- [API 文档](./docs/development/API.md)
 
 ## 设置
 
@@ -297,11 +297,11 @@ Canbox 提供以下格式供下载安装：
 
 # 开发文档
 
-[Canbox 开发文档](./docs/CANBOX_DEV_CN.md)
+[Canbox 开发文档](./docs/development/CANBOX_DEV_CN.md)
 
-[APP 开发文档](./docs/APP_DEV_CN.md)
+[APP 开发文档](./docs/development/APP_DEV_CN.md)
 
-[API 文档](./docs/API_CN.md)
+[API 文档](./docs/development/API_CN.md)
 
 # 许可证
 

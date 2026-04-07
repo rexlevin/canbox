@@ -1,7 +1,7 @@
 {
     "name": "canbox",
     "private": true,
-    "version": "0.3.2",
+    "version": "0.3.3",
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
     "author": "lizl6",
@@ -31,7 +31,7 @@
         "files": [
             "build/**/*",
             "childprocessEntry.js",
-            "docs/**/*",
+            "docs/development/**/*",
             "locales/**/*",
             "modules/**/*",
             "public/**/*",
