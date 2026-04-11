@@ -100,7 +100,7 @@ import { md } from '@/utils/markdownRenderer'
 import CustomDrawer from './CustomDrawer.vue'
 import AppCard from './AppCard.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const activeTab = ref(0)
 
 let appDevData = ref({})
@@ -279,12 +279,18 @@ const renderedHistory = computed(() => {
 
 // 打开APP开发文档
 async function openAppDevDoc() {
-  await renderAndOpenMarkdown('docs/development/APP_DEV_CN.md', 'APP 开发文档', { maxContentWidth: 1100 })
+  const isChinese = locale.value === 'zh-CN'
+  const docPath = isChinese ? 'docs/development/APP_DEV_CN.md' : 'docs/development/APP_DEV.md'
+  const docTitle = isChinese ? 'APP 开发文档' : 'APP Development Documentation'
+  await renderAndOpenMarkdown(docPath, docTitle, { maxContentWidth: 1100 })
 }
 
 // 打开API文档
 async function openApiDoc() {
-  await renderAndOpenMarkdown('docs/development/API_CN.md', 'API 文档')
+  const isChinese = locale.value === 'zh-CN'
+  const docPath = isChinese ? 'docs/development/API_CN.md' : 'docs/development/API.md'
+  const docTitle = isChinese ? 'API 文档' : 'API Documentation'
+  await renderAndOpenMarkdown(docPath, docTitle)
 }
 
 // 下载 canbox.d.ts 类型定义文件
