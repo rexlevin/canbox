@@ -237,9 +237,9 @@ const allTagsTooltip = computed(() => {
 <style scoped>
 .app-card {
     background: #f5f7fa;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 16px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    padding: 20px;
     display: flex;
     align-items: flex-start;
     transition: box-shadow 0.2s;
@@ -258,9 +258,9 @@ const allTagsTooltip = computed(() => {
 }
 
 .logo-section img {
-    width: 72px;
-    height: 72px;
-    border-radius: 12px;
+    width: 88px;
+    height: 88px;
+    border-radius: 14px;
     cursor: pointer;
     object-fit: cover;
 }
@@ -268,7 +268,7 @@ const allTagsTooltip = computed(() => {
 /* 信息区域 */
 .info-section {
     flex: 1;
-    margin-left: 16px;
+    margin-left: 20px;
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -293,12 +293,12 @@ const allTagsTooltip = computed(() => {
 }
 
 .name-row .platform-icon {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.8;
+    opacity: 0.85;
     cursor: help;
     color: #606266;
 }
@@ -309,7 +309,7 @@ const allTagsTooltip = computed(() => {
 }
 
 .app-name {
-    font-size: 23px;
+    font-size: 25px;
     font-weight: 600;
     color: #303133;
     cursor: pointer;
@@ -321,7 +321,7 @@ const allTagsTooltip = computed(() => {
 
 .app-version {
     color: #606266;
-    font-size: 16px;
+    font-size: 17px;
 }
 
 .author {
@@ -345,9 +345,9 @@ const allTagsTooltip = computed(() => {
 
 .description {
     color: #303133;
-    font-size: 16px;
-    margin-top: 6px;
-    line-height: 1.5;
+    font-size: 17px;
+    margin-top: 8px;
+    line-height: 1.6;
     text-align: left;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -359,7 +359,7 @@ const allTagsTooltip = computed(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 8px;
+    margin-top: 12px;
 }
 
 .meta-row {
@@ -370,7 +370,7 @@ const allTagsTooltip = computed(() => {
 }
 
 .meta-icon {
-    font-size: 19px;
+    font-size: 21px;
     cursor: help;
     display: inline-flex;
     align-items: center;
@@ -385,25 +385,25 @@ const allTagsTooltip = computed(() => {
 
 .tags {
     color: #303133;
-    font-size: 16px;
+    font-size: 17px;
     cursor: help;
 }
 
 /* 功能按钮行 - 靠右排列 */
 .actions-row {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     flex-shrink: 0;
 }
 
 .icon-btn {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border: none;
-    background: #f5f7fa;
-    border-radius: 6px;
+    background: #ebeff5;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 17px;
+    font-size: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -413,8 +413,9 @@ const allTagsTooltip = computed(() => {
 }
 
 .icon-btn:hover {
-    background: #e4e7ed;
-    transform: translateY(-1px);
+    background: #dde3eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .icon-btn:active {
