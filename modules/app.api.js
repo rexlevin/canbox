@@ -343,11 +343,6 @@ const electronStore = {
     get: (name, key) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendElectronStore('get', { name, key });
-            // const ret = ipcRenderer.sendSync('msg-electronStore', {
-            //     type: 'get',
-            //     key,
-            //     appId: window.appId
-            // });
             ret.success ? resolve(ret.data) : reject(ret.msg);
         });
     },
@@ -362,12 +357,6 @@ const electronStore = {
     set: (name, key, value) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendElectronStore('set', { name, key, value });
-            // const ret = ipcRenderer.sendSync('msg-electronStore', {
-            //     type: 'set',
-            //     key,
-            //     value,
-            //     appId: window.appId
-            // });
             ret.success ? resolve() : reject(ret.msg);
         });
     },
@@ -381,11 +370,6 @@ const electronStore = {
     delete: (name, key) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendElectronStore('delete', { name, key });
-            // const ret = ipcRenderer.sendSync('msg-electronStore', {
-            //     type: 'delete',
-            //     key,
-            //     appId: window.appId
-            // });
             ret.success ? resolve() : reject(ret.msg);
         });
     },
@@ -398,10 +382,6 @@ const electronStore = {
     clear: (name) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendElectronStore('clear', { name });
-            // const ret = ipcRenderer.sendSync('msg-electronStore', {
-            //     type: 'clear',
-            //     appId: window.appId
-            // });
             ret.success ? resolve() : reject(ret.msg);
         });
     }

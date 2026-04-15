@@ -1,4 +1,6 @@
-const { ipcMain } = require('electron');
+const { ipcMain, app, dialog } = require('electron');
+const fs = require('fs');
+const path = require('path');
 const logger = require('@modules/utils/logger');
 
 const winFactory = require('@modules/core/win');
@@ -6,6 +8,7 @@ const dialogFactory = require('@modules/core/dialog');
 const ElectronStore = require('@modules/core/electronStore');
 const DB = require('@modules/core/db');
 const sudo = require('@modules/core/sudo');
+const { getCanboxStore } = require('@modules/main/storageManager');
 
 /**
  * 初始化数据库相关的 IPC 消息处理逻辑
@@ -152,9 +155,6 @@ function initSudoIpcHandlers() {
 function initReadFileIpcHandlers() {
     ipcMain.handle('msg-readFile', async (event, args) => {
         try {
-            const fs = require('fs');
-            const path = require('path');
-            const { app } = require('electron');
 
             // 获取应用路径：开发环境使用项目根目录，打包后使用 app.getAppPath()
             let appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');
@@ -199,10 +199,6 @@ function initReadFileIpcHandlers() {
 function initDownloadCanboxTypesIpcHandlers() {
     ipcMain.handle('download-canbox-types', async () => {
         try {
-            const fs = require('fs');
-            const path = require('path');
-            const { app, dialog } = require('electron');
-            const logger = require('@modules/utils/logger');
 
             // 获取应用路径：开发环境使用项目根目录，打包后使用 app.getAppPath()
             let appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');

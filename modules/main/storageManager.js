@@ -2,6 +2,7 @@ const Store = require('electron-store');
 const path = require('path');
 const { app } = require('electron');
 const logger = require('@modules/utils/logger');
+const { getUsersBasePath } = require('@modules/main/pathManager');
 
 /**
  * 统一管理 electron-store 的配置和操作
@@ -9,8 +10,7 @@ const logger = require('@modules/utils/logger');
 class Storage {
     constructor(options = {}) {
         let cwd = options.cwd || 'Users';
-        const pathManager = require('./pathManager');
-        const customBase = pathManager.getUsersBasePath ? pathManager.getUsersBasePath() : null;
+        const customBase = getUsersBasePath();
         const defaultBase = app.getPath('userData');
 
         // 如果是绝对路径，直接使用
