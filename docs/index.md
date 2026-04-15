@@ -70,6 +70,7 @@ canbox/
 
 ### 3. 设计决策
 - **design-decisions/** - 技术方案、设计讨论、解决方案
+  - [Electron 进程模式与数据访问设计](./design-decisions/electron-process-modes.md) - Window 模式与 Childprocess 模式的进程架构差异及数据访问方案
   - [移动端与桌面端设计讨论](./design-decisions/mobile-desktop.md)
   - [操作反馈UI设计讨论](./design-decisions/operation-feedback.md)
 
