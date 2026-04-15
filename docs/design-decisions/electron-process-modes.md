@@ -128,21 +128,34 @@ function parseArgs() {
     return args;
 }
 
-// 设置全局语言，供 api.js 使用
-process.env.CANBOX_LANGUAGE = args.language;
+// 设置全局 userData 路径环境变量
+process.env.CANBOX_USER_DATA = args.userData;
 ```
 
-在 `api.js` 中优先使用环境变量：
+在 `pathManager.js` 中优先使用环境变量：
+
+```javascript
+// pathManager.js
+function getCanboxUserDataPath() {
+    // 子进程模式：使用主进程传递的 userData 路径
+    if (process.env.CANBOX_USER_DATA) {
+        return process.env.CANBOX_USER_DATA;
+    }
+    // Window 模式或主进程：使用默认路径
+    return app.getPath('userData');
+}
+
+function getUsersBasePath() {
+    const customRoot = getCustomDataRoot();
+    return customRoot || getCanboxUserDataPath();
+}
+```
+
+在 `api.js` 中直接使用 store（路径已正确）：
 
 ```javascript
 // api.js
 function getCanboxLanguage() {
-    // Childprocess 模式：从环境变量获取（由 childprocessEntry.js 设置）
-    if (process.env.CANBOX_LANGUAGE) {
-        return process.env.CANBOX_LANGUAGE;
-    }
-    
-    // Window 模式：直接读取 store
     try {
         const canboxStore = getCanboxStore();
         const savedLanguage = canboxStore.get('language');
@@ -191,8 +204,8 @@ function getCanboxLanguage() {
 | 数据类型 | 访问方式 | 示例 |
 |---------|---------|------|
 | App 独立数据 | 直接使用 Store/DB | `new ElectronStore(appId, name)` |
-| Canbox 全局配置 | 通过主进程获取 | 命令行参数传递 |
-| 运行时信息 | 环境变量或 IPC | `process.env.CANBOX_XXX` |
+| Canbox 全局配置 | 直接使用 Store | `getCanboxStore().get('key')`（路径已统一） |
+| 运行时信息 | 环境变量 | `process.env.CANBOX_USER_DATA` |
 
 ## 相关文件
 
@@ -205,7 +218,62 @@ function getCanboxLanguage() {
 
 理解两种进程模式的差异是设计 Canbox API 的关键：
 
-1. **Window 模式**：`api.js` 与主 Canbox 同进程，可直接访问全局配置
-2. **Childprocess 模式**：`api.js` 在独立进程中，必须通过外部方式（命令行参数）获取全局配置
+1. **Window 模式**：`api.js` 与主 Canbox 同进程，`app.getPath('userData')` 返回正确路径
+2. **Childprocess 模式**：`api.js` 在独立进程中，`app.getPath('userData')` 返回错误路径
 
-任何需要访问 canbox 全局配置的 API，都必须考虑这种差异，不能直接使用 `getCanboxStore()`。
+**统一解决方案**：通过 `--user-data` 命令行参数将主进程的 userData 路径传递给子进程，子进程通过 `CANBOX_USER_DATA` 环境变量设置，使 `pathManager.js` 中的所有路径函数都能返回正确的 canbox 数据目录。
+
+这样所有 API（`getLocale`、`store`、`db` 等）都可以直接使用，无需考虑运行模式差异。
+
+## 模块加载顺序问题
+
+### 问题描述
+
+在 `childprocessEntry.js` 中，某些模块在 `CANBOX_USER_DATA` 环境变量设置之前就被 `require` 了，导致这些模块使用了错误的路径。
+
+**问题示例**：
+
+```javascript
+// childprocessEntry.js
+
+// 第 23 行：此时 CANBOX_USER_DATA 还未设置！
+const winState = require('@modules/main/winState');
+
+// 第 56-63 行：参数解析并设置环境变量
+const args = parseArgs();
+if (userData) {
+    process.env.CANBOX_USER_DATA = userData;  // ← 环境变量在这里才设置
+}
+
+// 当 winState 被加载时：
+// - CANBOX_USER_DATA 是 undefined
+// - getCanboxUserDataPath() 走到 else 分支
+// - 使用 app.getPath('userData') → ~/.config/Electron/
+```
+
+### 解决方案
+
+**延迟加载依赖环境变量的模块**：
+
+```javascript
+// childprocessEntry.js
+
+// 不在这里加载 winState
+// const winState = require('@modules/main/winState');  // ❌ 不要在这里
+
+// ... 参数解析和环境变量设置 ...
+
+function createAppWindow() {
+    // 在 CANBOX_USER_DATA 设置之后再加载
+    const winState = require('@modules/main/winState');  // ✅ 正确位置
+
+    // 使用 winState...
+}
+```
+
+### 需要注意的模块
+
+| 模块 | 问题 | 解决方案 |
+|------|------|---------|
+| `winState` | 在环境变量设置前加载 | 延迟到 `createAppWindow()` 中加载 |
+| 其他在 `app.whenReady()` 后使用的模块 | 通常无问题 | 在 IPC handler 中加载即可 |

@@ -20,8 +20,9 @@ console.log('[childprocessEntry] logger loaded');
 const processBridge = require('@modules/childprocess/processBridge');
 console.log('[childprocessEntry] processBridge loaded');
 
-const winState = require('@modules/main/winState');
-console.log('[childprocessEntry] winState loaded');
+// 注意：winState 不能在这里加载，因为它依赖 CANBOX_USER_DATA 环境变量
+// 必须在 parseArgs() 和设置环境变量之后才能加载
+// 参见 childprocessEntry.js 中后续的 winState 加载逻辑
 
 // 清除启动时控制台的警告
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
@@ -45,13 +46,22 @@ function parseArgs() {
         } else if (arg === '--dev-tools') {
             // --dev-tools 没有值，默认为 'detach'
             args.devTools = 'detach';
+        } else if (arg.startsWith('--user-data=')) {
+            args.userData = arg.substring('--user-data='.length);
         }
     });
     return args;
 }
 
 const args = parseArgs();
-const { appId, appPath, devTag = false, devTools = null } = args;
+const { appId, appPath, devTag = false, devTools = null, userData } = args;
+
+// 设置全局 userData 路径环境变量，供 pathManager.js 使用
+// 这样子进程中的 store 和 db 等 API 能正确访问 canbox 的数据目录
+if (userData) {
+    process.env.CANBOX_USER_DATA = userData;
+    logger.info(`[childprocess] CANBOX_USER_DATA set to: ${userData}`);
+}
 
 console.log('[childprocessEntry] Starting with appId:', appId, 'appPath:', appPath, 'devTag:', devTag, 'devTools:', devTools);
 
@@ -111,6 +121,9 @@ process.on('uncaughtException', (error) => {
 
 function createAppWindow() {
     try {
+        // 在 CANBOX_USER_DATA 环境变量设置之后加载 winState
+        const winState = require('@modules/main/winState');
+
         // 读取 app.json
         const appJsonPath = path.join(appPath, 'app.json');
         if (!fs.existsSync(appJsonPath)) {

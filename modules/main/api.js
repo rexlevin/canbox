@@ -11,6 +11,41 @@ const sudo = require('@modules/core/sudo');
 const { getCanboxStore } = require('@modules/main/storageManager');
 
 /**
+ * 获取 canbox 当前语言设置
+ * 从 canbox store 中读取，支持 Window 模式和 Childprocess 模式
+ * Childprocess 模式下通过 CANBOX_USER_DATA 环境变量确保路径正确
+ * @returns {string} 当前语言代码
+ */
+function getCanboxLanguage() {
+    try {
+        const canboxStore = getCanboxStore();
+        const savedLanguage = canboxStore.get('language');
+        if (savedLanguage) {
+            return savedLanguage;
+        }
+    } catch (error) {
+        logger.error('[api.js] Failed to get language from canbox store:', error);
+    }
+
+    // 默认根据系统语言
+    const systemLocale = app.getLocale();
+    return systemLocale.startsWith('zh') ? 'zh-CN' : 'en-US';
+}
+
+/**
+ * 初始化 i18n 相关的 IPC 消息处理逻辑
+ * @description 处理来自 App 的语言相关请求
+ */
+function initI18nIpcHandlers() {
+    // 获取当前语言（同步）
+    ipcMain.on('i18n-get-locale', (event) => {
+        const language = getCanboxLanguage();
+        logger.debug('[api.js] i18n-get-locale: returning {}', language);
+        event.returnValue = language;
+    });
+}
+
+/**
  * 初始化数据库相关的 IPC 消息处理逻辑
  */
 function initDbIpcHandlers() {
@@ -290,6 +325,7 @@ function initApiIpcHandlers() {
     initReadFileIpcHandlers();
     initDownloadCanboxTypesIpcHandlers();
     initSudoIpcHandlers();
+    initI18nIpcHandlers();
 }
 
 module.exports = initApiIpcHandlers;

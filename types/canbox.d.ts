@@ -211,6 +211,16 @@ declare global {
              * @param callback - 窗口关闭时执行的回调函数
              */
             registerCloseCallback: (callback: () => void) => void;
+
+            /**
+             * 获取 canbox 当前语言设置
+             * 支持 Window 模式和 Childprocess 模式
+             * @returns string - 当前语言代码，如 'zh-CN' 或 'en-US'
+             * @example
+             * const locale = canbox.getLocale();
+             * console.log(locale); // 'zh-CN'
+             */
+            getLocale: () => string;
         };
     }
 
