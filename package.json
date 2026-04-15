@@ -1,5 +1,6 @@
 {
     "name": "canbox",
+    "productName": "canbox",
     "private": true,
     "version": "0.3.4",
     "description": "Canbox - Some Useful Apps",
