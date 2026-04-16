@@ -11,6 +11,20 @@ const logger = require('@modules/utils/logger');
  */
 
 /**
+ * 获取 canbox 的 userData 路径
+ * 优先使用环境变量 CANBOX_USER_DATA（子进程模式），否则使用 app.getPath('userData')
+ * @returns {string} userData 路径
+ */
+function getCanboxUserDataPath() {
+    // 子进程模式：使用主进程传递的 userData 路径
+    if (process.env.CANBOX_USER_DATA) {
+        return process.env.CANBOX_USER_DATA;
+    }
+    // Window 模式或主进程：使用默认路径
+    return app.getPath('userData');
+}
+
+/**
  * 获取自定义数据根路径
  * @returns {string|null} 返回 customDataRoot 或 null
  */
@@ -18,7 +32,7 @@ function getCustomDataRoot() {
     try {
         const configStore = new Store({
             name: 'config',
-            cwd: app.getPath('userData')
+            cwd: getCanboxUserDataPath()
         });
         return configStore.get('customDataRoot'); // 返回 "/data/myfolder" 或 null
     } catch (error) {
@@ -33,7 +47,7 @@ function getCustomDataRoot() {
  */
 function getUsersBasePath() {
     const customRoot = getCustomDataRoot();
-    return customRoot || app.getPath('userData');
+    return customRoot || getCanboxUserDataPath();
 }
 
 /**

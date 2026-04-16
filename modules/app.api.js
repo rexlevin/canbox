@@ -343,11 +343,6 @@ const electronStore = {
     get: (name, key) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendElectronStore('get', { name, key });
-            // const ret = ipcRenderer.sendSync('msg-electronStore', {
-            //     type: 'get',
-            //     key,
-            //     appId: window.appId
-            // });
             ret.success ? resolve(ret.data) : reject(ret.msg);
         });
     },
@@ -362,12 +357,6 @@ const electronStore = {
     set: (name, key, value) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendElectronStore('set', { name, key, value });
-            // const ret = ipcRenderer.sendSync('msg-electronStore', {
-            //     type: 'set',
-            //     key,
-            //     value,
-            //     appId: window.appId
-            // });
             ret.success ? resolve() : reject(ret.msg);
         });
     },
@@ -381,11 +370,6 @@ const electronStore = {
     delete: (name, key) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendElectronStore('delete', { name, key });
-            // const ret = ipcRenderer.sendSync('msg-electronStore', {
-            //     type: 'delete',
-            //     key,
-            //     appId: window.appId
-            // });
             ret.success ? resolve() : reject(ret.msg);
         });
     },
@@ -398,14 +382,26 @@ const electronStore = {
     clear: (name) => {
         return new Promise((resolve, reject) => {
             const ret = ipcSendElectronStore('clear', { name });
-            // const ret = ipcRenderer.sendSync('msg-electronStore', {
-            //     type: 'clear',
-            //     appId: window.appId
-            // });
             ret.success ? resolve() : reject(ret.msg);
         });
     }
 }
+
+/**
+ * 获取 canbox 当前语言设置
+ * @returns {string} 当前语言代码，如 'zh-CN' 或 'en-US'
+ * @example
+ * const locale = canbox.getLocale();
+ * console.log(locale); // 'zh-CN'
+ */
+const getLocale = () => {
+    if (!window.appId) {
+        throw new Error('appId is not set');
+    }
+    const language = ipcRenderer.sendSync('i18n-get-locale');
+    console.log('[canbox.getLocale] Returning language:', language);
+    return language;
+};
 
 /**
  * 对 app 暴露的 api
@@ -423,6 +419,7 @@ window.canbox = {
     dialog,
     store: electronStore,
     registerCloseCallback,
+    getLocale,
 };
 
 // 从 additionalArguments 读取 ID（主进程传递）

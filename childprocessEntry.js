@@ -12,22 +12,11 @@ moduleAlias.addAliases({
 });
 moduleAlias();
 
-console.log('[childprocessEntry] moduleAlias configured');
-
-const logger = require('@modules/utils/logger');
-console.log('[childprocessEntry] logger loaded');
-
-const processBridge = require('@modules/childprocess/processBridge');
-console.log('[childprocessEntry] processBridge loaded');
-
-const winState = require('@modules/main/winState');
-console.log('[childprocessEntry] winState loaded');
-
 // 清除启动时控制台的警告
 process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 app.disableHardwareAcceleration();
 
-// 解析命令行参数
+// 解析命令行参数（必须在加载其他模块之前，以便设置 CANBOX_USER_DATA 环境变量）
 function parseArgs() {
     const args = {};
     process.argv.forEach(arg => {
@@ -39,34 +28,48 @@ function parseArgs() {
             args.devTag = true;
         } else if (arg.startsWith('--dev-tools=')) {
             const value = arg.substring('--dev-tools='.length);
-            // 验证 dev-tools 值是否有效，无效则默认为 'detach'
             const validModes = ['right', 'bottom', 'undocked', 'detach'];
             args.devTools = value && validModes.includes(value) ? value : 'detach';
         } else if (arg === '--dev-tools') {
-            // --dev-tools 没有值，默认为 'detach'
             args.devTools = 'detach';
+        } else if (arg.startsWith('--user-data=')) {
+            args.userData = arg.substring('--user-data='.length);
         }
     });
     return args;
 }
 
 const args = parseArgs();
-const { appId, appPath, devTag = false, devTools = null } = args;
+const { appId, appPath, devTag = false, devTools = null, userData } = args;
+
+// 设置全局 userData 路径环境变量，供 pathManager.js 使用
+// 这样后续加载的 logger、store 等模块能正确访问 canbox 的数据目录
+if (userData) {
+    process.env.CANBOX_USER_DATA = userData;
+}
 
 console.log('[childprocessEntry] Starting with appId:', appId, 'appPath:', appPath, 'devTag:', devTag, 'devTools:', devTools);
 
 if (!appId || !appPath) {
-    logger.error('[childprocess] Missing required arguments: --app-id or --app-path');
-    console.error('[childprocess] Missing required arguments');
+    console.error('[childprocess] Missing required arguments: --app-id or --app-path');
     app.quit();
     process.exit(1);
 }
 
 // 将 appPath 设置到 process.env，供 win.js 使用
 process.env.CANBOX_APP_PATH = path.dirname(appPath);
-console.log('[childprocessEntry] Set CANBOX_APP_PATH:', process.env.CANBOX_APP_PATH);
 
-console.log('[childprocessEntry] Arguments validated, setting up app...');
+// 设置完成后，再加载依赖 pathManager 的模块
+const logger = require('@modules/utils/logger');
+const processBridge = require('@modules/childprocess/processBridge');
+
+// 记录环境变量设置
+if (userData) {
+    logger.info(`[childprocess] CANBOX_USER_DATA set to: ${userData}`);
+}
+
+// 注意：winState 不能在这里加载，因为它依赖 CANBOX_USER_DATA 环境变量
+// 必须在 createAppWindow() 函数内加载
 
 // 子进程不使用单实例锁，因为子进程本身就是作为独立实例运行的
 // 如果同一个APP被多次启动，主进程会通过 isAppRunning 检查并聚焦已有窗口
@@ -77,7 +80,6 @@ console.log('[childprocessEntry] Arguments validated, setting up app...');
 // }
 
 app.whenReady().then(() => {
-    console.log('[childprocessEntry] app.whenReady() called');
     logger.info(`[childprocess] Starting app ${appId}, dev: ${devTag}, path: ${appPath}`);
 
     // 初始化API IPC处理器（子进程需要提供Canbox API）
@@ -111,6 +113,9 @@ process.on('uncaughtException', (error) => {
 
 function createAppWindow() {
     try {
+        // 在 CANBOX_USER_DATA 环境变量设置之后加载 winState
+        const winState = require('@modules/main/winState');
+
         // 读取 app.json
         const appJsonPath = path.join(appPath, 'app.json');
         if (!fs.existsSync(appJsonPath)) {

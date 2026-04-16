@@ -1,4 +1,6 @@
-const { ipcMain } = require('electron');
+const { ipcMain, app, dialog } = require('electron');
+const fs = require('fs');
+const path = require('path');
 const logger = require('@modules/utils/logger');
 
 const winFactory = require('@modules/core/win');
@@ -6,6 +8,42 @@ const dialogFactory = require('@modules/core/dialog');
 const ElectronStore = require('@modules/core/electronStore');
 const DB = require('@modules/core/db');
 const sudo = require('@modules/core/sudo');
+const { getCanboxStore } = require('@modules/main/storageManager');
+
+/**
+ * 获取 canbox 当前语言设置
+ * 从 canbox store 中读取，支持 Window 模式和 Childprocess 模式
+ * Childprocess 模式下通过 CANBOX_USER_DATA 环境变量确保路径正确
+ * @returns {string} 当前语言代码
+ */
+function getCanboxLanguage() {
+    try {
+        const canboxStore = getCanboxStore();
+        const savedLanguage = canboxStore.get('language');
+        if (savedLanguage) {
+            return savedLanguage;
+        }
+    } catch (error) {
+        logger.error('[api.js] Failed to get language from canbox store:', error);
+    }
+
+    // 默认根据系统语言
+    const systemLocale = app.getLocale();
+    return systemLocale.startsWith('zh') ? 'zh-CN' : 'en-US';
+}
+
+/**
+ * 初始化 i18n 相关的 IPC 消息处理逻辑
+ * @description 处理来自 App 的语言相关请求
+ */
+function initI18nIpcHandlers() {
+    // 获取当前语言（同步）
+    ipcMain.on('i18n-get-locale', (event) => {
+        const language = getCanboxLanguage();
+        logger.debug('[api.js] i18n-get-locale: returning {}', language);
+        event.returnValue = language;
+    });
+}
 
 /**
  * 初始化数据库相关的 IPC 消息处理逻辑
@@ -152,9 +190,6 @@ function initSudoIpcHandlers() {
 function initReadFileIpcHandlers() {
     ipcMain.handle('msg-readFile', async (event, args) => {
         try {
-            const fs = require('fs');
-            const path = require('path');
-            const { app } = require('electron');
 
             // 获取应用路径：开发环境使用项目根目录，打包后使用 app.getAppPath()
             let appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');
@@ -199,10 +234,6 @@ function initReadFileIpcHandlers() {
 function initDownloadCanboxTypesIpcHandlers() {
     ipcMain.handle('download-canbox-types', async () => {
         try {
-            const fs = require('fs');
-            const path = require('path');
-            const { app, dialog } = require('electron');
-            const logger = require('@modules/utils/logger');
 
             // 获取应用路径：开发环境使用项目根目录，打包后使用 app.getAppPath()
             let appPath = app.isPackaged ? app.getAppPath() : path.join(__dirname, '../../');
@@ -294,6 +325,7 @@ function initApiIpcHandlers() {
     initReadFileIpcHandlers();
     initDownloadCanboxTypesIpcHandlers();
     initSudoIpcHandlers();
+    initI18nIpcHandlers();
 }
 
 module.exports = initApiIpcHandlers;
