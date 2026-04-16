@@ -115,16 +115,6 @@ class ProcessBridge {
             }, 30000);
         });
     }
-
-    /**
-     * 主进程向所有子进程广播消息
-     * @param {string} channel - 通道名
-     * @param {Object} data - 数据
-     */
-    broadcastToAllChildprocesses(channel, data) {
-        // 实现广播逻辑
-        logger.info(`Broadcasting to all childprocesses: ${channel}`);
-    }
 }
 
 module.exports = new ProcessBridge();
