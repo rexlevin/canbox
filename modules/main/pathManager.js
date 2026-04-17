@@ -1,7 +1,6 @@
 const { app } = require('electron');
 const Store = require('electron-store');
 const path = require('path');
-const logger = require('@modules/utils/logger');
 
 /**
  * app.getPath('userData') 指向 userData 目录：
@@ -36,7 +35,8 @@ function getCustomDataRoot() {
         });
         return configStore.get('customDataRoot'); // 返回 "/data/myfolder" 或 null
     } catch (error) {
-        logger.error('Failed to read customDataRoot / 读取 customDataRoot 失败: {}', error.message);
+        // 不使用 logger，避免循环依赖
+        console.error('Failed to read customDataRoot:', error.message);
         return null;
     }
 }

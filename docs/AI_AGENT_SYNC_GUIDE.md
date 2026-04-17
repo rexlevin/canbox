@@ -8,18 +8,39 @@
 
 ```
 docs/changes/
-├── README.md              # 变更系统说明
-├── template.md           # 变更记录模板（核心参考）
-├── active/               # 进行中的变更（如无则空）
-└── completed/            # 已完成变更（目标位置）
-    ├── README.md         # 汇总文档（需要更新）
+├── index.md               # 变更索引（总览）
+├── README.md              # 变更系统说明（保留兼容）
+├── template.md            # 变更记录模板（核心参考）
+├── active/                # 进行中的变更
+│   └── README.md          # 进行中变更索引
+│   └── [变更名称].md      # 进行中变更文档
+└── completed/             # 已完成变更
+    ├── index.md           # 汇总文档（需要更新）
     ├── 2025-03-04-logging-unification.md
     ├── 2026-02-11-custom-user-data-path.md
-    ├── 2026-02-12-improve-migration-restart-ux.md
-    ├── 2026-03-14-log-viewer-window.md
-    ├── 2026-03-21-auto-update.md
-    └── 2026-03-25-app-list-ui-upgrade.md
+    └── ...
 ```
+
+## 两种工作流程
+
+### 流程 A：进行中的变更
+
+当变更刚开始创建（尚未完成）时：
+
+1. 在 `openspec/changes/<name>/` 创建变更产出物（proposal, design, tasks 等）
+2. 在 `docs/changes/active/` 创建变更文档：`[变更名称].md`
+3. 更新 `docs/changes/active/README.md` 添加新变更
+4. 状态标记为 `🚧 进行中`
+
+### 流程 B：已完成的变更
+
+当变更完成后：
+
+1. 归档变更：`mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>`
+2. 将 `docs/changes/active/[变更名称].md` 移动到 `docs/changes/completed/`
+3. 重命名为 `YYYY-MM-DD-变更名称.md`
+4. 更新状态为 `✅ 已完成`
+5. 更新 `docs/changes/index.md` 索引
 
 ## 文档结构
 
@@ -31,9 +52,9 @@ docs/changes/
 ## 📋 基本信息
 | 项目 | 内容 |
 |------|------|
-| **状态** | ✅ 已完成 |
-| **日期** | YYYY-MM-DD |
+| **状态** | ✅ 已完成 / 🚧 进行中 / 📋 计划中 |
 | **优先级** | ⭐⭐⭐⭐⭐ |
+| ...
 
 ## 🎯 变更概述
 [1-2句话概括]
@@ -52,79 +73,111 @@ docs/changes/
 [描述测试情况]
 
 ## 🔗 相关文档
-- [OpenSpec详细设计](../../../openspec/changes/archive/[变更目录名]/)
+- [OpenSpec详细设计](../../../openspec/changes/[archive/]变更目录名/)
 ```
-
-## 同步步骤（手动流程）
-
-### 步骤1：准备工作
-1. 确认变更已归档：`openspec/changes/archive/[变更目录名]`
-2. 目录名格式应为：`YYYY-MM-DD-变更名称`
-3. 获取变更日期：从目录名前10字符提取（YYYY-MM-DD）
-
-### 步骤2：提取信息
-打开以下文件提取内容：
-
-1. **`proposal.md`**：
-   - **标题**：第一行的 `# 提案：XXX`
-   - **问题描述**：`## 为什么` 部分
-   - **目标**：`## 目标` 部分
-
-2. **`design.md`**：
-   - **解决方案**：`## 解决方案` 部分
-   - **架构设计**：`## 架构设计` 部分
-
-3. **`tasks.md`**：
-   - **修改的文件**：所有文件路径（格式如 `modules/apps/AppManager.js`）
-   - **关键实现步骤**：主要任务列表
 
 ## 详细步骤
 
-### 步骤1：确认变更已完成
-- 变更已归档到 `openspec/changes/archive/`
-- 目录名格式：`YYYY-MM-DD-变更名称`
+### 流程 A：创建进行中变更文档
 
-### 步骤2：提取关键信息
-打开以下文件提取信息：
+#### 步骤1：创建变更目录
+```
+docs/changes/active/
+```
 
-**A. `proposal.md`**
-- 标题：第一行的 `# 提案：XXX`
-- 问题描述：`## 为什么` 部分
-- 目标：`## 目标` 部分
+#### 步骤2：提取信息
+打开以下文件提取内容：
 
-**B. `design.md`**
-- 解决方案：`## 解决方案` 部分
-- 架构设计：`## 架构设计` 部分
+1. **`proposal.md`**：
+   - 变更概述
+   - 目标
+   - 风险评估
 
-**C. `tasks.md`**
-- 修改的文件：所有文件路径
-- 关键实现步骤
+2. **`design.md`**：
+   - 解决方案
+   - 技术选型
+   - 架构设计
 
-### 步骤3：创建文档
-1. **复制模板**：参考 `docs/changes/template.md` 的结构
-2. **填写内容**：将步骤2提取的信息填入对应位置
-3. **确定文件名**：`YYYY-MM-DD-变更名称.md`
-   - 示例：`2026-04-05-new-feature.md`
-4. **保存位置**：`docs/changes/completed/`
+3. **`tasks.md`**：
+   - 关键实现步骤
+   - 任务清单
 
-### 步骤4：更新汇总文档
-编辑 `docs/changes/completed/README.md`：
+#### 步骤3：创建文档
+1. 参考 `template.md` 结构
+2. 填写内容
+3. 状态标记为 `🚧 进行中`
+4. 保存位置：`docs/changes/active/[变更名称].md`
 
-1. **更新按时间排序**：
-   - 找到 `### 2026年变更` 部分
-   - 按时间倒序添加新条目（最新在最前）
-   - 格式：`1. **YYYY-MM-DD** - [标题](./文件名.md)`
+#### 步骤4：更新索引
+编辑 `docs/changes/active/README.md`：
+- 添加新变更条目
+- 更新变更数量
 
-2. **更新按类别分类**：
-   - 根据变更类型（用户体验改进/系统功能增强/开发体验优化）添加到相应表格
-   - 更新表格中的变更数量
+---
 
-3. **更新统计数字**：
-   - 总变更数
-   - 各年份变更数
-   - 各类别变更数
+### 流程 B：归档已完成变更
 
-4. **更新最后更新日期**：页面顶部的日期改为当前日期
+#### 步骤1：归档 OpenSpec 变更
+```bash
+mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
+```
+
+#### 步骤2：移动变更文档
+```bash
+mv docs/changes/active/[变更名称].md docs/changes/completed/YYYY-MM-DD-变更名称.md
+```
+
+#### 步骤3：更新文档内容
+- 状态改为 `✅ 已完成`
+- 添加完成日期
+- 更新 OpenSpec 链接（添加 archive/ 路径）
+- 添加测试验证结果
+
+#### 步骤4：更新索引
+编辑 `docs/changes/index.md`：
+1. 更新总变更数
+2. 按时间倒序添加新条目
+3. 更新各类别统计
+4. 更新最后更新日期
+
+## 示例
+
+### 示例 A：创建进行中变更
+
+假设刚创建新变更 `upgrade-electron-41`：
+
+1. 创建目录：`docs/changes/active/`
+2. 创建文件：`docs/changes/active/upgrade-electron-41.md`
+```markdown
+# Upgrade Electron 41 - 进行中
+
+## 📋 基本信息
+| 项目 | 内容 |
+|------|------|
+| **状态** | 🚧 进行中 |
+| ...
+
+## 🎯 变更概述
+将 Electron 从 35.7.2 升级到 41.2.1
+...
+
+## 🔗 相关文档
+- [OpenSpec详细设计](../../../openspec/changes/upgrade-electron-41/)
+```
+
+3. 更新 `docs/changes/active/README.md`
+
+---
+
+### 示例 B：归档已完成变更
+
+假设 `upgrade-electron-41` 已完成：
+
+1. 归档：`mv openspec/changes/upgrade-electron-41 openspec/changes/archive/2026-04-16-upgrade-electron-41`
+2. 移动：`mv docs/changes/active/upgrade-electron-41.md docs/changes/completed/2026-04-16-upgrade-electron-41.md`
+3. 更新文档状态为 `✅ 已完成`
+4. 更新链接：`../../../openspec/changes/archive/2026-04-16-upgrade-electron-41/`
+5. 更新 `docs/changes/index.md`
 
 ## 文档质量标准
 
@@ -136,81 +189,24 @@ docs/changes/
 - [ ] 修改的文件列表
 - [ ] 相关文档链接
 
-### 推荐包含
-- [ ] 实施细节
-- [ ] 测试验证
-- [ ] 影响评估
-- [ ] 成功指标
+### 进行中状态额外要求
+- [ ] 预计时间
+- [ ] 任务清单（待完成）
 
-### 格式要求
-- 使用Markdown格式
-- 标题层级正确
-- 表格对齐
-- 链接有效
-
-## 示例：同步一个新变更
-
-假设刚完成变更 `2026-04-05-new-feature`：
-
-### 1. 准备工作
-- 变更目录：`openspec/changes/archive/2026-04-05-new-feature/`
-- 文件名：`2026-04-05-new-feature.md`
-- 保存位置：`docs/changes/completed/`
-
-### 2. 提取信息
-```bash
-# 查看目录结构
-ls openspec/changes/archive/2026-04-05-new-feature/
-
-# 读取关键文件
-cat openspec/changes/archive/2026-04-05-new-feature/proposal.md | head -20
-cat openspec/changes/archive/2026-04-05-new-feature/design.md | head -30
-cat openspec/changes/archive/2026-04-05-new-feature/tasks.md | head -50
-```
-
-### 3. 创建文档
-参考 `docs/changes/template.md` 创建：
-```markdown
-# New Feature - 2026-04-05
-
-## 📋 基本信息
-| 项目 | 内容 |
-|------|------|
-| **状态** | ✅ 已完成 |
-| **日期** | 2026-04-05 |
-| **优先级** | ⭐⭐⭐⭐ |
-
-## 🎯 变更概述
-[从proposal.md提取1-2句话概括]
-
-## 🔍 问题描述
-[从proposal.md的"## 为什么"部分复制]
-
-## 💡 解决方案
-[从design.md的"## 解决方案"部分复制]
-
-## 📁 修改的文件
-- modules/apps/AppManager.js
-- src/components/NewFeature.vue
-- ... [从tasks.md复制]
-
-## 🧪 测试验证
-[简要描述测试情况]
-
-## 🔗 相关文档
-- [OpenSpec详细设计](../../../openspec/changes/archive/2026-04-05-new-feature/)
-```
-
-### 4. 更新汇总
-编辑 `docs/changes/completed/README.md`：
-- 在"2026年变更"列表开头添加：`1. **2026-04-05** - [New Feature](./2026-04-05-new-feature.md)`
-- 更新总变更数
-- 更新最后更新日期为当前日期
+### 已完成状态额外要求
+- [ ] 实际时间
+- [ ] 测试验证结果
+- [ ] 成功指标达成情况
 
 ## 常见问题
 
+### Q: 进行中和已完成的区别？
+A: 
+- **进行中**：正在开发，可能随时变更
+- **已完成**：已实现并测试通过，已归档
+
 ### Q: 变更目录名不包含日期怎么办？
-A: 使用归档日期或当前日期，格式：`YYYY-MM-DD`
+A: 使用当前日期，格式：`YYYY-MM-DD`
 
 ### Q: 如何确定优先级？
 A: 参考：
@@ -220,22 +216,22 @@ A: 参考：
 - ⭐⭐：小改进、文档更新
 - ⭐：微小调整
 
-### Q: 更新汇总文档时顺序错了怎么办？
-A: 确保按时间倒序排列（最新的在最前面）
-
 ### Q: 可以批量同步历史变更吗？
 A: 可以，为每个历史变更重复此流程
 
 ## 工作流程总结
 
-当您需要同步一个OpenSpec变更时：
-
 ```
-1. 确认变更已归档到 openspec/changes/archive/
-2. 提取关键信息（proposal.md, design.md, tasks.md）
-3. 参考 template.md 创建新文档
-4. 保存到 docs/changes/completed/[YYYY-MM-DD-名称].md
-5. 更新 docs/changes/completed/README.md
+创建新变更时：
+1. openspec-cn new change "<name>"
+2. 创建 docs/changes/active/[name].md
+3. 更新 docs/changes/active/README.md
+
+变更完成时：
+1. openspec-cn archive "<name>"
+2. 移动文档到 docs/changes/completed/
+3. 更新文档状态和链接
+4. 更新 docs/changes/index.md
 ```
 
 ## 质量检查清单
@@ -245,10 +241,10 @@ A: 可以，为每个历史变更重复此流程
 - [ ] 基本信息表完整
 - [ ] 所有链接有效
 - [ ] 文件名格式正确
-- [ ] 汇总文档已更新
+- [ ] 索引文件已更新
 - [ ] 最后更新日期已修改
 
 ---
 
-*最后更新：2026-04-07*
-*版本：2.0（纯指导版）*
+*最后更新：2026-04-16*
+*版本：3.0（支持进行中/已完成双流程）*
