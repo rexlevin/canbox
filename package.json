@@ -2,13 +2,13 @@
     "name": "canbox",
     "productName": "canbox",
     "private": true,
-    "version": "0.3.4",
+    "version": "0.3.5",
     "description": "Canbox - Some Useful Apps",
     "main": "main.js",
     "author": "lizl6",
     "license": "Apache-2.0",
     "engines": {
-        "node": ">=22.0.0"
+        "node": ">=24.0.0"
     },
     "scripts": {
         "dev": "vite --host 0.0.0.0 --port 12333",
@@ -93,7 +93,7 @@
         "axios": "^1.11.0",
         "electron-store": "^8.2.0",
         "electron-sudo": "^4.0.12",
-        "electron-updater": "^6.8.3",
+        "electron-updater": "^6.3.9",
         "element-plus": "^2.8.3",
         "fs-extra": "^11.3.0",
         "glob": "^11.0.3",
@@ -118,7 +118,8 @@
     },
     "devDependencies": {
         "@vitejs/plugin-vue": "^5.0.4",
-        "electron": "^35.7.2",
+        "electron": "^41.2.1",
+        "electron-builder": "^25.1.8",
         "vite": "^5.4.6"
     }
 }
