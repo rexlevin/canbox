@@ -15,6 +15,7 @@ const pathManager = require('./modules/main/pathManager');
 const userDataMigration = require('./modules/main/userDataMigration');
 const logIpcHandler = require('./modules/ipc/logIpcHandler');
 const { getAutoUpdateManager, IPC_CHANNELS } = require('./modules/auto-update');
+const { FileTaskIPC } = require('./modules/file-task');
 
 // 默认语言为英文
 let currentLanguage = 'en-US';
@@ -86,6 +87,9 @@ function getDocumentsDir() {
  * 初始化所有 IPC 消息处理逻辑
  */
 function initIpcHandlers() {
+    // 初始化 FileTask IPC handlers
+    FileTaskIPC.register();
+
     // i18n 相关 IPC 处理
     ipcMain.handle('i18n-get-language', () => {
         return currentLanguage;

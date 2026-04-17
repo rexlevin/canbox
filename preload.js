@@ -245,6 +245,51 @@ contextBridge.exposeInMainWorld(
         menu: {
             getLast: () => ipcRenderer.invoke('menu-get-last'),
             setLast: (menuName) => ipcRenderer.invoke('menu-set-last', menuName)
+        },
+        fileTask: {
+            // 创建任务
+            create: (type, uid, options) =>
+                ipcRenderer.invoke('file-task-create', type, uid, options),
+
+            // 取消任务
+            cancel: (taskId) =>
+                ipcRenderer.invoke('file-task-cancel', taskId),
+
+            // 重试任务
+            retry: (taskId) =>
+                ipcRenderer.invoke('file-task-retry', taskId),
+
+            // 获取所有任务
+            getAll: () =>
+                ipcRenderer.invoke('file-task-get-all'),
+
+            // 获取运行中的任务
+            getRunning: () =>
+                ipcRenderer.invoke('file-task-get-running'),
+
+            // 获取任务统计
+            getStats: () =>
+                ipcRenderer.invoke('file-task-get-stats'),
+
+            // 监听任务更新
+            onUpdate: (callback) =>
+                ipcRenderer.on('file-task-update', (event, task) => callback(task)),
+
+            // 监听任务列表更新
+            onListUpdate: (callback) =>
+                ipcRenderer.on('file-task-list', (event, tasks) => callback(tasks)),
+
+            // 移除任务更新监听
+            offUpdate: () =>
+                ipcRenderer.removeAllListeners('file-task-update'),
+
+            // 移除任务列表监听
+            offListUpdate: () =>
+                ipcRenderer.removeAllListeners('file-task-list'),
+
+            // 请求推送完整列表
+            requestList: () =>
+                ipcRenderer.invoke('file-task-request-list'),
         }
     }
 );
