@@ -87,8 +87,7 @@ function getDocumentsDir() {
  * 初始化所有 IPC 消息处理逻辑
  */
 function initIpcHandlers() {
-    // 初始化 FileTask IPC handlers
-    FileTaskIPC.register();
+
 
     // i18n 相关 IPC 处理
     ipcMain.handle('i18n-get-language', () => {

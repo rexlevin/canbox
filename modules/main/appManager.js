@@ -9,6 +9,12 @@ const { handleError } = require('@modules/ipc/errorHandler')
 const DateFormat = require('@modules/utils/DateFormat');
 const logger = require('@modules/utils/logger');
 const fsUtils = require('@modules/utils/fs-utils');
+const FileTaskManager = require('@modules/file-task/file-task-manager');
+
+// 注册 app-import 执行器
+FileTaskManager.getInstance().registerExecutor('app-import', async (task) => {
+    await handleAppImportTask(task);
+});
 
 // 延迟加载 sharp 的缓存，只在需要时动态加载（仅 Windows）
 let sharpCache = null;
@@ -232,97 +238,88 @@ function getAppDevInfo(uid) {
 }
 
 /**
- * 导入应用
- * @param {*} event 
- * @param {string} zipPath 
- * @param {string} uid 
- * @returns 
+ * 底层导入逻辑（可从多个任务中调用）
+ * @param {Object} task - 任务对象
+ * @param {string} zipPath - zip 文件路径
+ * @param {string} uid - 应用 UID
+ * @returns {Promise<{success: boolean}>}
  */
-async function handleImportApp(event, zipPath, uid) {
-    logger.info('{} handleImportApp: {}', uid||'', zipPath);
-    // 如果uid有值说明是从repos下载的，importTag为false，否则是导入的，importTag为true
-    const importTag = !uid?.trim();
+async function importAppFromZip(task, zipPath, uid) {
+    const taskManager = FileTaskManager.getInstance();
+
+    logger.info('{} importAppFromZip: {}', uid, zipPath);
+
     try {
-        // 检查是否有 getAppTempPath() 目录，有则删除，使用 original-fs 来操作 asar 文件
-        if (fs.existsSync(getAppTempPath())) {
-            logger.info(`${getAppTempPath()} 目录开始删除`);
-            originalFs.rmSync(getAppTempPath(), { recursive: true, force: true });
-            logger.info(`${getAppTempPath()} 目录已删除（使用 original-fs）`);
-        } else {
-            logger.info(`${getAppTempPath()} 目录不存在，跳过删除`);
-        }
-        // 创建 getAppTempPath() 目录
-        fs.mkdirSync(getAppTempPath(), { recursive: true });
+        taskManager.updateProgress(task.id, 10, '开始导入...', 0);
 
-        // 将文件复制到 getAppTempPath() 目录下
-        const uuid = uid || uuidv4().replace(/-/g, '');
-        const targetPath = path.join(getAppTempPath(), `${uuid}.zip`);
+        // 将文件复制到 task.tempPath 目录下
+        const targetPath = path.join(task.tempPath, `${uid}.zip`);
+        fs.copyFileSync(zipPath, targetPath);
 
-        if (!fs.existsSync(zipPath)) {
-            return handleError(new Error(`源文件不存在: ${zipPath}`), 'handleImportApp');
-        }
-        const absoluteAsarPath = path.resolve(zipPath);
-        if (!fs.existsSync(absoluteAsarPath)) {
-            const error =  new Error(`解析后的路径无效: ${absoluteAsarPath}`);
-            return handleError(error, 'handleImportApp');
-        }
-        const targetDir = path.dirname(targetPath);
-        if (!fs.existsSync(targetDir)) {
-            fs.mkdirSync(targetDir, { recursive: true });
-        }
-        // 使用 fs.copyFileSync 替代命令行复制
-        fs.copyFileSync(absoluteAsarPath, targetPath);
-        logger.debug('ZIP 文件复制成功 / ZIP file copied successfully');
+        taskManager.updateProgress(task.id, 20, '文件复制成功，开始解压...', 0);
 
-        // 将 getAppTempPath() 目录下的 zip 文件解压
+        // 解压
         if (process.platform === 'win32') {
-            execSync(`powershell -Command "Expand-Archive -Path '${targetPath}' -DestinationPath '${getAppTempPath()}'"`, { stdio: 'inherit' });
+            execSync(`powershell -Command "Expand-Archive -Path '${targetPath}' -DestinationPath '${task.tempPath}'"`, { stdio: 'inherit' });
         } else {
-            execSync(`unzip -o "${targetPath}" -d "${getAppTempPath()}"`, { stdio: 'inherit' });
+            execSync(`unzip -o "${targetPath}" -d "${task.tempPath}"`, { stdio: 'inherit' });
         }
-        logger.info('解压成功 / Extraction successful: {}', getAppTempPath());
+
+        taskManager.updateProgress(task.id, 40, '解压成功，处理文件...', 0);
+
         // 删除 zip 文件
         fs.rmSync(targetPath, { recursive: true, force: true });
-        // 重命名文件：检查 getAppTempPath() 下的文件和目录，如果当前存在 xxxx.asar 则改为 ${uuid}.asar，xxxx.asar.unpacked 改为 ${uuid}.asar.unpacked
-        const files = fs.readdirSync(getAppTempPath());
+
+        // 重命名文件
+        const files = fs.readdirSync(task.tempPath);
         files.forEach(file => {
-            logger.debug('file / 文件:', file);
             if (file.endsWith('.asar')) {
-                fs.renameSync(path.join(getAppTempPath(), file), path.join(getAppTempPath(), `${uuid}.asar`));
+                fs.renameSync(path.join(task.tempPath, file), path.join(task.tempPath, `${uid}.asar`));
             } else if (file.endsWith('.asar.unpacked')) {
-                fs.renameSync(path.join(getAppTempPath(), file), path.join(getAppTempPath(), `${uuid}.asar.unpacked`));
+                fs.renameSync(path.join(task.tempPath, file), path.join(task.tempPath, `${uid}.asar.unpacked`));
             }
         });
-        // 将 getAppTempPath() 下的所有文件移动到 getAppPath() 下，使用 original-fs 来操作 asar 文件
-        if (fs.existsSync(getAppTempPath())) {
-            if (!fs.existsSync(getAppPath())) {
-                fs.mkdirSync(getAppPath(), { recursive: true });
-            }
-            // 使用 original-fs 复制文件，然后删除源文件（避免跨目录移动的权限问题）
-            const filesToMove = originalFs.readdirSync(getAppTempPath());
-            filesToMove.forEach(file => {
-                const srcPath = path.join(getAppTempPath(), file);
-                const destPath = path.join(getAppPath(), file);
-                // 先复制文件，设置权限
-                originalFs.cpSync(srcPath, destPath, { dereference: true });
-                // 删除源文件
-                originalFs.rmSync(srcPath, { recursive: true, force: true });
-            });
-            // 删除临时目录
-            originalFs.rmSync(getAppTempPath(), { recursive: true, force: true });
+
+        taskManager.updateProgress(task.id, 60, '文件处理完成，读取配置...', 0);
+
+        // 从临时目录的 asar 文件中读取 app.json
+        // 注意：必须使用 fs（Electron 修补版）而不是 originalFs（原始版不支持 asar）
+        const asarInTemp = path.join(task.tempPath, `${uid}.asar`);
+        const appJsonPath = path.join(asarInTemp, 'app.json');
+        logger.info('从临时目录读取 app.json: {}', appJsonPath);
+        const appJsonContent = fs.readFileSync(appJsonPath, 'utf8');
+        const appJson = JSON.parse(appJsonContent);
+        logger.info('app.json 读取成功: {}', JSON.stringify(appJson));
+
+        taskManager.updateProgress(task.id, 70, '配置读取完成，移动到目标目录...', 0);
+
+        // 移动到目标目录
+        const targetAppPath = getAppPath();
+        logger.info('目标应用路径: {}', targetAppPath);
+        if (!fs.existsSync(targetAppPath)) {
+            fs.mkdirSync(targetAppPath, { recursive: true });
+            logger.info('创建目标应用路径成功');
         }
 
-        logger.debug(DateFormat.format(new Date(), 'yyyy-MM-dd HH:mm:ss'));
-        logger.debug(DateFormat.format(new Date()));
+        const filesToMove = fs.readdirSync(task.tempPath);
+        logger.info('临时目录中的文件: {}', filesToMove);
+        filesToMove.forEach(file => {
+            const srcPath = path.join(task.tempPath, file);
+            const destPath = path.join(targetAppPath, file);
+            logger.info('移动文件: {} -> {}', srcPath, destPath);
+            // 使用 originalFs.renameSync 直接移动（避免 Electron fs 的 asar 特殊处理）
+            if (originalFs.existsSync(destPath)) {
+                originalFs.rmSync(destPath, { recursive: true, force: true });
+            }
+            originalFs.renameSync(srcPath, destPath);
+            logger.info('移动文件成功');
+        });
 
-        const asarTargetPath = path.join(getAppPath(), `${uuid}.asar`);
-        // 读取 asar 文件内部内容
-        let appJsonContent;
-        appJsonContent = fs.readFileSync(path.join(asarTargetPath, 'app.json'), 'utf8');
-        const appJson = JSON.parse(appJsonContent);
+        taskManager.updateProgress(task.id, 80, '移动完成，保存配置...', 0);
 
+        // 保存到 store
         let appsConfig = getAppsStore().get('default') || {};
-        appsConfig[uuid] = {
+        appsConfig[uid] = {
             id: appJson.id || '',
             name: appJson.name || '',
             version: appJson.version || '',
@@ -330,41 +327,86 @@ async function handleImportApp(event, zipPath, uid) {
             author: appJson.author || '',
             logo: appJson.logo || ''
         };
-        if (importTag) {
-            appsConfig[uuid].sourceTag = 'import';
-            appsConfig[uuid].importTime = DateFormat.format(new Date());
+        if (task.options.importTag) {
+            appsConfig[uid].sourceTag = 'import';
+            appsConfig[uid].importTime = DateFormat.format(new Date());
         }
         getAppsStore().set('default', appsConfig);
 
-        // 复制logo文件到目标目录
+        taskManager.updateProgress(task.id, 90, '配置保存完成，复制 logo...', 0);
+
+        // 复制 logo（从目标路径的 asar 文件中读取）
+        // 使用 fs.readFileSync + fs.writeFileSync 而不是 fs.copyFileSync（后者对 asar 内文件支持不好）
+        const asarTargetPath = path.join(targetAppPath, `${uid}.asar`);
         const logoPathInAsar = path.join(asarTargetPath, appJson.logo);
         const logoExt = path.extname(appJson.logo).toLowerCase();
-        const logoPathInTarget = path.join(getAppPath(), `${uuid}${logoExt}`);
+        const logoPathInTarget = path.join(getAppPath(), `${uid}${logoExt}`);
 
         try {
-            fs.copyFileSync(logoPathInAsar, logoPathInTarget);
-            logger.debug('Logo 文件复制成功 / Logo file copied successfully');
+            logger.info('复制 logo: {} -> {}', logoPathInAsar, logoPathInTarget);
+            // 使用 readFileSync + writeFileSync 从 asar 内复制文件
+            const logoData = fs.readFileSync(logoPathInAsar);
+            fs.writeFileSync(logoPathInTarget, logoData);
+            logger.info('复制 logo 成功');
 
             // Windows 下生成 ICO 格式的图标
             if (process.platform === 'win32' && (logoExt === '.png' || logoExt === '.jpg' || logoExt === '.jpeg')) {
-                const icoPath = path.join(getAppPath(), `${uuid}.ico`);
-                logger.debug('开始生成 ICO 文件 / Starting to generate ICO file...');
+                const icoPath = path.join(getAppPath(), `${uid}.ico`);
                 await convertToIco(logoPathInTarget, icoPath);
             }
         } catch (err) {
             logger.error('复制logo文件失败 / Failed to copy logo file: {}', err.message || err);
         }
 
-        return { success: true, uuid };
+        taskManager.updateProgress(task.id, 100, '导入完成 / Import completed', 0);
+
+        return { success: true, uuid: uid };
+
     } catch (error) {
         logger.error('导入应用失败 / Failed to import app: {}', error.message || error);
-        return handleError(error, 'handleImportApp');
+        throw error;
     }
+}
+
+/**
+ * 处理 app-import 任务（调用底层导入逻辑）
+ * @param {Object} task - 任务对象
+ */
+async function handleAppImportTask(task) {
+    const { source: zipPath, uid: inputUid, importTag } = task.options;
+    const uid = inputUid || uuidv4().replace(/-/g, '');
+    
+    // 调用底层导入逻辑
+    return await importAppFromZip(task, zipPath, uid);
+}
+
+/**
+ * 导入应用（创建任务或执行导入）
+ * @param {*} event
+ * @param {string} zipPath - zip 文件路径
+ * @param {string} uid - 应用 UID（可选，不提供则自动生成）
+ * @param {Object} options - 选项
+ * @param {boolean} options.skipTaskCreation - 是否跳过任务创建（从其他任务中调用时使用）
+ * @returns
+ */
+async function handleImportApp(event, zipPath, uid, options = {}) {
+    // 如果从其他任务中调用，直接执行导入逻辑，不创建新任务
+    if (options.skipTaskCreation) {
+        const task = options.task; // 当前任务对象
+        return await handleAppImportTask(task);
+    }
+
+    // 否则创建新任务
+    const taskManager = FileTaskManager.getInstance();
+    const task = await taskManager.createTask('app-import', uid || uuidv4().replace(/-/g, ''), { source: zipPath });
+    return { success: true, taskId: task.id };
 }
 
 module.exports = {
     getAllApps,
     getAppInfo,
     getAppDevInfo,
-    handleImportApp
+    handleImportApp,
+    handleAppImportTask,
+    importAppFromZip
 }

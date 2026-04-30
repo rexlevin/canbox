@@ -13,6 +13,7 @@ const fsUtils = require('@modules/utils/fs-utils');
 const DateFormat = require('@modules/utils/DateFormat');
 
 const { handleImportApp } = require('@modules/main/appManager');
+const FileTaskManager = require('@modules/file-task/file-task-manager');
 
 const { getReposPath, getReposTempPath } = require('@modules/main/pathManager');
 const REPOS_PATH = getReposPath();
@@ -407,31 +408,30 @@ async function removeRepo(uid) {
 }
 
 /**
- * 从仓库下载应用
+ * 处理仓库下载任务
+ * @param {Object} task - 任务对象
  */
-async function downloadAppsFromRepo(uid) {
+async function handleRepoDownloadTask(task) {
+    const taskManager = FileTaskManager.getInstance();
+    const { uid } = task;
+
     const repoInfo = (getReposStore().get('default') || {})[uid];
     if (!repoInfo) {
-        return handleError(new Error('仓库不存在'), 'downloadAppsFromRepo');
+        throw new Error('仓库不存在 / Repository not found');
     }
 
+    const { repo, id, version } = repoInfo;
+    const fileName = `${id}-${version}.zip`;
+
+    // 构建下载 URL
+    const downloadUrl = repoUtils.getDownloadUrl(repo, version, fileName);
+    logger.info(`从 ${repo} 下载 ${fileName}... ${downloadUrl}`);
+
     try {
-        const { repo, id, version } = repoInfo;
-        const fileName = `${id}-${version}.zip`;
+        taskManager.updateProgress(task.id, 0, `开始下载 ${fileName}...`, 0);
 
-        // 解析仓库平台并构建下载 URL
-        const downloadUrl = repoUtils.getDownloadUrl(repo, version, fileName);
-        logger.info(`从 ${repo} 下载 ${fileName}...${downloadUrl}`);
-
-        // 确保 REPOS_TEMP_PATH 目录存在
-        if (!fs.existsSync(REPOS_TEMP_PATH)) {
-            fs.mkdirSync(REPOS_TEMP_PATH, { recursive: true });
-        } else {
-            fsUtils.clearDir(REPOS_TEMP_PATH);
-        }
-
-        // 下载文件
-        const zipPath = path.join(REPOS_TEMP_PATH, fileName);
+        // 1. 下载文件到任务临时目录
+        const zipPath = path.join(task.tempPath, fileName);
         const response = await axios({
             method: 'get',
             url: downloadUrl,
@@ -447,48 +447,54 @@ async function downloadAppsFromRepo(uid) {
             writer.on('error', reject);
         });
 
-        // 调用 handleImportApp 导入应用
-        const ret = await handleImportApp(null, zipPath, uid);
+        taskManager.updateProgress(task.id, 50, '下载完成，开始导入...', 0);
+
+        // 2. 导入应用（直接调用 importAppFromZip，不创建新任务）
+        const { importAppFromZip } = require('@modules/main/appManager');
+        const ret = await importAppFromZip(task, zipPath, uid);
         if (!ret.success) {
-            fs.unlinkSync(zipPath); // 确保临时文件被删除
-            return handleError(ret.msg, 'downloadAppsFromRepo');
+            throw new Error(ret.msg || '导入失败 / Import failed');
         }
-        // 删除临时文件
-        fs.unlinkSync(zipPath);
 
+        taskManager.updateProgress(task.id, 90, '导入完成，更新状态...', 0);
 
-        // 更新下载标识
+        // 3. 更新仓库下载状态
         const reposStore = getReposStore();
         const reposData = reposStore.get('default') || {};
         reposData[uid] = { ...repoInfo, downloaded: true, downloadTime: DateFormat.format(new Date()), toUpdate: false };
         reposStore.set('default', reposData);
 
-        // 返回下载结果
-        return { success: true };
+        taskManager.updateProgress(task.id, 100, '已完成 / Completed', 0);
+
     } catch (error) {
-        if (error.code === 'ECONNABORTED') {
-            return handleError(new Error('下载超时'), 'downloadAppsFromRepo');
+        // 清理临时文件
+        const zipPath = path.join(task.tempPath, fileName);
+        if (fs.existsSync(zipPath)) {
+            fs.unlinkSync(zipPath);
         }
-        return handleError(new Error('下载应用失败: ' + error.message), 'downloadAppsFromRepo');
+        throw error;
     }
 }
 
-// function clearDir(dirPath) {
-//     for (const file of fs.readdirSync(dirPath)) {
-//         const fullPath = path.join(dirPath, file);
-//         if (fs.lstatSync(fullPath).isDirectory()) {
-//             clearDir(fullPath); // 递归删除子目录
-//             fs.rmdirSync(fullPath);
-//         } else {
-//             fs.unlinkSync(fullPath); // 删除文件
-//         }
-//     }
-// }
+/**
+ * 从仓库下载应用（创建任务）
+ */
+async function downloadAppsFromRepo(uid) {
+    const taskManager = FileTaskManager.getInstance();
+    const task = await taskManager.createTask('repo-download', uid);
+    return { success: true, taskId: task.id };
+}
 
 /**
  * 初始化仓库管理相关的 IPC 处理逻辑
  */
 function initRepoHandlers() {
+    // 注册 repo-download 执行器
+    const taskManager = FileTaskManager.getInstance();
+    taskManager.registerExecutor('repo-download', async (task) => {
+        await handleRepoDownloadTask(task);
+    });
+
     // 添加app源
     ipcMain.handle('add-app-repo', async (event, repoUrl) => {
         try {

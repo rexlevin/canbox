@@ -135,12 +135,16 @@ class FileTaskManager {
 
             // 查找对应的执行器
             const executor = this.executors.get(task.type);
-            if (executor) {
-                await executor(task);
-            } else {
-                // 没有注册执行器，任务保持 pending 状态
-                console.warn(`No executor registered for task type: ${task.type}`);
+            if (!executor) {
+                await this.failTask(task.id, `No executor registered for task type: ${task.type}`);
+                return;
             }
+
+            // 调用执行器
+            await executor(task);
+
+            // 执行器成功，完成任务
+            await this.completeTask(task.id);
         } catch (error) {
             await this.failTask(task.id, error.message || error);
         }
@@ -212,6 +216,9 @@ class FileTaskManager {
         task.completedAt = Date.now();
         task.error = error;
         task.progressText = 'Failed';
+
+        // 清理临时目录
+        await this.fileOp.cleanupTemp(task.tempPath);
 
         this.pushTaskUpdate(task);
 
