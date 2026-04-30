@@ -79,6 +79,9 @@ if (userData) {
 //     process.exit(0);
 // }
 
+// Fallback 定时器 ID，用于 Wayland 等环境下 ready-to-show 不触发的兜底
+let readyToShowFallbackTimer = null;
+
 app.whenReady().then(() => {
     logger.info(`[childprocess] Starting app ${appId}, dev: ${devTag}, path: ${appPath}`);
 
@@ -261,10 +264,24 @@ function createAppWindow() {
             if (state?.isMax) {
                 appWin.maximize();
             }
+
+            // Wayland 环境下 ready-to-show 可能不触发，设置 fallback 兜底显示
+            readyToShowFallbackTimer = setTimeout(() => {
+                if (!appWin.isDestroyed() && !appWin.isVisible()) {
+                    logger.info(`[${appId}] Fallback: ready-to-show not triggered, forcing show window`);
+                    appWin.show();
+                }
+            }, 1000);
         });
 
         // 准备显示
         appWin.on('ready-to-show', () => {
+            // 清除 fallback 定时器，避免重复显示
+            if (readyToShowFallbackTimer) {
+                clearTimeout(readyToShowFallbackTimer);
+                readyToShowFallbackTimer = null;
+            }
+
             logger.info(`[${appId}] ready-to-show`);
             if (!state?.isMax) {
                 appWin.show();

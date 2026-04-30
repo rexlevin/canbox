@@ -375,6 +375,9 @@ const createWindow = () => {
         logger.error('Failed to load: {} - {}', errorCode, errorDescription);
     });
 
+    // Fallback 定时器 ID，用于 Wayland 等环境下 ready-to-show 不触发的兜底
+    let readyToShowFallbackTimer = null;
+
     // 添加页面加载完成后的日志
     win.webContents.on('did-finish-load', () => {
         console.log('Page loaded successfully');
@@ -394,6 +397,15 @@ const createWindow = () => {
         } catch (error) {
             logger.error('Failed to apply zoom factor:', error);
         }
+
+        // Wayland 环境下 ready-to-show 可能不触发，设置 fallback 兜底显示
+        // 如果 ready-to-show 先触发，会清除这个定时器
+        readyToShowFallbackTimer = setTimeout(() => {
+            if (!win.isDestroyed() && !win.isVisible()) {
+                logger.info('[main.js] Fallback: ready-to-show not triggered, forcing show window');
+                win.show();
+            }
+        }, 1000);
     });
 
     // 添加 console 日志输出到主进程
@@ -408,6 +420,12 @@ const createWindow = () => {
     }
 
     win.on('ready-to-show', () => {
+        // 清除 fallback 定时器，避免重复显示
+        if (readyToShowFallbackTimer) {
+            clearTimeout(readyToShowFallbackTimer);
+            readyToShowFallbackTimer = null;
+        }
+
         const PackageJson = require('./package.json');
         const devTitle = isDev ? ' - develop' : '';
         win.setTitle(`${PackageJson.description} - v${PackageJson.version}${devTitle}`);
