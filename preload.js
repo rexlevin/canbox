@@ -272,16 +272,30 @@ contextBridge.exposeInMainWorld(
                 ipcRenderer.invoke('file-task-get-stats'),
 
             // 监听任务更新
-            onUpdate: (callback) =>
-                ipcRenderer.on('file-task-update', (event, task) => callback(task)),
+            onUpdate: (callback) => {
+                const wrapper = (event, task) => callback(task);
+                ipcRenderer.on('file-task-update', wrapper);
+                // 保存 wrapper 引用，以便 offUpdate 能正确移除
+                if (!window.__fileTaskCallbacks) {
+                    window.__fileTaskCallbacks = new Map();
+                }
+                window.__fileTaskCallbacks.set(callback, wrapper);
+            },
 
             // 监听任务列表更新
             onListUpdate: (callback) =>
                 ipcRenderer.on('file-task-list', (event, tasks) => callback(tasks)),
 
             // 移除任务更新监听
-            offUpdate: () =>
-                ipcRenderer.removeAllListeners('file-task-update'),
+            offUpdate: (callback) => {
+                if (callback && window.__fileTaskCallbacks) {
+                    const wrapper = window.__fileTaskCallbacks.get(callback);
+                    if (wrapper) {
+                        ipcRenderer.removeListener('file-task-update', wrapper);
+                        window.__fileTaskCallbacks.delete(callback);
+                    }
+                }
+            },
 
             // 移除任务列表监听
             offListUpdate: () =>

@@ -6,6 +6,7 @@ const FileTaskState = require('./file-task-state');
 const FileTaskQueue = require('./file-task-queue');
 const FileOperation = require('./file-operation');
 const FileTaskIPC = require('./file-task-ipc');
+const logger = require('@modules/utils/logger');
 
 class FileTaskManager {
     /**
@@ -68,7 +69,9 @@ class FileTaskManager {
         const id = `${type}-${uid}-${Date.now()}`;
 
         // 准备临时空间
+        logger.info(`[FileTaskManager] createTask: 准备临时空间 type=${type}, uid=${uid}`);
         const tempPath = await this.fileOp.prepareTempSpace(type, uid);
+        logger.info(`[FileTaskManager] createTask: 临时空间准备完成 ${tempPath}`);
 
         const task = {
             id,
@@ -109,15 +112,18 @@ class FileTaskManager {
     async processQueue(type) {
         // 检查是否有正在执行的任务
         if (this.queue.isRunning(type, this.tasks)) {
+            logger.info(`[FileTaskManager] 队列 ${type} 有正在执行的任务，跳过`);
             return;
         }
 
         // 取出下一个任务
         const task = this.queue.dequeue(type);
         if (!task) {
+            logger.info(`[FileTaskManager] 队列 ${type} 没有待执行的任务`);
             return;
         }
 
+        logger.info(`[FileTaskManager] 开始执行任务: ${task.id}, type: ${task.type}`);
         await this.executeTask(task);
     }
 
@@ -126,27 +132,42 @@ class FileTaskManager {
      * @param {Object} task - 任务对象
      */
     async executeTask(task) {
+        // 确保 task 是 this.tasks 中的同一个引用
+        const existingTask = this.tasks.get(task.id);
+        if (existingTask !== task) {
+            logger.warn(`[FileTaskManager] executeTask: 任务引用不一致，强制使用 this.tasks 中的版本`);
+            task = existingTask;
+        }
+
         // 更新状态为 preparing
-        await this.updateStatus(task.id, FileTaskState.PREPARING);
+        task.status = FileTaskState.PREPARING;
+        task.startedAt = Date.now();
+        this.pushTaskUpdate(task);
 
         try {
-            task.startedAt = Date.now();
-            this.pushTaskUpdate(task);
-
             // 查找对应的执行器
             const executor = this.executors.get(task.type);
+            logger.info(`[FileTaskManager] 查找 executor: type=${task.type}, found=${!!executor}, registered executors: ${Array.from(this.executors.keys()).join(', ')}`);
+            
             if (!executor) {
-                await this.failTask(task.id, `No executor registered for task type: ${task.type}`);
+                task.status = FileTaskState.FAILED;
+                task.error = `No executor registered for task type: ${task.type}`;
+                this.pushTaskUpdate(task);
                 return;
             }
 
             // 调用执行器
+            logger.info(`[FileTaskManager] 开始调用 executor: ${task.type}`);
             await executor(task);
+            logger.info(`[FileTaskManager] executor 执行完成: ${task.type}, 当前状态: ${task.status}`);
 
             // 执行器成功，完成任务
-            await this.completeTask(task.id);
+            logger.info(`[FileTaskManager] 准备调用 completeTask: ${task.id}`);
+            await this.completeTask(task);
+            logger.info(`[FileTaskManager] completeTask 执行完成: ${task.id}`);
         } catch (error) {
-            await this.failTask(task.id, error.message || error);
+            logger.error(`[FileTaskManager] executor 执行失败: ${error.message}`, error.stack);
+            await this.failTask(task, error.message || error);
         }
     }
 
@@ -183,20 +204,25 @@ class FileTaskManager {
 
     /**
      * 完成任务
-     * @param {string} taskId - 任务ID
+     * @param {Object} task - 任务对象
      */
-    async completeTask(taskId) {
-        const task = this.tasks.get(taskId);
-        if (!task) return;
+    async completeTask(task) {
+        if (!task || !task.id) {
+            logger.error(`[FileTaskManager] completeTask: 任务不存在`);
+            return;
+        }
 
-        task.status = FileTaskState.COMPLETED;
+        logger.info(`[FileTaskManager] completeTask: 开始完成任务 ${task.id}`);
+        task.status = 'completed';  // 直接用字符串，避免模块缓存问题
         task.completedAt = Date.now();
         task.progress = 100;
         task.progressText = 'Completed';
 
         // 清理临时目录
+        logger.info(`[FileTaskManager] completeTask: 清理临时目录 ${task.tempPath}`);
         await this.fileOp.cleanupTemp(task.tempPath);
 
+        logger.info(`[FileTaskManager] completeTask: 推送任务更新, status=${task.status}`);
         this.pushTaskUpdate(task);
 
         // 继续处理队列
@@ -205,25 +231,35 @@ class FileTaskManager {
 
     /**
      * 任务失败
-     * @param {string} taskId - 任务ID
+     * @param {Object} task - 任务对象
      * @param {string} error - 错误信息
      */
-    async failTask(taskId, error) {
-        const task = this.tasks.get(taskId);
-        if (!task) return;
+    async failTask(task, error) {
+        if (!task || !task.id) {
+            logger.error(`[FileTaskManager] failTask: 任务不存在`);
+            return;
+        }
 
-        task.status = FileTaskState.FAILED;
-        task.completedAt = Date.now();
-        task.error = error;
-        task.progressText = 'Failed';
+        // 再次确认 task 引用
+        const currentTask = this.tasks.get(task.id);
+        logger.info(`[FileTaskManager] failTask: 开始, task.id=${task.id}, task===currentTask=${task === currentTask}, currentTask.status=${currentTask ? currentTask.status : 'N/A'}`);
+        
+        logger.info(`[FileTaskManager] failTask: 任务失败 ${task.id}, error: ${error}`);
+        logger.info(`[FileTaskManager] failTask: FileTaskState.FAILED = ${FileTaskState.FAILED}, typeof = ${typeof FileTaskState.FAILED}`);
+        currentTask.status = 'failed';  // 直接用字符串，避免模块缓存问题
+        logger.info(`[FileTaskManager] failTask: 赋值后 status = ${currentTask.status}`);
+        currentTask.completedAt = Date.now();
+        currentTask.error = error;
+        currentTask.progressText = 'Failed';
 
         // 清理临时目录
-        await this.fileOp.cleanupTemp(task.tempPath);
+        await this.fileOp.cleanupTemp(currentTask.tempPath);
 
-        this.pushTaskUpdate(task);
+        logger.info(`[FileTaskManager] failTask: 推送任务更新, status=${currentTask.status}, error=${currentTask.error}`);
+        this.pushTaskUpdate(currentTask);
 
         // 继续处理队列
-        await this.processQueue(task.type);
+        await this.processQueue(currentTask.type);
     }
 
     /**

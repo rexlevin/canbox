@@ -7,6 +7,7 @@ const { handleError } = require('@modules/ipc/errorHandler');
 const logger = require('@modules/utils/logger');
 const { handleImportApp, getAppInfo, getAppDevInfo } = require('@modules/main/appManager');
 const { deleteShortcuts } = require('@modules/main/shortcutManager');
+const { syncReposDownloadStatus } = require('@modules/ipc/repoIpcHandler');
 const i18nModule = require('../../locales');
 const { getCanboxStore } = require('@modules/main/storageManager');
 
@@ -219,6 +220,11 @@ class AppManagerIpcHandler {
                 // 从存储中删除
                 delete appsData[id];
                 store.set('default', appsData);
+
+                // 同步更新仓库的下载状态（非开发应用才需要）
+                if (!devTag) {
+                    await syncReposDownloadStatus(id, false);
+                }
 
                 logger.info(`应用已删除: ${id}, devTag: ${devTag}`);
                 return { success: true };

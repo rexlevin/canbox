@@ -3,6 +3,7 @@
  * 注册 IPC handlers，推送任务更新到前端
  */
 const { ipcMain, BrowserWindow } = require('electron');
+const logger = require('@modules/utils/logger');
 
 let taskManager = null;
 
@@ -31,6 +32,7 @@ function getMainWindow() {
 function pushTaskUpdate(task) {
     const win = getMainWindow();
     if (win) {
+        logger.info(`[FileTaskIPC] pushTaskUpdate: id=${task.id}, status=${task.status}, error=${task.error}, taskKeys=${Object.keys(task).join(',')}`);
         win.webContents.send('file-task-update', task);
     }
 }

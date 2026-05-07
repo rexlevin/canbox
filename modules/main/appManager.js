@@ -304,6 +304,11 @@ async function importAppFromZip(task, zipPath, uid) {
         const filesToMove = fs.readdirSync(task.tempPath);
         logger.info('临时目录中的文件: {}', filesToMove);
         filesToMove.forEach(file => {
+            // 跳过 .zip 文件，只移动 asar 相关文件
+            if (file.endsWith('.zip')) {
+                logger.info('跳过 zip 文件: {}', file);
+                return;
+            }
             const srcPath = path.join(task.tempPath, file);
             const destPath = path.join(targetAppPath, file);
             logger.info('移动文件: {} -> {}', srcPath, destPath);
