@@ -120,6 +120,70 @@ class FileOperation {
     }
 
     /**
+     * 清理遗留的临时目录
+     * 应用启动时调用，清理上次异常退出时未清理的临时目录
+     *
+     * 清理规则：
+     * 1. 收集所有任务类型对应的临时基础路径（去重）：
+     *    - app-import / app-pack → {UsersPath}/temp/apps/
+     *    - repo-download / app-update → {UsersPath}/temp/repos/
+     * 2. 遍历每个基础路径下的子目录
+     * 3. 按命名规则匹配：仅清理名称以 "{任务类型}-" 开头的子目录
+     *    （如 app-import-xxx、repo-download-xxx），避免误删无关目录
+     * 4. 应用正常退出时 completeTask()/failTask() 会清理临时目录，
+     *    此方法仅处理进程异常崩溃/被杀时的残留
+     *
+     * @returns {Promise<{cleaned: string[], errors: string[]}>}
+     */
+    async cleanupStale() {
+        const cleaned = [];
+        const errors = [];
+
+        const TaskTypes = require('./file-task-state').TASK_TYPES;
+        const tempBasePaths = new Set();
+
+        // 收集所有临时基础路径
+        for (const type of Object.values(TaskTypes)) {
+            tempBasePaths.add(FileTaskPath.getTempBasePath(type));
+        }
+
+        for (const basePath of tempBasePaths) {
+            if (!fs.existsSync(basePath)) {
+                continue;
+            }
+
+            let entries;
+            try {
+                entries = fs.readdirSync(basePath);
+            } catch (err) {
+                errors.push(`读取目录失败 ${basePath}: ${err.message}`);
+                continue;
+            }
+
+            for (const entry of entries) {
+                const entryPath = path.join(basePath, entry);
+                try {
+                    const stat = fs.statSync(entryPath);
+                    if (stat.isDirectory()) {
+                        // 匹配任务临时目录格式: {type}-{uid}
+                        const isTaskTempDir = Object.values(TaskTypes).some(
+                            type => entry.startsWith(type + '-')
+                        );
+                        if (isTaskTempDir) {
+                            await fse.remove(entryPath);
+                            cleaned.push(entryPath);
+                        }
+                    }
+                } catch (err) {
+                    errors.push(`清理失败 ${entryPath}: ${err.message}`);
+                }
+            }
+        }
+
+        return { cleaned, errors };
+    }
+
+    /**
      * 读取目录内容
      * @param {string} dirPath - 目录路径
      * @returns {Promise<string[]>}

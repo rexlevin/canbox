@@ -50,23 +50,23 @@ idle → pending → preparing → downloading → extracting → moving → com
 ## 迁移计划
 
 ### Phase 1: 基础框架
-- [ ] FileTaskState 状态枚举
-- [ ] FileTaskPath 路径解析
-- [ ] FileOperation 文件操作服务
-- [ ] FileTaskQueue 任务队列
-- [ ] FileTaskManager 核心管理器
-- [ ] FileTaskIPC IPC 通信
+- [x] FileTaskState 状态枚举
+- [x] FileTaskPath 路径解析
+- [x] FileOperation 文件操作服务
+- [x] FileTaskQueue 任务队列
+- [x] FileTaskManager 核心管理器
+- [x] FileTaskIPC IPC 通信
 
 ### Phase 2: 前端集成
-- [ ] FileTaskStore
-- [ ] Preload 接口
+- [x] FileTaskStore
+- [x] Preload 接口
 
 ### Phase 3: 业务迁移
-- [ ] 迁移 repo-download
-- [ ] 迁移 app-import
+- [x] 迁移 repo-download
+- [x] 迁移 app-import
 
 ### Phase 4: 完善
-- [ ] 清理遗留临时目录
+- [x] 清理遗留临时目录
 - [ ] 综合测试
 
 ## 相关文档

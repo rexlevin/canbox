@@ -339,6 +339,29 @@ class FileTaskManager {
     pushTaskUpdate(task) {
         FileTaskIPC.pushTaskUpdate(task);
     }
+
+    /**
+     * 清理遗留的临时目录
+     * 应用启动时调用，清理上次异常退出时未清理的临时目录
+     * @returns {Promise<{cleaned: string[], errors: string[]}>}
+     */
+    async cleanupStaleTasks() {
+        logger.info('[FileTaskManager] cleanupStaleTasks: 开始清理遗留临时目录');
+        const result = await this.fileOp.cleanupStale();
+        if (result.cleaned.length > 0) {
+            logger.info('[FileTaskManager] cleanupStaleTasks: 已清理 {} 个遗留目录: {}',
+                result.cleaned.length, result.cleaned.join(', '));
+        }
+        if (result.errors.length > 0) {
+            logger.warn('[FileTaskManager] cleanupStaleTasks: 清理过程中有 {} 个错误: {}',
+                result.errors.length, result.errors.join('; '));
+        }
+        if (result.cleaned.length === 0 && result.errors.length === 0) {
+            logger.info('[FileTaskManager] cleanupStaleTasks: 无遗留临时目录需要清理');
+        }
+        logger.info('[FileTaskManager] cleanupStaleTasks: 清理完成');
+        return result;
+    }
 }
 
 module.exports = FileTaskManager;

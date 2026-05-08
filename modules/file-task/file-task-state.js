@@ -52,10 +52,21 @@ function isTerminalState(status) {
     return TERMINAL_STATES.includes(status);
 }
 
+/**
+ * 任务类型常量
+ */
+const TASK_TYPES = {
+    APP_IMPORT: 'app-import',
+    REPO_DOWNLOAD: 'repo-download',
+    APP_PACK: 'app-pack',
+    APP_UPDATE: 'app-update',
+};
+
 module.exports = {
     FileTaskState,
     RUNNING_STATES,
     TERMINAL_STATES,
+    TASK_TYPES,
     isRunningState,
     isTerminalState,
 };

@@ -165,6 +165,14 @@ if (!getTheLock) {
         cleanupOldLogs(retentionDays);
         logger.info('[main.js] Log cleanup executed with retention days: {}', retentionDays);
 
+        // 清理遗留的文件任务临时目录
+        const FileTaskManager = require('@modules/file-task/file-task-manager');
+        FileTaskManager.getInstance().cleanupStaleTasks().then(result => {
+            logger.info('[main.js] 遗留临时目录清理完成, cleaned={}, errors={}', result.cleaned.length, result.errors.length);
+        }).catch(err => {
+            logger.error('[main.js] 清理遗留临时目录失败: {}', err.message);
+        });
+
         // 初始化执行调度器
         executionDispatcher.init();
 
