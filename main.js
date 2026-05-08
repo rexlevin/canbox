@@ -438,7 +438,23 @@ const createWindow = () => {
         const devTitle = isDev ? ' - develop' : '';
         win.setTitle(`${PackageJson.description} - v${PackageJson.version}${devTitle}`);
 
-        win.show(); // 注释掉这行，即启动最小化到tray
+        // 解析首次启动的 --app-id 参数
+        let launchAppId = null;
+        for (const arg of process.argv) {
+            if (arg.startsWith('--app-id=')) {
+                launchAppId = arg.split('=')[1];
+                break;
+            }
+        }
+
+        if (launchAppId) {
+            // 指定 APP 启动：主窗口不显示，启动到 tray，直接加载 APP
+            win.hide();
+            win.setSkipTaskbar(true);
+            appLoader.loadApp(launchAppId, false, null);
+        } else {
+            win.show(); // 注释掉这行，即启动最小化到tray
+        }
 
         // 检查是否传入了 --dev-tools 参数
         let devToolsMode = null;
