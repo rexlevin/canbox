@@ -25,7 +25,7 @@ related_changes:
 
 ## 📋 添加新变更
 
-当创建新的 OpenSpec 变更时，应在 `active/` 目录下添加对应的文档：
+当创建新变更时，应在 `active/` 目录下添加对应的文档：
 
 ```bash
 # 文件命名格式

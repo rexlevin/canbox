@@ -79,8 +79,6 @@ Canbox 主进程 ──▶ i18n-get-locale IPC handler
 
 ## 🔗 相关文档
 
-### 设计文档
-- [OpenSpec 详细设计](../../../openspec/changes/app-locale-api/)
 
 ## 📈 成功指标
 

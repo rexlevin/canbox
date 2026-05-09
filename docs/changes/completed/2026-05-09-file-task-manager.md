@@ -70,8 +70,4 @@ idle → pending → preparing → downloading → extracting → moving → com
 - [x] 清理遗留临时目录
 - [x] 综合测试
 
-## 相关文档
 
-- [OpenSpec Proposal](../../openspec/changes/file-task-manager/proposal.md)
-- [OpenSpec Design](../../openspec/changes/file-task-manager/design.md)
-- [OpenSpec Tasks](../../openspec/changes/file-task-manager/tasks.md)

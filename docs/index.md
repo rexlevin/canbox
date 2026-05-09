@@ -118,7 +118,6 @@ canbox/
 
 - [GitHub 仓库](https://github.com/lizl6/canbox)
 - [问题追踪](https://github.com/lizl6/canbox/issues)
-- [OpenSpec 规范](../openspec/)
 
 ---
 

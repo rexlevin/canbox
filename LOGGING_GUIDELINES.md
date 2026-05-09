@@ -240,4 +240,3 @@ When submitting code, please check the following:
 ## 参考资料 / References
 
 - `modules/utils/logger.js` - logger 模块实现
-- OpenSpec 变更: `logging-unification` - 日志系统统一化项目

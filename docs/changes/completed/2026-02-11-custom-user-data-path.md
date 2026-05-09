@@ -136,8 +136,7 @@ Canbox的用户数据固定存储在系统默认位置：
 
 ## 🔗 相关文档
 
-### 设计文档
-- [OpenSpec设计文档](../../../openspec/changes/archive/2026-02-11-custom-user-data-path/design.md)
+
 
 ### API文档
 - [存储API文档](../../development/api-reference/store.md)
