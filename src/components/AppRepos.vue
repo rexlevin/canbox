@@ -174,6 +174,16 @@ onBeforeMount(() => {
   window.api.on('repo-data-updated', () => {
     fetchReposData()
   })
+  // 监听文件任务更新事件，任务完成时刷新数据
+  window.api.fileTask.onUpdate((task) => {
+    console.info('[AppRepos] 收到任务更新:', task.type, task.status)
+    if ((task.type === 'repo-download' || task.type === 'app-import') && task.status === 'completed') {
+      console.info('[AppRepos] 任务完成，刷新数据')
+      const appStore = useAppStore()
+      appStore.triggerAppListUpdate()
+      fetchReposData()
+    }
+  })
 })
 
 // 获取仓库列表
@@ -263,12 +273,36 @@ const downloadAppsFromRepo = async (uid) => {
       window.api.downloadAppsFromRepo(uid, resolve)
     })
 
-    console.info('downloadAppsFromRepo result: %o', result)
+    console.info('downloadAppsFromRepo result: %o', JSON.stringify(result))
     if (result.success) {
-      ElMessage.success(t('appRepo.downloadSuccess'))
-      const appStore = useAppStore()
-      appStore.triggerAppListUpdate()
-      fetchReposData()   // 更新仓库列表
+      // 显示下载中的提示
+      const taskId = result.taskId
+      const messageId = ElMessage.info(t('appRepo.downloading'))
+      
+      // 监听任务完成
+      await new Promise((resolve) => {
+        const checkTask = (task) => {
+          console.info('[downloadAppsFromRepo] 收到任务更新:', task.id, task.status)
+          if (task.id === taskId) {
+            // 根据任务状态显示不同提示
+            if (task.status === 'completed') {
+              console.info('[downloadAppsFromRepo] 准备显示成功提示')
+              ElMessage.success(t('appRepo.downloadSuccess'))
+              console.info('[downloadAppsFromRepo] 成功提示已显示')
+              const appStore = useAppStore()
+              appStore.triggerAppListUpdate()
+              fetchReposData()   // 更新仓库列表
+            } else if (task.status === 'failed') {
+              console.info('[downloadAppsFromRepo] 准备显示失败提示, error:', task.error)
+              ElMessage.error(task.error || t('appRepo.downloadFailed'))
+            }
+            messageId.close()
+            window.api.fileTask.offUpdate(checkTask)
+            resolve()
+          }
+        }
+        window.api.fileTask.onUpdate(checkTask)
+      })
     } else {
       ElMessage.error(result.msg || t('appRepo.downloadFailed'))
     }
@@ -338,7 +372,7 @@ const addAppRepo = async () => {
 
 const importAppRepos = () => {
   window.api.importAppRepos(ret => {
-    console.log('importAppRepos ret: %o', ret)
+    console.log('importAppRepos ret: %o', JSON.stringify(ret))
     if (ret.success && ret.msg === 'NoFileSelected') {
       // 用户取消操作，不显示任何提示
       return

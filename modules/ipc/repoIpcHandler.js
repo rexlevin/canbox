@@ -13,6 +13,7 @@ const fsUtils = require('@modules/utils/fs-utils');
 const DateFormat = require('@modules/utils/DateFormat');
 
 const { handleImportApp } = require('@modules/main/appManager');
+const FileTaskManager = require('@modules/file-task/file-task-manager');
 
 const { getReposPath, getReposTempPath } = require('@modules/main/pathManager');
 const REPOS_PATH = getReposPath();
@@ -407,88 +408,149 @@ async function removeRepo(uid) {
 }
 
 /**
- * 从仓库下载应用
+ * 处理仓库下载任务
+ * @param {Object} task - 任务对象
  */
-async function downloadAppsFromRepo(uid) {
+async function handleRepoDownloadTask(task) {
+    logger.info(`[Download] handleRepoDownloadTask 被调用, task.id=${task.id}, task.uid=${task.uid}`);
+    
+    const taskManager = FileTaskManager.getInstance();
+    const { uid } = task;
+    logger.info(`[Download] 获取到 uid: ${uid}`);
+
     const repoInfo = (getReposStore().get('default') || {})[uid];
     if (!repoInfo) {
-        return handleError(new Error('仓库不存在'), 'downloadAppsFromRepo');
+        throw new Error('仓库不存在 / Repository not found');
     }
 
+    const { repo, id, version } = repoInfo;
+    const fileName = `${id}-${version}.zip`;
+
+    // 构建下载 URL
+    const downloadUrl = repoUtils.getDownloadUrl(repo, version, fileName);
+    logger.info(`从 ${repo} 下载 ${fileName}... ${downloadUrl}`);
+
+    // 文件路径（声明在函数作用域，以便在 catch 块中访问）
+    let zipPath = null;
+
+    logger.info(`[Download] 准备进入 try 块`);
+
     try {
-        const { repo, id, version } = repoInfo;
-        const fileName = `${id}-${version}.zip`;
+        logger.info(`[Download] 进入 try 块，开始执行下载`);
+        taskManager.updateProgress(task.id, 0, `开始下载 ${fileName}...`, 0);
 
-        // 解析仓库平台并构建下载 URL
-        const downloadUrl = repoUtils.getDownloadUrl(repo, version, fileName);
-        logger.info(`从 ${repo} 下载 ${fileName}...${downloadUrl}`);
+        logger.info(`[Download] Step 1: 开始 axios 请求, url: ${downloadUrl}`);
 
-        // 确保 REPOS_TEMP_PATH 目录存在
-        if (!fs.existsSync(REPOS_TEMP_PATH)) {
-            fs.mkdirSync(REPOS_TEMP_PATH, { recursive: true });
-        } else {
-            fsUtils.clearDir(REPOS_TEMP_PATH);
-        }
-
-        // 下载文件
-        const zipPath = path.join(REPOS_TEMP_PATH, fileName);
+        // 1. 下载文件到任务临时目录
         const response = await axios({
             method: 'get',
             url: downloadUrl,
             responseType: 'stream',
-            timeout: 5000,
+            timeout: 15000, // 15秒超时
         });
 
-        const writer = fs.createWriteStream(zipPath);
-        response.data.pipe(writer);
+        logger.info(`[Download] Step 2: axios 请求返回, status: ${response.status}`);
 
-        await new Promise((resolve, reject) => {
-            writer.on('finish', resolve);
-            writer.on('error', reject);
-        });
-
-        // 调用 handleImportApp 导入应用
-        const ret = await handleImportApp(null, zipPath, uid);
-        if (!ret.success) {
-            fs.unlinkSync(zipPath); // 确保临时文件被删除
-            return handleError(ret.msg, 'downloadAppsFromRepo');
+        // 检查 HTTP 响应状态
+        if (response.status !== 200) {
+            throw new Error(`下载失败，HTTP 状态码: ${response.status}`);
         }
-        // 删除临时文件
-        fs.unlinkSync(zipPath);
 
+        zipPath = path.join(task.tempPath, fileName);
+        logger.info(`[Download] Step 3: 准备写入文件: ${zipPath}`);
 
-        // 更新下载标识
+        // 确保目录存在
+        const tempDir = path.dirname(zipPath);
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+        }
+
+        // 使用更简单的流处理方式
+        const writer = fs.createWriteStream(zipPath);
+        
+        logger.info(`[Download] Step 4: 开始写入流`);
+        
+        await new Promise((resolve, reject) => {
+            response.data.on('end', () => {
+                logger.info(`[Download] Step 5: 流结束事件`);
+                resolve();
+            });
+            response.data.on('error', (err) => {
+                logger.error(`[Download] 流错误: ${err.message}`);
+                reject(err);
+            });
+            writer.on('error', (err) => {
+                logger.error(`[Download] 写入错误: ${err.message}`);
+                reject(err);
+            });
+            response.data.pipe(writer);
+        });
+
+        logger.info(`[Download] Step 6: 文件写入完成: ${zipPath}`);
+
+        // 验证文件是否存在
+        if (!fs.existsSync(zipPath)) {
+            throw new Error(`下载的文件不存在: ${zipPath}`);
+        }
+        const stats = fs.statSync(zipPath);
+        logger.info(`[Download] 文件大小: ${stats.size} bytes`);
+
+        if (stats.size === 0) {
+            throw new Error('下载的文件大小为 0');
+        }
+
+        taskManager.updateProgress(task.id, 50, '下载完成，开始导入...', 0);
+
+        // 2. 导入应用（直接调用 importAppFromZip，不创建新任务）
+        const { importAppFromZip } = require('@modules/main/appManager');
+        const ret = await importAppFromZip(task, zipPath, uid);
+        if (!ret.success) {
+            throw new Error(ret.msg || '导入失败 / Import failed');
+        }
+
+        taskManager.updateProgress(task.id, 90, '导入完成，更新状态...', 0);
+
+        // 3. 更新仓库下载状态
         const reposStore = getReposStore();
         const reposData = reposStore.get('default') || {};
         reposData[uid] = { ...repoInfo, downloaded: true, downloadTime: DateFormat.format(new Date()), toUpdate: false };
         reposStore.set('default', reposData);
 
-        // 返回下载结果
-        return { success: true };
+        taskManager.updateProgress(task.id, 100, '已完成 / Completed', 0);
+
     } catch (error) {
-        if (error.code === 'ECONNABORTED') {
-            return handleError(new Error('下载超时'), 'downloadAppsFromRepo');
+        logger.error(`[Download] 进入 catch 块, 错误: ${error.message}`);
+        // 清理临时文件
+        if (zipPath && fs.existsSync(zipPath)) {
+            fs.unlinkSync(zipPath);
         }
-        return handleError(new Error('下载应用失败: ' + error.message), 'downloadAppsFromRepo');
+        // 超时错误转换为友好提示
+        if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+            throw new Error('网络连接超时，目标链接暂时无法访问，请检查网络');
+        }
+        throw error;
     }
 }
 
-// function clearDir(dirPath) {
-//     for (const file of fs.readdirSync(dirPath)) {
-//         const fullPath = path.join(dirPath, file);
-//         if (fs.lstatSync(fullPath).isDirectory()) {
-//             clearDir(fullPath); // 递归删除子目录
-//             fs.rmdirSync(fullPath);
-//         } else {
-//             fs.unlinkSync(fullPath); // 删除文件
-//         }
-//     }
-// }
+/**
+ * 从仓库下载应用（创建任务）
+ */
+async function downloadAppsFromRepo(uid) {
+    const taskManager = FileTaskManager.getInstance();
+    const task = await taskManager.createTask('repo-download', uid);
+    return { success: true, taskId: task.id };
+}
 
 /**
  * 初始化仓库管理相关的 IPC 处理逻辑
  */
 function initRepoHandlers() {
+    // 注册 repo-download 执行器
+    const taskManager = FileTaskManager.getInstance();
+    taskManager.registerExecutor('repo-download', async (task) => {
+        await handleRepoDownloadTask(task);
+    });
+
     // 添加app源
     ipcMain.handle('add-app-repo', async (event, repoUrl) => {
         try {
@@ -537,6 +599,36 @@ function initRepoHandlers() {
     });
 }
 
+/**
+ * 根据 APP ID 更新所有相关仓库的下载状态
+ * @param {string} appId - APP 的 id
+ * @param {boolean} downloaded - 下载状态
+ * @returns {Promise<{success: boolean, updated: boolean}>}
+ */
+async function syncReposDownloadStatus(appId, downloaded) {
+    const reposStore = getReposStore();
+    const reposData = reposStore.get('default') || {};
+    let updated = false;
+
+    for (const [uid, repo] of Object.entries(reposData)) {
+        if (repo.id === appId) {
+            reposData[uid].downloaded = downloaded;
+            if (!downloaded) {
+                delete reposData[uid].toUpdate;
+                delete reposData[uid].downloadTime;
+            }
+            updated = true;
+            logger.info(`同步仓库 ${uid} 的 downloaded 状态为 ${downloaded}`);
+        }
+    }
+
+    if (updated) {
+        reposStore.set('default', reposData);
+    }
+    return { success: true, updated };
+}
+
 module.exports = {
-    init: initRepoHandlers
+    init: initRepoHandlers,
+    syncReposDownloadStatus
 };

@@ -119,8 +119,7 @@ Canbox项目中存在日志记录不一致的问题：
 
 ## 🔗 相关文档
 
-### 设计文档
-- [OpenSpec设计文档](../../../openspec/changes/archive/2025-03-04-logging-unification/design.md)
+
 
 ### 相关文档
 - [LOGGING_GUIDELINES.md](../../../LOGGING_GUIDELINES.md)

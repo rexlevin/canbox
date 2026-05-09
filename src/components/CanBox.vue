@@ -49,6 +49,7 @@
                 </div>
             </el-main>
         </el-container>
+        <FileTaskPanel />
     </div>
 </template>
 
@@ -153,6 +154,7 @@ import UserCenter from '@/components/UserCenter.vue'
 import AppDev from '@/components/AppDev.vue';
 import About from '@/components/About.vue';
 import Settings from '@/components/Settings.vue';
+import FileTaskPanel from '@/components/FileTaskPanel.vue';
 import { useUpdateStore } from '@/stores/updateStore';
 
 const { t } = useI18n();

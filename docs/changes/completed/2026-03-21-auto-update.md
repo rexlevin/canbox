@@ -147,8 +147,7 @@
 
 ## 🔗 相关文档
 
-### 设计文档
-- [OpenSpec设计文档](../../../openspec/changes/archive/2026-03-21-auto-update/design.md)
+
 
 ### 用户文档
 - [自动更新使用指南](../../development/auto-update.md)

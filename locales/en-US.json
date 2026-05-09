@@ -197,6 +197,25 @@
     "userCenter": {
         "underConstruction": "Under construction..."
     },
+    "fileTask": {
+        "title": "File Tasks",
+        "taskCount": "{count} tasks",
+        "empty": "No tasks",
+        "clearCompleted": "Clear Completed",
+        "collapse": "Collapse",
+        "expand": "Expand",
+        "status": {
+            "idle": "Idle",
+            "pending": "Pending",
+            "preparing": "Preparing",
+            "downloading": "Downloading",
+            "extracting": "Extracting",
+            "moving": "Moving",
+            "completed": "Completed",
+            "failed": "Failed",
+            "cancelled": "Cancelled"
+        }
+    },
     "logViewer": {
         "title": "Log Viewer",
         "refresh": "Refresh",

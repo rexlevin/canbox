@@ -206,7 +206,7 @@ grep -r "日志" ./*.md
 grep -l "优先级: ⭐⭐⭐⭐⭐" ./*.md
 
 # 搜索特定作者的变更
-grep -l "负责人:.*OpenSpec" ./*.md
+grep -l "负责人:.*开发" ./*.md
 ```
 
 ### 按时间范围筛选
@@ -259,7 +259,6 @@ grep -l "优先级: ⭐⭐⭐⭐" ./*.md
 ### 外部资源
 - [GitHub仓库](https://github.com/lizl6/canbox)
 - [问题追踪](https://github.com/lizl6/canbox/issues)
-- [OpenSpec规范](../../openspec/) - 详细变更规范
 
 ### 团队资源
 - 变更管理流程文档

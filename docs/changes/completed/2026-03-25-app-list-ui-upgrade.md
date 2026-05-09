@@ -158,7 +158,6 @@ AppCard.vue (可复用组件)
 ## 🔗 相关文档
 
 ### 设计文档
-- [OpenSpec设计文档](../../../openspec/changes/archive/2026-03-25-app-list-ui-upgrade/design.md)
 - [设计决策文档](../../design-decisions/app-list-ui-upgrade.md)
 
 ## 📈 成功指标

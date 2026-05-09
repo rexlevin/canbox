@@ -134,31 +134,6 @@ changes/
 - 🐛 Bug修复: X
 - 🔒 安全性改进: X
 
-## 🔗 与 OpenSpec 集成
-
-本变更记录系统与 OpenSpec 系统协同工作：
-
-1. **OpenSpec** - AI友好的详细变更记录
-
-   - `openspec/changes/[change-id]/`
-   - 包含：proposal.md, design.md, tasks.md, README.md
-   - 用于AI Agent处理和自动化工作流
-2. **本系统** - 人类友好的简化记录
-
-   - `docs/changes/[status]/[change].md`
-   - 提取OpenSpec关键信息生成简化文档
-   - 便于人类开发者快速了解变更内容
-
-### 同步机制
-
-每次OpenSpec变更完成后，AI Agent自动：
-
-1. 读取OpenSpec变更内容
-2. 提取关键信息
-3. 生成简化Markdown文档
-4. 保存到本系统相应目录
-5. 更新汇总文档
-
 ## 📈 质量指标
 
 ### 变更质量评估
@@ -235,14 +210,13 @@ grep -l "优先级: ⭐⭐⭐⭐⭐" docs/changes/active/*.md
 - [功能路线图](../roadmap/index.md) - 项目整体规划
 - [技术设计方案](../design-decisions/) - 详细设计文档
 - [开发指南](../development/) - 开发相关文档
-- [OpenSpec规范](../../openspec/) - 详细变更规范
 
 ## 🆘 支持与帮助
 
 ### 常见问题
 
 **Q: 变更记录应该多详细？**
-A: 应包含足够信息让其他开发者理解变更内容，但不必像OpenSpec那样详细。
+A: 应包含足够信息让其他开发者理解变更内容，但不必过于详细。
 
 **Q: 如何处理小的Bug修复？**
 A: 小的Bug修复可以合并记录，如"2026-04-多项Bug修复.md"。
@@ -261,4 +235,4 @@ A: 在变更记录中添加相关的PR链接和Commit Hash。
 
 ---
 
-*最后更新：2026-04-16*
+*最后更新：2026-04-17*

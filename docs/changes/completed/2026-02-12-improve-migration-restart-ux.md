@@ -123,8 +123,7 @@
 
 ## 🔗 相关文档
 
-### 设计文档
-- [OpenSpec设计文档](../../../openspec/changes/archive/2026-02-12-improve-migration-restart-ux/design.md)
+
 
 ## 📈 成功指标
 

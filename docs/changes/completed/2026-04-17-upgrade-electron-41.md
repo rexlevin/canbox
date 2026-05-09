@@ -77,9 +77,6 @@ related_changes:
 
 ## 🔗 相关文档
 
-### 设计文档
-- [OpenSpec 详细设计](../../../openspec/changes/archive/2026-04-16-upgrade-electron-41/)
-
 ---
 
 *创建时间: 2026-04-16*
