@@ -60,6 +60,7 @@ idle → pending → preparing → downloading → extracting → moving → com
 ### Phase 2: 前端集成
 - [x] FileTaskStore
 - [x] Preload 接口
+- [x] FileTaskPanel 任务面板组件
 
 ### Phase 3: 业务迁移
 - [x] 迁移 repo-download
@@ -67,7 +68,7 @@ idle → pending → preparing → downloading → extracting → moving → com
 
 ### Phase 4: 完善
 - [x] 清理遗留临时目录
-- [ ] 综合测试
+- [x] 综合测试
 
 ## 相关文档
 
