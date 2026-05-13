@@ -109,20 +109,6 @@ GitHub Actions 会自动：
 }
 ```
 
-### differentialPackagePolicy 配置
-
-```json
-"linux": {
-    "differentialPackagePolicy": "auto"
-}
-```
-
-| 配置值 | 说明 |
-|--------|------|
-| `auto` | 自动生成增量包（默认） |
-| `always` | 始终生成增量包 |
-| `never` | 从不生成增量包 |
-
 ## 更新源配置
 
 ### 更新源设置（用户端）

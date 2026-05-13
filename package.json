@@ -64,7 +64,6 @@
             "icon": "build/logo.png",
             "category": "System;Applications;Utility",
             "executableName": "canbox",
-            "differentialPackagePolicy": "auto",
             "desktop": {
                 "entry": {
                     "Name": "Canbox",
