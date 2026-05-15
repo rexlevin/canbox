@@ -21,8 +21,11 @@ on:
           - darwin
 
 jobs:
-  release:
+  # Linux 构建 job
+  build-linux:
     runs-on: ubuntu-latest
+    # 手动触发时，如果不选 linux 或 all，则跳过
+    if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'linux' || github.event.inputs.platforms == '' || github.event_name == 'push'
 
     steps:
       - name: Checkout
@@ -38,18 +41,84 @@ jobs:
         run: npm ci
 
       - name: Build Linux AppImage
-        if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'linux' || github.event.inputs.platforms == ''
         run: npm run build-appimage
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: |
+            dist/*.AppImage
+            dist/*-delta*.AppImage
+            dist/latest-linux.yml
+
+  # Windows 构建 job
+  build-windows:
+    runs-on: windows-latest
+    # 手动触发时，如果不选 windows 或 all，则跳过
+    if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'windows' || github.event.inputs.platforms == '' || github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows exe
+        run: npm run build-exe
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: |
+            dist/*.exe
+            dist/*.yml
+
+  # 发布 job（依赖所有构建 job）
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: always() && (needs.build-linux.result == 'success' || needs.build-windows.result == 'success')
+
+    steps:
+      - name: Download Linux artifacts
+        if: needs.build-linux.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-artifacts
+          path: dist/linux
+
+      - name: Download Windows artifacts
+        if: needs.build-windows.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-artifacts
+          path: dist/windows
+
+      - name: List artifacts
+        run: ls -la dist/linux/ dist/windows/ || true
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/*.AppImage
-            dist/*-delta*.AppImage
-            dist/latest-linux.yml
+            dist/linux/*.AppImage
+            dist/linux/*-delta*.AppImage
+            dist/linux/latest-linux.yml
+            dist/windows/*.exe
+            dist/windows/*.yml
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -65,6 +134,7 @@ jobs:
           RELEASE_NOTES="Canbox $VERSION 自动发布"
 
           # Create Gitee release via API (使用独立的 canbox-release 仓库)
+          # 注意：Gitee API 需要 target_commitish 参数
           curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases" \
             -H "Content-Type: application/json" \
             -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
@@ -72,6 +142,7 @@ jobs:
               \"tag_name\": \"$TAG_NAME\",
               \"name\": \"Canbox $VERSION\",
               \"body\": \"$RELEASE_NOTES\",
+              \"target_commitish\": \"master\",
               \"prerelease\": false
             }"
         shell: bash
@@ -91,34 +162,60 @@ jobs:
             exit 1
           fi
 
-          # Upload AppImage to Gitee
-          for FILE in dist/*.AppImage; do
-            if [ -f "$FILE" ]; then
-              echo "Uploading $FILE to Gitee..."
+          # Upload Linux AppImage to Gitee
+          if [ -d "dist/linux" ]; then
+            for FILE in dist/linux/*.AppImage; do
+              if [ -f "$FILE" ]; then
+                echo "Uploading $FILE to Gitee..."
+                curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
+                  -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
+                  -F "file=@$FILE"
+                echo ""
+              fi
+            done
+
+            # Upload delta AppImage
+            for FILE in dist/linux/*-delta*.AppImage; do
+              if [ -f "$FILE" ]; then
+                echo "Uploading $FILE to Gitee..."
+                curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
+                  -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
+                  -F "file=@$FILE"
+                echo ""
+              fi
+            done
+
+            # Upload latest-linux.yml
+            if [ -f "dist/linux/latest-linux.yml" ]; then
+              echo "Uploading latest-linux.yml to Gitee..."
               curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
                 -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
-                -F "file=@$FILE"
+                -F "file=@dist/linux/latest-linux.yml"
               echo ""
             fi
-          done
+          fi
 
-          # Upload delta AppImage (differential update)
-          for FILE in dist/*-delta*.AppImage; do
-            if [ -f "$FILE" ]; then
-              echo "Uploading $FILE to Gitee..."
-              curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
-                -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
-                -F "file=@$FILE"
-              echo ""
-            fi
-          done
+          # Upload Windows exe to Gitee
+          if [ -d "dist/windows" ]; then
+            for FILE in dist/windows/*.exe; do
+              if [ -f "$FILE" ]; then
+                echo "Uploading $FILE to Gitee..."
+                curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
+                  -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
+                  -F "file=@$FILE"
+                echo ""
+              fi
+            done
 
-          # Upload latest-linux.yml
-          if [ -f "dist/latest-linux.yml" ]; then
-            echo "Uploading latest-linux.yml to Gitee..."
-            curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
-              -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
-              -F "file=@dist/latest-linux.yml"
-            echo ""
+            # Upload Windows latest.yml
+            for FILE in dist/windows/*.yml; do
+              if [ -f "$FILE" ]; then
+                echo "Uploading $FILE to Gitee..."
+                curl -X POST "https://gitee.com/api/v5/repos/rexlevin/canbox-release/releases/$RELEASE_ID/attachments" \
+                  -H "Authorization: token ${{ secrets.GITEE_TOKEN }}" \
+                  -F "file=@$FILE"
+                echo ""
+              fi
+            done
           fi
         shell: bash
