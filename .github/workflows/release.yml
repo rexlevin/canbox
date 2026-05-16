@@ -115,6 +115,9 @@ jobs:
       - name: List artifacts
         run: ls -la dist/linux/ dist/windows/ || true
 
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Extract release notes from CHANGELOG
         id: changelog
         run: |
