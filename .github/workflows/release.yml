@@ -42,8 +42,6 @@ jobs:
 
       - name: Build Linux AppImage
         run: npm run build-appimage
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Clean debug files
         run: rm -f dist/builder-debug.yml dist/builder-effective-config.yaml
@@ -77,8 +75,6 @@ jobs:
 
       - name: Build Windows exe
         run: npm run build-exe
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Clean debug files
         run: Remove-Item -Force -ErrorAction SilentlyContinue dist/builder-debug.yml, dist/builder-effective-config.yaml
