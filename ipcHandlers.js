@@ -14,7 +14,7 @@ const processBridge = require('./modules/childprocess/processBridge');
 const pathManager = require('./modules/main/pathManager');
 const userDataMigration = require('./modules/main/userDataMigration');
 const logIpcHandler = require('./modules/ipc/logIpcHandler');
-const { getAutoUpdater, IPC_CHANNELS, getUpdateSource, setUpdateSource, getSourceSuccessRates } = require('./modules/update-center');
+const { getAutoUpdater, IPC_CHANNELS, getUpdateSource, setUpdateSource, getSourceSuccessRates, getConfig, saveConfig } = require('./modules/update-center');
 const { FileTaskIPC } = require('./modules/file-task');
 
 // 默认语言为英文
@@ -567,10 +567,12 @@ function initIpcHandlers() {
     ipcMain.handle(IPC_CHANNELS.GET_UPDATE_CONFIG, async () => {
         try {
             const config = await getConfig();
-            return { success: true, config };
+            const serializableConfig = JSON.parse(JSON.stringify(config));
+            return { success: true, config: serializableConfig };
         } catch (error) {
-            logger.error('Failed to get update config:', error);
-            return { success: false, error: error.message };
+            logger.error('Failed to get update config: {}', error.message || error);
+            logger.error('Failed to get update config stack: {}', error.stack);
+            return { success: false, error: error.message || String(error) };
         }
     });
 
@@ -609,14 +611,14 @@ function initIpcHandlers() {
     // 获取当前更新源设置
     ipcMain.handle('update-source:get', async () => {
         try {
-            const source = getUpdateSource();
-            const stats = getSourceSuccessRates();
+            const source = await getUpdateSource();
+            const stats = await getSourceSuccessRates();
             const manager = getAutoUpdater();
-            const currentSource = manager.getSourceInfo().source;
+            const sourceInfo = await manager.getSourceInfo();
             return {
                 success: true,
                 source,
-                currentSource,
+                currentSource: sourceInfo.currentSource,
                 stats
             };
         } catch (error) {
@@ -632,8 +634,8 @@ function initIpcHandlers() {
                 return { success: false, error: 'Invalid source' };
             }
 
-            const previousSource = getUpdateSource();
-            setUpdateSource(source);
+            const previousSource = await getUpdateSource();
+            await setUpdateSource(source);
 
             logger.info(`Update source changed from '${previousSource}' to '${source}'`);
 
