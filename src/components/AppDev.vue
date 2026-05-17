@@ -93,7 +93,7 @@
 
 <script setup>
 import { onBeforeMount, onUpdated, ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import notification from '../utils/notification'
 import { useI18n } from 'vue-i18n'
 import { renderAndOpenMarkdown } from '../utils/markdownRenderer'
 import { md } from '@/utils/markdownRenderer'
@@ -163,12 +163,12 @@ async function packApp(uid) {
     const result = await window.api.packToAsar(uid)
 
     if (!result.success) {
-      ElMessage.error(result.msg || t('devApp.packFailed'))
+      notification.error(result.msg || t('devApp.packFailed'))
       return
     }
-    ElMessage.success(t('devApp.packSuccess'))
+    notification.success(t('devApp.packSuccess'))
   } catch (err) {
-    ElMessage.error(err.message || t('devApp.packFailed'))
+    notification.error(err.message || t('devApp.packFailed'))
   } finally {
     exportAppFlag.value[uid] = false
   }
@@ -184,13 +184,10 @@ function clearData(uid) {
   window.api.app.clearData(uid, (result) => {
     console.info('clearData result=', result)
     if (!result.success) {
-      ElMessage.error(result.msg)
+      notification.error(result.msg)
       return
     }
-    ElMessage({
-      message: t('devApp.clearDataSuccess'),
-      type: 'success'
-    })
+    notification.success(t('devApp.clearDataSuccess'))
   })
 }
 
@@ -201,13 +198,10 @@ function removeApp(uid) {
   }, (result) => {
     console.info('remove result=', result)
     if (!result.success) {
-      ElMessage.error(result.msg)
+      notification.error(result.msg)
       return
     }
-    ElMessage({
-      message: t('devApp.removeSuccess'),
-      type: 'success'
-    })
+    notification.success(t('devApp.removeSuccess'))
     load()
   })
 }
@@ -299,7 +293,7 @@ async function downloadCanboxTS() {
     const result = await window.api.downloadCanboxTypes()
 
     if (!result.success) {
-      ElMessage.error(t('devApp.downloadFailed') + result.msg)
+      notification.error(t('devApp.downloadFailed') + result.msg)
       return
     }
 
@@ -308,10 +302,10 @@ async function downloadCanboxTS() {
       return
     }
 
-    ElMessage.success(t('devApp.downloadSuccess'))
+    notification.success(t('devApp.downloadSuccess'))
   } catch (error) {
     console.error('下载 canbox.d.ts 失败:', error)
-    ElMessage.error(t('devApp.downloadFailed') + error.message)
+    notification.error(t('devApp.downloadFailed') + error.message)
   }
 }
 

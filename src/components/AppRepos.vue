@@ -123,7 +123,7 @@
 
 <script setup>
 import { onBeforeMount, ref, watch, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import notification from '../utils/notification'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/appStore'
 import { md } from '@/utils/markdownRenderer'
@@ -219,7 +219,7 @@ const fetchReposData = async () => {
         })
       })
     } else {
-      ElMessage.error(result.msg || t('appRepo.fetchFailed'))
+      notification.error(result.msg || t('appRepo.fetchFailed'))
     }
     loading.value = false
   })
@@ -277,8 +277,8 @@ const downloadAppsFromRepo = async (uid) => {
     if (result.success) {
       // 显示下载中的提示
       const taskId = result.taskId
-      const messageId = ElMessage.info(t('appRepo.downloading'))
-      
+      const downloadNotification = notification.info(t('appRepo.downloading'))
+
       // 监听任务完成
       await new Promise((resolve) => {
         const checkTask = (task) => {
@@ -287,16 +287,16 @@ const downloadAppsFromRepo = async (uid) => {
             // 根据任务状态显示不同提示
             if (task.status === 'completed') {
               console.info('[downloadAppsFromRepo] 准备显示成功提示')
-              ElMessage.success(t('appRepo.downloadSuccess'))
+              notification.success(t('appRepo.downloadSuccess'))
               console.info('[downloadAppsFromRepo] 成功提示已显示')
               const appStore = useAppStore()
               appStore.triggerAppListUpdate()
               fetchReposData()   // 更新仓库列表
             } else if (task.status === 'failed') {
               console.info('[downloadAppsFromRepo] 准备显示失败提示, error:', task.error)
-              ElMessage.error(task.error || t('appRepo.downloadFailed'))
+              notification.error(task.error || t('appRepo.downloadFailed'))
             }
-            messageId.close()
+            downloadNotification.close()
             window.api.fileTask.offUpdate(checkTask)
             resolve()
           }
@@ -304,10 +304,10 @@ const downloadAppsFromRepo = async (uid) => {
         window.api.fileTask.onUpdate(checkTask)
       })
     } else {
-      ElMessage.error(result.msg || t('appRepo.downloadFailed'))
+      notification.error(result.msg || t('appRepo.downloadFailed'))
     }
   } catch (err) {
-    ElMessage.error(err.message || t('appRepo.downloadFailed'))
+    notification.error(err.message || t('appRepo.downloadFailed'))
   } finally {
     loadingTag.value[uid] = false
   }
@@ -317,10 +317,10 @@ const downloadAppsFromRepo = async (uid) => {
 const removeRepo = (uid) => {
   window.api.removeRepo(uid, result => {
     if (result.success) {
-      ElMessage.success(t('appRepo.removeSuccess'))
+      notification.success(t('appRepo.removeSuccess'))
       fetchReposData()
     } else {
-      ElMessage.error(result.msg || t('appRepo.removeFailed'))
+      notification.error(result.msg || t('appRepo.removeFailed'))
     }
   })
 }
@@ -341,7 +341,7 @@ const addAppRepo = async () => {
     })
 
     if (result.success) {
-      ElMessage.success(t('appRepo.addSuccess'))
+      notification.success(t('appRepo.addSuccess'))
       dialogVisible.value = false
       repoUrl.value = ''
       fetchReposData()
@@ -359,7 +359,7 @@ const addAppRepo = async () => {
       if (errorKey) {
         errorMsg = t(`appRepo.${errorKey}`)
       }
-      ElMessage.error(errorMsg)
+      notification.error(errorMsg)
     }
   } catch (err) {
     // 表单验证失败不显示错误消息（组件已处理）
@@ -377,20 +377,11 @@ const importAppRepos = () => {
       // 用户取消操作，不显示任何提示
       return
     } else if (!ret.success && 'Invalid JSON format' === ret.msg) {
-      ElMessage({
-        type: 'error',
-        message: t('appRepo.invalidJson')
-      })
+      notification.error(t('appRepo.invalidJson'))
     } else if (!ret.success && 'Invalid format: expected an array of repos' === ret.msg) {
-      ElMessage({
-        type: 'error',
-        message: t('appRepo.invalidFormat')
-      })
+      notification.error(t('appRepo.invalidFormat'))
     } else if (!ret.success) {
-      ElMessage({
-        type: 'error',
-        message: t('appRepo.importFailedPrefix') + ret.msg
-      })
+      notification.error(t('appRepo.importFailedPrefix') + ret.msg)
     } else {
       const { successCount, failedRepos, skippedCount } = ret.data || {}
       const failedCount = failedRepos ? failedRepos.length : 0
@@ -402,15 +393,13 @@ const importAppRepos = () => {
         if (failedCount > 0) {
           message = t('appRepo.importSuccessWithFailed', { success: successCount, failed: failedCount })
         }
-        ElMessage({
-          type: failedCount > 0 ? 'warning' : 'success',
-          message
-        })
+        if (failedCount > 0) {
+          notification.warning(message)
+        } else {
+          notification.success(message)
+        }
       } else {
-        ElMessage({
-          type: 'success',
-          message: t('appRepo.importSuccessAll', { success: successCount })
-        })
+        notification.success(t('appRepo.importSuccessAll', { success: successCount }))
       }
     }
   })
@@ -420,18 +409,12 @@ const exportAppRepos = () => {
   window.api.exportReposData(ret => {
     console.log('exportAppRepos ret: %s', JSON.stringify(ret))
     if (!ret.success) {
-      ElMessage({
-        type: 'error',
-        message: t('appRepo.exportFailed') + ret.msg
-      })
+      notification.error(t('appRepo.exportFailed') + ret.msg)
     } else if (ret.msg === '已取消导出') {
       // 用户取消操作，不显示任何提示
       return
     } else {
-      ElMessage({
-        type: 'success',
-        message: t('appRepo.exportSuccess')
-      })
+      notification.success(t('appRepo.exportSuccess'))
     }
   })
 }
@@ -441,9 +424,9 @@ const copyRepoURL = (uid) => {
   const repo = reposData.value[uid]
   if (repo && repo.repo) {
     navigator.clipboard.writeText(repo.repo).then(() => {
-      ElMessage.success(t('appRepo.copySuccess'))
+      notification.success(t('appRepo.copySuccess'))
     }).catch(() => {
-      ElMessage.error(t('appRepo.copyFailed'))
+      notification.error(t('appRepo.copyFailed'))
     })
   }
 }

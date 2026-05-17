@@ -76,7 +76,7 @@
 
 <script setup>
 import { onBeforeMount, ref, watch, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import notification from '../utils/notification'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/appStore'
 import { md } from '@/utils/markdownRenderer'
@@ -209,13 +209,10 @@ function clearData(uid) {
   window.api.app.clearData(uid, (result) => {
     console.info('clearData result=', result)
     if (!result.success) {
-      ElMessage.error(result.msg)
+      notification.error(result.msg)
       return
     }
-    ElMessage({
-      message: t('appList.clearDataSuccess'),
-      type: 'success'
-    })
+    notification.success(t('appList.clearDataSuccess'))
   })
 }
 
@@ -228,16 +225,13 @@ function removeApp(uid) {
   }, (result) => {
     console.info('remove result=', result)
     if (!result.success) {
-      ElMessage.error(result.msg)
+      notification.error(result.msg)
       return
     }
     // 触发删除当前应用的事件
     delete appsData.value[uid]
     appStore.setRemovedAppId(uid)
-    ElMessage({
-      message: t('appList.removeSuccess'),
-      type: 'success'
-    })
+    notification.success(t('appList.removeSuccess'))
   })
 }
 
@@ -269,13 +263,10 @@ async function importApp() {
       fetchAppsDetails(result.data)
     })
 
-    ElMessage({
-      message: t('appList.importSuccess'),
-      type: 'success',
-    })
+    notification.success(t('appList.importSuccess'))
   } catch (error) {
     console.error('导入应用失败:', error)
-    ElMessage.error(t('appList.importFailed') + error.message)
+    notification.error(t('appList.importFailed') + error.message)
   }
 }
 </script>

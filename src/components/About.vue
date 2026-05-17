@@ -103,6 +103,7 @@ import { useI18n } from 'vue-i18n';
 import { Link, Document, Top, Refresh } from '@element-plus/icons-vue';
 import { useUpdateStore } from '@/stores/updateStore';
 import { formatErrorForDisplay } from '@/utils/errorMessages';
+import notification from '../utils/notification';
 import logo from '/logo.png';
 
 const { t } = useI18n();
@@ -206,16 +207,16 @@ const handleCheckUpdate = async () => {
                     // 有新版本，不显示提示，"升级"按钮会自动显示
                 } else {
                     // 已经是最新版本
-                    ElMessage.info(t('autoUpdate.noUpdateAvailable'));
+                    notification.info(t('autoUpdate.noUpdateAvailable'));
                 }
             } else {
                 console.error('[About.vue] 检查更新失败:', result.error);
-                ElMessage.error(result.error?.message || t('autoUpdate.updateError'));
+                notification.error(result.error?.message || t('autoUpdate.updateError'));
             }
         }
     } catch (error) {
         console.error('[About.vue] 检查更新异常:', error);
-        ElMessage.error(t('autoUpdate.updateError'));
+        notification.error(t('autoUpdate.updateError'));
     } finally {
         isCheckingUpdate.value = false;
     }

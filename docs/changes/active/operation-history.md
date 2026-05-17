@@ -82,8 +82,8 @@ notification.show({
 - [x] 在 `CanBox.vue` 集成操作历史入口
 - [x] 创建 `src/stores/operationHistoryStore.js` 状态管理
 - [x] 更新类型定义和预加载脚本
-- [ ] 编写 `docs/notification-guidelines.md` 使用规范文档
-- [ ] 逐步替换各业务组件中的 ElMessage 调用
+- [x] 编写 `docs/notification-guidelines.md` 使用规范文档
+- [x] 逐步替换各业务组件中的 ElMessage 调用
 
 ## 已创建/修改的文件
 

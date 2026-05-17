@@ -252,7 +252,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import notification from '../utils/notification';
 import { useI18n } from 'vue-i18n';
 import RestartCountdownDialog from './RestartCountdownDialog.vue';
 import { useUpdateStore } from '@/stores/updateStore';
@@ -348,12 +349,9 @@ const formatLastCheckTime = computed(() => {
 function generateShortcut() {
     window.api.generateShortcut(ret => {
         if (ret.success) {
-            ElMessage({
-                message: t('settings.shortcutCreated'),
-                type: 'success'
-            });
+            notification.success(t('settings.shortcutCreated'));
         } else {
-            ElMessage.error(ret.msg);
+            notification.error(ret.msg);
         }
     });
 }
@@ -361,12 +359,9 @@ function generateShortcut() {
 function deleteShortcut() {
     window.api.deleteShortcut(ret => {
         if (ret.success) {
-            ElMessage({
-                message: t('settings.shortcutDeleted'),
-                type: 'success'
-            });
+            notification.success(t('settings.shortcutDeleted'));
         } else {
-            ElMessage.error(ret.msg);
+            notification.error(ret.msg);
         }
     });
 }
@@ -374,7 +369,7 @@ function deleteShortcut() {
 async function handleLanguageChange(lang) {
     const result = await window.api.i18n.setLanguage(lang);
     if (!result.success) {
-        ElMessage.error(result.msg || 'Failed to change language');
+        notification.error(result.msg || 'Failed to change language');
         currentLanguage.value = await window.api.i18n.getLanguage();
     }
 }
@@ -383,28 +378,22 @@ async function handleFontChange(fontValue) {
     const result = await window.api.font.set(fontValue);
 
     if (!result.success) {
-        ElMessage.error(result.msg || 'Failed to set font');
+        notification.error(result.msg || 'Failed to set font');
         return;
     }
 
     applyFont(fontValue);
 
-    ElMessage({
-        message: t('settings.fontSetSuccess'),
-        type: 'success'
-    });
+    notification.success(t('settings.fontSetSuccess'));
 }
 
 async function handleExecutionModeChange(mode) {
     const result = await window.api.execution.setGlobalMode(mode);
     if (!result.success) {
-        ElMessage.error(result.msg || 'Failed to set execution mode');
+        notification.error(result.msg || 'Failed to set execution mode');
         return;
     }
-    ElMessage({
-        message: t('settings.executionModeSetSuccess'),
-        type: 'success'
-    });
+    notification.success(t('settings.executionModeSetSuccess'));
 }
 
 async function handleZoomPlus() {
@@ -434,7 +423,7 @@ async function selectDirectory() {
 
 async function saveCustomDataPath() {
     if (!newDataPath.value) {
-        ElMessage.error(t('settings.customDataPathPlaceholder'));
+        notification.error(t('settings.customDataPathPlaceholder'));
         return;
     }
 
@@ -446,10 +435,10 @@ async function saveCustomDataPath() {
             showRestartDialog.value = true;
             newDataPath.value = '';
         } else {
-            ElMessage.error(t('settings.migrationFailed', { error: result.error }));
+            notification.error(t('settings.migrationFailed', { error: result.error }));
         }
     } catch (error) {
-        ElMessage.error(t('settings.migrationFailed', { error: error.message }));
+        notification.error(t('settings.migrationFailed', { error: error.message }));
     } finally {
         isSaving.value = false;
     }
@@ -463,10 +452,10 @@ async function resetToDefault() {
             restartIsAppImage.value = result.isAppImage;
             showRestartDialog.value = true;
         } else {
-            ElMessage.error(t('settings.migrationFailed', { error: result.error }));
+            notification.error(t('settings.migrationFailed', { error: result.error }));
         }
     } catch (error) {
-        ElMessage.error(t('settings.migrationFailed', { error: error.message }));
+        notification.error(t('settings.migrationFailed', { error: error.message }));
     } finally {
         isSaving.value = false;
     }
@@ -479,22 +468,22 @@ async function onRestartNow() {
             showRestartDialog.value = false;
         }
     } catch (error) {
-        ElMessage.error(t('settings.migrationFailed', { error: error.message }));
+        notification.error(t('settings.migrationFailed', { error: error.message }));
     }
 }
 
 async function saveLogRetentionDays() {
     const days = logRetentionDays.value;
     if (days < 0 || days > 30) {
-        ElMessage.error(t('settings.retentionDaysError'));
+        notification.error(t('settings.retentionDaysError'));
         logRetentionDays.value = await window.api.logViewer.getRetentionDays();
         return;
     }
     const result = await window.api.logViewer.setRetentionDays(days);
     if (result.success) {
-        ElMessage.success(t('settings.retentionDaysSaved'));
+        notification.success(t('settings.retentionDaysSaved'));
     } else {
-        ElMessage.error(result.msg || t('settings.retentionDaysSaveFailed'));
+        notification.error(result.msg || t('settings.retentionDaysSaveFailed'));
     }
 }
 
@@ -520,9 +509,9 @@ async function saveUpdateConfig() {
         const configToSave = JSON.parse(JSON.stringify(updateConfig.value));
         const result = await window.api.autoUpdate.saveConfig(configToSave);
         if (result.success) {
-            ElMessage.success(t('common.success'));
+            notification.success(t('common.success'));
         } else {
-            ElMessage.error(result.error || t('common.error'));
+            notification.error(result.error || t('common.error'));
         }
     }
 }
@@ -537,16 +526,16 @@ async function handleManualCheckUpdate() {
 
             if (result.success) {
                 if (updateStore.hasUpdate) {
-                    ElMessage.success(t('autoUpdate.updateAvailable', { version: updateStore.updateInfo.version }));
+                    notification.success(t('autoUpdate.updateAvailable', { version: updateStore.updateInfo.version }));
                 } else {
-                    ElMessage.info(t('autoUpdate.noUpdateAvailable'));
+                    notification.info(t('autoUpdate.noUpdateAvailable'));
                 }
             } else {
-                ElMessage.error(result.error?.message || t('autoUpdate.updateError'));
+                notification.error(result.error?.message || t('autoUpdate.updateError'));
             }
         }
     } catch (error) {
-        ElMessage.error(t('autoUpdate.updateError'));
+        notification.error(t('autoUpdate.updateError'));
     } finally {
         isCheckingUpdate.value = false;
     }
@@ -580,9 +569,9 @@ async function handleClearSkipped() {
 
         if (result.success) {
             updateConfig.value.skippedVersions = [];
-            ElMessage.success(t('common.success'));
+            notification.success(t('common.success'));
         } else {
-            ElMessage.error(result.error || t('common.error'));
+            notification.error(result.error || t('common.error'));
             await loadUpdateConfig();
         }
     } catch (error) {
@@ -607,14 +596,14 @@ async function handleUpdateSourceChange(source) {
         const result = await window.api.updateSource.set(source);
         if (result.success) {
             currentSource.value = source;
-            ElMessage.success(t('autoUpdate.settings.sourceChanged', { source: source.toUpperCase() }));
+            notification.success(t('autoUpdate.settings.sourceChanged', { source: source.toUpperCase() }));
         } else {
-            ElMessage.error(result.error || t('common.error'));
+            notification.error(result.error || t('common.error'));
             // 恢复原值
             await loadUpdateSource();
         }
     } catch (error) {
-        ElMessage.error(t('common.error'));
+        notification.error(t('common.error'));
         await loadUpdateSource();
     }
 }

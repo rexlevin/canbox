@@ -68,7 +68,8 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { ElMessageBox, ElMessage } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import notification from '../utils/notification';
 
 const { t } = useI18n();
 
@@ -211,7 +212,7 @@ async function handleClear() {
 
         await loadRecords();
         await loadStorageSize();
-        ElMessage.success(t('operationHistory.clearSuccess'));
+        notification.success(t('operationHistory.clearSuccess'));
     } catch (error) {
         if (error !== 'cancel') {
             console.error('Failed to clear records:', error);
