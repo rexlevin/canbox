@@ -1,0 +1,142 @@
+name: Release
+
+on:
+  # 推送 tag 时自动触发，构建所有平台
+  push:
+    tags:
+      - 'v*'
+
+  # 手动触发，可选择构建特定平台
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: '选择构建平台'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - linux
+          - windows
+          - darwin
+
+jobs:
+  # Linux 构建 job
+  build-linux:
+    runs-on: ubuntu-latest
+    # 手动触发时，如果不选 linux 或 all，则跳过
+    if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'linux' || github.event.inputs.platforms == '' || github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Linux AppImage
+        run: npm run build-appimage -- --publish never
+
+      - name: Clean debug files
+        run: rm -f dist/builder-debug.yml dist/builder-effective-config.yaml
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: |
+            dist/*.AppImage
+            dist/latest-linux.yml
+
+  # Windows 构建 job
+  build-windows:
+    runs-on: windows-latest
+    # 手动触发时，如果不选 windows 或 all，则跳过
+    if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'windows' || github.event.inputs.platforms == '' || github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Windows exe
+        run: npm run build-exe -- --publish never
+
+      - name: Clean debug files
+        run: Remove-Item -Force -ErrorAction SilentlyContinue dist/builder-debug.yml, dist/builder-effective-config.yaml
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: |
+            dist/*.exe
+            dist/latest*.yml
+
+  # 发布 job（依赖所有构建 job）
+  release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: always() && (needs.build-linux.result == 'success' || needs.build-windows.result == 'success')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Linux artifacts
+        if: needs.build-linux.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-artifacts
+          path: dist/linux
+
+      - name: Download Windows artifacts
+        if: needs.build-windows.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-artifacts
+          path: dist/windows
+
+      - name: List artifacts
+        run: ls -la dist/linux/ dist/windows/ || true
+
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG_NAME#v}
+          NOTES=$(awk "/## \[$VERSION\]/{flag=1; next} /## \[/{flag=0} flag" CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            NOTES="Canbox v$VERSION"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Canbox v${{ steps.changelog.outputs.version }}"
+          body: ${{ steps.changelog.outputs.notes }}
+          files: |
+            dist/linux/*.AppImage
+            dist/linux/latest-linux.yml
+            dist/windows/*.exe
+            dist/windows/latest*.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
