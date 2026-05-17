@@ -71,14 +71,32 @@ notification.show({
 - [ ] 浮动图标可拖动并记忆位置
 - [ ] 弹层自适应窗口尺寸，关闭后图标恢复显示
 - [ ] 容量限制生效（30天/200M），支持手动清理
-- [ ] 替换现有 ElMessage 调用为新通知组件，符合规范
+- [x] 替换现有 ElMessage 调用为新通知组件，符合规范
 
 ## 实施计划
 
-- [ ] 创建 `modules/core/canboxDb.js` 存储模块
-- [ ] 在 `modules/main/api.js` 新增 canboxDb IPC handler
-- [ ] 创建 `src/utils/notification.js` 通知组件封装
-- [ ] 创建 `src/components/OperationHistory.vue` 操作历史面板
-- [ ] 在 `CanBox.vue` 集成操作历史入口
+- [x] 创建 `modules/core/canboxDb.js` 存储模块
+- [x] 在 `modules/main/api.js` 新增 canboxDb IPC handler
+- [x] 创建 `src/utils/notification.js` 通知组件封装
+- [x] 创建 `src/components/OperationHistory.vue` 操作历史面板
+- [x] 在 `CanBox.vue` 集成操作历史入口
+- [x] 创建 `src/stores/operationHistoryStore.js` 状态管理
+- [x] 更新类型定义和预加载脚本
 - [ ] 编写 `docs/notification-guidelines.md` 使用规范文档
 - [ ] 逐步替换各业务组件中的 ElMessage 调用
+
+## 已创建/修改的文件
+
+| 文件 | 说明 |
+|------|------|
+| `modules/core/canboxDb.js` | 独立存储模块 |
+| `modules/main/pathManager.js` | 添加 getCanboxDbPath |
+| `modules/main/api.js` | 添加 canboxDb IPC handler |
+| `src/utils/notification.js` | 通知组件封装 |
+| `src/components/OperationHistory.vue` | 操作历史面板 |
+| `src/stores/operationHistoryStore.js` | 状态管理 |
+| `src/components/CanBox.vue` | 集成入口 |
+| `locales/zh-CN.json` | 中文国际化 |
+| `locales/en-US.json` | 英文国际化 |
+| `types/canbox.d.ts` | 类型定义 |
+| `preload.js` | API 暴露 |
