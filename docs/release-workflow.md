@@ -9,7 +9,7 @@ git tag v0.4.0
 git push origin v0.4.0
 ```
 
-自动触发 GitHub Actions，构建所有平台（Linux）。
+自动触发 GitHub Actions，构建 Linux 和 Windows 两个平台。
 
 ---
 
@@ -50,16 +50,17 @@ git push origin v0.4.0
 
 | 文件 | 说明 |
 |------|------|
-| `*.AppImage` | Linux 安装包 |
-| `*-delta*.AppImage` | 增量更新包 |
-| `latest-linux.yml` | 更新信息文件 |
+| `canbox-linux-x86_64.AppImage` | Linux 安装包 |
+| `latest-linux.yml` | Linux 更新信息文件 |
+
+### Windows (NSIS)
+
+| 文件 | 说明 |
+|------|------|
+| `canbox-win-x64.exe` | Windows 安装包 |
+| `canbox-win-x64.exe.blockmap` | Windows 增量更新元数据 |
+| `latest.yml` | Windows 更新信息文件 |
 
 ### 平台判断
 
-当前 workflow 仅配置了 Linux 构建。如需多平台构建，需在 workflow 中添加对应步骤：
-
-```yaml
-- name: Build Windows
-  if: github.event.inputs.platforms == 'all' || github.event.inputs.platforms == 'windows'
-  run: npm run build-exe
-```
+当前 workflow 已配置 Linux 和 Windows 两个平台构建。

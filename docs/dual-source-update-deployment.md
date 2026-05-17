@@ -73,15 +73,19 @@ GitHub Actions 会自动：
 
 ## electron-builder 配置
 
-### publish 配置
+> **注意**：已移除 `publish` 配置，发布完全由 GitHub Actions workflow 控制，避免 electron-builder 自动发布导致重复 release。
 
-```json
-"publish": {
-    "provider": "github",
-    "owner": "rexlevin",
-    "repo": "canbox"
-}
+### 构建命令
+
+```bash
+# Linux
+npm run build-appimage -- --publish never
+
+# Windows
+npm run build-exe -- --publish never
 ```
+
+`--publish never` 参数阻止 electron-builder 自动发布，发布由 `softprops/action-gh-release` 统一控制。
 
 ## 更新源配置
 
@@ -110,8 +114,11 @@ GitHub Actions 会自动：
 
 ```
 v0.4.2/
-├── canbox-linux-x86_64.AppImage     # 完整包
-└── latest-linux.yml                  # 更新清单
+├── canbox-linux-x86_64.AppImage     # Linux 安装包
+├── canbox-win-x64.exe              # Windows 安装包
+├── canbox-win-x64.exe.blockmap     # Windows 增量更新元数据
+├── latest-linux.yml                # Linux 更新清单
+└── latest.yml                     # Windows 更新清单
 ```
 
 ## 镜像加速源工作原理
