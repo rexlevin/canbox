@@ -10,6 +10,7 @@ const { deleteShortcuts } = require('@modules/main/shortcutManager');
 const { syncReposDownloadStatus } = require('@modules/ipc/repoIpcHandler');
 const i18nModule = require('../../locales');
 const { getCanboxStore } = require('@modules/main/storageManager');
+const canboxDb = require('@modules/core/canboxDb');
 
 // 获取当前语言
 function getCurrentLanguage() {
@@ -226,6 +227,14 @@ class AppManagerIpcHandler {
                     await syncReposDownloadStatus(id, false);
                 }
 
+                // 获取应用名称用于操作历史记录
+                const appName = appItem?.appJson?.name || appItem?.name || id;
+                canboxDb.put({
+                    type: 'info',
+                    message: `应用「${appName}」已${devTag ? '移除' : '删除'}`,
+                    module: 'app'
+                });
+
                 logger.info(`应用已删除: ${id}, devTag: ${devTag}`);
                 return { success: true };
             } catch (error) {
@@ -239,6 +248,11 @@ class AppManagerIpcHandler {
                 if (!id) {
                     return handleError(new Error('应用 ID 不能为空'), 'clearAppData');
                 }
+
+                // 获取应用名称用于操作历史记录
+                const appsData = getAppsStore().get('default') || {};
+                const appItem = appsData[id];
+                const appName = appItem?.appJson?.name || appItem?.name || id;
 
                 const appDataPath = path.join(getAppDataPath(), id);
 
@@ -256,6 +270,13 @@ class AppManagerIpcHandler {
                     if (result.success) {
                         logger.info(`应用窗口状态已清除: ${id}`);
                     }
+                });
+
+                // 写入操作历史
+                canboxDb.put({
+                    type: 'info',
+                    message: `应用「${appName}」数据已清理`,
+                    module: 'app'
                 });
 
                 return { success: true };

@@ -430,6 +430,7 @@
         "modules": {
             "appList": "我的应用",
             "appRepos": "应用仓库",
+            "app": "应用",
             "devApp": "开发应用",
             "settings": "设置",
             "update": "更新",

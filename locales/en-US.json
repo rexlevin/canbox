@@ -429,6 +429,7 @@
         "modules": {
             "appList": "My Apps",
             "appRepos": "App Repos",
+            "app": "App",
             "devApp": "Dev App",
             "settings": "Settings",
             "update": "Update",
