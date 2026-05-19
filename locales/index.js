@@ -59,14 +59,30 @@ function getCurrentLanguage() {
 
 /**
  * 翻译函数（用于主进程）
+ * 支持多种调用方式：
+ * - translate(key)
+ * - translate(key, lang) - lang 为字符串
+ * - translate(key, params) - params 为对象
+ * - translate(key, params, lang)
  * @param {string} key - 翻译键，如 'app.title'
- * @param {Object} params - 参数
- * @param {string} lang - 语言代码（可选，默认使用当前设置的语言）
+ * @param {Object|string} paramsOrLang - 参数对象或语言代码
+ * @param {string} lang - 语言代码
  * @returns {string}
  */
-function translate(key, params = {}, lang = null) {
-    const language = lang || getCurrentLanguage();
-    const translations = getTranslations(language);
+function translate(key, paramsOrLang = {}, lang = null) {
+    let params = {};
+    let language = null;
+
+    if (typeof paramsOrLang === 'string') {
+        // 第二个参数是语言代码
+        language = paramsOrLang;
+    } else if (paramsOrLang && typeof paramsOrLang === 'object') {
+        // 第二个参数是参数对象
+        params = paramsOrLang;
+    }
+
+    const currentLang = lang || language || getCurrentLanguage();
+    const translations = getTranslations(currentLang);
     const keys = key.split('.');
     let value = translations;
     for (const k of keys) {
@@ -77,7 +93,7 @@ function translate(key, params = {}, lang = null) {
     if (typeof value === 'string') {
         // 简单的参数替换
         return Object.keys(params).reduce((str, param) => {
-            return str.replace(new RegExp(`{${param}}`, 'g'), params[param]);
+            return str.replace(new RegExp(`\\{${param}\\}`, 'g'), params[param]);
         }, value);
     }
 
