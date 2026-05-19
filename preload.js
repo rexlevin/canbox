@@ -253,6 +253,10 @@ contextBridge.exposeInMainWorld(
             getLast: () => ipcRenderer.invoke('menu-get-last'),
             setLast: (menuName) => ipcRenderer.invoke('menu-set-last', menuName)
         },
+        canboxConfig: {
+            get: (key, defaultValue) => ipcRenderer.invoke('canboxConfig-get', key, defaultValue),
+            set: (key, value) => ipcRenderer.invoke('canboxConfig-set', key, value)
+        },
         fileTask: {
             // 创建任务
             create: (type, uid, options) =>

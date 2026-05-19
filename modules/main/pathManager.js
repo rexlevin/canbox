@@ -96,21 +96,15 @@ const PathManager = {
     },
     getReposTempPath: () => {
         return path.join(getUsersPath(), 'temp', 'repos');
+    },
+    getCanboxDbPath: () => {
+        return path.join(getUsersPath(), 'db', 'history');
     }
 };
-
-/**
- * 获取 canbox 数据库路径
- * @returns {string} canbox 数据库目录路径
- */
-function getCanboxDbPath() {
-    return path.join(getCanboxUserDataPath(), 'db', 'history');
-}
 
 module.exports = {
     ...PathManager,
     getCustomDataRoot,
     getUsersBasePath,
-    getUsersPath,
-    getCanboxDbPath
+    getUsersPath
 };

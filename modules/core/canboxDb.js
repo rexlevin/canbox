@@ -6,7 +6,7 @@ const { customAlphabet } = require('nanoid-cjs');
 const nanoid = customAlphabet('1234567890abcdef', 10);
 
 const DateFormat = require('@modules/utils/DateFormat');
-const { getCanboxDbPath } = require('@modules/main/pathManager');
+const PathManager = require('@modules/main/pathManager');
 
 // 默认配置
 const DEFAULT_CONFIG = {
@@ -23,7 +23,7 @@ let db = null;
  */
 function getDB() {
     if (!db) {
-        const dbDir = getCanboxDbPath();
+        const dbDir = PathManager.getCanboxDbPath();
         if (!fs.existsSync(dbDir)) {
             fs.mkdirSync(dbDir, { recursive: true });
         }
@@ -72,7 +72,7 @@ function closeDB() {
  */
 function getSize(callback) {
     try {
-        const dbDir = getCanboxDbPath();
+        const dbDir = PathManager.getCanboxDbPath();
         const dbPath = path.join(dbDir, 'db');
 
         // PouchDB 的 LevelDB 存储，需要计算 .couch 文件大小

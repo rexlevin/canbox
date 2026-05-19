@@ -749,6 +749,32 @@ function initIpcHandlers() {
             return { success: false, error: error.message };
         }
     });
+
+    // ========== Canbox 主程序配置相关 IPC 处理 ==========
+    // 获取配置
+    ipcMain.handle('canboxConfig-get', (event, key, defaultValue) => {
+        try {
+            const canboxStore = getCanboxStore();
+            const value = canboxStore.get(key, defaultValue);
+            return { success: true, data: value };
+        } catch (error) {
+            logger.error('Failed to get canbox config:', error);
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // 设置配置
+    ipcMain.handle('canboxConfig-set', (event, key, value) => {
+        try {
+            const canboxStore = getCanboxStore();
+            canboxStore.set(key, value);
+            logger.info(`Canbox config set: ${key}`);
+            return { success: true };
+        } catch (error) {
+            logger.error('Failed to set canbox config:', error);
+            return { success: false, msg: error.message };
+        }
+    });
 }
 
 // 初始化语言

@@ -18,7 +18,7 @@
 
         <!-- 全屏弹层 -->
         <transition name="fade">
-            <div v-show="showPanel" class="panel-overlay" @click.self="closePanel">
+            <div ref="panelRef" v-show="showPanel" class="panel-overlay" @click.self="closePanel" @keydown.esc="closePanel" tabindex="-1">
                 <div class="panel-container">
                     <div class="panel-header">
                         <span class="panel-title">{{ $t('operationHistory.title') }}</span>
@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, toRaw, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ElMessageBox } from 'element-plus';
 import notification from '../utils/notification';
@@ -78,11 +78,13 @@ const showPanel = ref(false);
 const records = ref([]);
 const unreadCount = ref(0);
 const storageSize = ref(0);
+const panelRef = ref(null);
 
 // 图标位置（默认左下角）
 const iconPosition = ref({ left: 16, bottom: 16 });
 const isDragging = ref(false);
 const dragOffset = ref({ x: 0, y: 0 });
+let hasMoved = false;
 
 // 样式
 const iconPositionStyle = computed(() => ({
@@ -103,11 +105,11 @@ onBeforeUnmount(() => {
 });
 
 // 加载图标位置
-function loadIconPosition() {
+async function loadIconPosition() {
     try {
-        const saved = localStorage.getItem('canbox_op_history_icon_pos');
-        if (saved) {
-            iconPosition.value = JSON.parse(saved);
+        const result = await window.api.canboxConfig.get('operationHistoryIconPosition', { left: 16, bottom: 16 });
+        if (result.success) {
+            iconPosition.value = result.data;
         }
     } catch (error) {
         console.error('Failed to load icon position:', error);
@@ -115,9 +117,10 @@ function loadIconPosition() {
 }
 
 // 保存图标位置
-function saveIconPosition() {
+async function saveIconPosition() {
     try {
-        localStorage.setItem('canbox_op_history_icon_pos', JSON.stringify(iconPosition.value));
+        const pos = toRaw(iconPosition.value);
+        await window.api.canboxConfig.set('operationHistoryIconPosition', pos);
     } catch (error) {
         console.error('Failed to save icon position:', error);
     }
@@ -126,7 +129,9 @@ function saveIconPosition() {
 // 拖动开始
 function startDrag(e) {
     if (e.button !== 0) return; // 只响应左键
+    hasMoved = false;
     isDragging.value = true;
+    // 记录鼠标相对于图标左上角的偏移
     dragOffset.value = {
         x: e.clientX - iconPosition.value.left,
         y: window.innerHeight - e.clientY - iconPosition.value.bottom
@@ -138,17 +143,29 @@ function startDrag(e) {
 // 拖动中
 function onDrag(e) {
     if (!isDragging.value) return;
-    iconPosition.value = {
-        left: Math.max(0, e.clientX - dragOffset.value.x),
-        bottom: Math.max(0, window.innerHeight - e.clientY - dragOffset.value.y)
-    };
+    const movedX = Math.abs(e.clientX - dragOffset.value.x - iconPosition.value.left);
+    const movedY = Math.abs(e.clientY - dragOffset.value.y - iconPosition.value.bottom);
+
+    if (movedX > 5 || movedY > 5) {
+        hasMoved = true;
+    }
+
+    if (hasMoved) {
+        // 计算新位置：鼠标位置减去初始偏移
+        iconPosition.value = {
+            left: Math.max(0, e.clientX - dragOffset.value.x),
+            bottom: Math.max(0, window.innerHeight - e.clientY - dragOffset.value.y)
+        };
+    }
 }
 
 // 拖动结束
 function stopDrag() {
     if (isDragging.value) {
+        if (hasMoved) {
+            saveIconPosition();
+        }
         isDragging.value = false;
-        saveIconPosition();
     }
     document.removeEventListener('mousemove', onDrag);
     document.removeEventListener('mouseup', stopDrag);
@@ -156,10 +173,17 @@ function stopDrag() {
 
 // 切换面板
 function togglePanel() {
+    if (hasMoved) {
+        return;
+    }
     showPanel.value = !showPanel.value;
     if (showPanel.value) {
         unreadCount.value = 0;
         loadRecords();
+        // 弹层显示后聚焦，以便捕获 ESC 键盘事件
+        nextTick(() => {
+            panelRef.value?.focus();
+        });
     }
 }
 
