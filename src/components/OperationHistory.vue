@@ -30,26 +30,41 @@
                         </div>
                     </div>
                     <div class="panel-body">
-                        <div v-if="records.length === 0" class="empty-tip">
-                            {{ $t('operationHistory.empty') }}
-                        </div>
-                        <div v-else ref="listRef" class="record-list" @scroll="handleScroll">
-                            <div
-                                v-for="record in records"
-                                :key="record._id"
-                                :class="['record-item', `type-${record.type}`]"
-                            >
-                                <div class="record-header">
-                                    <span :class="['record-type', `type-${record.type}`]">
-                                        {{ getTypeText(record.type) }}
+                        <el-empty v-if="records.length === 0" :description="$t('operationHistory.empty')" />
+                        <el-table
+                            v-else
+                            ref="tableRef"
+                            :data="records"
+                            height="100%"
+                            :show-header="true"
+                            style="width: 100%"
+                        >
+                            <el-table-column :label="$t('common.date')" width="170" fixed>
+                                <template #default="{ row }">
+                                    <span class="cell-time">{{ formatTime(row.timestamp) }}</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="类型" width="80" fixed>
+                                <template #default="{ row }">
+                                    <span :class="['type-badge', `type-${row.type}`]">
+                                        {{ getTypeText(row.type) }}
                                     </span>
-                                    <span class="record-time">{{ formatTime(record.timestamp) }}</span>
-                                </div>
-                                <div class="record-message">{{ record.message }}</div>
-                                <div v-if="record.module" class="record-module">
-                                    {{ $t(`operationHistory.modules.${record.module}`) || record.module }}
-                                </div>
-                            </div>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="模块" width="100">
+                                <template #default="{ row }">
+                                    {{ row.module ? $t(`operationHistory.modules.${row.module}`) || row.module : '-' }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作内容" min-width="200">
+                                <template #default="{ row }">
+                                    {{ row.message }}
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        <div v-if="isLoadingMore" class="loading-more">
+                            <el-icon class="is-loading"><Loading /></el-icon>
+                            加载中...
                         </div>
                     </div>
                     <div class="panel-footer">
@@ -67,6 +82,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, toRaw, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ElMessageBox } from 'element-plus';
+import { Loading } from '@element-plus/icons-vue';
 import notification from '../utils/notification';
 
 const { t } = useI18n();
@@ -77,11 +93,12 @@ const records = ref([]);
 const unreadCount = ref(0);
 const storageSize = ref(0);
 const panelRef = ref(null);
-const listRef = ref(null);
+const tableRef = ref(null);
 const isLoadingMore = ref(false);
 const hasMore = ref(true);
 const currentOffset = ref(0);
 const PAGE_SIZE = 20;
+let scrollHandler = null;
 
 // 图标位置（默认左下角）
 const iconPosition = ref({ left: 16, bottom: 16 });
@@ -104,6 +121,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
     document.removeEventListener('mousemove', onDrag);
     document.removeEventListener('mouseup', stopDrag);
+    unbindTableScroll();
 });
 
 // 加载图标位置
@@ -189,17 +207,46 @@ function togglePanel() {
         // 弹层显示后聚焦，以便捕获 ESC 键盘事件
         nextTick(() => {
             panelRef.value?.focus();
+            // 绑定表格滚动事件
+            bindTableScroll();
         });
     }
 }
 
 // 关闭面板
 function closePanel() {
+    unbindTableScroll();
     showPanel.value = false;
 }
 
-// 滚动加载更多
-function handleScroll(e) {
+// 绑定表格滚动事件
+function bindTableScroll() {
+    nextTick(() => {
+        const table = tableRef.value;
+        if (table?.$el) {
+            // el-table 的滚动容器是 .el-scrollbar__wrap
+            const scrollEl = table.$el.querySelector('.el-scrollbar__wrap');
+            if (scrollEl) {
+                scrollHandler = handleTableScroll;
+                scrollEl.addEventListener('scroll', scrollHandler);
+            }
+        }
+    });
+}
+
+// 解绑表格滚动事件
+function unbindTableScroll() {
+    if (scrollHandler && tableRef.value?.$el) {
+        const scrollEl = tableRef.value.$el.querySelector('.el-scrollbar__wrap');
+        if (scrollEl) {
+            scrollEl.removeEventListener('scroll', scrollHandler);
+            scrollHandler = null;
+        }
+    }
+}
+
+// 表格滚动加载更多
+function handleTableScroll(e) {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
     if (scrollTop + clientHeight >= scrollHeight - 50) {
         loadMore();
@@ -300,18 +347,8 @@ function getTypeText(type) {
 function formatTime(timestamp) {
     if (!timestamp) return '';
     const date = new Date(timestamp);
-    const now = new Date();
-    const isToday = date.toDateString() === now.toDateString();
-
-    if (isToday) {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    return date.toLocaleString([], {
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
 // 暴露方法给外部调用（用于写入记录）
@@ -443,84 +480,38 @@ defineExpose({
 
 .panel-body {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 16px;
 }
 
-.empty-tip {
+.cell-time {
+    font-size: 14px;
+    color: #909399;
+}
+
+/* 类型标签 */
+.type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #fff;
+    line-height: 1.4;
+}
+
+.type-badge.type-success { background: #67c23a; }
+.type-badge.type-error { background: #f56c6c; }
+.type-badge.type-warning { background: #e6a23c; }
+.type-badge.type-info { background: #409eff; }
+
+.loading-more {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100%;
+    gap: 8px;
+    padding: 12px;
     color: #909399;
     font-size: 14px;
-}
-
-.record-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    min-height: 200px;
-}
-
-.record-item {
-    padding: 12px 16px;
-    border-radius: 8px;
-    background: #f5f7fa;
-    border-left: 4px solid #909399;
-}
-
-.record-item.type-success {
-    border-left-color: #67c23a;
-}
-
-.record-item.type-error {
-    border-left-color: #f56c6c;
-}
-
-.record-item.type-warning {
-    border-left-color: #e6a23c;
-}
-
-.record-item.type-info {
-    border-left-color: #409eff;
-}
-
-.record-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
-
-.record-type {
-    font-size: 12px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 4px;
-    color: #fff;
-}
-
-.record-type.type-success { background: #67c23a; }
-.record-type.type-error { background: #f56c6c; }
-.record-type.type-warning { background: #e6a23c; }
-.record-type.type-info { background: #409eff; }
-
-.record-time {
-    font-size: 12px;
-    color: #909399;
-}
-
-.record-message {
-    font-size: 14px;
-    color: #303133;
-    line-height: 1.5;
-}
-
-.record-module {
-    margin-top: 6px;
-    font-size: 12px;
-    color: #909399;
 }
 
 .panel-footer {

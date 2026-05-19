@@ -267,11 +267,13 @@ class AppManagerIpcHandler {
                 const appDataPath = path.join(getAppDataPath(), id);
                 const hasData = fs.existsSync(appDataPath);
 
-                const action = devTag ? '移除' : '删除';
-                const detailsInfo = hasData ? '：含用户数据' : '';
+                const actionKey = devTag ? 'appRemoved' : (hasData ? 'appDeletedWithData' : 'appDeleted');
+                const message = i18nModule.t(`operationHistory.messages.${actionKey}`, { appName: appName });
                 canboxDb.put({
                     type: 'info',
-                    message: `应用「${appName}」已${action}${detailsInfo}`,
+                    message: message,
+                    i18nKey: `operationHistory.messages.${actionKey}`,
+                    params: { appName: appName },
                     module: 'app',
                     details: {
                         // appId: 应用唯一标识
@@ -323,10 +325,14 @@ class AppManagerIpcHandler {
                 });
 
                 // 写入操作历史
-                const detailsInfo = clearedSize > 0 ? `：${formatSize(clearedSize)}` : '';
+                const messageKey = clearedSize > 0 ? 'appDataClearedSize' : 'appDataCleared';
+                const messageParams = clearedSize > 0 ? { appName: appName, size: formatSize(clearedSize) } : { appName: appName };
+                const message = i18nModule.t(`operationHistory.messages.${messageKey}`, messageParams);
                 canboxDb.put({
                     type: 'info',
-                    message: `应用「${appName}」数据已清理${detailsInfo}`,
+                    message: message,
+                    i18nKey: `operationHistory.messages.${messageKey}`,
+                    params: messageParams,
                     module: 'app',
                     details: {
                         // appId: 应用唯一标识

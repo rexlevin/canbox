@@ -434,6 +434,15 @@
             "settings": "Settings",
             "update": "Update",
             "unknown": "Other"
+        },
+        "messages": {
+            "appRemoved": "App \"{appName}\" removed",
+            "appDeleted": "App \"{appName}\" deleted",
+            "appDeletedWithData": "App \"{appName}\" deleted: with user data",
+            "appDataCleared": "App \"{appName}\" data cleared",
+            "appDataClearedSize": "App \"{appName}\" data cleared: {size}",
+            "appDownloadSuccess": "App \"{appName}\" downloaded successfully: v{version}",
+            "appInstallSuccess": "App \"{appName}\" installed successfully"
         }
     }
 }

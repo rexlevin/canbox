@@ -39,14 +39,34 @@ function getTranslations(lang) {
 }
 
 /**
- * 翻译函数（用于主进程）
- * @param {string} key - 翻译键，如 'app.title'
- * @param {string} lang - 语言代码
- * @param {Object} params - 参数
+ * 获取当前语言
  * @returns {string}
  */
-function translate(key, lang = 'zh-CN', params = {}) {
-    const translations = getTranslations(lang);
+function getCurrentLanguage() {
+    try {
+        // 延迟加载避免循环依赖
+        const { getCanboxStore } = require('@modules/main/storageManager');
+        const canboxStore = getCanboxStore();
+        const savedLanguage = canboxStore.get('language');
+        if (savedLanguage) {
+            return savedLanguage;
+        }
+    } catch (e) {
+        // ignore
+    }
+    return 'zh-CN';
+}
+
+/**
+ * 翻译函数（用于主进程）
+ * @param {string} key - 翻译键，如 'app.title'
+ * @param {Object} params - 参数
+ * @param {string} lang - 语言代码（可选，默认使用当前设置的语言）
+ * @returns {string}
+ */
+function translate(key, params = {}, lang = null) {
+    const language = lang || getCurrentLanguage();
+    const translations = getTranslations(language);
     const keys = key.split('.');
     let value = translations;
     for (const k of keys) {
@@ -68,5 +88,6 @@ function translate(key, lang = 'zh-CN', params = {}) {
 module.exports = {
     getAvailableLanguages,
     getTranslations,
-    translate
+    translate,
+    t: translate
 };

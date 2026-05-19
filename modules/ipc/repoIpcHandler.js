@@ -12,6 +12,7 @@ const repoUtils = require('@modules/utils/repoUtils');
 const fsUtils = require('@modules/utils/fs-utils');
 const DateFormat = require('@modules/utils/DateFormat');
 const canboxDb = require('@modules/core/canboxDb');
+const i18nModule = require('../../locales');
 
 const { handleImportApp } = require('@modules/main/appManager');
 const FileTaskManager = require('@modules/file-task/file-task-manager');
@@ -520,9 +521,12 @@ async function handleRepoDownloadTask(task) {
         // 4. 写入操作历史
         const appName = repoInfo?.name || uid;
         const version = repoInfo?.version || 'unknown';
+        const message = i18nModule.t('operationHistory.messages.appDownloadSuccess', { appName: appName, version: version });
         canboxDb.put({
             type: 'success',
-            message: `应用「${appName}」下载成功：v${version}`,
+            message: message,
+            i18nKey: 'operationHistory.messages.appDownloadSuccess',
+            params: { appName: appName, version: version },
             module: 'repo',
             details: {
                 // appId: 应用唯一标识
