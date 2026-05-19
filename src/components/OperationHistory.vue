@@ -23,19 +23,17 @@
                     <div class="panel-header">
                         <span class="panel-title">{{ $t('operationHistory.title') }}</span>
                         <div class="panel-actions">
-                            <el-button type="danger" size="small" @click="handleClear">
+                            <el-button type="danger" @click="handleClear">
                                 {{ $t('operationHistory.clear') }}
                             </el-button>
-                            <el-button size="small" @click="closePanel">
-                                {{ $t('operationHistory.close') }}
-                            </el-button>
+                            <span class="close-btn" @click="closePanel" :title="$t('operationHistory.close')">✕</span>
                         </div>
                     </div>
                     <div class="panel-body">
                         <div v-if="records.length === 0" class="empty-tip">
                             {{ $t('operationHistory.empty') }}
                         </div>
-                        <div v-else class="record-list">
+                        <div v-else ref="listRef" class="record-list" @scroll="handleScroll">
                             <div
                                 v-for="record in records"
                                 :key="record._id"
@@ -79,6 +77,11 @@ const records = ref([]);
 const unreadCount = ref(0);
 const storageSize = ref(0);
 const panelRef = ref(null);
+const listRef = ref(null);
+const isLoadingMore = ref(false);
+const hasMore = ref(true);
+const currentOffset = ref(0);
+const PAGE_SIZE = 20;
 
 // 图标位置（默认左下角）
 const iconPosition = ref({ left: 16, bottom: 16 });
@@ -95,7 +98,6 @@ const iconPositionStyle = computed(() => ({
 // 生命周期
 onMounted(async () => {
     loadIconPosition();
-    await loadRecords();
     await loadStorageSize();
 });
 
@@ -179,6 +181,10 @@ function togglePanel() {
     showPanel.value = !showPanel.value;
     if (showPanel.value) {
         unreadCount.value = 0;
+        // 重置分页状态
+        currentOffset.value = 0;
+        hasMore.value = true;
+        records.value = [];
         loadRecords();
         // 弹层显示后聚焦，以便捕获 ESC 键盘事件
         nextTick(() => {
@@ -192,16 +198,51 @@ function closePanel() {
     showPanel.value = false;
 }
 
-// 加载记录
-async function loadRecords() {
+// 滚动加载更多
+function handleScroll(e) {
+    const { scrollTop, scrollHeight, clientHeight } = e.target;
+    if (scrollTop + clientHeight >= scrollHeight - 50) {
+        loadMore();
+    }
+}
+
+// 加载记录（支持分页）
+async function loadRecords(isLoadMore = false) {
     try {
-        const result = await window.api.canboxDb.allDocs({ limit: 100 });
+        if (isLoadMore) {
+            if (isLoadingMore.value || !hasMore.value) return;
+            isLoadingMore.value = true;
+        }
+
+        const result = await window.api.canboxDb.allDocs({ 
+            limit: PAGE_SIZE,
+            skip: isLoadMore ? currentOffset.value : 0
+        });
+
         if (result.success) {
-            records.value = result.data.rows.map(row => row.doc);
+            const docs = result.data.rows.map(row => row.doc);
+            
+            if (isLoadMore) {
+                records.value = [...records.value, ...docs];
+            } else {
+                records.value = docs;
+            }
+            
+            currentOffset.value += docs.length;
+            hasMore.value = docs.length === PAGE_SIZE;
+            
+            console.log('[OperationHistory] 从数据库获取的记录:', JSON.stringify(docs, null, 2));
         }
     } catch (error) {
         console.error('Failed to load records:', error);
+    } finally {
+        isLoadingMore.value = false;
     }
+}
+
+// 加载更多
+async function loadMore() {
+    await loadRecords(true);
 }
 
 // 加载存储大小
@@ -384,7 +425,20 @@ defineExpose({
 
 .panel-actions {
     display: flex;
-    gap: 8px;
+    gap: 12px;
+    align-items: center;
+}
+
+.close-btn {
+    font-size: 20px;
+    color: #909399;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+}
+
+.close-btn:hover {
+    color: #303133;
 }
 
 .panel-body {
@@ -406,6 +460,7 @@ defineExpose({
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-height: 200px;
 }
 
 .record-item {
