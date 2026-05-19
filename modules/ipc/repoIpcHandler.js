@@ -519,10 +519,19 @@ async function handleRepoDownloadTask(task) {
 
         // 4. 写入操作历史
         const appName = repoInfo?.name || uid;
+        const version = repoInfo?.version || 'unknown';
         canboxDb.put({
             type: 'success',
-            message: `应用「${appName}」下载成功`,
-            module: 'repo'
+            message: `应用「${appName}」下载成功：v${version}`,
+            module: 'repo',
+            details: {
+                // appId: 应用唯一标识
+                appId: uid,
+                // version: 应用版本号
+                version: version,
+                // repoUrl: 来源仓库地址
+                repoUrl: repoInfo?.url || ''
+            }
         });
 
         taskManager.updateProgress(task.id, 100, '已完成 / Completed', 0);
