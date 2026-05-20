@@ -39,24 +39,24 @@
                             :show-header="true"
                             style="width: 100%"
                         >
-                            <el-table-column :label="$t('common.date')" width="170" fixed>
+                            <el-table-column :label="$t('common.date')" width="180" fixed>
                                 <template #default="{ row }">
                                     <span class="cell-time">{{ formatTime(row.timestamp) }}</span>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="类型" width="80" fixed>
+                            <el-table-column :label="$t('operationHistory.column.type')" width="80" fixed>
                                 <template #default="{ row }">
                                     <span :class="['type-badge', `type-${row.type}`]">
                                         {{ getTypeText(row.type) }}
                                     </span>
                                 </template>
                             </el-table-column>
-                            <el-table-column label="模块" width="100">
+                            <el-table-column :label="$t('operationHistory.column.module')" width="100">
                                 <template #default="{ row }">
                                     {{ row.module ? $t(`operationHistory.modules.${row.module}`) || row.module : '-' }}
                                 </template>
                             </el-table-column>
-                            <el-table-column label="操作内容" min-width="200">
+                            <el-table-column :label="$t('operationHistory.column.message')" min-width="200">
                                 <template #default="{ row }">
                                     {{ row.message }}
                                 </template>

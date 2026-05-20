@@ -325,14 +325,15 @@ class AppManagerIpcHandler {
                 });
 
                 // 写入操作历史
-                const messageKey = clearedSize > 0 ? 'appDataClearedSize' : 'appDataCleared';
-                const messageParams = clearedSize > 0 ? { appName: appName, size: formatSize(clearedSize) } : { appName: appName };
-                const message = i18nModule.t(`operationHistory.messages.${messageKey}`, messageParams);
+                const message = i18nModule.t('operationHistory.messages.appDataClearedSize', {
+                    appName: appName,
+                    size: formatSize(clearedSize)
+                });
                 canboxDb.put({
                     type: 'info',
                     message: message,
-                    i18nKey: `operationHistory.messages.${messageKey}`,
-                    params: messageParams,
+                    i18nKey: 'operationHistory.messages.appDataClearedSize',
+                    params: { appName: appName, size: formatSize(clearedSize) },
                     module: 'app',
                     details: {
                         // appId: 应用唯一标识
