@@ -58,7 +58,7 @@
                             </el-table-column>
                             <el-table-column :label="$t('operationHistory.column.message')" min-width="200">
                                 <template #default="{ row }">
-                                    {{ row.message }}
+                                    {{ resolveMessage(row) }}
                                 </template>
                             </el-table-column>
                         </el-table>
@@ -343,6 +343,34 @@ function getTypeText(type) {
     return typeMap[type] || type;
 }
 
+// 解析消息文本（支持 i18n key 或直接文本）
+function resolveMessage(record) {
+    const key = record.message;
+    const params = record.params || {};
+    // 如果 message 是 i18n key，尝试解析
+    if (key && key.includes('.')) {
+        const translated = t(key, params);
+        // 如果翻译结果和 key 相同，说明没有找到翻译，返回原值或拼接 details
+        if (translated === key) {
+            return formatFallbackMessage(record);
+        }
+        return translated;
+    }
+    // 直接是文本，返回原值
+    return key || '';
+}
+
+// 格式化后备消息（当 i18n key 未找到时使用）
+function formatFallbackMessage(record) {
+    const params = record.params || {};
+    let message = record.message || '';
+    // 简单替换 {param} 格式的参数
+    Object.keys(params).forEach(k => {
+        message = message.replace(new RegExp(`\\{${k}\\}`, 'g'), params[k]);
+    });
+    return message;
+}
+
 // 格式化时间
 function formatTime(timestamp) {
     if (!timestamp) return '';
@@ -485,8 +513,8 @@ defineExpose({
 }
 
 .cell-time {
-    font-size: 14px;
-    color: #909399;
+    font-size: 15px;
+    color: #303133;
 }
 
 /* 类型标签 */
@@ -494,7 +522,7 @@ defineExpose({
     display: inline-block;
     padding: 2px 8px;
     border-radius: 3px;
-    font-size: 12px;
+    font-size: 14px;
     color: #fff;
     line-height: 1.4;
 }

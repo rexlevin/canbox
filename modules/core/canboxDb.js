@@ -117,6 +117,7 @@ module.exports = {
             message: param.message || '',
             module: param.module || 'unknown',
             details: param.details || {},
+            params: param.params || {},
             timestamp: Date.now()
         });
         dbInstance.put(doc)

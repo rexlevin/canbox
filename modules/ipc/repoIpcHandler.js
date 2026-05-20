@@ -521,11 +521,9 @@ async function handleRepoDownloadTask(task) {
         // 4. 写入操作历史
         const appName = repoInfo?.name || uid;
         const version = repoInfo?.version || 'unknown';
-        const message = i18nModule.t('operationHistory.messages.appDownloadSuccess', { appName: appName, version: version });
         canboxDb.put({
             type: 'success',
-            message: message,
-            i18nKey: 'operationHistory.messages.appDownloadSuccess',
+            message: 'operationHistory.messages.appDownloadSuccess',
             params: { appName: appName, version: version },
             module: 'repo',
             details: {

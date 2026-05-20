@@ -268,11 +268,9 @@ class AppManagerIpcHandler {
                 const hasData = fs.existsSync(appDataPath);
 
                 const actionKey = devTag ? 'appRemoved' : (hasData ? 'appDeletedWithData' : 'appDeleted');
-                const message = i18nModule.t(`operationHistory.messages.${actionKey}`, { appName: appName });
                 canboxDb.put({
                     type: 'info',
-                    message: message,
-                    i18nKey: `operationHistory.messages.${actionKey}`,
+                    message: `operationHistory.messages.${actionKey}`,
                     params: { appName: appName },
                     module: 'app',
                     details: {
@@ -325,14 +323,9 @@ class AppManagerIpcHandler {
                 });
 
                 // 写入操作历史
-                const message = i18nModule.t('operationHistory.messages.appDataClearedSize', {
-                    appName: appName,
-                    size: formatSize(clearedSize)
-                });
                 canboxDb.put({
                     type: 'info',
-                    message: message,
-                    i18nKey: 'operationHistory.messages.appDataClearedSize',
+                    message: 'operationHistory.messages.appDataClearedSize',
                     params: { appName: appName, size: formatSize(clearedSize) },
                     module: 'app',
                     details: {
