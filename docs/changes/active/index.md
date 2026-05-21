@@ -3,12 +3,11 @@ title: 进行中的变更
 description: 记录正在实施或讨论中的功能变更
 related_changes:
   - file-task-manager
-  - operation-history
 ---
 
 # 进行中的变更
 
-> 最后更新：2026-05-17
+> 最后更新：2026-05-21
 
 ## 📊 统计
 
@@ -22,7 +21,7 @@ related_changes:
 
 | 变更名称 | 日期 | 优先级 | 描述 |
 |----------|------|--------|------|
-| [operation-history](./operation-history.md) | 2026-05-17 | ⭐⭐⭐ | 分级通知系统和操作历史记录 |
+| [file-task-manager](./file-task-manager.md) | 2026-05-09 | ⭐⭐⭐⭐⭐ | 文件任务管理模块 |
 
 ---
 
