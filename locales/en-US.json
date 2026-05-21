@@ -411,5 +411,42 @@
                 "hint": "Please view details or download manually"
             }
         }
+    },
+    "operationHistory": {
+        "title": "Operation History",
+        "clear": "Clear Records",
+        "close": "Close",
+        "empty": "No operation records",
+        "clearConfirm": "Are you sure you want to clear all operation records? This action cannot be undone.",
+        "clearSuccess": "Records cleared",
+        "storageSize": "Storage Size",
+        "column": {
+            "type": "Type",
+            "module": "Module",
+            "message": "Operation"
+        },
+        "types": {
+            "success": "Success",
+            "error": "Error",
+            "warning": "Warning",
+            "info": "Info"
+        },
+        "modules": {
+            "appList": "My Apps",
+            "appRepos": "App Repos",
+            "app": "App",
+            "devApp": "Dev App",
+            "settings": "Settings",
+            "update": "Update",
+            "unknown": "Other"
+        },
+        "messages": {
+            "appRemoved": "App \"{appName}\" removed",
+            "appDeleted": "App \"{appName}\" deleted",
+            "appDeletedWithData": "App \"{appName}\" deleted: with user data",
+            "appDataClearedSize": "App \"{appName}\" data cleared: {size}",
+            "appDownloadSuccess": "App \"{appName}\" downloaded successfully: v{version}",
+            "appInstallSuccess": "App \"{appName}\" installed successfully"
+        }
     }
 }

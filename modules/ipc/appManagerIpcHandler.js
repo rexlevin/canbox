@@ -10,6 +10,42 @@ const { deleteShortcuts } = require('@modules/main/shortcutManager');
 const { syncReposDownloadStatus } = require('@modules/ipc/repoIpcHandler');
 const i18nModule = require('../../locales');
 const { getCanboxStore } = require('@modules/main/storageManager');
+const canboxDb = require('@modules/core/canboxDb');
+
+/**
+ * 计算目录大小（字节）
+ * @param {string} dirPath - 目录路径
+ * @returns {number} 目录大小（字节）
+ */
+function getDirSize(dirPath) {
+    let size = 0;
+    if (!fs.existsSync(dirPath)) return 0;
+
+    const files = fs.readdirSync(dirPath);
+    for (const file of files) {
+        const filePath = path.join(dirPath, file);
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+            size += getDirSize(filePath);
+        } else {
+            size += stat.size;
+        }
+    }
+    return size;
+}
+
+/**
+ * 格式化文件大小
+ * @param {number} bytes - 字节数
+ * @returns {string} 格式化后的大小字符串
+ */
+function formatSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    const k = 1024;
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + units[i];
+}
 
 // 获取当前语言
 function getCurrentLanguage() {
@@ -226,6 +262,27 @@ class AppManagerIpcHandler {
                     await syncReposDownloadStatus(id, false);
                 }
 
+                // 获取应用名称用于操作历史记录
+                const appName = appItem?.appJson?.name || appItem?.name || id;
+                const appDataPath = path.join(getAppDataPath(), id);
+                const hasData = fs.existsSync(appDataPath);
+
+                const actionKey = devTag ? 'appRemoved' : (hasData ? 'appDeletedWithData' : 'appDeleted');
+                canboxDb.put({
+                    type: 'info',
+                    message: `operationHistory.messages.${actionKey}`,
+                    params: { appName: appName },
+                    module: 'app',
+                    details: {
+                        // appId: 应用唯一标识
+                        appId: id,
+                        // isDev: 是否为开发应用（true=移除，false=删除）
+                        isDev: devTag,
+                        // hasData: 删除前是否存在应用数据
+                        hasData: hasData
+                    }
+                });
+
                 logger.info(`应用已删除: ${id}, devTag: ${devTag}`);
                 return { success: true };
             } catch (error) {
@@ -240,12 +297,19 @@ class AppManagerIpcHandler {
                     return handleError(new Error('应用 ID 不能为空'), 'clearAppData');
                 }
 
-                const appDataPath = path.join(getAppDataPath(), id);
+                // 获取应用名称用于操作历史记录
+                const appsData = getAppsStore().get('default') || {};
+                const appItem = appsData[id];
+                const appName = appItem?.appJson?.name || appItem?.name || id;
 
-                // 使用 original-fs 删除应用数据目录
+                const appDataPath = path.join(getAppDataPath(), id);
+                let clearedSize = 0;
+
+                // 计算要清理的数据大小
                 if (fs.existsSync(appDataPath)) {
+                    clearedSize = getDirSize(appDataPath);
                     originalFs.rmSync(appDataPath, { recursive: true, force: true });
-                    logger.info(`应用数据已清除: ${appDataPath}`);
+                    logger.info(`应用数据已清除: ${appDataPath}, size: ${clearedSize}`);
                 } else {
                     logger.info(`应用数据目录不存在: ${appDataPath}`);
                 }
@@ -255,6 +319,22 @@ class AppManagerIpcHandler {
                 winState.remove(id, (result) => {
                     if (result.success) {
                         logger.info(`应用窗口状态已清除: ${id}`);
+                    }
+                });
+
+                // 写入操作历史
+                canboxDb.put({
+                    type: 'info',
+                    message: 'operationHistory.messages.appDataClearedSize',
+                    params: { appName: appName, size: formatSize(clearedSize) },
+                    module: 'app',
+                    details: {
+                        // appId: 应用唯一标识
+                        appId: id,
+                        // clearedSize: 清理的数据大小（字节）
+                        clearedSize: clearedSize,
+                        // clearedSizeStr: 清理的数据大小（格式化字符串）
+                        clearedSizeStr: clearedSize > 0 ? formatSize(clearedSize) : '0 B'
                     }
                 });
 

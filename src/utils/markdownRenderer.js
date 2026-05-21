@@ -1,6 +1,6 @@
 import MarkdownIt from 'markdown-it';
 import markdownItAnchor from 'markdown-it-anchor';
-import { ElMessage } from 'element-plus';
+import notification from './notification';
 
 /**
  * Markdown 渲染器模块
@@ -187,7 +187,7 @@ export async function renderAndOpenMarkdown(filePath, title, options = {}) {
     try {
         const result = await window.api.readFile(filePath);
         if (!result || !result.success) {
-            ElMessage.error('无法读取文档');
+            notification.error('无法读取文档');
             return;
         }
 
@@ -199,11 +199,11 @@ export async function renderAndOpenMarkdown(filePath, title, options = {}) {
         const docName = getBasename(filePath, '.md');
         const openResult = await window.api.openHtml(tempHtml, docName);
         if (!openResult.success) {
-            ElMessage.error('无法打开文档: ' + openResult.msg);
+            notification.error('无法打开文档: ' + openResult.msg);
         }
     } catch (error) {
         console.error('渲染 Markdown 文档失败:', error);
-        ElMessage.error('渲染文档失败: ' + error.message);
+        notification.error('渲染文档失败: ' + error.message);
     }
 }
 

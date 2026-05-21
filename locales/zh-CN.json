@@ -412,5 +412,42 @@
                 "hint": "请查看详情或手动下载安装"
             }
         }
+    },
+    "operationHistory": {
+        "title": "操作历史",
+        "clear": "清空记录",
+        "close": "关闭",
+        "empty": "暂无操作记录",
+        "clearConfirm": "确定要清空所有操作记录吗？此操作不可恢复。",
+        "clearSuccess": "记录已清空",
+        "storageSize": "存储大小",
+        "column": {
+            "type": "类型",
+            "module": "模块",
+            "message": "操作内容"
+        },
+        "types": {
+            "success": "成功",
+            "error": "错误",
+            "warning": "警告",
+            "info": "提示"
+        },
+        "modules": {
+            "appList": "我的应用",
+            "appRepos": "应用仓库",
+            "app": "应用",
+            "devApp": "开发应用",
+            "settings": "设置",
+            "update": "更新",
+            "unknown": "其他"
+        },
+        "messages": {
+            "appRemoved": "应用 \"{appName}\" 已移除",
+            "appDeleted": "应用 \"{appName}\" 已删除",
+            "appDeletedWithData": "应用 \"{appName}\" 已删除：含用户数据",
+            "appDataClearedSize": "应用 \"{appName}\" 数据已清理：{size}",
+            "appDownloadSuccess": "应用 \"{appName}\" 下载成功：v{version}",
+            "appInstallSuccess": "应用 \"{appName}\" 安装成功"
+        }
     }
 }

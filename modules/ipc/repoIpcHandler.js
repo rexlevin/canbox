@@ -11,6 +11,8 @@ const { getReposStore, getAppsStore } = require('@modules/main/storageManager');
 const repoUtils = require('@modules/utils/repoUtils');
 const fsUtils = require('@modules/utils/fs-utils');
 const DateFormat = require('@modules/utils/DateFormat');
+const canboxDb = require('@modules/core/canboxDb');
+const i18nModule = require('../../locales');
 
 const { handleImportApp } = require('@modules/main/appManager');
 const FileTaskManager = require('@modules/file-task/file-task-manager');
@@ -515,6 +517,24 @@ async function handleRepoDownloadTask(task) {
         const reposData = reposStore.get('default') || {};
         reposData[uid] = { ...repoInfo, downloaded: true, downloadTime: DateFormat.format(new Date()), toUpdate: false };
         reposStore.set('default', reposData);
+
+        // 4. 写入操作历史
+        const appName = repoInfo?.name || uid;
+        const version = repoInfo?.version || 'unknown';
+        canboxDb.put({
+            type: 'success',
+            message: 'operationHistory.messages.appDownloadSuccess',
+            params: { appName: appName, version: version },
+            module: 'repo',
+            details: {
+                // appId: 应用唯一标识
+                appId: uid,
+                // version: 应用版本号
+                version: version,
+                // repoUrl: 来源仓库地址
+                repoUrl: repoInfo?.url || ''
+            }
+        });
 
         taskManager.updateProgress(task.id, 100, '已完成 / Completed', 0);
 

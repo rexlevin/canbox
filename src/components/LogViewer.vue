@@ -157,7 +157,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage } from 'element-plus'
+import notification from '../utils/notification'
 import { Refresh, Download, Delete, DeleteFilled, FolderDelete, Top } from '@element-plus/icons-vue'
 
 const { t } = useI18n()
@@ -290,7 +290,7 @@ const refreshLogs = async () => {
             }
         }
     } catch (error) {
-        ElMessage.error(t('logViewer.loadLogsFailed'))
+        notification.error(t('logViewer.loadLogsFailed'))
         console.error('Failed to load logs:', error)
     } finally {
         loading.value = false
@@ -376,13 +376,13 @@ const exportLogs = async () => {
         )
 
         if (result.success) {
-            ElMessage.success(t('logViewer.exportSuccess'))
+            notification.success(t('logViewer.exportSuccess'))
             exportDialogVisible.value = false
         } else {
-            ElMessage.error(result.message || t('logViewer.exportFailed'))
+            notification.error(result.message || t('logViewer.exportFailed'))
         }
     } catch (error) {
-        ElMessage.error(t('logViewer.exportFailed'))
+        notification.error(t('logViewer.exportFailed'))
         console.error('Failed to export logs:', error)
     }
 }
@@ -398,13 +398,13 @@ const clearLogs = async () => {
             logs.value = []
             allLogs.value = []
             lastLogId = null
-            ElMessage.success(t('logViewer.clearLogsSuccess'))
+            notification.success(t('logViewer.clearLogsSuccess'))
             clearLogsDialogVisible.value = false
         } else {
-            ElMessage.error(result.message || t('logViewer.clearLogsFailed'))
+            notification.error(result.message || t('logViewer.clearLogsFailed'))
         }
     } catch (error) {
-        ElMessage.error(t('logViewer.clearLogsFailed'))
+        notification.error(t('logViewer.clearLogsFailed'))
         console.error('Failed to clear logs:', error)
     }
 }
@@ -417,10 +417,10 @@ const showCleanupDialog = async () => {
             selectedCleanupFiles.value = []
             cleanupDialogVisible.value = true
         } else {
-            ElMessage.info(t('logViewer.noFilesToDelete'))
+            notification.info(t('logViewer.noFilesToDelete'))
         }
     } catch (error) {
-        ElMessage.error(t('logViewer.loadFilesFailed'))
+        notification.error(t('logViewer.loadFilesFailed'))
         console.error('Failed to load log files:', error)
     }
 }
@@ -438,7 +438,7 @@ const toggleRowSelection = (row) => {
 const cleanupOldLogs = async () => {
     try {
         if (selectedCleanupFiles.value.length === 0) {
-            ElMessage.warning(t('logViewer.noFilesToDelete'))
+            notification.warning(t('logViewer.noFilesToDelete'))
             return
         }
 
@@ -450,17 +450,17 @@ const cleanupOldLogs = async () => {
         console.log('[cleanupOldLogs] Result:', result)
 
         if (result.success) {
-            ElMessage.success(t('logViewer.cleanupSuccess', { count: result.deletedCount || 0 }))
+            notification.success(t('logViewer.cleanupSuccess', { count: result.deletedCount || 0 }))
             cleanupDialogVisible.value = false
             await refreshLogs()
             await loadAvailableDates()
         } else {
             console.error('[cleanupOldLogs] Cleanup failed:', result.error)
-            ElMessage.error(result.error || t('logViewer.cleanupFailed'))
+            notification.error(result.error || t('logViewer.cleanupFailed'))
         }
     } catch (error) {
         console.error('[cleanupOldLogs] Exception:', error)
-        ElMessage.error(t('logViewer.cleanupFailed'))
+        notification.error(t('logViewer.cleanupFailed'))
     }
 }
 

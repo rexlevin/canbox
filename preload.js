@@ -253,6 +253,10 @@ contextBridge.exposeInMainWorld(
             getLast: () => ipcRenderer.invoke('menu-get-last'),
             setLast: (menuName) => ipcRenderer.invoke('menu-set-last', menuName)
         },
+        canboxConfig: {
+            get: (key, defaultValue) => ipcRenderer.invoke('canboxConfig-get', key, defaultValue),
+            set: (key, value) => ipcRenderer.invoke('canboxConfig-set', key, value)
+        },
         fileTask: {
             // 创建任务
             create: (type, uid, options) =>
@@ -311,6 +315,28 @@ contextBridge.exposeInMainWorld(
             // 请求推送完整列表
             requestList: () =>
                 ipcRenderer.invoke('file-task-request-list'),
+        },
+        canboxDb: {
+            // 写入记录
+            put: (param) => ipcRenderer.invoke('canboxDb-put', param),
+
+            // 获取单条记录
+            get: (param) => ipcRenderer.invoke('canboxDb-get', param),
+
+            // 查询记录
+            find: (query) => ipcRenderer.invoke('canboxDb-find', query),
+
+            // 删除记录
+            remove: (param) => ipcRenderer.invoke('canboxDb-remove', param),
+
+            // 获取所有记录
+            allDocs: (options) => ipcRenderer.invoke('canboxDb-allDocs', options),
+
+            // 获取存储大小
+            getSize: () => ipcRenderer.invoke('canboxDb-getSize'),
+
+            // 清理过期记录
+            cleanup: (maxDays) => ipcRenderer.invoke('canboxDb-cleanup', maxDays),
         }
     }
 );

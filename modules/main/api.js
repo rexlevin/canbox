@@ -7,6 +7,7 @@ const winFactory = require('@modules/core/win');
 const dialogFactory = require('@modules/core/dialog');
 const ElectronStore = require('@modules/core/electronStore');
 const DB = require('@modules/core/db');
+const canboxDb = require('@modules/core/canboxDb');
 const sudo = require('@modules/core/sudo');
 const { getCanboxStore } = require('@modules/main/storageManager');
 
@@ -314,10 +315,122 @@ function initDownloadCanboxTypesIpcHandlers() {
 }
 
 /**
+ * 初始化 canboxDb 相关的 IPC 消息处理逻辑
+ * @description 处理来自渲染进程的操作历史记录请求
+ */
+function initCanboxDbIpcHandlers() {
+    // canboxDb-put: 写入记录
+    ipcMain.handle('canboxDb-put', async (event, param) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.put(param, (res, err) => {
+                    if (err) reject(err);
+                    else resolve(res);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-get: 获取单条记录
+    ipcMain.handle('canboxDb-get', async (event, param) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.get(param, (res, err) => {
+                    if (err) reject(err);
+                    else resolve(res);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-find: 查询记录
+    ipcMain.handle('canboxDb-find', async (event, query) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.find(query, (res, err) => {
+                    if (err) reject(err);
+                    else resolve(res);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-remove: 删除记录
+    ipcMain.handle('canboxDb-remove', async (event, param) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.remove(param, (res, err) => {
+                    if (err) reject(err);
+                    else resolve(res);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-allDocs: 获取所有记录
+    ipcMain.handle('canboxDb-allDocs', async (event, options) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.allDocs(options, (res, err) => {
+                    if (err) reject(err);
+                    else resolve(res);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-getSize: 获取存储大小
+    ipcMain.handle('canboxDb-getSize', async () => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.getSize((size, err) => {
+                    if (err) reject(err);
+                    else resolve(size);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+
+    // canboxDb-cleanup: 清理过期记录
+    ipcMain.handle('canboxDb-cleanup', async (event, maxDays) => {
+        try {
+            const result = await new Promise((resolve, reject) => {
+                canboxDb.cleanupByDays(maxDays, (count, err) => {
+                    if (err) reject(err);
+                    else resolve(count);
+                });
+            });
+            return { success: true, data: result };
+        } catch (error) {
+            return { success: false, msg: error.message };
+        }
+    });
+}
+
+/**
  * 统一初始化所有 IPC 消息处理逻辑
  */
 function initApiIpcHandlers() {
     initDbIpcHandlers();
+    initCanboxDbIpcHandlers();
     createWindowIpcHandlers();
     notificationHandlers();
     initDialogIpcHandlers();

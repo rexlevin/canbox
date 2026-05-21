@@ -39,14 +39,50 @@ function getTranslations(lang) {
 }
 
 /**
- * 翻译函数（用于主进程）
- * @param {string} key - 翻译键，如 'app.title'
- * @param {string} lang - 语言代码
- * @param {Object} params - 参数
+ * 获取当前语言
  * @returns {string}
  */
-function translate(key, lang = 'zh-CN', params = {}) {
-    const translations = getTranslations(lang);
+function getCurrentLanguage() {
+    try {
+        // 延迟加载避免循环依赖
+        const { getCanboxStore } = require('@modules/main/storageManager');
+        const canboxStore = getCanboxStore();
+        const savedLanguage = canboxStore.get('language');
+        if (savedLanguage) {
+            return savedLanguage;
+        }
+    } catch (e) {
+        // ignore
+    }
+    return 'zh-CN';
+}
+
+/**
+ * 翻译函数（用于主进程）
+ * 支持多种调用方式：
+ * - translate(key)
+ * - translate(key, lang) - lang 为字符串
+ * - translate(key, params) - params 为对象
+ * - translate(key, params, lang)
+ * @param {string} key - 翻译键，如 'app.title'
+ * @param {Object|string} paramsOrLang - 参数对象或语言代码
+ * @param {string} lang - 语言代码
+ * @returns {string}
+ */
+function translate(key, paramsOrLang = {}, lang = null) {
+    let params = {};
+    let language = null;
+
+    if (typeof paramsOrLang === 'string') {
+        // 第二个参数是语言代码
+        language = paramsOrLang;
+    } else if (paramsOrLang && typeof paramsOrLang === 'object') {
+        // 第二个参数是参数对象
+        params = paramsOrLang;
+    }
+
+    const currentLang = lang || language || getCurrentLanguage();
+    const translations = getTranslations(currentLang);
     const keys = key.split('.');
     let value = translations;
     for (const k of keys) {
@@ -57,7 +93,7 @@ function translate(key, lang = 'zh-CN', params = {}) {
     if (typeof value === 'string') {
         // 简单的参数替换
         return Object.keys(params).reduce((str, param) => {
-            return str.replace(new RegExp(`{${param}}`, 'g'), params[param]);
+            return str.replace(new RegExp(`\\{${param}\\}`, 'g'), params[param]);
         }, value);
     }
 
@@ -68,5 +104,6 @@ function translate(key, lang = 'zh-CN', params = {}) {
 module.exports = {
     getAvailableLanguages,
     getTranslations,
-    translate
+    translate,
+    t: translate
 };

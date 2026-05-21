@@ -50,6 +50,7 @@
             </el-main>
         </el-container>
         <FileTaskPanel />
+        <OperationHistory ref="operationHistoryRef" />
     </div>
 </template>
 
@@ -155,10 +156,14 @@ import AppDev from '@/components/AppDev.vue';
 import About from '@/components/About.vue';
 import Settings from '@/components/Settings.vue';
 import FileTaskPanel from '@/components/FileTaskPanel.vue';
+import OperationHistory from '@/components/OperationHistory.vue';
 import { useUpdateStore } from '@/stores/updateStore';
+import { useOperationHistoryStore } from '@/stores/operationHistoryStore';
 
 const { t } = useI18n();
 const updateStore = useUpdateStore();
+const operationHistoryStore = useOperationHistoryStore();
+const operationHistoryRef = ref(null);
 let activeName = ref('myApps');
 
 // 页面加载时读取上次选中的菜单
