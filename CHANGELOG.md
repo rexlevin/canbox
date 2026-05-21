@@ -37,30 +37,59 @@ Add change workflow documentation
 
 ## [0.4.0] - 2026-05-09
 
-### Added
+### feat | 新功能 / Features
 
-- 新增文件任务管理模块（file-task），统一管理下载、导入等文件操作任务
+新增文件任务管理器（File Task Manager），统一管理下载、导入等文件操作任务
+Electron 从 35.7.2 升级到 41.2.1，Node.js 升级到 23+
+新增 App Locale API（window.canbox.getLocale()），应用可获取 Canbox 当前语言环境
+打包、下载、添加仓库操作添加视觉反馈
+新增字体设置功能
+新增日志查看器窗口，支持实时过滤和搜索
+APP 列表 UI 升级
+自动更新支持后台静默下载
+支持自定义用户数据存储路径
+优化数据迁移后重启体验
 
-### Changed
+Add File Task Manager for unified file operation management
+Upgrade Electron from 35.7.2 to 41.2.1, Node.js to 23+
+Add App Locale API (window.canbox.getLocale()) for apps
+Add visual feedback for pack, download, repo operations
+Add font settings
+Add log viewer window with real-time filtering and search
+Upgrade APP list UI
+Auto-update with silent download
+Custom user data path
+Improved post-migration restart UX
 
-- 更新变更文档指南和 Electron 升级记录
+### chore | 维护 / Maintenance
+
+Linux AppImage --no-sandbox 沙箱权限解决方案
+日志系统统一化
+
+--no-sandbox solution for Linux AppImage
+Logging unification
 
 ## [0.3.4] - 2026-04-16
 
-### Added
+### feat | 新功能 / Features
 
-- 添加 getLocale API，支持 APP 获取当前语言设置
-- 支持中英文文档切换
-- 添加加载状态提示和国际化文本
-- 新增卡片式应用列表 UI 和设置页面
+为 APP 提供 window.canbox.getLocale() API，获取 Canbox 当前语言环境
 
-### Fixed
+Add window.canbox.getLocale() API for apps to get Canbox locale
 
-- 修复存储路径配置异常
+### docs | 文档 / Documentation
 
-### Changed
+更新 API 文档（中英文）
+完善变更记录归档系统
 
-- 重构文档目录结构并更新变更记录
+Update API documentation (Chinese and English)
+Complete change log archiving system
+
+### API Usage | API 使用
+
+```javascript
+const locale = window.canbox.getLocale(); // 'zh-CN' or 'en-US'
+```
 
 ## [0.2.7] - 2026-03-21
 

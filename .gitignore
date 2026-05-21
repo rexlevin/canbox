@@ -11,7 +11,7 @@ lerna-debug.log*
 /node_modules
 /dist
 /build
-.trae/
+.trae
 .codebuddy
 .codebuddy/
 openspec/
