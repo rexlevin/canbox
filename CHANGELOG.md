@@ -5,42 +5,6 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [0.4.5] - 2026-05-21
-
-### feat
-
-- 新增操作历史记录功能，支持多语言和分页加载
-- 实现双源更新系统及跨平台自动发布流程
-- 增强 Zoom 功能：键盘快捷键 + 设置界面控制
-- 新增地区检测功能，根据系统语言智能推荐更新源
-- 新增更新源速度测试功能，自动选择最优源
-
-### chore
-
-- 将 .codebuddy 添加到 gitignore
-
-### docs
-
-- 添加操作历史记录文档并更新变更日志
-- 添加分级通知和操作历史功能设计文档
-- 完成双源更新机制文档并归档
-- 添加变更工作流文档
-
-### fixed
-
-- 修复 IPC handler 重复注册导致启动报错的问题
-- 修复 ASAR 文件读取时使用 fs 而非 original-fs 导致的 ENOENT 错误
-- 修复 AppImage 启动后界面空白的问题（loadFile 替换为 loadURL）
-- 修复 update-source:get IPC 返回 Promise 对象无法序列化的问题
-- 修复 GET_UPDATE_CONFIG handler 中 getConfig/saveConfig 未导入的问题
-- 修复 Gitee 发布大文件上传超时问题，改为只推送增量包
-
-### changed
-
-- 重构 updateSource API 调用方式
-- 拆分跨平台构建流程，支持 Windows 独立发布
-- 移除 differentialPackagePolicy 配置
-
 ## [0.4.0] - 2026-05-09
 
 ### Added
