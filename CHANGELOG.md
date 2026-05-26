@@ -5,6 +5,20 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.4.8] - 2026-05-25
+
+### feat | 新功能 / Features
+
+APP 外部链接自动使用默认浏览器打开，新增 canbox.openUrl API
+
+Automatically open external URLs in default browser for APPs, add canbox.openUrl API
+
+### docs | 文档 / Documentation
+
+更新变更列表和文档
+
+Update change list and documentation
+
 ## [0.4.7] - 2026-05-21
 
 ### feat | 新功能 / Features
