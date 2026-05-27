@@ -251,10 +251,12 @@ if (!getTheLock) {
         if ('' !== appId) {
             console.info('First-time startup with appId:', appId, 'devTag:', isDevTag, 'devTools:', devTools);
             logger.info('[main.js] First-time startup with appId: {}, devTag: {}, devTools: {}', appId, isDevTag, devTools);
-            // 延迟执行，确保主窗口已完全初始化
+            // 延迟执行，尽快启动目标 APP
+            // 注意：不在这里调用 win.hide()，窗口创建时已是 show: false 不会显示
+            // 提前 hide 会破坏渲染器初始化（X11 compositor 不再为隐藏窗口合成首帧）
+            // 后续 ready-to-show 或 fallback 会统一处理窗口的显示/隐藏逻辑
             setTimeout(() => {
                 if (win && !win.isDestroyed()) {
-                    win.hide();
                     appLoader.loadApp(appId, isDevTag, devTools);
                 } else {
                     logger.warn('[main.js] Main window not ready for app loading, skipping');
@@ -389,6 +391,15 @@ const createWindow = () => {
     // Fallback 定时器 ID，用于 Wayland 等环境下 ready-to-show 不触发的兜底
     let readyToShowFallbackTimer = null;
 
+    // 解析首次启动的 --app-id 参数（提前到 createWindow 作用域，供 fallback 和 ready-to-show 共用）
+    let launchAppId = null;
+    for (const arg of process.argv) {
+        if (arg.startsWith('--app-id=')) {
+            launchAppId = arg.split('=')[1];
+            break;
+        }
+    }
+
     // 添加页面加载完成后的日志
     win.webContents.on('did-finish-load', () => {
         console.log('Page loaded successfully');
@@ -409,10 +420,16 @@ const createWindow = () => {
             logger.error('Failed to apply zoom factor:', error);
         }
 
-        // Wayland 环境下 ready-to-show 可能不触发，设置 fallback 兜底显示
+        // Wayland 等环境下 ready-to-show 可能不触发，设置 fallback 兜底显示
         // 如果 ready-to-show 先触发，会清除这个定时器
         readyToShowFallbackTimer = setTimeout(() => {
             if (!win.isDestroyed() && !win.isVisible()) {
+                // --app-id 启动时主窗口不应显示，跳过 fallback 的 show 操作
+                if (launchAppId) {
+                    win.setSkipTaskbar(true);
+                    logger.info('[main.js] Fallback: ready-to-show not triggered, skipping show (--app-id mode, appId: {})', launchAppId);
+                    return;
+                }
                 logger.info('[main.js] Fallback: ready-to-show not triggered, forcing show window');
                 win.show();
             }
@@ -440,15 +457,6 @@ const createWindow = () => {
         const PackageJson = require('./package.json');
         const devTitle = isDev ? ' - develop' : '';
         win.setTitle(`${PackageJson.description} - v${PackageJson.version}${devTitle}`);
-
-        // 解析首次启动的 --app-id 参数
-        let launchAppId = null;
-        for (const arg of process.argv) {
-            if (arg.startsWith('--app-id=')) {
-                launchAppId = arg.split('=')[1];
-                break;
-            }
-        }
 
         if (launchAppId) {
             // 指定 APP 启动：主窗口不显示，启动到 tray，直接加载 APP
