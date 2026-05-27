@@ -5,6 +5,14 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.0] - 2026-05-27
+
+### fix | 问题修复 / Bug Fixes
+
+修复 --app-id 启动时 X11 下渲染首帧异常及 fallback 误显示窗口
+
+Fix renderer first-frame anomaly and fallback incorrectly showing window on --app-id launch under X11
+
 ## [0.4.9] - 2026-05-27
 
 ### feat | 新功能 / Features
