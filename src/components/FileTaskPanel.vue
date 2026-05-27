@@ -1,75 +1,81 @@
 <template>
     <transition name="slide-up">
-        <div v-if="showPanel" class="file-task-panel">
-            <div class="panel-header">
-                <span class="panel-title">{{ $t('fileTask.title') }}</span>
-                <span class="panel-count">{{ $t('fileTask.taskCount', { count: activeTasks.length }) }}</span>
-                <div class="panel-actions">
-                    <el-tooltip :content="$t('fileTask.clearCompleted')" placement="top">
-                        <button class="icon-btn" @click="handleClearCompleted">🗑️</button>
-                    </el-tooltip>
-                    <el-tooltip :content="panelExpanded ? $t('fileTask.collapse') : $t('fileTask.expand')" placement="top">
-                        <button class="icon-btn" @click="panelExpanded = !panelExpanded">
-                            {{ panelExpanded ? '▼' : '▲' }}
-                        </button>
-                    </el-tooltip>
-                </div>
+        <div v-if="showPanel" :class="['file-task-panel', { 'panel-collapsed': !panelExpanded }]">
+            <!-- 收起状态：小图标按钮 -->
+            <div v-if="!panelExpanded" class="collapsed-badge" @click="panelExpanded = true">
+                <span class="badge-icon">📋</span>
+                <span v-if="runningCount > 0" class="badge-dot"></span>
             </div>
-            <div v-show="panelExpanded" class="panel-body">
-                <div v-if="taskList.length === 0" class="empty-tip">
-                    {{ $t('fileTask.empty') }}
-                </div>
-                <div
-                    v-for="task in taskList"
-                    :key="task.id"
-                    :class="['task-item', `task-status-${task.status}`]"
-                >
-                    <div class="task-info">
-                        <span class="task-type-icon">{{ getTypeIcon(task.type) }}</span>
-                        <span class="task-name">{{ task.options?.name || task.uid || task.id }}</span>
-                        <el-tag
-                            :type="getStatusTagType(task.status)"
-                            size="small"
-                            effect="plain"
-                            class="task-status-tag"
-                        >
-                            {{ getStatusText(task.status) }}
-                        </el-tag>
-                    </div>
-                    <div v-if="isRunningState(task.status)" class="task-progress">
-                        <el-progress
-                            :percentage="task.progress || 0"
-                            :stroke-width="6"
-                            :show-text="!!task.progressText"
-                            :format="() => task.progressText || ''"
-                        />
-                        <span v-if="task.speed" class="task-speed">{{ task.speed }}</span>
-                    </div>
-                    <div v-if="task.error" class="task-error">
-                        {{ task.error }}
-                    </div>
-                    <div class="task-actions">
-                        <el-button
-                            v-if="canCancel(task)"
-                            type="warning"
-                            size="small"
-                            text
-                            @click="handleCancel(task.id)"
-                        >
-                            {{ $t('common.cancel') }}
-                        </el-button>
-                        <el-button
-                            v-if="canRetry(task)"
-                            type="primary"
-                            size="small"
-                            text
-                            @click="handleRetry(task.id)"
-                        >
-                            {{ $t('autoUpdate.retry') }}
-                        </el-button>
+            <!-- 展开状态：完整面板 -->
+            <template v-else>
+                <div class="panel-header">
+                    <span class="panel-title">{{ $t('fileTask.title') }}</span>
+                    <span class="panel-count">{{ $t('fileTask.taskCount', { count: activeTasks.length }) }}</span>
+                    <div class="panel-actions">
+                        <el-tooltip :content="$t('fileTask.clearCompleted')" placement="top">
+                            <button class="icon-btn" @click="handleClearCompleted">🗑️</button>
+                        </el-tooltip>
+                        <el-tooltip :content="$t('fileTask.collapse')" placement="top">
+                            <button class="icon-btn" @click="panelExpanded = false">▼</button>
+                        </el-tooltip>
                     </div>
                 </div>
-            </div>
+                <div class="panel-body">
+                    <div v-if="taskList.length === 0" class="empty-tip">
+                        {{ $t('fileTask.empty') }}
+                    </div>
+                    <div
+                        v-for="task in taskList"
+                        :key="task.id"
+                        :class="['task-item', `task-status-${task.status}`]"
+                    >
+                        <div class="task-info">
+                            <span class="task-type-icon">{{ getTypeIcon(task.type) }}</span>
+                            <span class="task-name">{{ task.options?.name || task.uid || task.id }}</span>
+                            <el-tag
+                                :type="getStatusTagType(task.status)"
+                                size="small"
+                                effect="plain"
+                                class="task-status-tag"
+                            >
+                                {{ getStatusText(task.status) }}
+                            </el-tag>
+                        </div>
+                        <div v-if="isRunningState(task.status)" class="task-progress">
+                            <el-progress
+                                :percentage="task.progress || 0"
+                                :stroke-width="6"
+                                :show-text="!!task.progressText"
+                                :format="() => task.progressText || ''"
+                            />
+                            <span v-if="task.speed" class="task-speed">{{ task.speed }}</span>
+                        </div>
+                        <div v-if="task.error" class="task-error">
+                            {{ task.error }}
+                        </div>
+                        <div class="task-actions">
+                            <el-button
+                                v-if="canCancel(task)"
+                                type="warning"
+                                size="small"
+                                text
+                                @click="handleCancel(task.id)"
+                            >
+                                {{ $t('common.cancel') }}
+                            </el-button>
+                            <el-button
+                                v-if="canRetry(task)"
+                                type="primary"
+                                size="small"
+                                text
+                                @click="handleRetry(task.id)"
+                            >
+                                {{ $t('autoUpdate.retry') }}
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+            </template>
         </div>
     </transition>
 </template>
@@ -87,6 +93,7 @@ const panelExpanded = ref(true);
 const taskList = computed(() => fileTaskStore.taskList);
 const activeTasks = computed(() => fileTaskStore.activeTasks);
 const showPanel = computed(() => taskList.value.length > 0);
+const runningCount = computed(() => taskList.value.filter(t => isRunningState(t.status)).length);
 
 const TERMINAL_STATES = ['completed', 'cancelled', 'failed'];
 
@@ -108,6 +115,7 @@ function getTypeIcon(type) {
         'repo-download': '📦',
         'app-pack': '📦',
         'app-update': '🔄',
+        'app-export': '📤',
     };
     return icons[type] || '📋';
 }
@@ -128,9 +136,9 @@ function getStatusTagType(status) {
 }
 
 function getStatusText(status) {
+    if (!status) return '';
     const key = `fileTask.status.${status}`;
     const text = t(key);
-    // 如果没有对应的国际化文本，返回原始状态
     return text === key ? status : text;
 }
 
@@ -154,7 +162,6 @@ function handleClearCompleted() {
     fileTaskStore.clearCompleted();
 }
 
-// 监听任务更新
 function onTaskUpdate(task) {
     fileTaskStore.updateTask(task);
 }
@@ -165,7 +172,6 @@ onMounted(async () => {
         return;
     }
 
-    // 获取当前所有任务
     try {
         const result = await window.api.fileTask.getAll();
         if (result.success && result.tasks) {
@@ -175,7 +181,6 @@ onMounted(async () => {
         console.error('[FileTaskPanel] getAll tasks failed:', err);
     }
 
-    // 监听任务更新
     window.api.fileTask.onUpdate(onTaskUpdate);
 });
 
@@ -201,6 +206,55 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: width 0.25s ease, max-height 0.25s ease, border-radius 0.25s ease;
+}
+
+.file-task-panel.panel-collapsed {
+    width: auto;
+    max-height: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.collapsed-badge {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s;
+}
+
+.collapsed-badge:hover {
+    transform: scale(1.1);
+}
+
+.collapsed-badge:active {
+    transform: scale(0.95);
+}
+
+.badge-icon {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.badge-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 10px;
+    height: 10px;
+    background: #67c23a;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
 .panel-header {
@@ -337,7 +391,6 @@ onBeforeUnmount(() => {
     margin-top: 4px;
 }
 
-/* slide-up 过渡动画 */
 .slide-up-enter-active,
 .slide-up-leave-active {
     transition: transform 0.3s ease, opacity 0.3s ease;

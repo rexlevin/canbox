@@ -15,6 +15,7 @@ const FileTaskPath = {
         switch (type) {
             case 'app-import':
             case 'app-pack':
+            case 'app-export':
                 return pathManager.getAppTempPath();  // Users/temp/apps
             case 'repo-download':
             case 'app-update':

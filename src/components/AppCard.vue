@@ -68,6 +68,13 @@
                             </button>
                         </el-tooltip>
 
+                        <!-- 导出按钮（我的APP） -->
+                        <el-tooltip v-if="showExport" :content="$t('appList.exportApp')" placement="top" popper-class="app-card-tooltip">
+                            <button class="icon-btn export-btn" @click="$emit('export', uid)">
+                                {{ getActionIcon('export') }}
+                            </button>
+                        </el-tooltip>
+
                         <!-- 复制按钮（仓库） -->
                         <el-tooltip v-if="showCopy" :content="$t('appList.copy')" placement="top" popper-class="app-card-tooltip">
                             <button class="icon-btn copy-btn" @click="$emit('copy', uid)">
@@ -163,6 +170,10 @@ const props = defineProps({
         type: Boolean,
         default: true
     },
+    showExport: {
+        type: Boolean,
+        default: false
+    },
     showDelete: {
         type: Boolean,
         default: true
@@ -194,7 +205,7 @@ const props = defineProps({
     }
 })
 
-defineEmits(['run', 'delete', 'clear', 'pack', 'copy', 'download', 'update', 'show-info'])
+defineEmits(['run', 'delete', 'clear', 'pack', 'copy', 'download', 'update', 'export', 'show-info'])
 
 // Logo URL
 const logoUrl = computed(() => {
@@ -439,6 +450,10 @@ const allTagsTooltip = computed(() => {
 
 .clear-btn:hover {
     background: #fff3e0;
+}
+
+.export-btn:hover {
+    background: #e8eaf6;
 }
 
 .pack-btn:hover {

@@ -94,6 +94,12 @@ contextBridge.exposeInMainWorld(
         importApp: (zipPath) => {
             return ipcRenderer.invoke('import-app', zipPath);
         },
+        exportApp: (uid, savePath) => {
+            return ipcRenderer.invoke('export-app', uid, savePath);
+        },
+        selectExportPath: (defaultName) => {
+            return ipcRenderer.invoke('select-export-path', defaultName);
+        },
         packToAsar: (uid) => {
             return ipcRenderer.invoke('pack-asar', uid);
         },

@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const fse = require('fs-extra');
 const originalFs = require('original-fs');
 const { getAppsStore, getAppsDevStore } = require('@modules/main/storageManager');
 const { getAppPath, getAppDataPath } = require('@modules/main/pathManager');
@@ -54,6 +55,107 @@ function getCurrentLanguage() {
 }
 
 const translate = (key) => i18nModule.translate(key, getCurrentLanguage());
+
+/**
+ * 处理 app-export 任务
+ * @param {Object} task - 任务对象
+ */
+async function handleAppExportTask(task) {
+    const FileTaskManager = require('@modules/file-task/file-task-manager');
+    const taskManager = FileTaskManager.getInstance();
+    const { execSync } = require('child_process');
+
+    const uid = task.uid;
+    const savePath = task.options.savePath;
+
+    logger.info('Exporting app: {}, saveTo: {}', uid, savePath);
+
+    try {
+        taskManager.updateProgress(task.id, 10, '准备导出...', 0);
+
+        const appsData = getAppsStore().get('default') || {};
+        const appItem = appsData[uid];
+        if (!appItem) {
+            throw new Error('应用不存在');
+        }
+
+        const appName = appItem.appJson?.name || appItem.name || uid;
+        const version = appItem.appJson?.version || appItem.version || '';
+        const appId = appItem.appJson?.id || appItem.id || uid;
+
+        taskManager.updateProgress(task.id, 20, '读取应用文件...', 0);
+
+        const appPath = getAppPath();
+        const asarPath = path.join(appPath, `${uid}.asar`);
+        const unpackedPath = path.join(appPath, `${uid}.asar.unpacked`);
+
+        logger.info('Reading asar file: {}', asarPath);
+        if (!originalFs.existsSync(asarPath)) {
+            throw new Error(`应用文件不存在: ${uid}.asar`);
+        }
+
+        taskManager.updateProgress(task.id, 30, '复制应用文件...', 0);
+
+        const hasUnpacked = originalFs.existsSync(unpackedPath);
+        if (hasUnpacked) {
+            logger.info('Found .asar.unpacked directory: {}', unpackedPath);
+        }
+
+        const tmpAsarPath = path.join(task.tempPath, `${uid}.asar`);
+        originalFs.copyFileSync(asarPath, tmpAsarPath);
+
+        if (hasUnpacked) {
+            fse.copySync(unpackedPath, path.join(task.tempPath, `${uid}.asar.unpacked`));
+        }
+
+        taskManager.updateProgress(task.id, 50, '打包中...', 0);
+
+        logger.info('Creating zip package: {}', savePath);
+
+        if (process.platform === 'win32') {
+            execSync(`powershell -Command "Compress-Archive -Path '${task.tempPath}\\*' -DestinationPath '${savePath}' -Force"`, { stdio: 'inherit' });
+        } else {
+            execSync(`cd "${task.tempPath}" && zip -r "${savePath}" .`, { stdio: 'inherit' });
+        }
+
+        taskManager.updateProgress(task.id, 90, '导出完成...', 0);
+
+        logger.info('App exported successfully: {} -> {}', appId, savePath);
+
+        canboxDb.put({
+            type: 'success',
+            message: 'operationHistory.messages.appExportSuccess',
+            params: { appName: appName, version: version },
+            module: 'app',
+            details: {
+                appId: uid,
+                version: version,
+                exportPath: savePath
+            }
+        });
+
+        return { success: true };
+    } catch (error) {
+        logger.error('App export failed: {}, error: {}', uid, error.message);
+
+        const appsData = getAppsStore().get('default') || {};
+        const appItem = appsData[uid];
+        const appName = appItem?.appJson?.name || appItem?.name || uid;
+
+        canboxDb.put({
+            type: 'error',
+            message: 'operationHistory.messages.appExportFailed',
+            params: { appName: appName, error: error.message },
+            module: 'app',
+            details: {
+                appId: uid,
+                error: error.message
+            }
+        });
+
+        throw error;
+    }
+}
 
 class AppManagerIpcHandler {
     constructor() {
@@ -177,6 +279,43 @@ class AppManagerIpcHandler {
                 return ret;
             } catch (error) {
                 return handleError(error, 'import-app');
+            }
+        });
+
+        // 导出应用（创建任务）
+        this.handlers.set('export-app', async (event, uid, savePath) => {
+            try {
+                if (!uid) {
+                    return handleError(new Error('应用 ID 不能为空'), 'export-app');
+                }
+                if (!savePath) {
+                    return handleError(new Error('保存路径不能为空'), 'export-app');
+                }
+
+                const FileTaskManager = require('@modules/file-task/file-task-manager');
+                const taskManager = FileTaskManager.getInstance();
+                const task = await taskManager.createTask('app-export', uid, { savePath });
+                return { success: true, taskId: task.id };
+            } catch (error) {
+                return handleError(error, 'export-app');
+            }
+        });
+
+        // 选择导出保存路径
+        this.handlers.set('select-export-path', async (event, defaultName) => {
+            try {
+                const { dialog } = require('electron');
+                const result = await dialog.showSaveDialog({
+                    title: translate('appList.exportApp'),
+                    defaultPath: defaultName,
+                    filters: [
+                        { name: 'ZIP Files', extensions: ['zip'] },
+                        { name: 'All Files', extensions: ['*'] }
+                    ]
+                });
+                return result;
+            } catch (error) {
+                return handleError(error, 'select-export-path');
             }
         });
 
@@ -443,6 +582,13 @@ class AppManagerIpcHandler {
             ipcMain.handle(channel, handler);
             logger.info(`Registered IPC handler: ${channel}`);
         }
+
+        // 注册 app-export 任务执行器
+        const FileTaskManager = require('@modules/file-task/file-task-manager');
+        const taskManager = FileTaskManager.getInstance();
+        taskManager.registerExecutor('app-export', async (task) => {
+            await handleAppExportTask(task);
+        });
         
         // 注册 load-app 处理器（使用 ipcMain.on 因为前端使用 ipcRenderer.send）
         ipcMain.on('load-app', async (event, uid, devTag = false) => {

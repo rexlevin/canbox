@@ -151,7 +151,10 @@
         "copy": "复制链接",
         "download": "下载",
         "update": "更新",
-        "downloaded": "已下载"
+        "downloaded": "已下载",
+        "exportApp": "导出 APP",
+        "exportSuccess": "应用导出成功！",
+        "exportFailed": "导出应用失败："
     },
     "appRepo": {
         "addSource": "添加 APP 源",
@@ -453,7 +456,9 @@
             "appDeletedWithData": "应用 \"{appName}\" 已删除：含用户数据",
             "appDataClearedSize": "应用 \"{appName}\" 数据已清理：{size}",
             "appDownloadSuccess": "应用 \"{appName}\" 下载成功：v{version}",
-            "appInstallSuccess": "应用 \"{appName}\" 安装成功"
+            "appInstallSuccess": "应用 \"{appName}\" 安装成功",
+            "appExportSuccess": "应用 \"{appName}\" 导出成功：v{version}",
+            "appExportFailed": "应用 \"{appName}\" 导出失败"
         }
     }
 }

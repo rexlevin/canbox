@@ -59,7 +59,8 @@ export const ACTION_ICONS = {
   copy: '📋',
   download: '⬇️',
   update: '🔄',
-  downloaded: '✅'
+  downloaded: '✅',
+  export: '📤'
 }
 
 // 功能按钮名称（用于 tooltip）
@@ -71,7 +72,8 @@ export const ACTION_NAMES = {
   copy: '复制链接',
   download: '下载',
   update: '更新',
-  downloaded: '已下载'
+  downloaded: '已下载',
+  export: '导出'
 }
 
 /**

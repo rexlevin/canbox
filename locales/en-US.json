@@ -150,7 +150,10 @@
         "copy": "Copy Link",
         "download": "Download",
         "update": "Update",
-        "downloaded": "Downloaded"
+        "downloaded": "Downloaded",
+        "exportApp": "Export App",
+        "exportSuccess": "App exported successfully!",
+        "exportFailed": "Export failed: "
     },
     "appRepo": {
         "addSource": "Add Source",
@@ -449,7 +452,9 @@
             "appDeletedWithData": "App \"{appName}\" deleted: with user data",
             "appDataClearedSize": "App \"{appName}\" data cleared: {size}",
             "appDownloadSuccess": "App \"{appName}\" downloaded successfully: v{version}",
-            "appInstallSuccess": "App \"{appName}\" installed successfully"
+            "appInstallSuccess": "App \"{appName}\" installed successfully",
+            "appExportSuccess": "App \"{appName}\" exported successfully: v{version}",
+            "appExportFailed": "App \"{appName}\" export failed"
         }
     }
 }

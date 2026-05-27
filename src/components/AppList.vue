@@ -32,9 +32,11 @@
           sourceTag: appItem.sourceTag
         }"
         :uid="uid"
+        :show-export="true"
         @run="loadApp"
         @delete="removeApp"
         @clear="clearData"
+        @export="exportApp"
         @show-info="showAppInfo"
       />
     </div>
@@ -267,6 +269,30 @@ async function importApp() {
   } catch (error) {
     console.error('导入应用失败:', error)
     notification.error(t('appList.importFailed') + error.message)
+  }
+}
+
+async function exportApp(uid) {
+  try {
+    const appItem = appsData.value[uid]
+    if (!appItem) return
+
+    const appId = appItem.appJson?.id || appItem.id || uid
+    const version = appItem.appJson?.version || appItem.version || ''
+    const defaultName = version ? `${appId}-${version}.zip` : `${appId}.zip`
+
+    const { canceled, filePath } = await window.api.selectExportPath(defaultName)
+    if (canceled || !filePath) return
+
+    const { success, error } = await window.api.exportApp(uid, filePath)
+    if (!success) {
+      throw new Error(error)
+    }
+
+    notification.success(t('appList.exportSuccess'))
+  } catch (error) {
+    console.error('导出应用失败:', error)
+    notification.error(t('appList.exportFailed') + error.message)
   }
 }
 </script>

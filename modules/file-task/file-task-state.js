@@ -60,6 +60,7 @@ const TASK_TYPES = {
     REPO_DOWNLOAD: 'repo-download',
     APP_PACK: 'app-pack',
     APP_UPDATE: 'app-update',
+    APP_EXPORT: 'app-export',
 };
 
 module.exports = {
