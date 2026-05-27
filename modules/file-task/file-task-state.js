@@ -3,15 +3,16 @@
  * 定义任务的生命周期状态
  */
 const FileTaskState = {
-    IDLE: 'idle',                    // 初始状态
-    PENDING: 'pending',              // 等待中（排队中）
-    PREPARING: 'preparing',          // 准备中（创建临时目录）
-    DOWNLOADING: 'downloading',      // 下载中
-    EXTRACTING: 'extracting',        // 解压中
-    MOVING: 'moving',                // 移动中
-    COMPLETED: 'completed',          // 已完成
-    FAILED: 'failed',                // 失败
-    CANCELLED: 'cancelled',          // 已取消
+    IDLE: 'idle',
+    PENDING: 'pending',
+    PREPARING: 'preparing',
+    DOWNLOADING: 'downloading',
+    EXTRACTING: 'extracting',
+    MOVING: 'moving',
+    COMPLETED: 'completed',
+    FAILED: 'failed',
+    CANCELLED: 'cancelled',
+    INTERRUPTED: 'interrupted',
 };
 
 /**
@@ -32,6 +33,7 @@ const TERMINAL_STATES = [
     FileTaskState.COMPLETED,
     FileTaskState.FAILED,
     FileTaskState.CANCELLED,
+    FileTaskState.INTERRUPTED,
 ];
 
 /**

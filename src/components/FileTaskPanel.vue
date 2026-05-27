@@ -12,6 +12,9 @@
                     <span class="panel-title">{{ $t('fileTask.title') }}</span>
                     <span class="panel-count">{{ $t('fileTask.taskCount', { count: activeTasks.length }) }}</span>
                     <div class="panel-actions">
+                        <el-tooltip :content="$t('fileTask.cleanupOld')" placement="top">
+                            <button class="icon-btn" @click="handleCleanupOld">🧹</button>
+                        </el-tooltip>
                         <el-tooltip :content="$t('fileTask.clearCompleted')" placement="top">
                             <button class="icon-btn" @click="handleClearCompleted">🗑️</button>
                         </el-tooltip>
@@ -72,6 +75,15 @@
                             >
                                 {{ $t('autoUpdate.retry') }}
                             </el-button>
+                            <el-button
+                                v-if="canDelete(task)"
+                                type="danger"
+                                size="small"
+                                text
+                                @click="handleDelete(task.id)"
+                            >
+                                {{ $t('fileTask.delete') }}
+                            </el-button>
                         </div>
                     </div>
                 </div>
@@ -95,7 +107,7 @@ const activeTasks = computed(() => fileTaskStore.activeTasks);
 const showPanel = computed(() => taskList.value.length > 0);
 const runningCount = computed(() => taskList.value.filter(t => isRunningState(t.status)).length);
 
-const TERMINAL_STATES = ['completed', 'cancelled', 'failed'];
+const TERMINAL_STATES = ['completed', 'cancelled', 'failed', 'interrupted'];
 
 function isRunningState(status) {
     return !TERMINAL_STATES.includes(status);
@@ -106,7 +118,11 @@ function canCancel(task) {
 }
 
 function canRetry(task) {
-    return task.status === 'failed';
+    return task.status === 'failed' || task.status === 'interrupted';
+}
+
+function canDelete(task) {
+    return ['completed', 'cancelled', 'failed', 'interrupted'].includes(task.status);
 }
 
 function getTypeIcon(type) {
@@ -131,6 +147,7 @@ function getStatusTagType(status) {
         'completed': 'success',
         'failed': 'danger',
         'cancelled': 'info',
+        'interrupted': 'warning',
     };
     return map[status] || 'info';
 }
@@ -162,11 +179,27 @@ function handleClearCompleted() {
     fileTaskStore.clearCompleted();
 }
 
+async function handleDelete(taskId) {
+    await fileTaskStore.deleteTask(taskId);
+}
+
+async function handleCleanupOld() {
+    await fileTaskStore.cleanupByDays(30);
+}
+
 function onTaskUpdate(task) {
     fileTaskStore.updateTask(task);
 }
 
+function onKeydown(e) {
+    if (e.key === 'Escape' && panelExpanded.value) {
+        panelExpanded.value = false;
+    }
+}
+
 onMounted(async () => {
+    document.addEventListener('keydown', onKeydown);
+
     if (!window.api?.fileTask) {
         console.warn('[FileTaskPanel] window.api.fileTask not available');
         return;
@@ -185,6 +218,8 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+    document.removeEventListener('keydown', onKeydown);
+
     if (window.api?.fileTask) {
         window.api.fileTask.offUpdate(onTaskUpdate);
     }
@@ -332,6 +367,10 @@ onBeforeUnmount(() => {
 
 .task-item.task-status-failed {
     background-color: #fef0f0;
+}
+
+.task-item.task-status-interrupted {
+    background-color: #fdf6ec;
 }
 
 .task-info {

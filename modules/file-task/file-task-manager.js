@@ -6,6 +6,7 @@ const FileTaskState = require('./file-task-state');
 const FileTaskQueue = require('./file-task-queue');
 const FileOperation = require('./file-operation');
 const FileTaskIPC = require('./file-task-ipc');
+const fileTaskDb = require('@modules/core/fileTaskDb');
 const logger = require('@modules/utils/logger');
 
 class FileTaskManager {
@@ -90,6 +91,7 @@ class FileTaskManager {
         };
 
         this.tasks.set(id, task);
+        this.persistTask(task);
         this.pushTaskUpdate(task);
         this.enqueue(task);
 
@@ -181,6 +183,7 @@ class FileTaskManager {
         if (!task) return;
 
         task.status = status;
+        this.persistTask(task);
         this.pushTaskUpdate(task);
     }
 
@@ -223,6 +226,7 @@ class FileTaskManager {
         await this.fileOp.cleanupTemp(task.tempPath);
 
         logger.info(`[FileTaskManager] completeTask: 推送任务更新, status=${task.status}`);
+        this.persistTask(task);
         this.pushTaskUpdate(task);
 
         // 继续处理队列
@@ -256,6 +260,7 @@ class FileTaskManager {
         await this.fileOp.cleanupTemp(currentTask.tempPath);
 
         logger.info(`[FileTaskManager] failTask: 推送任务更新, status=${currentTask.status}, error=${currentTask.error}`);
+        this.persistTask(currentTask);
         this.pushTaskUpdate(currentTask);
 
         // 继续处理队列
@@ -279,6 +284,7 @@ class FileTaskManager {
         task.completedAt = Date.now();
         task.progressText = 'Cancelled';
 
+        this.persistTask(task);
         this.pushTaskUpdate(task);
 
         // 从队列中移除
@@ -361,6 +367,172 @@ class FileTaskManager {
         }
         logger.info('[FileTaskManager] cleanupStaleTasks: 清理完成');
         return result;
+    }
+
+    persistTask(task) {
+        fileTaskDb.put(task, (res, err) => {
+            if (err) {
+                logger.error('[FileTaskManager] persistTask: 持久化任务失败 id={}, error={}', task.id, err.message || err);
+            }
+        });
+    }
+
+    async loadPersistedTasks() {
+        logger.info('[FileTaskManager] loadPersistedTasks: 开始加载持久化任务');
+        return new Promise((resolve) => {
+            fileTaskDb.allDocs({}, (result, err) => {
+                if (err) {
+                    logger.error('[FileTaskManager] loadPersistedTasks: 加载失败, error={}', err.message || err);
+                    resolve({ loaded: 0, interrupted: 0 });
+                    return;
+                }
+
+                if (!result || !result.rows) {
+                    logger.info('[FileTaskManager] loadPersistedTasks: 无持久化任务');
+                    resolve({ loaded: 0, interrupted: 0 });
+                    return;
+                }
+
+                let interruptedCount = 0;
+                result.rows.forEach(row => {
+                    const doc = row.doc;
+                    const task = {
+                        id: doc.taskId,
+                        type: doc.type,
+                        uid: doc.uid,
+                        status: doc.status,
+                        progress: doc.progress || 0,
+                        progressText: doc.progressText || '',
+                        speed: 0,
+                        tempPath: null,
+                        error: doc.error || null,
+                        createdAt: doc.createdAt,
+                        startedAt: doc.startedAt || null,
+                        completedAt: doc.completedAt || null,
+                        options: doc.options || {},
+                    };
+
+                    if (FileTaskState.isRunningState(task.status)) {
+                        task.status = FileTaskState.INTERRUPTED;
+                        task.progressText = 'Interrupted';
+                        interruptedCount++;
+                        this.persistTask(task);
+                    }
+
+                    this.tasks.set(task.id, task);
+                });
+
+                logger.info('[FileTaskManager] loadPersistedTasks: 加载完成, loaded={}, interrupted={}',
+                    result.rows.length, interruptedCount);
+                resolve({ loaded: result.rows.length, interrupted: interruptedCount });
+            });
+        });
+    }
+
+    async deleteTask(taskId) {
+        const task = this.tasks.get(taskId);
+        if (!task) return;
+
+        this.tasks.delete(taskId);
+
+        return new Promise((resolve) => {
+            fileTaskDb.get(taskId, (doc, err) => {
+                if (err || !doc) {
+                    logger.warn('[FileTaskManager] deleteTask: 未找到持久化记录 taskId={}', taskId);
+                    resolve();
+                    return;
+                }
+                fileTaskDb.remove({ _id: doc._id, _rev: doc._rev }, (res, removeErr) => {
+                    if (removeErr) {
+                        logger.error('[FileTaskManager] deleteTask: 删除持久化记录失败 taskId={}, error={}',
+                            taskId, removeErr.message || removeErr);
+                    }
+                    resolve();
+                });
+            });
+        });
+    }
+
+    async clearCompletedTasks() {
+        const completedIds = [];
+        const completedDocs = [];
+
+        this.tasks.forEach((task, id) => {
+            if (FileTaskState.isTerminalState(task.status)) {
+                completedIds.push(id);
+            }
+        });
+
+        if (completedIds.length === 0) return 0;
+
+        return new Promise((resolve) => {
+            fileTaskDb.allDocs({ include_docs: true }, (result, err) => {
+                if (err || !result || !result.rows) {
+                    completedIds.forEach(id => this.tasks.delete(id));
+                    resolve(completedIds.length);
+                    return;
+                }
+
+                result.rows.forEach(row => {
+                    const doc = row.doc;
+                    if (doc.taskId && completedIds.includes(doc.taskId)) {
+                        completedDocs.push({ _id: doc._id, _rev: doc._rev });
+                    }
+                });
+
+                if (completedDocs.length > 0) {
+                    fileTaskDb.bulkRemove(completedDocs, () => {});
+                }
+
+                completedIds.forEach(id => this.tasks.delete(id));
+                resolve(completedIds.length);
+            });
+        });
+    }
+
+    async clearAllTasks() {
+        this.tasks.clear();
+
+        return new Promise((resolve) => {
+            fileTaskDb.allDocs({ include_docs: true }, (result, err) => {
+                if (err || !result || !result.rows) {
+                    resolve(0);
+                    return;
+                }
+
+                const docs = result.rows.map(row => ({
+                    _id: row.doc._id,
+                    _rev: row.doc._rev
+                }));
+
+                if (docs.length > 0) {
+                    fileTaskDb.bulkRemove(docs, () => {});
+                }
+
+                resolve(docs.length);
+            });
+        });
+    }
+
+    async cleanupByDays(maxDays) {
+        return new Promise((resolve) => {
+            fileTaskDb.cleanupByDays(maxDays, (count, err) => {
+                if (err) {
+                    logger.error('[FileTaskManager] cleanupByDays: 清理失败, error={}', err.message || err);
+                    resolve(0);
+                    return;
+                }
+                if (count > 0) {
+                    this.tasks.forEach((task, id) => {
+                        const daysDiff = (Date.now() - task.createdAt) / (24 * 60 * 60 * 1000);
+                        if (daysDiff > maxDays) {
+                            this.tasks.delete(id);
+                        }
+                    });
+                }
+                resolve(count);
+            });
+        });
     }
 }
 

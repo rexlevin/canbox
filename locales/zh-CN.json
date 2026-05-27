@@ -208,7 +208,9 @@
         "taskCount": "{count} 个任务",
         "empty": "暂无任务",
         "clearCompleted": "清除已完成",
-        "collapse": "收起",
+        "cleanupOld": "清理30天前记录",
+        "delete": "删除",
+        "collapse": "收起（ESC）",
         "expand": "展开",
         "status": {
             "idle": "初始",
@@ -219,7 +221,8 @@
             "moving": "移动中",
             "completed": "已完成",
             "failed": "失败",
-            "cancelled": "已取消"
+            "cancelled": "已取消",
+            "interrupted": "已中断"
         }
     },
     "logViewer": {

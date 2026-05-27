@@ -97,8 +97,11 @@ const PathManager = {
     getReposTempPath: () => {
         return path.join(getUsersPath(), 'temp', 'repos');
     },
-    getCanboxDbPath: () => {
+    getHistoryDbPath: () => {
         return path.join(getUsersPath(), 'db', 'history');
+    },
+    getFileTaskDbPath: () => {
+        return path.join(getUsersPath(), 'db', 'fileTask');
     }
 };
 

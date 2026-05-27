@@ -137,6 +137,58 @@ function register() {
         }
         pushTaskList(taskManager.getAllTasks());
     });
+
+    // 删除单个任务
+    ipcMain.handle('file-task-delete', async (event, taskId) => {
+        if (!taskManager) {
+            return { success: false, error: 'TaskManager not initialized' };
+        }
+        try {
+            await taskManager.deleteTask(taskId);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message || error };
+        }
+    });
+
+    // 清理已完成的任务
+    ipcMain.handle('file-task-clear-completed', async () => {
+        if (!taskManager) {
+            return { success: false, error: 'TaskManager not initialized' };
+        }
+        try {
+            const count = await taskManager.clearCompletedTasks();
+            return { success: true, count };
+        } catch (error) {
+            return { success: false, error: error.message || error };
+        }
+    });
+
+    // 清理所有任务
+    ipcMain.handle('file-task-clear-all', async () => {
+        if (!taskManager) {
+            return { success: false, error: 'TaskManager not initialized' };
+        }
+        try {
+            const count = await taskManager.clearAllTasks();
+            return { success: true, count };
+        } catch (error) {
+            return { success: false, error: error.message || error };
+        }
+    });
+
+    // 按天数清理过期任务
+    ipcMain.handle('file-task-cleanup-by-days', async (event, maxDays) => {
+        if (!taskManager) {
+            return { success: false, error: 'TaskManager not initialized' };
+        }
+        try {
+            const count = await taskManager.cleanupByDays(maxDays);
+            return { success: true, count };
+        } catch (error) {
+            return { success: false, error: error.message || error };
+        }
+    });
 }
 
 module.exports = {

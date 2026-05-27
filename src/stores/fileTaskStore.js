@@ -26,7 +26,7 @@ export const useFileTaskStore = defineStore('fileTask', {
          */
         activeTasks: (state) =>
             Object.values(state.tasks).filter((t) =>
-                !['completed', 'cancelled', 'failed'].includes(t.status)
+                !['completed', 'cancelled', 'failed', 'interrupted'].includes(t.status)
             ),
 
         /**
@@ -43,7 +43,7 @@ export const useFileTaskStore = defineStore('fileTask', {
          */
         hasActiveTasks: (state) =>
             Object.values(state.tasks).some((t) =>
-                !['completed', 'cancelled', 'failed'].includes(t.status)
+                !['completed', 'cancelled', 'failed', 'interrupted'].includes(t.status)
             ),
 
         /**
@@ -91,20 +91,76 @@ export const useFileTaskStore = defineStore('fileTask', {
         /**
          * 清空已完成的任务
          */
-        clearCompleted() {
-            Object.keys(this.tasks).forEach((id) => {
-                const task = this.tasks[id];
-                if (['completed', 'cancelled', 'failed'].includes(task.status)) {
-                    delete this.tasks[id];
+        async clearCompleted() {
+            if (!window.api?.fileTask) return;
+            try {
+                const result = await window.api.fileTask.clearCompleted();
+                if (result.success) {
+                    Object.keys(this.tasks).forEach((id) => {
+                        const task = this.tasks[id];
+                        if (['completed', 'cancelled', 'failed', 'interrupted'].includes(task.status)) {
+                            delete this.tasks[id];
+                        }
+                    });
                 }
-            });
+            } catch (err) {
+                console.error('[fileTaskStore] clearCompleted failed:', err);
+            }
         },
 
         /**
          * 清空所有任务
          */
-        clearAll() {
-            this.tasks = {};
+        async clearAll() {
+            if (!window.api?.fileTask) return;
+            try {
+                const result = await window.api.fileTask.clearAll();
+                if (result.success) {
+                    this.tasks = {};
+                }
+            } catch (err) {
+                console.error('[fileTaskStore] clearAll failed:', err);
+            }
+        },
+
+        /**
+         * 删除单个任务
+         * @param {string} taskId - 任务ID
+         */
+        async deleteTask(taskId) {
+            if (!window.api?.fileTask) return;
+            try {
+                const result = await window.api.fileTask.deleteTask(taskId);
+                if (result.success) {
+                    delete this.tasks[taskId];
+                }
+            } catch (err) {
+                console.error('[fileTaskStore] deleteTask failed:', err);
+            }
+        },
+
+        /**
+         * 按天数清理过期任务
+         * @param {number} maxDays - 最大保留天数
+         */
+        async cleanupByDays(maxDays) {
+            if (!window.api?.fileTask) return;
+            try {
+                const result = await window.api.fileTask.cleanupByDays(maxDays);
+                if (result.success && result.count > 0) {
+                    Object.keys(this.tasks).forEach((id) => {
+                        const task = this.tasks[id];
+                        const daysDiff = (Date.now() - task.createdAt) / (24 * 60 * 60 * 1000);
+                        if (daysDiff > maxDays) {
+                            delete this.tasks[id];
+                        }
+                    });
+                }
+                return result;
+            } catch (err) {
+                console.error('[fileTaskStore] cleanupByDays failed:', err);
+                return { success: false };
+            }
         },
 
         /**

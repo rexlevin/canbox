@@ -207,7 +207,9 @@
         "taskCount": "{count} tasks",
         "empty": "No tasks",
         "clearCompleted": "Clear Completed",
-        "collapse": "Collapse",
+        "cleanupOld": "Cleanup 30-day Old Records",
+        "delete": "Delete",
+        "collapse": "Collapse (ESC)",
         "expand": "Expand",
         "status": {
             "idle": "Idle",
@@ -218,7 +220,8 @@
             "moving": "Moving",
             "completed": "Completed",
             "failed": "Failed",
-            "cancelled": "Cancelled"
+            "cancelled": "Cancelled",
+            "interrupted": "Interrupted"
         }
     },
     "logViewer": {

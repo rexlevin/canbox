@@ -173,6 +173,13 @@ if (!getTheLock) {
             logger.error('[main.js] 清理遗留临时目录失败: {}', err.message);
         });
 
+        // 加载持久化的文件任务
+        FileTaskManager.getInstance().loadPersistedTasks().then(result => {
+            logger.info('[main.js] 持久化任务加载完成, loaded={}, interrupted={}', result.loaded, result.interrupted);
+        }).catch(err => {
+            logger.error('[main.js] 加载持久化任务失败: {}', err.message);
+        });
+
         // 初始化执行调度器
         executionDispatcher.init();
 

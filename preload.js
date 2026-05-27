@@ -321,6 +321,22 @@ contextBridge.exposeInMainWorld(
             // 请求推送完整列表
             requestList: () =>
                 ipcRenderer.invoke('file-task-request-list'),
+
+            // 删除单个任务
+            deleteTask: (taskId) =>
+                ipcRenderer.invoke('file-task-delete', taskId),
+
+            // 清理已完成的任务
+            clearCompleted: () =>
+                ipcRenderer.invoke('file-task-clear-completed'),
+
+            // 清理所有任务
+            clearAll: () =>
+                ipcRenderer.invoke('file-task-clear-all'),
+
+            // 按天数清理过期任务
+            cleanupByDays: (maxDays) =>
+                ipcRenderer.invoke('file-task-cleanup-by-days', maxDays),
         },
         canboxDb: {
             // 写入记录

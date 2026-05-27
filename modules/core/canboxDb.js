@@ -23,7 +23,7 @@ let db = null;
  */
 function getDB() {
     if (!db) {
-        const dbDir = PathManager.getCanboxDbPath();
+        const dbDir = PathManager.getHistoryDbPath();
         if (!fs.existsSync(dbDir)) {
             fs.mkdirSync(dbDir, { recursive: true });
         }
@@ -72,7 +72,7 @@ function closeDB() {
  */
 function getSize(callback) {
     try {
-        const dbDir = PathManager.getCanboxDbPath();
+        const dbDir = PathManager.getHistoryDbPath();
         const dbPath = path.join(dbDir, 'db');
 
         // PouchDB 的 LevelDB 存储，需要计算 .couch 文件大小

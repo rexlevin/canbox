@@ -100,6 +100,8 @@ const currentOffset = ref(0);
 const PAGE_SIZE = 20;
 let scrollHandler = null;
 
+const ICON_SIZE = 40;
+
 // 图标位置（默认左下角）
 const iconPosition = ref({ left: 16, bottom: 16 });
 const isDragging = ref(false);
@@ -112,15 +114,26 @@ const iconPositionStyle = computed(() => ({
     bottom: `${iconPosition.value.bottom}px`
 }));
 
+function clampPosition(pos) {
+    const maxLeft = window.innerWidth - ICON_SIZE;
+    const maxBottom = window.innerHeight - ICON_SIZE;
+    return {
+        left: Math.max(0, Math.min(pos.left, maxLeft)),
+        bottom: Math.max(0, Math.min(pos.bottom, maxBottom))
+    };
+}
+
 // 生命周期
 onMounted(async () => {
     loadIconPosition();
     await loadStorageSize();
+    window.addEventListener('resize', onWindowResize);
 });
 
 onBeforeUnmount(() => {
     document.removeEventListener('mousemove', onDrag);
     document.removeEventListener('mouseup', stopDrag);
+    window.removeEventListener('resize', onWindowResize);
     unbindTableScroll();
 });
 
@@ -129,7 +142,7 @@ async function loadIconPosition() {
     try {
         const result = await window.api.canboxConfig.get('operationHistoryIconPosition', { left: 16, bottom: 16 });
         if (result.success) {
-            iconPosition.value = result.data;
+            iconPosition.value = clampPosition(result.data);
         }
     } catch (error) {
         console.error('Failed to load icon position:', error);
@@ -143,6 +156,14 @@ async function saveIconPosition() {
         await window.api.canboxConfig.set('operationHistoryIconPosition', pos);
     } catch (error) {
         console.error('Failed to save icon position:', error);
+    }
+}
+
+function onWindowResize() {
+    const clamped = clampPosition(iconPosition.value);
+    if (clamped.left !== iconPosition.value.left || clamped.bottom !== iconPosition.value.bottom) {
+        iconPosition.value = clamped;
+        saveIconPosition();
     }
 }
 
@@ -171,11 +192,10 @@ function onDrag(e) {
     }
 
     if (hasMoved) {
-        // 计算新位置：鼠标位置减去初始偏移
-        iconPosition.value = {
-            left: Math.max(0, e.clientX - dragOffset.value.x),
-            bottom: Math.max(0, window.innerHeight - e.clientY - dragOffset.value.y)
-        };
+        iconPosition.value = clampPosition({
+            left: e.clientX - dragOffset.value.x,
+            bottom: window.innerHeight - e.clientY - dragOffset.value.y
+        });
     }
 }
 
