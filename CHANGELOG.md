@@ -5,6 +5,34 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.1] - 2026-05-28
+
+### feat | 新功能 / Features
+
+文件任务记录持久化存储，重启后自动恢复任务和浮窗显示
+新增 interrupted 状态标记重启时中断的任务
+支持单个删除、批量清理已完成任务、全部清理任务记录
+新增 30 天过期任务清理功能
+文件任务面板新增 ESC 快捷键收起
+
+Persist file task records to PouchDB, auto-restore tasks and panel on restart
+Add interrupted state for tasks interrupted by restart
+Support single delete, batch clear completed tasks, and clear all task records
+Add 30-day expired task cleanup feature
+Add ESC shortcut to collapse file task panel
+
+### fix | 问题修复 / Bug Fixes
+
+修复操作历史浮动图标拖动超出窗口边界导致不可见的问题
+
+Fix operation history floating icon being dragged outside window bounds and becoming invisible
+
+### docs | 文档 / Documentation
+
+新增文件任务持久化存储设计文档
+
+Add file task persistence design document
+
 ## [0.5.0] - 2026-05-27
 
 ### fix | 问题修复 / Bug Fixes
