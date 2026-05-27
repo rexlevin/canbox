@@ -5,6 +5,28 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.4.9] - 2026-05-27
+
+### feat | 新功能 / Features
+
+添加应用导出功能，支持将已安装的 APP 打包为 ZIP 文件离线分享
+优化文件任务面板的折叠展开交互，收起状态改为小图标避免遮挡内容
+
+Add app export feature to package installed apps as ZIP files for offline sharing
+Optimize file task panel collapse/expand interaction, collapsed state uses small icon to avoid blocking content
+
+### docs | 文档 / Documentation
+
+添加 app-export 功能变更文档
+
+Add app-export feature change document
+
+### chore | 维护 / Maintenance
+
+更新版本号至 0.4.9 并归档 APP 导出功能文档
+
+Update version to 0.4.9 and archive app-export feature document
+
 ## [0.4.8] - 2026-05-25
 
 ### feat | 新功能 / Features
