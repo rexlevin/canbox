@@ -8,8 +8,8 @@ related_issues:
 # 依赖包 Deprecation 分析报告
 
 > 创建时间：2026-04-17
-> 最后更新：2026-04-17
-> 状态：📋 待处理
+> 最后更新：2026-05-28
+> 状态：🟡 部分已处理
 
 ---
 
@@ -20,42 +20,35 @@ npm install 时产生的 deprecation warnings 主要来自以下 3 个来源：
 | 来源 | 涉及包 | 严重程度 |
 |------|--------|----------|
 | `pouchdb` 及其依赖 | leveldown, levelup, level-* 系列 | 🟡 中 |
-| `electron-sudo` 及其依赖 | sudo-prompt, npmlog 等 | 🔴 高 |
+| `electron-sudo` 及其依赖 | sudo-prompt, npmlog 等 | 🟢 已处理 |
 | 直接依赖 | asar, glob, rimraf, core-js | 🟡 中 |
 
 ---
 
-## 🔴 高风险：electron-sudo 及其依赖
+## 🟢 已处理：electron-sudo 及其依赖
 
-### 依赖链
+### 处理方案
+
+已将直接依赖 `sudo-prompt@9.2.1` 替换为 `@vscode/sudo-prompt@9.3.2`（VSCode 团队维护的 fork）。
+
+**替换原因**：
+- `sudo-prompt@9.2.1` 内部使用了 `util.isObject()` / `util.isFunction()`，这两个 API 在 Node.js v22+ 中已被移除
+- Electron v41 内置 Node.js v22+，导致 `canbox.sudo.exec` 调用时报错 `Node.util.isObject is not a function`
+- `@vscode/sudo-prompt` 自行实现了 `isObject` / `isFunction`，不再依赖已废弃的 `util` API，API 完全兼容
+
+### 依赖链（处理后）
 
 ```
-electron-sudo@4.0.12
-├── sudo-prompt@9.2.1 ⚠️ 不再维护
-│   └── npmlog@6.0.2 ⚠️ 不再维护
-├── are-we-there-yet@3.0.1 ⚠️ 不再维护
-├── gauge@4.0.4 ⚠️ 不再维护
-└── boolean@3.2.0 ⚠️ 不再维护
+@vscode/sudo-prompt@9.3.2 ✅ VSCode 维护，活跃更新
+electron-sudo@4.0.12       ⚠️ 仅 Windows 平台使用，暂保留
+├── sudo-prompt@9.2.1      ⚠️ electron-sudo 内部依赖，非直接引用
+└── ...其他已废弃依赖
 ```
-
-### 影响
-
-- `sudo-prompt@9.2.1` 已不再维护
-- 可能在未来 Node.js 版本中失效
-- 存在潜在安全风险
-
-### 建议方案
-
-| 方案 | 说明 | 可行性 |
-|------|------|--------|
-| 替换为 `@vscode/sudo-prompt` | VSCode 维护的 fork，活跃更新 | ✅ 推荐 |
-| 升级到最新版 sudo-prompt | 需检查是否有新版本 | 待确认 |
-| 移除 electron-sudo | 如果功能不再需要 | 需评估 |
 
 ### 检查点
 
-- [ ] 确认 `electron-sudo` 的功能是否还在使用
-- [ ] 如果使用，评估替换方案
+- [x] 确认 `electron-sudo` 的功能是否还在使用 → 仅 Windows 平台使用，暂保留
+- [x] 替换直接依赖 `sudo-prompt` 为 `@vscode/sudo-prompt` → 已完成
 
 ---
 
@@ -136,7 +129,8 @@ npm install @electron/asar
 
 | 优先级 | 包 | 当前版本 | 目标版本 | 操作 |
 |--------|-----|----------|----------|------|
-| 🔴 高 | `electron-sudo` | ^4.0.12 | 移除或替换 | 需评估功能是否必要 |
+| 🟢 已处理 | `sudo-prompt` → `@vscode/sudo-prompt` | ^9.2.1 → ^9.3.2 | `@vscode/sudo-prompt@^9.3.2` | ✅ 已替换 |
+| 🟡 中 | `electron-sudo` | ^4.0.12 | 移除或替换 | 仅 Windows 使用，暂保留 |
 | 🟡 中 | `pouchdb` | ^9.0.0 | ^9.0.0+ | 检查最新版本 |
 | 🟡 中 | `asar` | ^3.2.0 | `@electron/asar@^4.0.0` | 直接替换包名 |
 | 🟢 低 | `electron-store` | ^8.2.0 | 暂不升级 | v10 是 ESM，需单独迁移 |
@@ -178,6 +172,7 @@ grep -r "from.*asar" --include="*.js" .
 | 日期 | 操作 | 结果 |
 |------|------|------|
 | 2026-04-17 | 创建分析报告 | 待处理 |
+| 2026-05-28 | 替换 `sudo-prompt@9.2.1` 为 `@vscode/sudo-prompt@9.3.2` | ✅ 已完成，修复 Node.js v22+ 兼容性问题 |
 
 ---
 

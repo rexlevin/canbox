@@ -631,10 +631,9 @@ canbox.win.notification(options)
 - `command` - 要执行的命令（必填）
 - `name` - 操作名称，用于向用户提示为何需要提权（必填）
 
-**name 参数要求**：
-- 只能包含字母、数字和空格（不支持中文等非 ASCII 字符）
-- 长度不超过 70 个字符
-- 建议使用英文描述，例如：`'Apply Hosts Config'`、`'Restart Service'`
+**name 参数说明**：
+- 支持中文等非 ASCII 字符，内部会自动净化为系统认证对话框可接受的格式
+- 建议使用有意义的描述，例如：`'Apply Hosts Config'`、`'修改 hosts 文件'`
 
 ### 基础示例
 
@@ -680,7 +679,7 @@ canbox.sudo.exec({
 ```
 
 **平台说明**：
-- **Linux/macOS** - 使用 `sudo-prompt`，会弹出系统提权对话框
+- **Linux/macOS** - 使用 `@vscode/sudo-prompt`，会弹出系统提权对话框
 - **Windows** - 使用 `electron-sudo`，会弹出 UAC 提权对话框
 
 **参数说明**：

@@ -172,6 +172,7 @@ function initSudoIpcHandlers() {
                 data: result
             };
         } catch (error) {
+            logger.error('[IPC msg-sudo] failed: {}', error.message);
             return {
                 success: false,
                 msg: error.message

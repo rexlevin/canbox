@@ -187,14 +187,13 @@ declare global {
                  * 执行需要提权的命令
                  * @param options - 提权选项
                  * @param options.command - 要执行的命令（必填）
-                 * @param options.name - 操作名称，用于向用户提示为何需要提权（必填）
+                 * @param options.name - 操作名称，用于向用户提示为何需要提权（必填，支持中文等非 ASCII 字符）
                  * @returns Promise<{ stdout: string; stderr: string }> - 返回执行结果，包含 stdout 和 stderr
                  * 
                  * @description
-                 * name 参数要求：
-                 * - 只能包含字母、数字和空格（不支持中文等非 ASCII 字符）
-                 * - 长度不超过 70 个字符
-                 * - 建议使用英文描述，例如：'Apply Hosts Config'、'Restart Service'
+                 * name 参数说明：
+                 * - 支持中文等非 ASCII 字符，内部会自动净化为系统认证对话框可接受的格式
+                 * - 建议使用有意义的描述，例如：'Apply Hosts Config'、'修改 hosts 文件'
                  */
                 exec: (options: { command: string; name: string }) => Promise<{ stdout: string; stderr: string }>;
             };

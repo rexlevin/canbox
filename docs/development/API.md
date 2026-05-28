@@ -634,11 +634,10 @@ Execute commands that require elevated privileges.
 - `command` - Command to execute (required)
 - `name` - Operation name, used to prompt the user why elevation is needed (required)
 
-**name Parameter Requirements**:
+**name Parameter Notes**:
 
-- Can only contain letters, numbers, and spaces (does not support non-ASCII characters like Chinese)
-- Length not exceeding 70 characters
-- Recommended to use English description, for example: `'Apply Hosts Config'`, `'Restart Service'`
+- Supports non-ASCII characters like Chinese, internally sanitized to a format acceptable by the system authentication dialog
+- Recommended to use a meaningful description, for example: `'Apply Hosts Config'`, `'修改 hosts 文件'`
 
 ### Basic Example
 
@@ -685,7 +684,7 @@ canbox.sudo.exec({
 
 **Platform Notes**:
 
-- **Linux/macOS** - Uses `sudo-prompt`, will pop up system elevation dialog
+- **Linux/macOS** - Uses `@vscode/sudo-prompt`, will pop up system elevation dialog
 - **Windows** - Uses `electron-sudo`, will pop up UAC elevation dialog
 
 **Parameter Descriptions**:

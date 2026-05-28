@@ -261,7 +261,10 @@ const sudo = {
                 options,
                 appId: window.appId
             }).then(result => {
-                result.success ? resolve(result.data) : reject(result.msg);
+                result.success ? resolve(result.data) : reject(new Error(result.msg));
+            }).catch(err => {
+                console.error('[canbox.sudo.exec] IPC error:', err);
+                reject(err);
             });
         });
     }

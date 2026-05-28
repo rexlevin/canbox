@@ -1,6 +1,7 @@
 const { platform } = require('os');
-const sudo = require('sudo-prompt');
+const sudo = require('@vscode/sudo-prompt');
 const electronSudo = require('electron-sudo');
+const logger = require('@modules/utils/logger');
 
 /**
  * Sudo 模块 - 提供跨平台的提权执行命令功能
@@ -8,21 +9,22 @@ const electronSudo = require('electron-sudo');
  */
 class Sudo {
     /**
-     * 验证操作名称是否符合要求
-     * @param {string} name - 操作名称
-     * @returns {boolean} 是否符合要求
+     * 将 name 净化为 sudo-prompt 可接受的格式
+     * sudo-prompt 要求 name 只能包含 ASCII 字母、数字和空格，且长度不超过 70
+     * 此方法保留 ASCII 部分，过滤非 ASCII 字符，若结果为空则回退为 "Canbox"
+     * @param {string} name - 原始操作名称
+     * @returns {string} 净化后的名称
      */
-    _validateName(name) {
-        // name 只能包含字母、数字和空格，且长度不超过 70
-        const regex = /^[a-zA-Z0-9\s]*$/;
-        return regex.test(name) && name.length <= 70;
+    _sanitizeName(name) {
+        const sanitized = name.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+        return sanitized.length > 0 ? sanitized.substring(0, 70) : 'Canbox';
     }
 
     /**
      * 执行需要提权的命令
      * @param {object} options - 选项
      * @param {string} options.command - 要执行的命令
-     * @param {string} options.name - 操作名称（用于提示用户）
+     * @param {string} options.name - 操作名称（用于提示用户，支持中文等非 ASCII 字符）
      * @param {string} [options.icns] - macOS 图标路径（可选）
      * @returns {Promise} - 返回执行结果
      */
@@ -33,23 +35,16 @@ class Sudo {
                 return;
             }
 
-            const name = options.name || 'Canbox 需要管理员权限';
-
-            // 验证 name 参数
-            if (!this._validateName(name)) {
-                reject(new Error('options.name 只能包含字母、数字和空格，且长度不超过 70 个字符'));
-                return;
-            }
+            const name = options.name || 'Canbox';
+            const sanitizedName = this._sanitizeName(name);
+            logger.info('[sudo] name: "{}", sanitized: "{}", platform: {}', name, sanitizedName, platform());
 
             if (platform() === 'win32') {
-                // Windows 使用 electron-sudo
-                this._execWindows(options.command, name, resolve, reject);
+                this._execWindows(options.command, sanitizedName, resolve, reject);
             } else if (platform() === 'darwin') {
-                // macOS 使用 sudo-prompt
-                this._execUnix(options.command, name, options.icns, resolve, reject);
+                this._execUnix(options.command, sanitizedName, options.icns, resolve, reject);
             } else {
-                // Linux 使用 sudo-prompt
-                this._execLinux(options.command, name, resolve, reject);
+                this._execLinux(options.command, sanitizedName, resolve, reject);
             }
         });
     }
@@ -60,6 +55,7 @@ class Sudo {
     _execWindows(command, name, resolve, reject) {
         electronSudo.exec(command, { name }, (error, stdout, stderr) => {
             if (error) {
+                logger.error('[sudo] _execWindows failed: {}', error.message);
                 reject(error);
             } else {
                 resolve({ stdout, stderr });
@@ -73,6 +69,7 @@ class Sudo {
     _execLinux(command, name, resolve, reject) {
         sudo.exec(command, { name }, (error, stdout, stderr) => {
             if (error) {
+                logger.error('[sudo] _execLinux failed: {}', error.message);
                 reject(error);
             } else {
                 resolve({ stdout, stderr });
@@ -91,6 +88,7 @@ class Sudo {
 
         sudo.exec(command, options, (error, stdout, stderr) => {
             if (error) {
+                logger.error('[sudo] _execUnix failed: {}', error.message);
                 reject(error);
             } else {
                 resolve({ stdout, stderr });
