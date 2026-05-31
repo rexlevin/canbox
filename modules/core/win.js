@@ -53,6 +53,7 @@ function setupExternalUrlHandler(win, isWebApp = false) {
  * 窗口操作模块
  */
 const winFactory = {
+    setupExternalUrlHandler,
     /**
      * 新开窗口
      * @param {Object} options - 窗口配置
