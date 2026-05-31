@@ -2,12 +2,14 @@
   <div class="app-list-new-container">
     <!-- 按钮区域 -->
     <div class="button-section">
-      <el-button type="primary" @click="importApp">
-        {{ $t('appList.importApp') }}
-      </el-button>
-      <el-button @click="openCreateWebApp">
-        {{ $t('webApp.createBtn') }}
-      </el-button>
+      <div class="primary-actions">
+        <el-button type="primary" @click="importApp">
+          {{ $t('appList.importApp') }}
+        </el-button>
+        <el-button @click="openCreateWebApp">
+          {{ $t('webApp.createBtn') }}
+        </el-button>
+      </div>
       <div class="secondary-actions">
         <el-link type="primary" @click="toAnotherTab('appRepos')">
           {{ $t('appList.goToRepo') }}
@@ -325,6 +327,12 @@ async function exportApp(uid) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.primary-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 /* 次要操作链接 */
