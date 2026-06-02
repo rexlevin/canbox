@@ -5,6 +5,14 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.6] - 2026-06-02
+
+### feat | 新功能 / Features
+
+使用 webFrame 原生缩放替代 CSS zoom，修复页面 fixed/sticky 定位在缩放后不跟随的问题
+
+Replace CSS zoom with webFrame native viewport zoom to fix fixed/sticky positioning issues after zooming
+
 ## [0.5.5] - 2026-05-31
 
 ### feat | 新功能 / Features
