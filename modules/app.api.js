@@ -1,4 +1,4 @@
-const { ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, webFrame } = require("electron");
 
 // 注册窗口关闭回调
 let __closeCallback = null;
@@ -424,6 +424,16 @@ const getLocale = () => {
     console.log('[canbox.getLocale] Returning language:', language);
     return language;
 };
+
+/**
+ * 缩放桥接：通过 contextBridge 暴露 webFrame 缩放 API 到主世界
+ * 供 app-zoom.js 注入脚本（executeJavaScript）调用
+ * webFrame.setZoomFactor() 与浏览器 Ctrl++ 缩放行为一致，会触发页面重排
+ */
+contextBridge.exposeInMainWorld('__canboxZoom', {
+    setZoomFactor: (factor) => webFrame.setZoomFactor(factor),
+    getZoomFactor: () => webFrame.getZoomFactor()
+});
 
 /**
  * 对 app 暴露的 api

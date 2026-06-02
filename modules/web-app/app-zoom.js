@@ -2,10 +2,13 @@
  * APP 窗口缩放功能
  *
  * 为 APP 窗口提供 Ctrl+鼠标滚轮 和 Ctrl++/Ctrl+-/Ctrl+0 缩放能力。
- * 通过注入自包含脚本实现，零 IPC 依赖，适用于 webapp 和普通 APP。
+ * 通过 app.api.js preload 中 contextBridge.exposeInMainWorld 暴露的
+ * window.__canboxZoom.setZoomFactor / getZoomFactor
+ * 调用 webFrame.setZoomFactor() 实现原生 viewport 缩放，
+ * 行为与浏览器 Ctrl++ 缩放一致，会触发页面重排，fixed/sticky 定位正确跟随。
  *
  * 缩放结果持久化到 winState，下次启动自动恢复：
- * - 运行时每 3 秒轮询 window.__canboxCurrentZoom，变更时写入 winState
+ * - 运行时每 3 秒轮询 getZoomFactor()，变更时写入 winState
  * - 退出时使用最后一次已知值同步保存
  *
  * 缩放参数与 Canbox 主窗口一致：
@@ -30,71 +33,69 @@ function setupAppZoom(appWin, enableZoom = true, savedZoomFactor = 1.0) {
     const initialZoom = savedZoomFactor || 1.0;
 
     appWin.webContents.on('did-finish-load', () => {
+        // 设置初始缩放（恢复上次退出时的值，导航后重新应用）
+        try {
+            appWin.webContents.setZoomFactor(initialZoom);
+            logger.info('[app-zoom] Zoom set to: {}', initialZoom);
+        } catch (err) {
+            logger.error('[app-zoom] Failed to set zoom factor:', err);
+        }
+
+        // 注入缩放交互脚本
         const zoomScript = `
             (function() {
-                if (window.__canboxZoomInjected) return;
-                window.__canboxZoomInjected = true;
-
-                var currentZoom = ${initialZoom};
                 var STEP = 0.1;
                 var MIN = 0.5;
                 var MAX = 2.0;
 
-                function applyZoom(z) {
-                    document.body.style.zoom = z;
-                    window.__canboxCurrentZoom = z;
+                // 移除旧监听器（防止 did-finish-load 重复注入时叠加）
+                if (window.__canboxZoomWheelHandler) {
+                    document.removeEventListener('wheel', window.__canboxZoomWheelHandler);
+                }
+                if (window.__canboxZoomKeyHandler) {
+                    document.removeEventListener('keydown', window.__canboxZoomKeyHandler);
                 }
 
                 function adjustZoom(delta) {
-                    var newZoom = currentZoom + delta;
+                    var current = window.__canboxZoom.getZoomFactor();
+                    var newZoom = current + delta;
                     newZoom = Math.max(MIN, Math.min(MAX, newZoom));
                     newZoom = Math.round(newZoom * 10) / 10;
-                    if (newZoom !== currentZoom) {
-                        currentZoom = newZoom;
-                        applyZoom(currentZoom);
+                    if (newZoom !== current) {
+                        window.__canboxZoom.setZoomFactor(newZoom);
                     }
                 }
-
-                function resetZoom() {
-                    if (currentZoom !== 1.0) {
-                        currentZoom = 1.0;
-                        applyZoom(1.0);
-                    }
-                }
-
-                // 初始应用 zoom（恢复上次退出时的值）
-                applyZoom(currentZoom);
 
                 // Ctrl + 鼠标滚轮
-                document.addEventListener('wheel', function(e) {
+                window.__canboxZoomWheelHandler = function(e) {
                     if (e.ctrlKey) {
                         e.preventDefault();
                         var delta = e.deltaY > 0 ? -STEP : STEP;
                         adjustZoom(delta);
                     }
-                }, { passive: false });
+                };
+                document.addEventListener('wheel', window.__canboxZoomWheelHandler, { passive: false });
 
                 // 键盘快捷键
-                document.addEventListener('keydown', function(e) {
+                window.__canboxZoomKeyHandler = function(e) {
                     if (!e.ctrlKey) return;
-                    // Ctrl++ / Ctrl+=
                     if (e.key === '+' || e.key === '=') {
                         e.preventDefault();
                         adjustZoom(STEP);
-                    }
-                    // Ctrl+-
-                    else if (e.key === '-' || e.key === '_') {
+                    } else if (e.key === '-' || e.key === '_') {
                         e.preventDefault();
                         adjustZoom(-STEP);
-                    }
-                    // Ctrl+0 → 重置
-                    else if (e.key === '0') {
+                    } else if (e.key === '0') {
                         e.preventDefault();
-                        resetZoom();
+                        var current = window.__canboxZoom.getZoomFactor();
+                        if (current !== 1.0) {
+                            window.__canboxZoom.setZoomFactor(1.0);
+                        }
                     }
-                });
+                };
+                document.addEventListener('keydown', window.__canboxZoomKeyHandler);
 
-                console.log('[Canbox Zoom] Zoom initialized (Ctrl+Wheel / Ctrl++/-/0), initial: ' + ${initialZoom});
+                console.log('[Canbox Zoom] Zoom initialized (Ctrl+Wheel / Ctrl++/-/0), initial: ${initialZoom}');
             })();
         `;
 
@@ -105,7 +106,7 @@ function setupAppZoom(appWin, enableZoom = true, savedZoomFactor = 1.0) {
 }
 
 /**
- * 读取注入脚本中的当前 zoom 值
+ * 读取当前 zoom 值
  * @param {BrowserWindow} appWin - APP 窗口实例
  * @returns {Promise<number|undefined>} 当前 zoom 因子
  */
@@ -113,7 +114,12 @@ function getCurrentZoom(appWin) {
     if (!appWin || appWin.isDestroyed()) {
         return Promise.resolve();
     }
-    return appWin.webContents.executeJavaScript('window.__canboxCurrentZoom');
+    try {
+        const factor = appWin.webContents.getZoomFactor();
+        return Promise.resolve(factor);
+    } catch (e) {
+        return Promise.resolve();
+    }
 }
 
 /**
@@ -130,13 +136,13 @@ function startZoomPersistence(appWin, uid, winState, initialZoom = 1.0) {
     let currentZoom = initialZoom;
     let disposed = false;
 
-    const intervalId = setInterval(async () => {
+    const intervalId = setInterval(() => {
         if (disposed || appWin.isDestroyed()) {
             clearInterval(intervalId);
             return;
         }
         try {
-            const zoom = await getCurrentZoom(appWin);
+            const zoom = appWin.webContents.getZoomFactor();
             if (typeof zoom === 'number' && Math.abs(zoom - currentZoom) > 0.01) {
                 currentZoom = zoom;
                 const state = winState.loadSync(uid) || {};
