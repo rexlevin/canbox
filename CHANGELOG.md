@@ -5,6 +5,28 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.7] - 2026-06-03
+
+### feat | 新功能 / Features
+
+同根域名链接在子窗口打开并修复导航中断问题
+
+Open same-root-domain links in child windows and fix navigation interruption
+
+### fix | 问题修复 / Bug Fixes
+
+WebApp 同域子窗口去除菜单栏
+允许 WebApp 同根域名子域名间导航
+
+Remove menu bar from WebApp same-domain child windows
+Allow WebApp navigation between subdomains of the same root domain
+
+### docs | 文档 / Documentation
+
+更新 README 功能列表、文档链接及截图
+
+Update README feature list, documentation links and screenshots
+
 ## [0.5.6] - 2026-06-02
 
 ### feat | 新功能 / Features
