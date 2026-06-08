@@ -9,10 +9,6 @@ const router = createRouter({
         {
             path: '/log-viewer',
             component: () => import('@/components/LogViewer.vue')
-        },
-        {
-            path: '/launcher',
-            component: () => import('@/components/Launcher.vue')
         }
     ],
     history: createWebHashHistory()
