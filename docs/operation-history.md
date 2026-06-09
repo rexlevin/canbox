@@ -22,12 +22,12 @@
 ┌──────────────────────▼──────────────────────────────────────┐
 │                      Main 进程                               │
 │  ┌────────────────────────────────────────────────────────┐ │
-│  │               modules/main/api.js                       │ │
+│  │               ipcHandlers.js (canboxDb handlers)             │ │
 │  │                    canboxDb IPC Handler                 │ │
 │  └──────────────────────────┬─────────────────────────────┘ │
 │                             ▼                                │
 │  ┌────────────────────────────────────────────────────────┐ │
-│  │              modules/core/canboxDb.js                   │ │
+│  │              modules/canbox/core/canboxDb.js               │ │
 │  │                     PouchDB                             │ │
 │  └──────────────────────────┬─────────────────────────────┘ │
 │                             ▼                                │
@@ -73,7 +73,7 @@
 
 ## 模块说明
 
-### 1. canboxDb (`modules/core/canboxDb.js`)
+### 1. canboxDb (`modules/canbox/core/canboxDb.js`)
 
 数据库操作模块，基于 PouchDB：
 
@@ -86,7 +86,7 @@
 | `bulkRemove(docs)` | 批量删除 |
 | `getSize()` | 获取存储大小 |
 
-### 2. IPC Handler (`modules/main/api.js`)
+### 2. IPC Handler (`ipcHandlers.js`)
 
 暴露给渲染进程的接口：
 
@@ -98,7 +98,7 @@ await window.api.canboxDb.remove({ _id, _rev });
 await window.api.canboxDb.getSize();
 ```
 
-### 3. 业务写入 (`modules/ipc/`)
+### 3. 业务写入 (`modules/canbox/ipc/`)
 
 | 文件 | 写入场景 |
 |------|----------|

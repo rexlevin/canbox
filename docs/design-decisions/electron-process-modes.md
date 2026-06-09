@@ -209,10 +209,10 @@ function getCanboxLanguage() {
 
 ## 相关文件
 
-- `modules/main/api.js` - API 实现
-- `modules/main/storageManager.js` - 存储管理
-- `modules/childprocess/processManager.js` - 子进程管理
-- `childprocessEntry.js` - 子进程入口
+- `modules/app/api.js` - APP IPC handlers 实现
+- `modules/canbox/main/storageManager.js` - 存储管理
+- `modules/canbox/childprocess/processManager.js` - 子进程管理
+- `childprocessEntry.js` - 子进程入口（项目根目录）
 
 ## 总结
 
@@ -237,7 +237,7 @@ function getCanboxLanguage() {
 // childprocessEntry.js
 
 // 第 23 行：此时 CANBOX_USER_DATA 还未设置！
-const winState = require('@modules/main/winState');
+const winState = require('@modules/canbox/main/winState');
 
 // 第 56-63 行：参数解析并设置环境变量
 const args = parseArgs();
@@ -259,13 +259,13 @@ if (userData) {
 // childprocessEntry.js
 
 // 不在这里加载 winState
-// const winState = require('@modules/main/winState');  // ❌ 不要在这里
+// const winState = require('@modules/canbox/main/winState');  // ❌ 不要在这里
 
 // ... 参数解析和环境变量设置 ...
 
 function createAppWindow() {
     // 在 CANBOX_USER_DATA 设置之后再加载
-    const winState = require('@modules/main/winState');  // ✅ 正确位置
+    const winState = require('@modules/canbox/main/winState');  // ✅ 正确位置
 
     // 使用 winState...
 }
