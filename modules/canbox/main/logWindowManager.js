@@ -7,7 +7,7 @@ const { getCanboxStore } = require('@modules/canbox/main/storageManager');
 // 加载 uatDev 配置
 const uatDev = (() => {
     try {
-        const uatDevPath = path.join(__dirname, '../../uat.dev.json');
+        const uatDevPath = path.join(__dirname, '../../../uat.dev.json');
         if (fs.existsSync(uatDevPath)) {
             return require(uatDevPath);
         }
@@ -73,7 +73,7 @@ class LogWindowManager {
             alwaysOnTop: alwaysOnTop,
             webPreferences: {
                 sandbox: false,
-                preload: path.join(__dirname, '../../preload.js'),
+                preload: path.join(__dirname, '../../../preload.js'),
                 nodeIntegration: false,
                 contextIsolation: true,
                 webSecurity: false,
@@ -101,7 +101,7 @@ class LogWindowManager {
             logger.info('Loading log viewer in uatDev mode: {}', uatDev.main);
             loadUrl = uatDev.main + '#/log-viewer';
         } else {
-            const indexPath = path.join(__dirname, '../../build/index.html');
+            const indexPath = path.join(__dirname, '../../../build/index.html');
             logger.info('Loading log viewer from: {}', indexPath);
             loadUrl = `file://${indexPath.replace(/\\/g, '/')}#/log-viewer`;
         }

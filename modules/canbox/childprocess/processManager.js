@@ -36,7 +36,7 @@ class ProcessManager {
         try {
             // 获取 Electron 可执行文件路径
             const electronPath = process.execPath;
-            const childprocessEntry = path.join(__dirname, '../../childprocessEntry.js');
+            const childprocessEntry = path.join(__dirname, '../../../childprocessEntry.js');
 
             // 获取主进程的 userData 路径，传递给子进程
             const { app } = require('electron');
