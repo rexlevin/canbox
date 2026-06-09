@@ -5,6 +5,38 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.5.9] - 2026-06-09
+
+### feat | 新功能 / Features
+
+添加开机自动启动功能
+添加多项目工作区与架构声明文件
+
+Add auto-start on boot functionality
+Add multi-project workspace and architecture declaration files
+
+### docs | 文档 / Documentation
+
+添加重构模块目录结构的变更文档
+添加多项目管理方案分析文档
+添加 VSCode 扩展可行性分析与能力规划文档
+添加启动器功能规划及应用缓存服务文档
+
+Add module directory structure refactoring change documentation
+Add multi-project management analysis documentation
+Add VSCode extension feasibility analysis and capability planning documentation
+Add launcher feature planning and application cache service documentation
+
+### refactor | 重构 / Refactoring
+
+重构模块目录结构，优化代码组织
+替换更新源为原生单选框，移除未使用的 currentSource 字段
+移除更新源查询中的网络测速调用，修复设置页加载延迟
+
+Restructure module directory for better code organization
+Replace update source with native radio buttons, remove unused currentSource field
+Remove network speed test from update source query, fix settings page loading delay
+
 ## [0.5.7] - 2026-06-03
 
 ### feat | 新功能 / Features
