@@ -6,13 +6,13 @@ related_changes: []
 
 # 进行中的变更
 
-> 最后更新：2026-06-10
+> 最后更新：2026-06-11
 
 ## 📊 统计
 
 | 项目 | 数量 |
 |------|------|
-| 进行中变更 | 2 |
+| 进行中变更 | 3 |
 
 ---
 
@@ -20,6 +20,7 @@ related_changes: []
 
 | 变更名称 | 日期 | 优先级 | 描述 |
 |----------|------|--------|------|
+| [app-global-shortcut](./app-global-shortcut.md) | 2026-06-11 | ⭐⭐⭐ | 为 APP 运行时提供全局快捷键注册/注销 API，支持持久化映射和事件驱动 |
 | [refactor-module-structure](./refactor-module-structure.md) | 2026-06-09 | ⭐⭐⭐ | 重构 modules/ 目录，按运行环境拆分为 canbox/app/utils 三层结构 |
 | [rename-shortcut-to-app-launcher](./rename-shortcut-to-app-launcher.md) | 2026-06-10 | ⭐⭐⭐ | 重命名 shortcutManager → appLauncherManager，消除 shortcut 歧义 |
 
